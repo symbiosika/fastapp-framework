@@ -12,6 +12,8 @@ import fs from "fs/promises";
 import { getCookie } from "hono/cookie";
 import { serveStatic } from "hono/bun";
 import FileHander from "./routes/files";
+import path from "path";
+import type { HonoBase } from "hono/hono-base";
 
 /**
  * validate .ENV variables
@@ -254,6 +256,33 @@ app.all(
     }
   }
 );
+
+/**
+ * Funktion zum dynamischen Laden der Plugins
+ */
+async function loadPlugins(app: Hono) {
+  const pluginsDir = path.join(__dirname, "../plugins");
+  try {
+    const files = await fs.readdir(pluginsDir);
+    for (const file of files) {
+      if (file.endsWith(".ts") || file.endsWith(".js")) {
+        const pluginPath = path.join(pluginsDir, file);
+        const plugin = await import(pluginPath);
+        if (typeof plugin.default === "function") {
+          const pluginApp = new Hono();
+          pluginApp.use("*", authAndSetUsersInfo);
+          plugin.default(pluginApp);
+          app.route("/api/v1/custom", pluginApp);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden der Plugins:", error);
+  }
+}
+
+// Plugins laden
+loadPlugins(app as any);
 
 /*
 --------------------------
