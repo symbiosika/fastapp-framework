@@ -52,10 +52,12 @@ export const getCollection = async (c: Context) => {
       return c.json(data);
     }
 
+    // get permission
     await permissionCheckerViaUrlParams(definition, userId, parsedParams);
 
     // start query
-    const table = getDbSchemaTable(tableName);
+    const table = getDbSchemaTable(tableName); // THIS FAILS FOR CUSTOM TABLES!!!
+    
     const where = mapConditionsToDrizzleWhereObject(table, parsedParams);
     if (!where) {
       // @ts-ignore

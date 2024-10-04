@@ -6,6 +6,8 @@ import type {
   PermissionDefinitionPerTable,
 } from "../types/permission-checker";
 import type { SecretsEntry } from "../types/shared/db/secrets";
+import { join } from "path";
+import { readdirSync } from "fs";
 
 export const allowAll = async (): Promise<CrudPermission> => {
   return {
@@ -16,7 +18,32 @@ export const allowAll = async (): Promise<CrudPermission> => {
   };
 };
 
+// Import all custom collection files
+const customCollectionsPath = join(__dirname, "../../..", "custom-collections");
+const customCollectionFiles = readdirSync(customCollectionsPath).filter(
+  (file) => file.endsWith(".ts") && file !== "index.ts"
+);
+// Import and collect permissions from each file
+const customPermissions: PermissionDefinitionPerTable = Object.assign(
+  {},
+  ...customCollectionFiles.map((file) => {
+    const module = require(join(customCollectionsPath, file));
+    if (
+      typeof module.default === "function" &&
+      module.default.name === "defineCollectionEndpoints"
+    ) {
+      console.log("Importing custom collection from:", file);
+      return module.default();
+    }
+    return {};
+  })
+);
+
+export const customTables: string[] = Object.keys(customPermissions);
+console.log("Added customTables to collections", customTables);
+
 export const collectionPermissions: PermissionDefinitionPerTable = {
+  ...customPermissions,
   users: {
     GET: {
       checkPermissionsFor: [
