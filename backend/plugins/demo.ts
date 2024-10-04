@@ -35,6 +35,7 @@ export type AppDbWithSchema = typeof db;
 export default function defineRoutes(app: FastAppHono) {
   app.get("/test", async (c) => {
     const usersEmail = c.get("usersEmail");
+    const userId = c.get("usersId");
 
     // insert a random value into the database
     const randomValue = Math.random().toString(36).substring(2, 15);
@@ -44,6 +45,7 @@ export default function defineRoutes(app: FastAppHono) {
 
     return c.json({
       usersEmail,
+      userId,
       top5Values,
     });
   });

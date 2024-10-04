@@ -4,11 +4,13 @@
 import * as userTables from "./schema/users";
 import * as secrets from "./schema/secrets";
 import * as files from "./schema/files";
+import * as embeddings from "./schema/embeddings";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
 export * from "./schema/secrets";
 export * from "./schema/files";
+export * from "./schema/embeddings";
 
 export const dbSchema = {
   // auth tables
@@ -21,6 +23,8 @@ export const dbSchema = {
   sessions: userTables.sessions,
   // files
   files: files.files,
+  // embeddings
+  embeddings: embeddings.embeddings,
 };
 
 /**
