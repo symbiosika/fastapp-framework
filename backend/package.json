@@ -26,6 +26,7 @@
     "dev": "bun --hot run .\\src\\index.ts",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
-    "generate": "drizzle-kit generate"
+    "generate": "drizzle-kit generate",
+    "studio": "drizzle-kit studio"
   }
 }

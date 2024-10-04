@@ -11,6 +11,10 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./src/lib/db/db-schema.ts",
   out: "./drizzle-sql",
+  tablesFilter: ["base_*"],
+  migrations: {
+    table: "base_migrations",
+  },
   dbCredentials: {
     user: POSTGRES_USER,
     password: POSTGRES_PASSWORD,
@@ -21,6 +25,5 @@ export default defineConfig({
       rejectUnauthorized: false,
       ca: readFileSync("ca.pem").toString(),
     },
-    // ssl: false,
   },
 });

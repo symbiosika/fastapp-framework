@@ -3,9 +3,11 @@ import {
   uuid,
   timestamp,
   customType,
+  pgTableCreator,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { pgBaseTable } from ".";
+
+const pgTable = pgTableCreator((name) => `fastapp_${name}`);
 
 const bytea = customType<{
   data: Buffer;
@@ -17,13 +19,12 @@ const bytea = customType<{
 });
 
 // Table files
-export const files = pgBaseTable("files", {
+export const files = pgTable("files", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
-  bucket: varchar("bucket", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   fileType: varchar("file_type", { length: 255 }).notNull(),
   extension: varchar("extension", { length: 255 }).notNull(),

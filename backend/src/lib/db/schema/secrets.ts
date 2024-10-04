@@ -3,19 +3,11 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  uuid,
-  timestamp,
-  text,
-  pgSchema,
-  unique,
-  index,
-} from "drizzle-orm/pg-core";
-
-const dataSchema = pgSchema("data");
+import { uuid, timestamp, text, unique, index } from "drizzle-orm/pg-core";
+import { pgBaseTable } from ".";
 
 // Secrets
-export const secrets = dataSchema.table(
+export const secrets = pgBaseTable(
   "secrets",
   {
     id: uuid("id")
