@@ -66,6 +66,18 @@
         <input type="password" id="password" placeholder="Passwort" required />
         <button type="submit">Anmelden</button>
       </form>
+      <hr style="margin: 1rem 0" />
+      <h2 style="text-align: center">Registrieren</h2>
+      <form id="register-form">
+        <input type="email" id="register-email" placeholder="E-Mail" required />
+        <input
+          type="password"
+          id="register-password"
+          placeholder="Passwort"
+          required
+        />
+        <button type="submit">Registrieren</button>
+      </form>
     </div>
 
     <script>
@@ -94,6 +106,40 @@
               const errorData = await response.json();
               errorBox.textContent =
                 errorData.message || "Anmeldung fehlgeschlagen";
+              errorBox.style.display = "block";
+            }
+          } catch (error) {
+            errorBox.textContent =
+              "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
+            errorBox.style.display = "block";
+          }
+        });
+
+      document
+        .getElementById("register-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("register-email").value;
+          const password = document.getElementById("register-password").value;
+          const errorBox = document.getElementById("error-box");
+
+          try {
+            const response = await fetch("/register", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email, password }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
+              window.location.href = "/static/start.html";
+            } else {
+              const errorData = await response.json();
+              errorBox.textContent =
+                errorData.message || "Registrierung fehlgeschlagen";
               errorBox.style.display = "block";
             }
           } catch (error) {

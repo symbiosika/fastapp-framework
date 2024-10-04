@@ -13,7 +13,6 @@ import { getCookie } from "hono/cookie";
 import { serveStatic } from "hono/bun";
 import FileHander from "./routes/files";
 import path from "path";
-import type { HonoBase } from "hono/hono-base";
 
 /**
  * validate .ENV variables
@@ -54,6 +53,18 @@ const getTokenFromJwt = (token: string) => {
 };
 
 /**
+ * Add the user to context
+ */
+function addUserToContext(
+  c: Context<any, any, {}>,
+  decodedAndVerifiedToken: jwtlib.JwtPayload
+) {
+  c.set("usersEmail", decodedAndVerifiedToken.email ?? "");
+  c.set("usersId", decodedAndVerifiedToken.sub ?? "");
+  // c.set("usersRoles", decodedAndVerifiedToken["symbiosika/roles"] ?? []);
+}
+
+/**
  * Token validation
  */
 const checkToken = (c: Context) => {
@@ -80,11 +91,8 @@ const checkToken = (c: Context) => {
 const authAndSetUsersInfo = async (c: Context, next: Function) => {
   try {
     const decodedAndVerifiedToken = checkToken(c);
-
     if (typeof decodedAndVerifiedToken === "object") {
-      c.set("usersEmail", decodedAndVerifiedToken.email ?? "");
-      c.set("usersId", decodedAndVerifiedToken.sub ?? "");
-      c.set("usersRoles", decodedAndVerifiedToken["symbiosika/roles"] ?? []);
+      addUserToContext(c, decodedAndVerifiedToken);
     } else {
       return c.text("Invalid token", 401);
     }
@@ -102,6 +110,28 @@ const authOrRedirectToLogin = async (c: Context, next: Function) => {
   try {
     checkToken(c);
   } catch (error) {
+    return c.redirect("/login");
+  }
+  await next();
+};
+
+/**
+ * Middleware for JWT authentication
+ * Will check the JWT cookie and redirect to login if not valid
+ */
+const authAndSetUsersInfoOrRedirectToLogin = async (
+  c: Context,
+  next: Function
+) => {
+  try {
+    const decodedAndVerifiedToken = checkToken(c);
+
+    if (typeof decodedAndVerifiedToken === "object") {
+      addUserToContext(c, decodedAndVerifiedToken);
+    } else {
+      return c.redirect("/login");
+    }
+  } catch (err) {
     return c.redirect("/login");
   }
   await next();
@@ -270,7 +300,7 @@ async function loadPlugins(app: Hono) {
         const plugin = await import(pluginPath);
         if (typeof plugin.default === "function") {
           const pluginApp = new Hono();
-          pluginApp.use("*", authAndSetUsersInfo);
+          pluginApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
           plugin.default(pluginApp);
           app.route("/api/v1/custom", pluginApp);
         }
