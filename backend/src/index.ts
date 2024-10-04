@@ -288,7 +288,7 @@ app.all(
 );
 
 /**
- * Funktion zum dynamischen Laden der Plugins
+ * Add custom routes from plugins
  */
 async function loadPlugins(app: Hono) {
   const pluginsDir = path.join(__dirname, "../plugins");
