@@ -1,0 +1,30 @@
+/**
+ * Main Schema for the database
+ */
+import * as userTables from "./schema/users";
+import * as secrets from "./schema/secrets";
+import * as files from "./schema/files";
+
+// export all tables for drizzle-kit
+export * from "./schema/users";
+export * from "./schema/secrets";
+export * from "./schema/files";
+
+export const dbSchema = {
+  // auth tables
+  users: userTables.users,
+  userGroups: userTables.userGroups,
+  userGroupMembers: userTables.userGroupMembers,
+  userGroup: userTables.userGroups,
+  // app wide secrets
+  secrets: secrets.secrets,
+  sessions: userTables.sessions,
+  // files
+  files: files.files,
+};
+
+/**
+ * Export the database schema and the valid table names.
+ */
+export type DatabaseSchema = typeof dbSchema;
+export const validTableNames = Object.keys(dbSchema);

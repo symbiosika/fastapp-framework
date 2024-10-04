@@ -1,0 +1,31 @@
+{
+  "name": "fastapp-framework-backend",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.6",
+    "prettier": "^3.3.3",
+    "drizzle-kit": "^0.24.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.33.0",
+    "hono": "^4.5.8",
+    "jira.js": "^4.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "llamaindex": "^0.6.0",
+    "octokit": "^4.0.2",
+    "openai": "^4.40.2",
+    "pg": "^8.11.5",
+    "pgvector": "^0.1.8"
+  },
+  "scripts": {
+    "dev": "bun --hot run .\\src\\index.ts",
+    "migrate": "drizzle-kit migrate",
+    "push": "drizzle-kit push",
+    "generate": "drizzle-kit generate"
+  }
+}

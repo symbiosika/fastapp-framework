@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logout</title>
+  </head>
+  <body>
+    <script>
+      // Cookie löschen
+      document.cookie =
+        "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=strict";
+
+      // Zur Login-Seite weiterleiten
+      window.location.href = "/static/login.html";
+    </script>
+  </body>
+</html>
