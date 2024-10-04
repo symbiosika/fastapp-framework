@@ -1,12 +1,12 @@
 {
-  "id": "ff960dfb-40d4-4bfa-8c1b-880854c1ee0d",
+  "id": "a7191fe0-1b10-4564-a59a-013d7e5dc73f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "data.sessions": {
-      "name": "sessions",
-      "schema": "data",
+    "public.base_sessions": {
+      "name": "base_sessions",
+      "schema": "",
       "columns": {
         "session_token": {
           "name": "session_token",
@@ -29,11 +29,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "sessions_user_id_users_id_fk": {
-          "name": "sessions_user_id_users_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "users",
-          "schemaTo": "data",
+        "base_sessions_user_id_base_users_id_fk": {
+          "name": "base_sessions_user_id_base_users_id_fk",
+          "tableFrom": "base_sessions",
+          "tableTo": "base_users",
           "columnsFrom": [
             "user_id"
           ],
@@ -47,9 +46,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "data.user_group_members": {
-      "name": "user_group_members",
-      "schema": "data",
+    "public.base_user_group_members": {
+      "name": "base_user_group_members",
+      "schema": "",
       "columns": {
         "user_id": {
           "name": "user_id",
@@ -66,11 +65,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_group_members_user_id_users_id_fk": {
-          "name": "user_group_members_user_id_users_id_fk",
-          "tableFrom": "user_group_members",
-          "tableTo": "users",
-          "schemaTo": "data",
+        "base_user_group_members_user_id_base_users_id_fk": {
+          "name": "base_user_group_members_user_id_base_users_id_fk",
+          "tableFrom": "base_user_group_members",
+          "tableTo": "base_users",
           "columnsFrom": [
             "user_id"
           ],
@@ -80,11 +78,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "user_group_members_user_groups_id_user_groups_id_fk": {
-          "name": "user_group_members_user_groups_id_user_groups_id_fk",
-          "tableFrom": "user_group_members",
-          "tableTo": "user_groups",
-          "schemaTo": "data",
+        "base_user_group_members_user_groups_id_base_user_groups_id_fk": {
+          "name": "base_user_group_members_user_groups_id_base_user_groups_id_fk",
+          "tableFrom": "base_user_group_members",
+          "tableTo": "base_user_groups",
           "columnsFrom": [
             "user_groups_id"
           ],
@@ -96,8 +93,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "user_group_members_user_id_user_groups_id_pk": {
-          "name": "user_group_members_user_id_user_groups_id_pk",
+        "base_user_group_members_user_id_user_groups_id_pk": {
+          "name": "base_user_group_members_user_id_user_groups_id_pk",
           "columns": [
             "user_id",
             "user_groups_id"
@@ -106,9 +103,9 @@
       },
       "uniqueConstraints": {}
     },
-    "data.user_groups": {
-      "name": "user_groups",
-      "schema": "data",
+    "public.base_user_groups": {
+      "name": "base_user_groups",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
@@ -143,9 +140,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "data.users": {
-      "name": "users",
-      "schema": "data",
+    "public.base_users": {
+      "name": "base_users",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
@@ -221,12 +218,208 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
+    },
+    "public.base_secrets": {
+      "name": "base_secrets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx": {
+          "name": "idx",
+          "columns": [
+            {
+              "expression": "reference_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ref_idx": {
+          "name": "ref_idx",
+          "columns": [
+            {
+              "expression": "reference",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ref_id_idx": {
+          "name": "ref_id_idx",
+          "columns": [
+            {
+              "expression": "reference_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "name_idx": {
+          "name": "name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "base_secrets_reference_name_unique": {
+          "name": "base_secrets_reference_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference",
+            "name"
+          ]
+        }
+      }
+    },
+    "public.base_files": {
+      "name": "base_files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "bucket": {
+          "name": "bucket",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extension": {
+          "name": "extension",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file": {
+          "name": "file",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     }
   },
   "enums": {},
-  "schemas": {
-    "data": "data"
-  },
+  "schemas": {},
   "sequences": {},
   "_meta": {
     "columns": {},
