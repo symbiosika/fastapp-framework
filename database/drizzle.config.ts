@@ -11,9 +11,9 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./db/schema.ts",
   out: "./drizzle-sql",
-  tablesFilter: "fastapp_",
+  tablesFilter: "custom_demo_",
   migrations: {
-    table: "fastapp_migrations",
+    table: "custom_demo_migrations",
   },
   dbCredentials: {
     user: POSTGRES_USER,

@@ -1,6 +1,5 @@
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { dbSchema } from "./db-schema";
 import { readFileSync } from "fs";
 
 const POSTGRES_DB = process.env.POSTGRES_DB ?? "";
@@ -14,9 +13,8 @@ const caCert = readFileSync("ca.pem").toString();
 /**
  * Connect to the database
  */
-const createDbClient = async <TSchema extends Record<string, unknown>>(
-  dbSchema: TSchema,
-  drizzleCreateClient: typeof drizzle
+export const createDbClient = async <TSchema extends Record<string, unknown>>(
+  dbSchema: TSchema
 ) => {
   /** PG Connection pool */
   const pool = new pg.Pool({
@@ -48,12 +46,12 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
     // delete old client
     client.release();
     // reconnect to the db
-    await createDbClient(dbSchema, drizzleCreateClient);
+    await createDbClient(dbSchema);
   });
 
   client.on("end", async () => {
     console.error("PG Client ended the connection.");
-    await createDbClient(dbSchema, drizzleCreateClient);
+    await createDbClient(dbSchema);
   });
 
   client.on("notification", async (msg) => {
@@ -68,24 +66,3 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
   const conn = drizzle(client, { schema: dbSchema, logger: false }); // Initialize Drizzle ORM with the connection pool
   return conn;
 };
-
-// hold the connection
-let dbClient = await createDbClient(dbSchema, drizzle);
-
-/**
- * Re-Connect to the database also on error
- */
-if (!dbClient) {
-  // this is needed to don´t have a "undefined" db object at the other places where it is used
-  console.error(
-    "Failed to connect to the database in the first place. Exiting..."
-  );
-  process.exit(1);
-}
-
-export const getDb = () => {
-  return dbClient;
-};
-
-const db = dbClient;
-export type AppDbWithSchema = typeof db;
