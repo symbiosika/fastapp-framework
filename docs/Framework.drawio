@@ -1,0 +1,55 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0" version="24.7.16">
+  <diagram name="Seite-1" id="1ohOLwrpuU4f8TpSpfWa">
+    <mxGraphModel dx="1153" dy="851" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-2" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="190" y="130" width="700" height="510" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-14" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="530" y="140" width="350" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-3" value="Auth0 Cloud Authentifizierung" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="150" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-4" value="Lokale Authentifizierung" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="200" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-5" value="Token Bereitstellung" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="370" y="180" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-6" value="Datenbank" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="540" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="rhDZJNlHoUthRG1BjoFI-7" target="rhDZJNlHoUthRG1BjoFI-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-7" value="API" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="450" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-9" value="API" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="320" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-10" value="Data 2 Formular" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="710" y="220" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-11" value="KOMPONENTEN" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="710" y="160" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-12" value="Data 2 List/Card/..." style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="710" y="270" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-13" value="Login Seite" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="370" y="260" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-15" value="Nicht Low-Code. Aber Lower-Code.&lt;div&gt;Ähnlich Supabase aber noch mehr Bauteile mit ausgeliefert&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="190" y="70" width="370" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rhDZJNlHoUthRG1BjoFI-16" value="Ggf eine allgemeine Überseite die iFrames rendert?" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;" vertex="1" parent="1">
+          <mxGeometry x="370" y="330" width="150" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
