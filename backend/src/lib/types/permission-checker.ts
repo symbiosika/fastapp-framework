@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm";
+
 export interface CrudPermission {
   create: boolean;
   read: boolean;
@@ -5,35 +7,23 @@ export interface CrudPermission {
   delete: boolean;
 }
 
-type QueryParamForEquals = {
-  operator: "eq";
-  value: string;
-};
-
-type QueryParamForOr = {
-  operator: "or";
-  value: string[];
-};
-
-type QueryParamForLowerThan = {
-  operator: "lt";
-  value: string;
-};
-
-type QueryParamForGreaterThan = {
-  operator: "gt";
-  value: string;
-};
-
-export type QueryParams = {
-  [key: string]:
-    | QueryParamForEquals
-    | QueryParamForOr
-    | QueryParamForLowerThan
-    | QueryParamForGreaterThan;
-};
+export interface RawParameters {
+  userId: string;
+  rawSearchParams: URLSearchParams;
+  tableName: string;
+  orderBy?: string;
+  orderAsc?: boolean;
+  limit?: number;
+  single?: boolean;
+  columns?: string[];
+  expand?: string[];
+  filter?: string;
+  where?: Record<string, SQL<unknown>>;
+}
 
 export interface PermissionDefinition {
+  simpleFilter?: string; // simple filter for the query like "id = '123'"
+  customWhere?: (params: RawParameters) => SQL<unknown>; // custom where clause
   neededParameters?: {
     name: string;
     operator: string;
@@ -47,7 +37,7 @@ export interface PermissionDefinition {
   }[];
   columns?: any;
   // custom SQL actions
-  selector?: (userId: string, params: QueryParams) => Promise<any[]>; // custom selector function
+  selector?: (userId: string, params: RawParameters) => Promise<any[]>; // custom selector function
   inserter?: (userId: string, body: any) => Promise<any>; // custom inserter function
   // custom actions to do some modifications with the data before the actual action
   preAction?: (userId: string, body: any) => Promise<any>; // custom pre-action function

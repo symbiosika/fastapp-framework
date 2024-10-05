@@ -1,4 +1,4 @@
-import { secrets } from "./db-schema";
+import { secrets, userGroupMembers, userGroups, users } from "./db-schema";
 import { getDb } from "./db-connection";
 import { encryptAes } from "../crypt/aes";
 import type {
@@ -8,6 +8,7 @@ import type {
 import type { SecretsEntry } from "../types/shared/db/secrets";
 import { join } from "path";
 import { readdirSync } from "fs";
+import { and, eq, exists, inArray } from "drizzle-orm";
 
 export const allowAll = async (): Promise<CrudPermission> => {
   return {
@@ -45,11 +46,25 @@ console.log("Added customTables to collections", customTables);
 export const collectionPermissions: PermissionDefinitionPerTable = {
   ...customPermissions,
   users: {
-    GET: {},
+    GET: {
+      customWhere(params) {
+        return eq(users.id, params.userId);
+      },
+    },
   },
 
   userGroups: {
-    GET: {},
+    GET: {
+      customWhere(params) {
+        return inArray(
+          userGroups.id,
+          getDb()
+            .select({ id: userGroupMembers.userGroupId })
+            .from(userGroupMembers)
+            .where(eq(userGroupMembers.userId, params.userId))
+        );
+      },
+    },
   },
 
   userGroupMembers: {

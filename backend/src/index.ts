@@ -344,7 +344,7 @@ async function loadPlugins(app: Hono) {
       }
     }
   } catch (error) {
-    console.error("Fehler beim Laden der Plugins:", error);
+    console.error("Error loading plugins:", error);
   }
 }
 

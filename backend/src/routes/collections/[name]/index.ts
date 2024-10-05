@@ -16,6 +16,8 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../lib/db/db-connection";
 import { dbSchema } from "src/lib/db/db-schema";
+import type { RawParameters } from "src/lib/types/permission-checker";
+import { and } from "drizzle-orm";
 
 const consoleDebug = (
   withObject: any,
@@ -124,20 +126,42 @@ export const getCollection = async (c: Context) => {
     // get the columns parameter. if set, only these columns will be returned
     const columnsParam = searchParams.get("columns")?.split(",") ?? undefined;
 
-    // check if there is a special selector
-    /* if (definition.selector) {
-      const data = await definition.selector(userId, parsedParams);
-      return c.json(data);
-    } */
-
-    // get permission
-    // await permissionCheckerViaUrlParams(definition, userId, parsedParams);
-
     const whereStatement = mapConditionsToDrizzleWhereObject(
       dbSchema,
       tableName,
       filterClause
     );
+
+    const rawParameters: RawParameters = {
+      userId,
+      rawSearchParams: searchParams,
+      tableName: tableNameRaw,
+      orderBy: orderByParam,
+      orderAsc: orderAscParam,
+      limit,
+      single: resultIsObject,
+      columns: columnsParam,
+      expand: expandParam,
+      filter: filterString,
+      where: whereStatement,
+    };
+
+    // check if there is a custom selector
+    if (definition.selector) {
+      const data = await definition.selector(userId, rawParameters);
+      return c.json(data);
+    }
+
+    // check if the query has a custom where clause defined
+    if (definition.customWhere) {
+      whereStatement[tableName] = and(
+        definition.customWhere(rawParameters),
+        whereStatement[tableName]
+      );
+    }
+
+    // get permission
+    // await permissionCheckerViaUrlParams(definition, userId, parsedParams);
 
     const withObject = generateWithObject(tablesToExpand, whereStatement);
     consoleDebug(withObject, whereStatement, tablesToExpand);
