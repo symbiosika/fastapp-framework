@@ -45,15 +45,15 @@ console.log("Added customTables to collections", customTables);
 export const collectionPermissions: PermissionDefinitionPerTable = {
   ...customPermissions,
   users: {
-    GET: {
-      checkPermissionsFor: [
-        {
-          name: "id",
-          permission: "read",
-          checker: allowAll,
-        },
-      ],
-    },
+    GET: {},
+  },
+
+  userGroups: {
+    GET: {},
+  },
+
+  userGroupMembers: {
+    GET: {},
   },
 
   secrets: {

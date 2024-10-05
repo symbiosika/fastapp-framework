@@ -250,29 +250,33 @@ app.get("/api/v1/user/search", authAndSetUsersInfo, async (c: Context) => {
 /**
  * Collections endpoint
  */
-app.all("/v1/db/collections/:name/:id?", async (c: Context) => {
-  // check if id is set
-  const id = c.req.param("id");
-  if (!id) {
-    if (c.req.method === "GET") {
-      return getCollection(c);
-    } else if (c.req.method === "POST") {
-      return postCollection(c);
+app.all(
+  "/v1/db/collections/:name/:id?",
+  authAndSetUsersInfo,
+  async (c: Context) => {
+    // check if id is set
+    const id = c.req.param("id");
+    if (!id) {
+      if (c.req.method === "GET") {
+        return getCollection(c);
+      } else if (c.req.method === "POST") {
+        return postCollection(c);
+      } else {
+        throw new HTTPException(405, { message: "Method not allowed" });
+      }
     } else {
-      throw new HTTPException(405, { message: "Method not allowed" });
-    }
-  } else {
-    if (c.req.method === "GET") {
-      return getCollectionById(c);
-    } else if (c.req.method === "PUT") {
-      return putCollectionById(c);
-    } else if (c.req.method === "DELETE") {
-      return deleteCollectionById(c);
-    } else {
-      throw new HTTPException(405, { message: "Method not allowed" });
+      if (c.req.method === "GET") {
+        return getCollectionById(c);
+      } else if (c.req.method === "PUT") {
+        return putCollectionById(c);
+      } else if (c.req.method === "DELETE") {
+        return deleteCollectionById(c);
+      } else {
+        throw new HTTPException(405, { message: "Method not allowed" });
+      }
     }
   }
-});
+);
 
 /**
  * Serve all files from ./static/

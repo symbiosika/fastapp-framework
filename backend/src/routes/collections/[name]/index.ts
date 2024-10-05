@@ -1,7 +1,7 @@
 import {
   getOrderBy,
   mapConditionsToDrizzleWhereObject,
-  parseSearchParams,
+  parseFilterClause,
 } from "./url-parser";
 import {
   getPermissionDefinionForMethod,
@@ -15,6 +15,58 @@ import {
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../lib/db/db-connection";
+import { dbSchema } from "src/lib/db/db-schema";
+
+const consoleDebug = (
+  withObject: any,
+  whereStatement: any,
+  tablesToExpand: any
+) => {
+  console.log(
+    "withObject",
+    JSON.stringify(
+      withObject,
+      (key, value) => {
+        if (key.startsWith("where")) {
+          return undefined;
+        }
+        return value;
+      },
+      2
+    )
+  );
+
+  console.log(
+    "whereStatement",
+    Object.keys(whereStatement ?? {}),
+    "tablesToExpand",
+    tablesToExpand
+  );
+};
+
+const generateWithObject = (
+  tablesToExpand: string[] | undefined,
+  whereStatement: Record<string, any>
+) => {
+  if (!tablesToExpand) return undefined;
+
+  const buildNestedWith = (tables: string[]): Record<string, any> => {
+    if (tables.length === 0) return {};
+
+    const [currentTable, ...remainingTables] = tables;
+    return {
+      [currentTable]: {
+        where:
+          currentTable in whereStatement
+            ? whereStatement[currentTable]
+            : undefined,
+        with: buildNestedWith(remainingTables),
+      },
+    };
+  };
+
+  return buildNestedWith(tablesToExpand);
+};
 
 /**
  * GET Route for the collections endpoint
@@ -26,70 +78,103 @@ export const getCollection = async (c: Context) => {
     const userId = c.get("usersId");
     const tableNameRaw = c.req.param("name");
 
-    // check table-name and get schema
+    // check the table-name and get schema. will throw an error if table does not exist in the schema
     const tableName = normalizeTableName(tableNameRaw ?? "");
+    const table = getDbSchemaTable(tableName);
 
-    // parse URL query parameters and map to ORM query
+    // get the collection definition for the table.
+    const definition = getPermissionDefinionForMethod(tableName, "GET");
+
+    // The URL query parameters are optional and can be used to filter, sort and limit the result
+    // expample:
+    // http://localhost:3000/v1/db/collections/demo-data?filter=((id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e')||(users.id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e'))
+    // or:
+    // http://localhost:3000/v1/db/collections/users?filter=(userGroupMembers.userGroupId='d9698fcc-c359-42ba-8a96-2935163cbd29')
+    // /v1/db/collections/users?expand=userGroupMembers&filter=(userGroupMembers.userGroupId=%27d9698fcc-c359-42ba-8a96-2935163cbd29%27)%26%26(createdAt>=%272023-01-01%27)
+
+    // get the URL query parameters
     const searchParams = new URLSearchParams(c.req.url.split("?")[1] || "");
-    const parsedParams = parseSearchParams(searchParams);
 
-    const orderBy = searchParams.get("orderBy") ?? undefined;
-    const orderAsc =
+    // get the orderBy and orderAsc parameters
+    const orderByParam = searchParams.get("orderBy") ?? undefined;
+    const orderAscParam =
       searchParams.get("order") && searchParams.get("order") === "asc"
         ? true
         : false;
-    const limit = searchParams.get("limit") ?? undefined;
-    const single = searchParams.get("single") === "true" ? true : false;
-    const columns = searchParams.get("columns")?.split(",") ?? undefined;
+    const orderBy = getOrderBy(orderByParam, table, orderAscParam);
 
-    // check for some hidden tables
-    // check permissions on the ressource for GET
-    const definition = getPermissionDefinionForMethod(tableName, "GET");
+    // get the limit parameter
+    const limitParam = searchParams.get("limit") ?? undefined;
+    const limit = limitParam ? parseInt(limitParam) : undefined;
+
+    // get the single parameter. if true, the result will be an object, otherwise an array
+    const resultIsObject = searchParams.get("single") === "true" ? true : false;
+
+    // get the filter parameter
+    let filterString = searchParams.get("filter") ?? undefined;
+    if (filterString && definition.filter) {
+      filterString = `(${definition.filter.value}) && (${filterString})`;
+    } else if (definition.filter) {
+      filterString = definition.filter.value;
+    }
+    console.log("filterString", filterString);
+    const filterClause = parseFilterClause(filterString);
+
+    // get the expand parameter. if set, the result will be joined with the referenced tables
+    const expandParam = searchParams.get("expand")?.split(",") ?? undefined;
+    let tablesToExpand = expandParam
+      ? expandParam.map((tableName) => normalizeTableName(tableName))
+      : undefined;
+
+    // get the columns parameter. if set, only these columns will be returned
+    const columnsParam = searchParams.get("columns")?.split(",") ?? undefined;
 
     // check if there is a special selector
-    if (definition.selector) {
-      const data = await definition.selector(userId, parsedParams);
+    /* if (definition.selector) {
+       const data = await definition.selector(userId, parsedParams);
       return c.json(data);
-    }
+    } */
 
     // get permission
-    await permissionCheckerViaUrlParams(definition, userId, parsedParams);
+    // await permissionCheckerViaUrlParams(definition, userId, parsedParams);
 
-    // start query
-    const table = getDbSchemaTable(tableName); // THIS FAILS FOR CUSTOM TABLES!!!
-    
-    const where = mapConditionsToDrizzleWhereObject(table, parsedParams);
-    if (!where) {
-      // @ts-ignore
-      const data = await getDb().query[tableName].findMany({
-        orderBy: orderBy ? getOrderBy(orderBy, table, orderAsc) : undefined,
-        limit: limit ? parseInt(limit) : undefined,
-      });
+    const whereStatement = mapConditionsToDrizzleWhereObject(
+      dbSchema,
+      tableName,
+      filterClause
+    );
 
-      if (single && Array.isArray(data)) {
-        if (data.length === 0) {
-          return c.json({});
+    if (definition.filter?.expand) {
+      if (!tablesToExpand) tablesToExpand = [];
+      for (const t of definition.filter.expand) {
+        const normalizedTableName = normalizeTableName(t);
+        if (!tablesToExpand.includes(normalizedTableName)) {
+          tablesToExpand.push(normalizedTableName);
         }
-        return c.json(data[0]);
-      } else {
-        return c.json(data);
       }
+    }
+    const withObject = generateWithObject(tablesToExpand, whereStatement);
+    consoleDebug(withObject, whereStatement, tablesToExpand);
+
+    // @ts-ignore
+    const data = await getDb().query[tableName].findMany({
+      where:
+        tableName in whereStatement ? whereStatement[tableName] : undefined,
+      orderBy,
+      limit,
+      with: withObject,
+      /*  with: {
+        userGroupMembers: true,
+      }, */
+    });
+
+    if (resultIsObject && Array.isArray(data)) {
+      if (data.length === 0) {
+        return c.json({});
+      }
+      return c.json(data[0]);
     } else {
-      // @ts-ignore
-      const data = await getDb().query[tableName].findMany({
-        where,
-        orderBy: orderBy ? getOrderBy(orderBy, table, orderAsc) : undefined,
-        limit: limit ? parseInt(limit) : undefined,
-      });
-
-      if (single && Array.isArray(data)) {
-        if (data.length === 0) {
-          return c.json({});
-        }
-        return c.json(data[0]);
-      } else {
-        return c.json(data);
-      }
+      return c.json(data);
     }
   } catch (err) {
     throw new HTTPException(400, { message: err + "" });

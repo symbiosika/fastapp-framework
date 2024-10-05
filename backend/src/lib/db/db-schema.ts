@@ -30,6 +30,10 @@ export const dbSchema = {
   userGroups: userTables.userGroups,
   userGroupMembers: userTables.userGroupMembers,
   userGroup: userTables.userGroups,
+  usersRelations: userTables.usersRelations,
+  userGroupsRelations: userTables.userGroupsRelations,
+  userGroupMembersRelations: userTables.userGroupMembersRelations,
+  sessionsRelations: userTables.sessionsRelations,
   // app wide secrets
   secrets: secrets.secrets,
   sessions: userTables.sessions,

@@ -11,6 +11,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
+import { relations } from "drizzle-orm";
 
 export const users = pgBaseTable("users", {
   id: uuid("id")
@@ -60,6 +61,36 @@ export const userGroupMembers = pgBaseTable(
   (userGroupMember) => ({
     compositePK: primaryKey({
       columns: [userGroupMember.userId, userGroupMember.userGroupId],
+    }),
+  })
+);
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  sessions: many(sessions), // sessions will be the name in the "with" clause in the query
+  userGroupMembers: many(userGroupMembers), // userGroupMembers will be the name in the "with" clause in the query
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  users: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userGroupsRelations = relations(userGroups, ({ many }) => ({
+  userGroupMembers: many(userGroupMembers),
+}));
+
+export const userGroupMembersRelations = relations(
+  userGroupMembers,
+  ({ one }) => ({
+    users: one(users, {
+      fields: [userGroupMembers.userId],
+      references: [users.id],
+    }),
+    userGroups: one(userGroups, {
+      fields: [userGroupMembers.userGroupId],
+      references: [userGroups.id],
     }),
   })
 );

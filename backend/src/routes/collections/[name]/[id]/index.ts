@@ -1,17 +1,17 @@
-import { parseSearchParams } from "../url-parser";
+import type { Context } from "hono";
+import { parseFilterClause } from "../url-parser";
 import {
   getPermissionDefinionForMethod,
   permissionCheckerViaBody,
 } from "../permission-check";
 import { mapConditionsToDrizzleWhereObject } from "../url-parser";
-import { type QueryParams } from "../url-parser";
 import {
   getDbSchemaTable,
   normalizeTableName,
 } from "../../../../lib/db/db-get-schema";
-import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../../lib/db/db-connection";
+import { dbSchema } from "src/lib/db/db-schema";
 
 /**
  * GET Route for the collections endpoint
@@ -33,10 +33,12 @@ export const getCollectionById = async (c: Context) => {
     // start query
     const table = getDbSchemaTable(tableName);
     // for an GET with an given id we can build a direct query
-    const parsedParams: QueryParams = {
-      id: { operator: "eq", value: id ?? "" },
-    };
-    const where = mapConditionsToDrizzleWhereObject(table, parsedParams);
+    const filter = parseFilterClause(`id = '${id}'`);
+    const where = mapConditionsToDrizzleWhereObject(
+      dbSchema,
+      tableName,
+      filter
+    );
 
     // @ts-ignore
     const data = await getDb()
@@ -90,9 +92,8 @@ export const putCollectionById = async (c: Context) => {
       const table = getDbSchemaTable(tableName);
 
       // get old data by id
-      const where = mapConditionsToDrizzleWhereObject(table, {
-        id: { operator: "eq", value: id ?? "" },
-      });
+      const ast = parseFilterClause(`id = '${id}'`);
+      const where = mapConditionsToDrizzleWhereObject(dbSchema, tableName, ast);
       // @ts-ignore
       const data = await getDb().select().from(table).where([where]);
 
@@ -139,23 +140,20 @@ export const deleteCollectionById = async (c: Context) => {
 
     // get url params
     const searchParams = new URLSearchParams(c.req.url.split("?")[1] || "");
-    const parsedParams = parseSearchParams(searchParams);
 
     // check if a primary key is given to add the main id to the where clause
     const primaryKey = definition.neededParameters?.find(
       (param) => param.isPrimaryId
     );
+    let filter;
     if (primaryKey) {
-      parsedParams[primaryKey.name] = {
-        operator: "eq",
-        value: id ?? "",
-      };
+      filter = `${primaryKey.name} = '${id}'`;
     } else {
       // else use "id" as identifier
-      parsedParams.id = { operator: "eq", value: id ?? "" };
+      filter = `id = '${id}'`;
     }
-
-    const where = mapConditionsToDrizzleWhereObject(table, parsedParams);
+    const ast = parseFilterClause(filter);
+    const where = mapConditionsToDrizzleWhereObject(dbSchema, tableName, ast);
 
     // pre-fetch data to check permissions on the item
     const item = await getDb()
