@@ -112,11 +112,6 @@ export const getCollection = async (c: Context) => {
 
     // get the filter parameter
     let filterString = searchParams.get("filter") ?? undefined;
-    if (filterString && definition.filter) {
-      filterString = `(${definition.filter.value}) && (${filterString})`;
-    } else if (definition.filter) {
-      filterString = definition.filter.value;
-    }
     console.log("filterString", filterString);
     const filterClause = parseFilterClause(filterString);
 
@@ -131,7 +126,7 @@ export const getCollection = async (c: Context) => {
 
     // check if there is a special selector
     /* if (definition.selector) {
-       const data = await definition.selector(userId, parsedParams);
+      const data = await definition.selector(userId, parsedParams);
       return c.json(data);
     } */
 
@@ -144,15 +139,6 @@ export const getCollection = async (c: Context) => {
       filterClause
     );
 
-    if (definition.filter?.expand) {
-      if (!tablesToExpand) tablesToExpand = [];
-      for (const t of definition.filter.expand) {
-        const normalizedTableName = normalizeTableName(t);
-        if (!tablesToExpand.includes(normalizedTableName)) {
-          tablesToExpand.push(normalizedTableName);
-        }
-      }
-    }
     const withObject = generateWithObject(tablesToExpand, whereStatement);
     consoleDebug(withObject, whereStatement, tablesToExpand);
 
