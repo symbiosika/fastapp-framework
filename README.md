@@ -14,6 +14,8 @@ This makes the development of apps with authentication, etc., very fast.
 
 ### Webserver functions
 
+- [ ] Provide a running webserver as docker image
+- [ ] Provide webserver as submodule?
 - [ ] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)

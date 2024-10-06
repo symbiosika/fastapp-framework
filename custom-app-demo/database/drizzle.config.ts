@@ -9,7 +9,7 @@ const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./db/schema.ts",
+  schema: "./schema.ts",
   out: "./drizzle-sql",
   tablesFilter: "custom_demo_",
   migrations: {
