@@ -20,7 +20,8 @@
     "octokit": "^4.0.2",
     "openai": "^4.40.2",
     "pg": "^8.11.5",
-    "pgvector": "^0.1.8"
+    "pgvector": "^0.1.8",
+    "stripe": "^17.1.0"
   },
   "scripts": {
     "dev": "bun --hot run .\\src\\index.ts",

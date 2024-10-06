@@ -5,12 +5,14 @@ import * as userTables from "./schema/users";
 import * as secrets from "./schema/secrets";
 import * as files from "./schema/files";
 import * as embeddings from "./schema/embeddings";
+import * as payment from "./schema/payment";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
 export * from "./schema/secrets";
 export * from "./schema/files";
 export * from "./schema/embeddings";
+export * from "./schema/payment";
 
 // import custom drizzle schema
 let customDrizzleSchema = {};
@@ -41,6 +43,9 @@ export const dbSchema = {
   files: files.files,
   // embeddings
   embeddings: embeddings.embeddings,
+  // payment
+  activeSubscriptions: payment.activeSubscriptions,
+  oneTimePurchases: payment.oneTimePurchases,
 };
 console.log("Collection tables", Object.keys(dbSchema));
 

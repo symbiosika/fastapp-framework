@@ -19,6 +19,7 @@ import {
   getCollectionById,
   putCollectionById,
 } from "./routes/collections/[name]/[id]";
+import paymentRoutes from "./routes/payment";
 
 /**
  * validate .ENV variables
@@ -323,6 +324,17 @@ app.all(
     }
   }
 );
+
+/**
+ * Add all payment routes
+ */
+if (process.env.USE_STRIPE === "true") {
+  console.log("Activating Stripe");
+  const paymentApp = new Hono();
+  paymentApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
+  paymentRoutes(paymentApp as any);
+  app.route("/api/v1/payment", paymentApp);
+}
 
 /**
  * Add custom routes from plugins

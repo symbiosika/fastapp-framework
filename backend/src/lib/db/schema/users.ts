@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
+import { activeSubscriptions, oneTimePurchases } from "./payment";
 
 export const users = pgBaseTable("users", {
   id: uuid("id")
@@ -68,6 +69,8 @@ export const userGroupMembers = pgBaseTable(
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions), // sessions will be the name in the "with" clause in the query
   userGroupMembers: many(userGroupMembers), // userGroupMembers will be the name in the "with" clause in the query
+  activeSubscriptions: many(activeSubscriptions),
+  oneTimePurchases: many(oneTimePurchases),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({

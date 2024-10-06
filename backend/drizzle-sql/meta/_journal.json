@@ -15,6 +15,13 @@
       "when": 1728205142981,
       "tag": "0001_zippy_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1728205436617,
+      "tag": "0002_fixed_the_anarchist",
+      "breakpoints": true
     }
   ]
 }
