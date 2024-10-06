@@ -1,24 +1,63 @@
-# placeholder
+# FastApp Webserver for real fast development
 
-# Nice to have:
+## A base docker image to render websites!
 
-custom flows that are defined as JS file for: /register
+The base image represents the web server.
+There are several subdirectories that are mapped externally.
+Specific content can be placed in these directories.
 
+Alternatively, another Docker image can be built based on this image, and the folders can be filled.
 
-# Table definition
+This makes the development of apps with authentication, etc., very fast.
 
-All standard tables will be prefixed with "base_*"
+## Requirements V0.1
 
+### Webserver functions
 
-# Collections Endpoint
+- [ ] Serve static public files (e.g. the Main page for an App)
+- [x] Serve static hidden files behind the user login
+- [x] Serve an API for the database (simple query logic)
 
-## Filter
+### User handling
 
-## Filter Parameter Documentation
+- [x] Simple Username/Password Registration and Login
+- [x] Standard Static page for Login/Logout/Registration
+- [ ] Custom registration flow to prevent Registration of unallowed users
+- [ ] Auth0 Login (Cloud)
+
+### Payment Integration
+
+- [ ] Optional payment functions (checked by middleware)
+- [ ] Simple Stripe Integration
+- [ ] Standard config for payment plans to the custom app
+- [ ] Standard Static page to subscribe to a payment plan
+- [ ] Standard config for coupons for the custom app
+- [ ] Single Payment actions (one-time buy)
+
+## Requirements V0.5
+
+- [ ] Internal Proxy to connect server-side-rendering frameworks inside
+- [ ] 2FA Auth: https://www.npmjs.com/package/otpauth
+- [ ] Magic Link Auth: https://www.npmjs.com/package/passport-magic-link
+- [ ] Internal Proxy to connect server-side-rendering frameworks inside
+- [ ] Internal Proxy to connect other webservices
+
+## Database
+
+FastApp uses PostgreSQL with pgvector to handle all data and files.
+
+### Table definition
+
+All standard tables will be prefixed with "base\_\*".
+All custom tables must use another prefix.
+
+## Collections Endpoint
+
+### Filter Parameter Documentation
 
 The filter parameter allows for complex querying of data using a custom syntax. It supports logical operations, comparisons, and grouping.
 
-### Basic Syntax
+#### Basic Syntax
 
 `field operator value`
 
@@ -26,7 +65,7 @@ The filter parameter allows for complex querying of data using a custom syntax. 
 - `operator`: The comparison operator
 - `value`: The value to compare against
 
-### Operators
+#### Operators
 
 - `=`: Equal to
 - `!=`: Not equal to
@@ -39,16 +78,16 @@ The filter parameter allows for complex querying of data using a custom syntax. 
 - `?=`: Is null
 - `?!=`: Is not null
 
-### Logical Operators
+#### Logical Operators
 
 - `&&`: AND
 - `||`: OR
 
-### Grouping
+#### Grouping
 
 Use parentheses `()` to group expressions and control precedence.
 
-### Examples
+#### Examples
 
 1. Simple comparison:
 
