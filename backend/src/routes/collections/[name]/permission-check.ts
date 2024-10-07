@@ -1,7 +1,13 @@
 import { collectionPermissions } from "../../../lib/db/db-collections";
 import { ErrorWithLogging } from "../../../lib/log";
 import type { PermissionDefinition } from "../../../lib/types/permission-checker";
-import type { QueryParams } from "./url-parser";
+
+interface QueryParams {
+  [key: string]: {
+    operator: string;
+    value: any;
+  };
+}
 
 export const getValueForEquals = (params: QueryParams, name: string) => {
   const value = params[name];

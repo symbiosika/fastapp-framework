@@ -27,6 +27,10 @@ This makes the development of apps with authentication, etc., very fast.
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
 
+### Mailing
+
+- [ ] Simple functions to send Mails from Backend via SMTP
+
 ### User handling
 
 - [x] Simple Username/Password Registration and Login
@@ -66,6 +70,7 @@ This makes the development of apps with authentication, etc., very fast.
 - [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
 - [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
 - [ ] Dark/Light mode for standard pages
+- [ ] OAuth2 Mail Providers
 
 ## Database
 
