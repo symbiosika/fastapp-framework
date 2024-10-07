@@ -9,7 +9,7 @@ const emailSchema = v.object({
   html: v.optional(v.string()),
 });
 
-interface EmailOptions {
+export interface EmailOptions {
   sender?: string;
   recipients: string[];
   subject: string;
@@ -73,7 +73,7 @@ class SMTPService {
         text,
         html,
       });
-      
+
       this.log(`Message sent: ${info.messageId}`);
       this.log(JSON.stringify(info));
       return true;

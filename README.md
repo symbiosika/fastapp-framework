@@ -34,7 +34,7 @@ DataModel->Forms (image)
 - [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
-- [ ] Simple scheduler
+- [x] Simple Task scheduler
 
 ### Database
 
