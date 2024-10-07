@@ -6,7 +6,6 @@ import {
 import {
   getPermissionDefinionForMethod,
   permissionCheckerViaBody,
-  permissionCheckerViaUrlParams,
 } from "./permission-check";
 import {
   getDbSchemaTable,
@@ -18,6 +17,9 @@ import { getDb } from "../../../lib/db/db-connection";
 import { dbSchema } from "src/lib/db/db-schema";
 import type { RawParameters } from "src/lib/types/permission-checker";
 import { and } from "drizzle-orm";
+import { CsvService } from "src/lib/csv";
+
+const csvService = new CsvService();
 
 const consoleDebug = (
   withObject: any,
@@ -126,6 +128,14 @@ export const getCollection = async (c: Context) => {
     // get the columns parameter. if set, only these columns will be returned
     const columnsParam = searchParams.get("columns")?.split(",") ?? undefined;
 
+    // get the csv parameter. if set, the result will be exported to a csv file
+    const exportAsCsv = searchParams.get("csv") === "true" ? true : false;
+    const csvSeparatorParam = searchParams.get("csvSeparator") ?? ",";
+    const csvQuoteParam =
+      searchParams.get("csvQuote") === "false" ? false : true;
+    const csvHeaderParam =
+      searchParams.get("csvHeader") === "false" ? false : true;
+
     const whereStatement = mapConditionsToDrizzleWhereObject(
       dbSchema,
       tableName,
@@ -149,6 +159,14 @@ export const getCollection = async (c: Context) => {
     // check if there is a custom selector
     if (definition.selector) {
       const data = await definition.selector(userId, rawParameters);
+      if (exportAsCsv) {
+        const csv = await csvService.objectsToCsv(data, {
+          separator: csvSeparatorParam,
+          useQuotes: csvQuoteParam,
+          header: csvHeaderParam,
+        });
+        return c.text(csv);
+      }
       return c.json(data);
     }
 
@@ -177,6 +195,16 @@ export const getCollection = async (c: Context) => {
         userGroupMembers: true,
       }, */
     });
+
+    // Export as CSV?
+    if (exportAsCsv) {
+      const csv = await csvService.objectsToCsv(data, {
+        separator: csvSeparatorParam,
+        useQuotes: csvQuoteParam,
+        header: csvHeaderParam,
+      });
+      return c.text(csv);
+    }
 
     if (resultIsObject && Array.isArray(data)) {
       if (data.length === 0) {

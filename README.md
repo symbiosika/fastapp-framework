@@ -25,7 +25,6 @@ This makes the development of apps with authentication, etc., very fast.
 Later this will be used for the landing page.
 DataModel->Forms (image)
 
-
 ## Requirements V0.1
 
 ### Webserver functions
@@ -35,10 +34,16 @@ DataModel->Forms (image)
 - [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
+- [ ] Simple scheduler
+
+### Database
+
+- [x] Simple collecionts endpoint with custom tables
+- [x] CSV Export for collections
 
 ### Mailing
 
-- [ ] Simple functions to send Mails from Backend via SMTP
+- [x] Simple functions to send Mails from Backend via SMTP
 
 ### User handling
 
@@ -57,6 +62,7 @@ DataModel->Forms (image)
 - [b] Single Payment actions (one-time buy)
 
 ### AI functions
+
 - [ ] Save embeddings to textes
 - [ ] Simialarity search
 - [ ] Chat interface
@@ -65,7 +71,7 @@ DataModel->Forms (image)
 
 ## Requirements V0.5
 
-- [ ] CSV Import/Export for collections
+- [ ] CSV Import for collections
 - [ ] Custom registration flow to prevent Registration of unallowed users
 - [ ] Default layout wrapper (header + menu)
 - [ ] Internal news page (like messdas)
