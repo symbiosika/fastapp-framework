@@ -23,7 +23,7 @@ This makes the development of apps with authentication, etc., very fast.
 
 - [ ] Provide a running webserver as docker image
 - [ ] Provide webserver as submodule?
-- [ ] Serve static public files (e.g. the Main page for an App)
+- [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
 
@@ -31,18 +31,17 @@ This makes the development of apps with authentication, etc., very fast.
 
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
-- [ ] Custom registration flow to prevent Registration of unallowed users
 - [ ] Auth0 Login (Cloud)
-- [ ] Users profile page
+- [b] Users profile page
 
 ### Payment Integration
 
 - [ ] Optional payment functions (checked by middleware)
-- [ ] Simple Stripe Integration
-- [ ] Standard config for payment plans to the custom app
-- [ ] Standard Static page to subscribe to a payment plan
+- [b] Simple Stripe Integration
+- [b] Standard config for payment plans to the custom app
+- [b] Standard Static page to subscribe to a payment plan
 - [ ] Standard config for coupons for the custom app
-- [ ] Single Payment actions (one-time buy)
+- [b] Single Payment actions (one-time buy)
 
 ### AI functions
 - [ ] Save embeddings to textes
@@ -54,6 +53,7 @@ This makes the development of apps with authentication, etc., very fast.
 ## Requirements V0.5
 
 - [ ] CSV Import/Export for collections
+- [ ] Custom registration flow to prevent Registration of unallowed users
 - [ ] Default layout wrapper (header + menu)
 - [ ] Internal news page (like messdas)
 - [ ] Connectors to make.com, PowerAutomate und n8n.com

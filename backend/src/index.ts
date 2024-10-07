@@ -172,13 +172,35 @@ app.get("/api/v1/ping", async (c) => {
 app.get("/api/v1/user/me", authAndSetUsersInfo, async (c: Context) => {
   // check if id is set
   const id = c.get("usersId");
-  const user = await getDb().select().from(users).where(eq(users.id, id));
+  const user = await getDb()
+    .select({
+      userId: users.id,
+      email: users.email,
+      firstname: users.firstname,
+      surname: users.surname,
+      image: users.image,
+    })
+    .from(users)
+    .where(eq(users.id, id));
 
   if (!user || user.length === 0) {
     throw new HTTPException(404, { message: "User not found" });
   } else {
     return c.json(user[0]);
   }
+});
+
+/**
+ * Update the own user
+ */
+app.put("/api/v1/user/me", authAndSetUsersInfo, async (c: Context) => {
+  const { firstname, surname, image } = await c.req.json();
+  const user = await getDb()
+    .update(users)
+    .set({ firstname, surname, image })
+    .where(eq(users.id, c.get("usersId")))
+    .returning();
+  return c.json(user);
 });
 
 /**
