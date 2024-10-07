@@ -15,7 +15,16 @@ This makes the development of apps with authentication, etc., very fast.
 - No Vendor LockIn
 - Cloud/OnPrem/Docker
 - Standard Technologies
+- Direct access to custom business logic with direct access to DB (not like Directus, Pocketbase, Firebase etc.)
+- Full control to enable custom access rules
 - Simple!
+- Vue3 Development kit for fast complex UIs
+
+## Marketing
+
+Later this will be used for the landing page.
+DataModel->Forms (image)
+
 
 ## Requirements V0.1
 
