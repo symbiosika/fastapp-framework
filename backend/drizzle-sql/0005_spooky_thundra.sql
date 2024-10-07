@@ -1,0 +1,1 @@
+ALTER TYPE "purchase_type" ADD VALUE 'payment';

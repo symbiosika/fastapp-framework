@@ -22,6 +22,27 @@
       "when": 1728205436617,
       "tag": "0002_fixed_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1728238939068,
+      "tag": "0003_dry_darkstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1728286825093,
+      "tag": "0004_material_microbe",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1728289026944,
+      "tag": "0005_spooky_thundra",
+      "breakpoints": true
     }
   ]
 }

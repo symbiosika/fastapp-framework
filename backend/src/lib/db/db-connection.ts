@@ -65,7 +65,7 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
   });
 
   // assign the database object to the global variable
-  const conn = drizzle(client, { schema: dbSchema, logger: true }); // Initialize Drizzle ORM with the connection pool
+  const conn = drizzle(client, { schema: dbSchema, logger: false }); // Initialize Drizzle ORM with the connection pool
   return conn;
 };
 

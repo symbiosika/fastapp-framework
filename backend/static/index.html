@@ -4,49 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Willkommen</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #f0f0f0;
-      }
-      .container {
-        text-align: center;
-        padding: 20px;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .styled-button {
-        background-color: #4caf50;
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-      }
-      .styled-button:hover {
-        background-color: #45a049;
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <div class="container">
-      <h1>Willkommen</h1>
-      <p id="userEmail">Laden...</p>
-      <img src="./start.png" alt="Startbild" style="max-width: 150px" />
-      <br />
-      <button id="logoutButton" class="styled-button">Logout</button>
+  <body class="flex justify-center items-center h-screen bg-gray-100">
+    <div class="text-center p-8 bg-white rounded-lg shadow-md">
+      <h1 class="text-2xl font-bold mb-4">Willkommen</h1>
+      <p id="userEmail" class="mb-4">Laden...</p>
+      <img
+        src="./start.png"
+        alt="Startbild"
+        class="max-w-[150px] mx-auto mb-4"
+      />
+      <button
+        id="logoutButton"
+        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300"
+      >
+        Logout
+      </button>
     </div>
 
     <script>

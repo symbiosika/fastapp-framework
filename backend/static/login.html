@@ -1,83 +1,159 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" class="h-full bg-gray-50">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f2f5;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-      .login-container {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        width: 300px;
-      }
-      h1 {
-        text-align: center;
-        color: #1877f2;
-      }
-      form {
-        display: flex;
-        flex-direction: column;
-      }
-      input {
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-      button {
-        background-color: #1877f2;
-        color: white;
-        padding: 0.5rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      button:hover {
-        background-color: #166fe5;
-      }
-      .error-box {
-        background-color: #ffebee;
-        border: 1px solid #f44336;
-        color: #f44336;
-        padding: 0.5rem;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-        display: none;
-      }
-    </style>
+    <title>Login | FastAppFramework</title>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <div class="login-container">
-      <h1>Login</h1>
-      <div id="error-box" class="error-box"></div>
-      <form id="login-form">
-        <input type="email" id="email" placeholder="E-Mail" required />
-        <input type="password" id="password" placeholder="Passwort" required />
-        <button type="submit">Anmelden</button>
-      </form>
-      <hr style="margin: 1rem 0" />
-      <h2 style="text-align: center">Registrieren</h2>
-      <form id="register-form">
-        <input type="email" id="register-email" placeholder="E-Mail" required />
-        <input
-          type="password"
-          id="register-password"
-          placeholder="Passwort"
-          required
-        />
-        <button type="submit">Registrieren</button>
-      </form>
+  <body class="h-full">
+    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2
+          class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900"
+        >
+          Anmelden bei FastAppFramework
+        </h2>
+      </div>
+
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div id="error-box" class="mb-4 rounded-md bg-red-50 p-4 hidden">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3
+                  class="text-sm font-medium text-red-800"
+                  id="error-message"
+                ></h3>
+              </div>
+            </div>
+          </div>
+
+          <form class="space-y-6" id="login-form">
+            <div>
+              <label
+                for="email"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >E-Mail-Adresse</label
+              >
+              <div class="mt-2">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  required
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="password"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Passwort</label
+              >
+              <div class="mt-2">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                Anmelden
+              </button>
+            </div>
+          </form>
+
+          <div class="mt-6">
+            <div class="relative">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300"></div>
+              </div>
+              <div class="relative flex justify-center text-sm">
+                <span class="bg-white px-2 text-gray-500">Oder</span>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <h3 class="text-center text-sm font-medium text-gray-900">
+                Noch kein Konto?
+              </h3>
+              <form class="mt-4 space-y-6" id="register-form">
+                <div>
+                  <label
+                    for="register-email"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >E-Mail-Adresse</label
+                  >
+                  <div class="mt-2">
+                    <input
+                      id="register-email"
+                      name="email"
+                      type="email"
+                      autocomplete="email"
+                      required
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    for="register-password"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >Passwort</label
+                  >
+                  <div class="mt-2">
+                    <input
+                      id="register-password"
+                      name="password"
+                      type="password"
+                      autocomplete="new-password"
+                      required
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Registrieren
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -101,7 +177,7 @@
             if (response.ok) {
               const data = await response.json();
               document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
-              window.location.href = "/static/start.html";
+              window.location.href = "/static/index.html";
             } else {
               const errorData = await response.json();
               errorBox.textContent =
@@ -135,7 +211,7 @@
             if (response.ok) {
               const data = await response.json();
               document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
-              window.location.href = "/static/start.html";
+              window.location.href = "/static/index.html";
             } else {
               const errorData = await response.json();
               errorBox.textContent =

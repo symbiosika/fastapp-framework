@@ -8,15 +8,32 @@ import type { StripeDetailedItem } from "src/lib/types/shared/payment";
  */
 export class StripeService {
   private stripe: Stripe;
+  private logEnabled: boolean = false;
 
   constructor(apiKey?: string) {
     const stripeApiKey = apiKey || process.env.STRIPE_API_KEY;
+    this.logEnabled = process.env.STRIPE_DEBUG === "true";
     if (!stripeApiKey) {
       throw new Error("Stripe API key is not provided");
     }
     this.stripe = new Stripe(stripeApiKey, {
       apiVersion: "2024-09-30.acacia",
     });
+  }
+
+  /**
+   * Small logging for debugging
+   */
+  private log(message: string): void {
+    if (this.logEnabled) {
+      console.log(`[StripeService] Log:${message}`);
+    }
+  }
+
+  private error(message: string): void {
+    if (this.logEnabled) {
+      this.log(`[StripeService] Err:${message}`);
+    }
   }
 
   /**
@@ -28,6 +45,7 @@ export class StripeService {
   ): Promise<Stripe.Customer> {
     // return if no email or user id is given
     if (!email || !userId) {
+      this.error("Invalid user email or id " + email + " " + userId);
       throw new Error("Invalid user email or id");
     }
     // try to create customer via stripe API
@@ -38,7 +56,7 @@ export class StripeService {
       });
       return customer;
     } catch (error) {
-      console.error("Error creating customer:", error);
+      this.error("Error creating customer:" + error);
       throw error;
     }
   }
@@ -56,46 +74,86 @@ export class StripeService {
       const customers = await this.stripe.customers.list({ email });
       return customers.data[0].id;
     } catch (error) {
-      console.error("Error checking customer:", error);
+      this.error("Error checking customer:" + error);
       throw error;
     }
+  }
+
+  /**
+   * Get active subscriptions for a customer
+   */
+  private async getActiveSubscriptions(
+    customerId: string,
+    planName?: string
+  ): Promise<Stripe.Subscription[]> {
+    this.log(`Fetching active subscriptions for customer ${customerId}`);
+    const subscriptions = await this.stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+    });
+    this.log(
+      `Customer ${customerId} has ${subscriptions.data.length} active subscriptions`
+    );
+
+    if (planName) {
+      const targetSubscription = subscriptions.data.find((sub) =>
+        sub.items.data.some(
+          (item) => item.price.product === this.getPriceIdByPlanName(planName)
+        )
+      );
+      return targetSubscription ? [targetSubscription] : [];
+    }
+
+    return subscriptions.data;
+  }
+
+  /**
+   * Get a subscription by id
+   */
+  async getSubscriptionById(
+    subscriptionId: string
+  ): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.retrieve(subscriptionId);
   }
 
   /**
    * Check if a customer has a valid subscription
    */
   async hasValidSubscription(
-    customerId: null | string
+    customerId: null | string,
+    planName: string
   ): Promise<{ valid: boolean; end?: string }> {
-    // return if no customer id is given
     if (!customerId) {
       return { valid: false };
     }
-    // try to get subscriptions via stripe API
     try {
-      const subscriptions = await this.stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-      });
-      // result length is 0 if no subscription is found
-      if (subscriptions.data.length < 1) {
+      const activeSubscriptions = await this.getActiveSubscriptions(
+        customerId,
+        planName
+      );
+      if (activeSubscriptions.length === 0) {
+        this.log("No active subscription found for plan: " + planName);
         return { valid: false };
       }
-      // format date as "YYYY-MM-DD"
-      const persiodEndFormatted = new Date(
-        subscriptions.data[0].current_period_end * 1000
+      const targetSubscription = activeSubscriptions[0];
+
+      const periodEndFormatted = new Date(
+        targetSubscription.current_period_end * 1000
       )
         .toISOString()
         .split("T")[0];
+
+      this.log(
+        `user ${customerId} has a valid subscription ending on ${periodEndFormatted}`
+      );
       return {
         valid: true,
-        end: subscriptions.data[0].cancel_at_period_end
-          ? persiodEndFormatted
+        end: targetSubscription.cancel_at_period_end
+          ? periodEndFormatted
           : undefined,
       };
     } catch (error) {
-      // any error means also no valid subscription
-      console.error("Error checking valid subscription:", error);
+      this.error("Error checking valid subscription:" + error);
       return { valid: false };
     }
   }
@@ -108,7 +166,9 @@ export class StripeService {
   async createSubscription(
     customerId: null | string,
     name: string,
-    discount: string
+    discount: string,
+    successUrlParam?: string,
+    cancelUrlParam?: string
   ): Promise<Stripe.Checkout.Session> {
     // return if no customer id or invalid type is given
     if (!customerId) {
@@ -126,6 +186,16 @@ export class StripeService {
       // set price id depending on type
       const priceId = stripeItem.priceId;
 
+      let successUrl =
+        successUrlParam ??
+        `${process.env.BASE_URL}/static/subscriptions.html?session_id={CHECKOUT_SESSION_ID}`;
+      // check if success urls ends with ?session_id={CHECKOUT_SESSION_ID}
+      if (!successUrl.endsWith("?session_id={CHECKOUT_SESSION_ID}")) {
+        successUrl += "?session_id={CHECKOUT_SESSION_ID}";
+      }
+      const cancelUrl =
+        cancelUrlParam ?? `${process.env.BASE_URL}/static/subscriptions.html`;
+
       // create a session to checkout
       const session = await this.stripe.checkout.sessions.create({
         mode: stripeItem.type,
@@ -139,13 +209,13 @@ export class StripeService {
             quantity: 1,
           },
         ],
-        success_url: `/static/start.html`, // ?session_id={CHECKOUT_SESSION_ID}
-        cancel_url: `/static/start.html`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       });
       // console.log("Created checkout session: ", session.id);
       return session;
     } catch (error) {
-      // console.error("Error creating subscription:", error);
+      this.error("Error creating subscription:" + error);
       throw error;
     }
   }
@@ -154,29 +224,19 @@ export class StripeService {
    * Cancel a subscription by stripe customer id
    */
   async cancelSubscription(
-    customerId: null | string
+    customerId: null | string,
+    subscriptionId: string
   ): Promise<Stripe.Subscription> {
-    // return if no customer id is given
     if (!customerId) {
       throw new Error("Invalid customer id");
     }
-    // try to cancel subscription via stripe API
     try {
-      // get subscription id by customer id
-      const subscriptions = await this.stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-      });
-      if (subscriptions.data.length === 0) {
-        throw new Error("No active subscription found");
-      }
-      const subscriptionId = subscriptions.data[0].id;
-      // cancel subscription
+      this.log(`Canceling subscription ${subscriptionId} for customer ${customerId}`);
       return await this.stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: true,
       });
     } catch (error) {
-      console.error("Error canceling subscription:", error);
+      this.error("Error canceling subscription:" + error);
       throw error;
     }
   }
@@ -185,7 +245,8 @@ export class StripeService {
    * Generate a user account link for a customer
    */
   async generateAccountLink(
-    customerId: null | string
+    customerId: null | string,
+    returnUrl: string
   ): Promise<Stripe.Response<Stripe.BillingPortal.Session>> {
     // return if no customer id is given
     if (!customerId) {
@@ -195,10 +256,10 @@ export class StripeService {
     try {
       return await this.stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `/static/start.html`,
+        return_url: returnUrl,
       });
     } catch (error) {
-      console.error("Error generating account link:", error);
+      this.error("Error generating account link:" + error);
       throw error;
     }
   }
@@ -206,7 +267,7 @@ export class StripeService {
   /**
    * Get all products for a specific group
    */
-  async getProductsByGroup(
+  async getProductsByGroupAndType(
     group: string,
     type?: "subscription" | "payment" | undefined
   ): Promise<StripeDetailedItem[]> {
@@ -245,9 +306,26 @@ export class StripeService {
 
       return detailedItems;
     } catch (error) {
-      console.error("Error fetching products by group:", error);
+      this.error("Error fetching products by group:" + error);
       throw error;
     }
+  }
+
+  async retrieveCheckoutSession(
+    sessionId: string
+  ): Promise<Stripe.Checkout.Session> {
+    return this.stripe.checkout.sessions.retrieve(sessionId);
+  }
+
+  // Helper method to get price ID by plan name
+  private getPriceIdByPlanName(planName: string): string {
+    const stripeItem = APP_PAYMENT_OPTIONS.stripeItems.find(
+      (i) => i.priceName === planName
+    );
+    if (!stripeItem) {
+      throw new Error(`Invalid product: ${planName}`);
+    }
+    return stripeItem.priceId;
   }
 }
 

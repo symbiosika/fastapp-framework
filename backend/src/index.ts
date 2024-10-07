@@ -185,8 +185,8 @@ app.get("/api/v1/user/me", authAndSetUsersInfo, async (c: Context) => {
  * GET login page
  * publish a static html page from ./static/login.html
  */
-const loginPage = await fs.readFile("./static/login.html", "utf8");
 app.get("/login", async (c) => {
+  const loginPage = await fs.readFile("./static/login.html", "utf8");
   return c.html(loginPage);
 });
 
@@ -329,9 +329,14 @@ app.all(
  * Add all payment routes
  */
 if (process.env.USE_STRIPE === "true") {
-  console.log("Activating Stripe");
   const paymentApp = new Hono();
-  paymentApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
+  paymentApp.use("*", async (c, next) => {
+    console.log("Payment route", c.req.path);
+    if (c.req.path !== "/api/v1/payment/success") {
+      return authAndSetUsersInfoOrRedirectToLogin(c, next);
+    }
+    await next();
+  });
   paymentRoutes(paymentApp as any);
   app.route("/api/v1/payment", paymentApp);
 }

@@ -10,6 +10,13 @@ Alternatively, another Docker image can be built based on this image, and the fo
 
 This makes the development of apps with authentication, etc., very fast.
 
+## Advantages
+
+- No Vendor LockIn
+- Cloud/OnPrem/Docker
+- Standard Technologies
+- Simple!
+
 ## Requirements V0.1
 
 ### Webserver functions
@@ -26,6 +33,7 @@ This makes the development of apps with authentication, etc., very fast.
 - [x] Standard Static page for Login/Logout/Registration
 - [ ] Custom registration flow to prevent Registration of unallowed users
 - [ ] Auth0 Login (Cloud)
+- [ ] Users profile page
 
 ### Payment Integration
 
@@ -36,13 +44,28 @@ This makes the development of apps with authentication, etc., very fast.
 - [ ] Standard config for coupons for the custom app
 - [ ] Single Payment actions (one-time buy)
 
+### AI functions
+- [ ] Save embeddings to textes
+- [ ] Simialarity search
+- [ ] Chat interface
+- [ ] Basic AI functions like: summary, embeddings, create image,... (with custom prompts given by config)
+- [ ] Chat-2-Action Interface
+
 ## Requirements V0.5
 
+- [ ] CSV Import/Export for collections
+- [ ] Default layout wrapper (header + menu)
+- [ ] Internal news page (like messdas)
+- [ ] Connectors to make.com, PowerAutomate und n8n.com
 - [ ] Internal Proxy to connect server-side-rendering frameworks inside
 - [ ] 2FA Auth: https://www.npmjs.com/package/otpauth
 - [ ] Magic Link Auth: https://www.npmjs.com/package/passport-magic-link
 - [ ] Internal Proxy to connect server-side-rendering frameworks inside
 - [ ] Internal Proxy to connect other webservices
+- [ ] Anbindung von WhatsApp/Telegram
+- [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
+- [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
+- [ ] Dark/Light mode for standard pages
 
 ## Database
 

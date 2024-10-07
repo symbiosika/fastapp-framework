@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Premium Products and Subscriptions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen text-sm"
+  >
+    <header class="bg-white shadow-lg">
+      <div class="container mx-auto px-4 py-4">
+        <h1 class="text-2xl font-bold text-indigo-800">
+          All Products and Subscriptions
+        </h1>
+        <p class="text-gray-600 mt-1">
+          Demo to show all products and subscriptions available for FastApp
+        </p>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+      <div id="products" class="flex flex-wrap justify-center gap-4"></div>
+      <div id="message" class="mt-6"></div>
+    </main>
+
+    <script>
+      async function listProducts() {
+        try {
+          const response = await fetch("/api/v1/payment/products?group=demo");
+          const products = await response.json();
+          const productsDiv = document.getElementById("products");
+
+          products.forEach((product) => {
+            const productDiv = document.createElement("div");
+            productDiv.className =
+              "bg-white rounded-lg shadow-md overflow-hidden transform transition duration-300 hover:scale-105 w-64"; // Added w-64 for fixed width
+            productDiv.innerHTML = `
+              <div class="p-4">
+                <h2 class="text-lg font-semibold text-indigo-800 mb-1">${product.name}</h2>
+                <p class="text-gray-600 text-xs mb-3">${product.description ?? ""}</p>
+                <p class="text-base font-bold text-indigo-600 mb-3">
+                  ${product.price} ${product.currency.charAt(0).toUpperCase() + product.currency.slice(1)}${product.interval ? ` / ${product.interval}` : ""}
+                </p>
+                <button onclick="initiateCheckout('${product.priceName}')"
+                  class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 px-3 rounded-md text-sm hover:from-indigo-600 hover:to-purple-700 transition duration-300">
+                  ${product.type === "subscription" ? "Subscribe Now" : "Get Instant Access"}
+                </button>
+              </div>
+            `;
+            productsDiv.appendChild(productDiv);
+          });
+        } catch (error) {
+          console.error("Error listing products:", error);
+        }
+      }
+
+      async function initiateCheckout(productName) {
+        try {
+          // base url + /success?session_id={CHECKOUT_SESSION_ID}
+          const successUrl = `${window.location.origin}/api/v1/payment/success?session_id={CHECKOUT_SESSION_ID}`;
+          const cancelUrl = window.location.href;
+
+          const response = await fetch(
+            "/api/v1/payment/create-checkout-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ productName, successUrl, cancelUrl }),
+            }
+          );
+          const data = await response.json();
+          if (data.checkoutUrl) {
+            // Instead of redirecting, open the Stripe Checkout in a new window
+            window.open(data.checkoutUrl, "_blank");
+          } else {
+            console.error("No checkout URL received");
+          }
+        } catch (error) {
+          console.error("Error initiating checkout:", error);
+        }
+      }
+
+      function checkPaymentStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get("session_id");
+
+        console.log("Success page Session ID:", sessionId);
+
+        /* if (sessionId) {
+          fetch(`/api/v1/payment/success?session_id=${sessionId}`)
+            .then(response => response.text())
+            .then(html => {
+              document.getElementById('message').innerHTML = html;
+            })
+            .catch(error => {
+              console.error("Error checking payment status:", error);
+              document.getElementById('message').innerHTML = '<p>Error checking payment status</p>';
+            });
+        } */
+      }
+
+      listProducts();
+      checkPaymentStatus();
+    </script>
+  </body>
+</html>

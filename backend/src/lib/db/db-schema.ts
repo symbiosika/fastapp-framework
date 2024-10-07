@@ -45,7 +45,7 @@ export const dbSchema = {
   embeddings: embeddings.embeddings,
   // payment
   activeSubscriptions: payment.activeSubscriptions,
-  oneTimePurchases: payment.oneTimePurchases,
+  purchases: payment.purchases,
 };
 console.log("Collection tables", Object.keys(dbSchema));
 
