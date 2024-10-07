@@ -1,0 +1,94 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0" version="24.7.17">
+  <diagram name="Seite-1" id="LkEojlMXBBVVDDNIo2A-">
+    <mxGraphModel dx="2764" dy="2075" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-2" value="FastApp Framework" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;align=left;textDirection=vertical-lr;fontSize=26;" vertex="1" parent="1">
+          <mxGeometry x="-212" y="-205" width="791" height="774" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-11" value="BASIC" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="-151" y="242" width="720" height="313" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-12" value="Zugang für den Benutzer" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="-152.5" y="-181" width="720" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-3" value="Usermanagement und Authentifizierung" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="490" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-4" value="Mail-Versand" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="437" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-5" value="Öffentliche und geschützte statische Inhalte" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="384" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-6" value="Öffentliche und geschützte statische Inhalte" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-136.5" y="-95" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-7" value="Datenbank Zugriffe mit Anwendung von Benutzerrechten" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="331" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-8" value="Stripe Zahlungsdienst Integration" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="278" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-13" value="Einfache Bindung von Daten an Formulare (schnelles Erstellen von Benutzeroberflächen)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-136.5" y="-149" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-14" value="KI Funktionen" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="-151" y="-24" width="720" height="255" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-15" value="Speichermodell für generelle Inhalte als Vektoren um Gleichartigkeits-Suchen zu ermöglichen" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="171" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-17" value="Knowledge Base Anfragen beantworten" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="119" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-18" value="Custom-Prompt Funktionalitäten um: Zusammenfassungen zu erstellen, Texte zu erstellen,..." style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="65" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-10" value="Steuerbarkeit der App über &quot;Sprache&quot;, um die App optional via Chat zu steuern" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-135" y="11" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-19" value="CO2-Manager" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;textDirection=vertical-lr;fontSize=26;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="-524" width="791" height="288" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-22" value="PONE Solutions" style="text;strokeColor=none;fillColor=none;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="-444" y="-565" width="159" height="53" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-24" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="-512" y="-559" width="71.5" height="143" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-26" value="BE GmbH" style="text;strokeColor=none;fillColor=none;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="-444" y="-183" width="159" height="53" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-27" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="-506" y="-183" width="71.5" height="143" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-28" value="Nutzt &quot;BE GmbH&quot; Techstack" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="-138" y="-311" width="685" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-29" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fontSize=12;startSize=8;endSize=14;curved=1;fillColor=#dae8fc;strokeColor=#6c8ebf;shadow=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-499" y="-236" as="sourcePoint" />
+            <mxPoint x="-499" y="-364" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-30" value="Entwickelt &quot;App spezifische Zusatzinhalte&quot;" style="text;strokeColor=none;fillColor=none;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="-652" y="-337" width="159" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-31" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fontSize=12;startSize=8;endSize=14;curved=1;fillColor=#dae8fc;strokeColor=#6c8ebf;shadow=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-289" y="-367" as="sourcePoint" />
+            <mxPoint x="-289" y="-239" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-32" value="Lizensiert&lt;br&gt;Framework&lt;br&gt;abhängig von echten Kunden-Lizenzen" style="text;strokeColor=none;fillColor=none;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="-464" y="-340" width="159" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="kqUFNPpK-az4FQ5p3NCX-33" value="&quot;App spezifische&quot; Programmierung" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="-138" y="-500" width="685" height="175" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

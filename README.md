@@ -1,5 +1,9 @@
 # FastApp Webserver for real fast development
 
+USE AS A SUBMODULE?!
+- static und public pfad müssen einstellbar sein
+- die pfade für plugin, collections, drizzle-schema müssen anpassbar sein
+
 ## A base docker image to render websites!
 
 The base image represents the web server.
@@ -29,8 +33,7 @@ DataModel->Forms (image)
 
 ### Webserver functions
 
-- [ ] Provide a running webserver as docker image
-- [ ] Provide webserver as submodule?
+- [ ] Provide webserver as submodule
 - [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
@@ -43,23 +46,29 @@ DataModel->Forms (image)
 
 ### Mailing
 
-- [x] Simple functions to send Mails from Backend via SMTP
+- [x] Function to send Mails from Backend via SMTP
+
+### Interaction
+
+- [ ] Use Telegram to interact with the App
+- [ ] Send push notifications (PWA)
 
 ### User handling
 
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
 - [ ] Auth0 Login (Cloud)
-- [b] Users profile page
+- [o] Users profile page
+- [ ] Limited Time-Usage Tokens (to give users without accout access to may do some action)
 
 ### Payment Integration
 
 - [ ] Optional payment functions (checked by middleware)
-- [b] Simple Stripe Integration
-- [b] Standard config for payment plans to the custom app
-- [b] Standard Static page to subscribe to a payment plan
+- [o] Simple Stripe Integration
+- [o] Standard config for payment plans to the custom app
+- [o] Standard Static page to subscribe to a payment plan
 - [ ] Standard config for coupons for the custom app
-- [b] Single Payment actions (one-time buy)
+- [o] Single Payment actions (one-time buy)
 
 ### AI functions
 
@@ -71,6 +80,9 @@ DataModel->Forms (image)
 
 ## Requirements V0.5
 
+- [ ] Docker container to run DB migrations
+- [ ] Use WhatsApp to interact with the App
+- [ ] Provide a running webserver as docker image
 - [ ] CSV Import for collections
 - [ ] Custom registration flow to prevent Registration of unallowed users
 - [ ] Default layout wrapper (header + menu)
