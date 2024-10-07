@@ -117,7 +117,7 @@ const authOrRedirectToLogin = async (c: Context, next: Function) => {
   try {
     checkToken(c);
   } catch (error) {
-    return c.redirect("/login");
+    return c.redirect("/public/login.html");
   }
   await next();
 };
@@ -136,10 +136,10 @@ const authAndSetUsersInfoOrRedirectToLogin = async (
     if (typeof decodedAndVerifiedToken === "object") {
       addUserToContext(c, decodedAndVerifiedToken);
     } else {
-      return c.redirect("/login");
+      return c.redirect("/public/login.html");
     }
   } catch (err) {
-    return c.redirect("/login");
+    return c.redirect("/public/login.html");
   }
   await next();
 };
@@ -179,15 +179,6 @@ app.get("/api/v1/user/me", authAndSetUsersInfo, async (c: Context) => {
   } else {
     return c.json(user[0]);
   }
-});
-
-/**
- * GET login page
- * publish a static html page from ./static/login.html
- */
-app.get("/login", async (c) => {
-  const loginPage = await fs.readFile("./static/login.html", "utf8");
-  return c.html(loginPage);
 });
 
 /**
@@ -280,19 +271,6 @@ app.all(
 );
 
 /**
- * Serve all files from ./static/
- * can be images, html, css, js, etc.
- */
-app.use(
-  "/static/*",
-  authOrRedirectToLogin,
-  serveStatic({
-    root: "./static",
-    rewriteRequestPath: (path) => path.replace(/^\/static/, "/"),
-  })
-);
-
-/**
  * Save and serve files that are stored in the database
  */
 app.all(
@@ -367,6 +345,31 @@ async function loadPlugins(app: Hono) {
 
 // Plugins laden
 loadPlugins(app as any);
+
+/**
+ * Serve all files from ./static/
+ * can be images, html, css, js, etc.
+ */
+app.use(
+  "/static/*",
+  authOrRedirectToLogin,
+  serveStatic({
+    root: "./static",
+    rewriteRequestPath: (path) => path.replace(/^\/static/, "/"),
+  })
+);
+
+/**
+ * Serve all files from ./public/
+ * can be images, html, css, js, etc.
+ */
+app.use(
+  "/*",
+  serveStatic({
+    root: "./public",
+    rewriteRequestPath: (path) => path.replace(/^\/public/, "/"),
+  })
+);
 
 /*
 --------------------------
