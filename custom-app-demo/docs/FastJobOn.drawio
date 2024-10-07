@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0" version="24.7.17">
   <diagram name="Seite-1" id="2mukNt-tXM6PQvOMlUbF">
-    <mxGraphModel dx="2476" dy="1970" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="2180" dy="1764" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,7 +22,7 @@
         <mxCell id="q97qObsOtOfPG67Am5Zo-27" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="q97qObsOtOfPG67Am5Zo-6" target="q97qObsOtOfPG67Am5Zo-24">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="q97qObsOtOfPG67Am5Zo-6" value="Neue/Wiederkehrende&lt;div&gt;Mitarbeiter&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=7;" vertex="1" parent="1">
+        <mxCell id="q97qObsOtOfPG67Am5Zo-6" value="Firmeninhaber" style="rounded=1;whiteSpace=wrap;html=1;arcSize=7;" vertex="1" parent="1">
           <mxGeometry x="-423" y="-230" width="184" height="72" as="geometry" />
         </mxCell>
         <mxCell id="q97qObsOtOfPG67Am5Zo-7" value="DATENBANK" style="rounded=1;whiteSpace=wrap;html=1;arcSize=7;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
@@ -43,7 +43,7 @@
         <mxCell id="q97qObsOtOfPG67Am5Zo-16" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="q97qObsOtOfPG67Am5Zo-12" target="q97qObsOtOfPG67Am5Zo-14">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="q97qObsOtOfPG67Am5Zo-12" value="Firmeninhaber" style="rounded=1;whiteSpace=wrap;html=1;arcSize=7;" vertex="1" parent="1">
+        <mxCell id="q97qObsOtOfPG67Am5Zo-12" value="Neue/Wiederkehrende&lt;div&gt;Mitarbeiter&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=7;" vertex="1" parent="1">
           <mxGeometry x="-423" y="-345" width="184" height="72" as="geometry" />
         </mxCell>
         <mxCell id="q97qObsOtOfPG67Am5Zo-23" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="q97qObsOtOfPG67Am5Zo-13" target="q97qObsOtOfPG67Am5Zo-10">
