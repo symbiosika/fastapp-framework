@@ -1,0 +1,6 @@
+[submodule "custom-app-demo/frontend/src/devkit"]
+	path = custom-app-demo/frontend/src/devkit
+	url = https://github.com/Enders-Consulting/fastapp-devkit.git
+[submodule "custom-app-demo/frontend/src/formbuilder"]
+	path = custom-app-demo/frontend/src/formbuilder
+	url = https://github.com/Enders-Consulting/fastapp-formbuilder.git
