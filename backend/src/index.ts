@@ -117,7 +117,7 @@ const authOrRedirectToLogin = async (c: Context, next: Function) => {
   try {
     checkToken(c);
   } catch (error) {
-    return c.redirect("/public/login.html");
+    return c.redirect("/login.html");
   }
   await next();
 };
@@ -136,10 +136,10 @@ const authAndSetUsersInfoOrRedirectToLogin = async (
     if (typeof decodedAndVerifiedToken === "object") {
       addUserToContext(c, decodedAndVerifiedToken);
     } else {
-      return c.redirect("/public/login.html");
+      return c.redirect("/login.html");
     }
   } catch (err) {
-    return c.redirect("/public/login.html");
+    return c.redirect("/login.html");
   }
   await next();
 };
@@ -217,7 +217,7 @@ app.post("/login", async (c: Context) => {
     const r = await LocalAuth.login(email, password);
     return c.json(r);
   } catch (err) {
-    throw new HTTPException(401, { message: "Invalid login" });
+    throw new HTTPException(401, { message: "Invalid login: " + err });
   }
 });
 
