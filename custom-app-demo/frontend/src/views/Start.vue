@@ -40,6 +40,11 @@ const features = [
     label: "API Anfragen",
     link: "/#/simple-api",
   },
+  {
+    icon: "fa-solid fa-database",
+    label: "Datenbank Nutzung",
+    link: "/#/use-database",
+  },
 ];
 
 onMounted(async () => {

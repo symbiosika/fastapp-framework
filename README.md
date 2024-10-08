@@ -41,7 +41,7 @@ DataModel->Forms (image)
 
 ### Database
 
-- [x] Simple collecionts endpoint with custom tables
+- [x] Simple collections endpoint with custom tables
 - [x] CSV Export for collections
 
 ### Mailing

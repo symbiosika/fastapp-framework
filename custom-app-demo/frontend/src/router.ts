@@ -15,6 +15,11 @@ const routes = [
     name: "simple-api",
     component: () => import("./views/SimpleApi.vue"),
   },
+  {
+    path: "/use-database",
+    name: "use-database",
+    component: () => import("./views/UseDatabase.vue"),
+  },
 ];
 
 export const router = createRouter({
