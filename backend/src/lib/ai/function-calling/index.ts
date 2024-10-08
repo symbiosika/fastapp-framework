@@ -1,59 +1,121 @@
-import type { ChatCompletionTool } from "openai/resources/chat/completions";
-import addProduct from "./add-product";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import {
+  aiFunctionExecuter,
+  getAllAiFunctionDescriptions,
+  getUiDescriptionForFunctionCall,
+} from "./function-calls";
+import { openai } from "../standard/openai";
 
-export type FunctionCallingAction = (args: Record<string, any>) => Promise<any>;
+const TEXT_MODEL = "gpt-4-turbo";
+const systemPrompt = `
+You are an AI assistant integrated into a web application backend.
+You have access to functions that can add, list, and modify data.
+When a user asks to perform an action, determine the required function
+and ensure all necessary parameters are provided.
+If parameters are missing, politely ask the user to provide them.
+Your responses should be clear, professional, and helpful.
+`;
 
-type UiActionText = {
-  type: "render_text";
-  content: string;
+/**
+ * A small in memory chat history for the function chat.
+ */
+const globalChatHistory = new Map<string, ChatCompletionMessageParam[]>();
+
+/**
+ * Generate a random id for the chat session
+ */
+const generateId = () => {
+  return Math.random().toString(36).substring(2, 15);
 };
 
-export type FunctionCallingResponseUiAction = UiActionText;
-
-export interface FunctionCalling {
-  functionDescription: ChatCompletionTool;
-  action: FunctionCallingAction;
-  uiResponse: FunctionCallingResponseUiAction;
-}
-
-/**
- * The list of all function calling actions that the AI can perform.
- */
-export const aiFunctions: FunctionCalling[] = [addProduct];
-
-/**
- * Get all the function descriptions for the AI functions.
- */
-export const getAllAiFunctionDescriptions = () => {
-  return aiFunctions.map((func) => func.functionDescription);
-};
-
-/**
- * Execute a function call.
- */
-export const aiFunctionExecuter = async (
-  functionName: string,
-  args: Record<string, any>
+export const functionChat = async (
+  chatId: string | undefined,
+  messages: ChatCompletionMessageParam[]
 ) => {
-  const func = aiFunctions.find(
-    (func) => func.functionDescription.function.name === functionName
-  );
-  if (!func) {
-    throw new Error(`Function ${functionName} not found`);
-  }
+  try {
+    if (!chatId) {
+      chatId = generateId();
+      globalChatHistory.set(chatId, [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+      ]);
+    }
+    // Get the chat history for the chatId, or an empty array if no chatId is provided
+    const chatHistory = globalChatHistory.get(chatId) ?? [];
+    const fullMessages = [...chatHistory, ...messages];
+    // console.log(fullMessages);
 
-  return func.action(args);
-};
+    const response = await openai.chat.completions.create({
+      model: TEXT_MODEL,
+      messages: fullMessages,
+      tools: getAllAiFunctionDescriptions(),
+      tool_choice: "auto",
+    });
 
-/*
- * Get the ui response for a function call.
- */
-export const getUiDescriptionForFunctionCall = (functionName: string) => {
-  const func = aiFunctions.find(
-    (func) => func.functionDescription.function.name === functionName
-  );
-  if (!func) {
-    throw new Error(`Function ${functionName} not found`);
+    // console.log(response);
+    const assistantMessage = response.choices[0].message;
+
+    if (
+      response.choices[0].finish_reason === "tool_calls" &&
+      response.choices[0]?.message.tool_calls
+    ) {
+      console.log("Function call detected");
+
+      const toolCall = response.choices[0]?.message.tool_calls[0];
+      const args = JSON.parse(toolCall.function.arguments);
+
+      // Handle the function call
+      if (!toolCall.function.name || !args) {
+        throw new Error(
+          "Function call detected but no function name or arguments found"
+        );
+      }
+
+      const functionResponse = await aiFunctionExecuter(
+        toolCall.function.name,
+        args
+      );
+
+      const uiResponse = getUiDescriptionForFunctionCall(
+        toolCall.function.name
+      );
+
+      // Append the function response to the conversation
+      messages.push(assistantMessage);
+      messages.push({
+        role: "tool",
+        tool_call_id: response.choices[0].message.tool_calls[0].id,
+        content: JSON.stringify(functionResponse),
+      });
+
+      // Get the assistant's final reply
+      const finalResponse = await openai.chat.completions.create({
+        model: TEXT_MODEL,
+        messages,
+      });
+
+      const finalMessage = finalResponse.choices[0].message;
+
+      return {
+        chatId,
+        reply: finalMessage.content,
+        uiResponse,
+      };
+    } else {
+      // No function call, just return the assistant's message
+      console.log("No function call detected");
+      return {
+        chatId,
+        reply: assistantMessage.content,
+      };
+    }
+  } catch (error) {
+    console.error("Error in chat endpoint:", error);
+    return {
+      chatId,
+      reply: "An error occurred while processing your request.",
+    };
   }
-  return func.uiResponse;
 };

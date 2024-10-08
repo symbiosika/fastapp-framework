@@ -20,6 +20,11 @@ const routes = [
     name: "use-database",
     component: () => import("./views/UseDatabase.vue"),
   },
+  {
+    path: "/chat-demo",
+    name: "chat-demo",
+    component: () => import("./views/ChatDemo.vue"),
+  },
 ];
 
 export const router = createRouter({

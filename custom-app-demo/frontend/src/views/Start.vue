@@ -4,7 +4,7 @@
     <h1 class="text-4xl font-bold text-gray-800 mb-4">FastApp Framework</h1>
     <p class="text-lg text-gray-600 mb-2">Einfaches Onboarding für Deine App</p>
 
-    <div class="flex flex-wrap justify-center gap-4 mt-10">
+    <div class="flex flex-wrap justify-center gap-4 mt-10 w-1/2">
       <MarketingButton
         v-for="feature in features"
         :key="feature.label"
@@ -44,6 +44,11 @@ const features = [
     icon: "fa-solid fa-database",
     label: "Datenbank Nutzung",
     link: "/#/use-database",
+  },
+  {
+    icon: "fa-solid fa-comments",
+    label: "Chat Integration",
+    link: "/#/chat-demo",
   },
 ];
 

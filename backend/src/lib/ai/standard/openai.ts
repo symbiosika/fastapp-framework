@@ -19,7 +19,7 @@ export interface Message {
   content: MessageContent[] | string;
 }
 
-const openai = new OpenAIClient({
+export const openai = new OpenAIClient({
   apiKey: process.env.OPENAI_API_KEY,
 });
 

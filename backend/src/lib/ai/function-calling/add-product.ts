@@ -1,4 +1,4 @@
-import type { FunctionCalling } from ".";
+import type { FunctionCalling } from "./function-calls";
 
 const item: FunctionCalling = {
   functionDescription: {

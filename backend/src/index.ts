@@ -20,6 +20,7 @@ import {
   putCollectionById,
 } from "./routes/collections/[name]/[id]";
 import paymentRoutes from "./routes/payment";
+import aiRoutes from "./routes/ai";
 
 /**
  * validate .ENV variables
@@ -331,7 +332,6 @@ app.all(
 if (process.env.USE_STRIPE === "true") {
   const paymentApp = new Hono();
   paymentApp.use("*", async (c, next) => {
-    console.log("Payment route", c.req.path);
     if (c.req.path !== "/api/v1/payment/success") {
       return authAndSetUsersInfoOrRedirectToLogin(c, next);
     }
@@ -340,6 +340,16 @@ if (process.env.USE_STRIPE === "true") {
   paymentRoutes(paymentApp as any);
   app.route("/api/v1/payment", paymentApp);
 }
+
+/**
+ * Add all AI routes
+ */
+const aiApp = new Hono();
+aiApp.use("*", async (c, next) => {
+  await next();
+});
+aiRoutes(aiApp as any);
+app.route("/api/v1/ai", aiApp);
 
 /**
  * Add custom routes from plugins
