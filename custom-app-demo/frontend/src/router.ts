@@ -5,6 +5,16 @@ const routes = [
     name: "home",
     component: () => import("./views/Start.vue"),
   },
+  {
+    path: "/use-forms",
+    name: "use-forms",
+    component: () => import("./views/UseForms.vue"),
+  },
+  {
+    path: "/simple-api",
+    name: "simple-api",
+    component: () => import("./views/SimpleApi.vue"),
+  },
 ];
 
 export const router = createRouter({
