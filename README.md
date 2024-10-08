@@ -1,6 +1,7 @@
 # FastApp Webserver for real fast development
 
 USE AS A SUBMODULE?!
+
 - static und public pfad müssen einstellbar sein
 - die pfade für plugin, collections, drizzle-schema müssen anpassbar sein
 
@@ -78,6 +79,12 @@ DataModel->Forms (image)
 - [ ] Basic AI functions like: summary, embeddings, create image,... (with custom prompts given by config)
 - [ ] Chat-2-Action Interface
 
+### Vue3 Dev Kit
+
+- [ ] Formbuilder
+- [ ] Chat-Kit to build interactive Chats
+- [ ] Some formatter and helper for Vue
+
 ## Requirements V0.5
 
 - [ ] Docker container to run DB migrations
@@ -98,6 +105,7 @@ DataModel->Forms (image)
 - [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
 - [ ] Dark/Light mode for standard pages
 - [ ] OAuth2 Mail Providers
+- [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
 
 ## Database
 
