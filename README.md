@@ -85,6 +85,16 @@ DataModel->Forms (image)
 - [ ] Chat-Kit to build interactive Chats
 - [ ] Some formatter and helper for Vue
 
+### Use Cases (intern)
+
+- [ ] Perlecto
+- [ ] AI-PM
+- [ ] ePub to Chatbot (PDF -> Fine-Tune -> ChatBot)
+- [ ] FastOn Job
+- [ ] CO2 Manager
+- [ ] CSRD
+- [ ] VALERI
+
 ## Requirements V0.5
 
 - [ ] Docker container to run DB migrations
@@ -103,6 +113,7 @@ DataModel->Forms (image)
 - [ ] Anbindung von WhatsApp/Telegram
 - [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
 - [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
+- [ ] Graphen ggf. nur als URI speichern. Also http://product1->"is parent of"->http://product2 (Ref.: Knowledge Graph, Prof. Dengler)
 - [ ] Dark/Light mode for standard pages
 - [ ] OAuth2 Mail Providers
 - [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
