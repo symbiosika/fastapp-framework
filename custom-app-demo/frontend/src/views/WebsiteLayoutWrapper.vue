@@ -1,4 +1,13 @@
 <template>
+  <div class="flex mt-4 ml-10 w-full">
+    <MarketingButton
+      icon="fas fa-arrow-left"
+      label="Back"
+      link="#"
+      size="small"
+      @click.prevent="goBack"
+    />
+  </div>
   <div class="mt-3 flex flex-col items-center justify-center">
     <img src="/favicon.png" alt="Logo" class="w-16 h-16 mb-6" />
     <h1 class="text-4xl font-bold text-gray-800 mb-4">{{ title }}</h1>
@@ -13,8 +22,17 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
+import MarketingButton from "./MarketingButton.vue";
+
 defineProps<{
   title: string;
   description?: string;
 }>();
+
+const router = useRouter();
+
+const goBack = () => {
+  router.back();
+};
 </script>

@@ -4,9 +4,10 @@ import {
   getAllAiFunctionDescriptions,
   getUiDescriptionForFunctionCall,
 } from "./function-calls";
-import { openai } from "../standard/openai";
+import { openai, TEXT_MODEL } from "../standard/openai";
+import { isContentAllowed } from "./content-filter";
+import { classifyMessage } from "./message-classifier";
 
-const TEXT_MODEL = "gpt-4-turbo";
 const systemPrompt = `
 You are an AI assistant integrated into a web application backend.
 You have access to functions that can add, list, and modify data.
@@ -42,6 +43,28 @@ export const functionChat = async (
         },
       ]);
     }
+    // check if message is allowed
+    const lastUserMessage = messages[messages.length - 1].content as string;
+    const isAllowed = true; //await isContentAllowed(lastUserMessage);
+
+    if (!isAllowed) {
+      return {
+        chatId,
+        reply: "I´m sorry, but I can´t answer that question.",
+      };
+    }
+
+    // classify message
+    const messageType = await classifyMessage(lastUserMessage);
+
+    if (messageType === "knowledge") {
+      console.log("Knowledge message!");
+      return {
+        chatId,
+        reply: "Knowledge questions are not implemented yet.",
+      };
+    }
+
     // Get the chat history for the chatId, or an empty array if no chatId is provided
     const chatHistory = globalChatHistory.get(chatId) ?? [];
     const fullMessages = [...chatHistory, ...messages];

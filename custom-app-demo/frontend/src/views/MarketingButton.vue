@@ -2,7 +2,13 @@
   <a
     :href="link"
     class="flex items-center p-4 rounded-lg shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
-    :class="[size === 'large' ? 'text-xl' : 'text-lg']"
+    :class="[
+      size === 'large'
+        ? 'text-xl'
+        : size === 'small'
+        ? 'text-sm p-2'
+        : 'text-lg',
+    ]"
   >
     <i :class="icon" class="mr-3"></i>
     <span class="font-semibold">{{ label }}</span>
@@ -14,7 +20,7 @@ defineProps<{
   icon: string;
   label: string;
   link: string;
-  size?: "default" | "large";
+  size?: "default" | "large" | "small";
 }>();
 </script>
 

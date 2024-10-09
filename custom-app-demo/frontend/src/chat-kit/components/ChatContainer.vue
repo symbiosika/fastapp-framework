@@ -21,7 +21,7 @@
           :disabled="isLoading"
           :class="[
             'text-white px-4 py-2 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 relative overflow-hidden',
-            isLoading ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600',
+            isLoading ? 'thinking-button' : 'bg-blue-500 hover:bg-blue-600',
           ]"
         >
           <span :class="{ 'opacity-0': isLoading }">Abschicken</span>
@@ -120,27 +120,46 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.loading-animation {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent 100%
-  );
-  background-size: 40px 40px;
-  animation: loading 1s linear infinite;
+.thinking-button {
+  position: relative;
+  padding-left: 50px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-@keyframes loading {
-  0% {
-    background-position: 0 0;
-  }
+.thinking-button .dots {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  display: flex;
+  gap: 5px;
+  transform: translateY(-50%);
+}
+
+.thinking-button .dots span {
+  width: 10px;
+  height: 10px;
+  background-color: #333;
+  border-radius: 50%;
+  animation: bounce 1.2s infinite ease-in-out both;
+}
+
+.thinking-button .dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.thinking-button .dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
   100% {
-    background-position: 40px 0;
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
   }
 }
 </style>

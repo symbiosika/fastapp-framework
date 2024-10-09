@@ -2,9 +2,10 @@ import OpenAIClient from "openai";
 import fs from "fs/promises";
 import { ErrorWithLogging } from "../../log";
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
-const VISION_MODEL = "gpt-4-turbo";
-const TEXT_MODEL = "gpt-4-turbo";
+export const EMBEDDING_MODEL = "text-embedding-3-small";
+export const VISION_MODEL = "gpt-4-turbo";
+export const TEXT_MODEL = "gpt-4-turbo";
+export const FAST_TEXT_MODEL = "gpt-3.5-turbo";
 
 interface MessageContent {
   type: string;
