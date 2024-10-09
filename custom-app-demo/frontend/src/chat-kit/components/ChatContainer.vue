@@ -102,7 +102,11 @@ const sendRequest = async (usersMessage: string) => {
 };
 
 const chatId = ref("");
-const suggestions = ref<string[]>(["Wie mache ich eine Datenbankabfrage?"]);
+const suggestions = ref<string[]>([
+  "Wie mache ich eine Datenbankabfrage?",
+  "Wie füge ich ein Produkt hinzu?",
+  "Ich will Produkt 'ABC' anlegen",
+]);
 
 const selectSuggestion = (suggestion: string) => {
   newMessage.value = suggestion;

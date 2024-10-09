@@ -18,8 +18,16 @@ const item: FunctionCalling = {
             description:
               "The type of the item to add. Can be 'product' or 'feature'",
           },
+          description: {
+            type: "string",
+            description: "The description of the item to add",
+          },
+          price: {
+            type: "number",
+            description: "The price of the item to add",
+          },
         },
-        required: ["name"],
+        required: ["name", "type", "description", "price"],
         additionalProperties: false,
       },
     },
@@ -27,8 +35,8 @@ const item: FunctionCalling = {
   action: async (args: Record<string, any>) => {
     console.log("add product", args);
     return {
-      id: "AA123",
-      name: args.name,
+      id: "L7F5S0D95",
+      args,
     };
   },
   uiResponse: {

@@ -4,13 +4,15 @@ import {
   getAllAiFunctionDescriptions,
   getUiDescriptionForFunctionCall,
 } from "./function-calls";
-import { openai, TEXT_MODEL } from "../standard/openai";
+import { FAST_TEXT_MODEL, openai, TEXT_MODEL } from "../standard/openai";
 import { isContentAllowed } from "./content-filter";
 import { classifyMessage } from "./message-classifier";
+import { classifyFunctionMessage } from "./function-classifier";
 
 const systemPrompt = `
 You are an AI assistant integrated into a web application backend.
 You have access to functions that can add, list, and modify data.
+
 When a user asks to perform an action, determine the required function
 and ensure all necessary parameters are provided.
 If parameters are missing, politely ask the user to provide them.
@@ -76,16 +78,39 @@ export const functionChat = async (
 
     console.log("fullMessages", fullMessages);
 
-    const response = await openai.chat.completions.create({
-      model: TEXT_MODEL,
+    const functionClassification =
+      await classifyFunctionMessage(lastUserMessage);
+    console.log("functionClassification", functionClassification);
+
+    if (functionClassification.allFieldsAreSet) {
+      const functionCall = {
+        name: functionClassification.functionName,
+        arguments: functionClassification.knownFields,
+      };
+      console.log("functionCall", functionCall);
+      const functionResponse = await aiFunctionExecuter(
+        functionCall.name,
+        functionClassification.knownFields
+      );
+      console.log("functionResponse", functionResponse);
+    }
+
+    return {
+      chatId,
+      reply: "",
+    };
+
+
+    /* const response = await openai.chat.completions.create({
+      model: FAST_TEXT_MODEL,
       messages: fullMessages,
       tools: getAllAiFunctionDescriptions(),
       tool_choice: "auto",
     });
-    console.log("response", response.choices[0]);
-    const assistantMessage = response.choices[0].message;
+    console.log("AI response", response);
+    const assistantMessage = response.choices[0].message; */
 
-    if (
+    /* if (
       response.choices[0].finish_reason === "tool_calls" &&
       response.choices[0]?.message.tool_calls
     ) {
@@ -141,7 +166,7 @@ export const functionChat = async (
         chatId,
         reply: assistantMessage.content,
       };
-    }
+    } */
   } catch (error) {
     console.error("Error in chat endpoint:", error);
     return {
