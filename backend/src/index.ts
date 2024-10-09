@@ -21,6 +21,7 @@ import {
 } from "./routes/collections/[name]/[id]";
 import paymentRoutes from "./routes/payment";
 import aiRoutes from "./routes/ai";
+import Logger from "./lib/log";
 
 /**
  * validate .ENV variables
@@ -31,10 +32,17 @@ type HonoContextVariables = {
   usersId: string;
   usersEmail: string;
   usersRoles: string[];
+  logger: typeof Logger;
 };
 
 const app = new Hono<{ Variables: HonoContextVariables }>();
 app.use(logger());
+
+export const attachLogger = async (c: Context, next: Function) => {
+  c.set("logger", Logger);
+  await next();
+};
+app.use(attachLogger);
 
 /**
  * Server configuration
@@ -161,7 +169,9 @@ app.use(
 /**
  * A Ping endpoint
  */
-app.get("/api/v1/ping", async (c) => {
+app.get("/api/v1/ping", attachLogger, async (c) => {
+  const logger = c.get("logger");
+  logger.info("Ping");
   return c.json({
     online: true,
   });

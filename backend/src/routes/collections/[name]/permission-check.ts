@@ -1,5 +1,4 @@
 import { collectionPermissions } from "../../../lib/db/db-collections";
-import { ErrorWithLogging } from "../../../lib/log";
 import type { PermissionDefinition } from "../../../lib/types/permission-checker";
 
 interface QueryParams {
@@ -12,11 +11,7 @@ interface QueryParams {
 export const getValueForEquals = (params: QueryParams, name: string) => {
   const value = params[name];
   if (!value || (value.operator !== "eq" && value.operator !== "or")) {
-    throw new ErrorWithLogging(
-      `"${name}[eq]=<value>" is required`,
-      "debug",
-      "getValueForEquals"
-    );
+    throw new Error(`"${name}[eq]=<value>" is required`);
   }
   return value.value;
 };
@@ -29,11 +24,7 @@ export const permissionCheckerViaUrlParams = async (
   if (definition.neededParameters) {
     for (const { name, operator, valueType } of definition.neededParameters) {
       if (!params[name] || params[name].operator !== operator) {
-        throw new ErrorWithLogging(
-          `"${name}[${operator}]=<${valueType}>" is required`,
-          "debug",
-          "permissionCheckerViaUrlParams"
-        );
+        throw new Error(`"${name}[${operator}]=<${valueType}>" is required`);
       }
     }
   }
@@ -50,11 +41,7 @@ export const permissionCheckerViaUrlParams = async (
       for (const v of value) {
         const p = await checker(userId, v);
         if (!p[permission]) {
-          throw new ErrorWithLogging(
-            "No Permission",
-            "debug",
-            "permissionCheckerViaUrlParams"
-          );
+          throw new Error("No Permission");
         }
       }
     }
@@ -75,11 +62,7 @@ export const permissionCheckerViaBody = async (
       const value = body[name] ?? undefined;
       const p = await checker(userId, value);
       if (!p[permission]) {
-        throw new ErrorWithLogging(
-          "No Permission",
-          "debug",
-          "permissionCheckerViaBody"
-        );
+        throw new Error("No Permission");
       }
     }
   }
@@ -91,10 +74,8 @@ export const getPermissionDefinionForMethod = (
 ): PermissionDefinition => {
   const definition = collectionPermissions[tableName]?.[method];
   if (!definition) {
-    throw new ErrorWithLogging(
-      `No permission definition found for table "${tableName}" and method "${method}"`,
-      "debug",
-      "getPermissionDefinionForMethod"
+    throw new Error(
+      `No permission definition found for table "${tableName}" and method "${method}"`
     );
   }
   return definition;
