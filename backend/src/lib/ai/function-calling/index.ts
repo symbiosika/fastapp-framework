@@ -34,7 +34,9 @@ export const functionChat = async (
   messages: ChatCompletionMessageParam[]
 ) => {
   try {
+    // Generate a new chatId if none is provided
     if (!chatId) {
+      console.log("No chatId provided, generating new chatId");
       chatId = generateId();
       globalChatHistory.set(chatId, [
         {
@@ -43,22 +45,24 @@ export const functionChat = async (
         },
       ]);
     }
-    // check if message is allowed
+
+    // Check if message is allowed
     const lastUserMessage = messages[messages.length - 1].content as string;
     const isAllowed = true; //await isContentAllowed(lastUserMessage);
 
     if (!isAllowed) {
+      console.log("Content not allowed");
       return {
         chatId,
         reply: "I´m sorry, but I can´t answer that question.",
       };
     }
 
-    // classify message
+    // Classify the message
     const messageType = await classifyMessage(lastUserMessage);
 
+    // Handle knowledge messages
     if (messageType === "knowledge") {
-      console.log("Knowledge message!");
       return {
         chatId,
         reply: "Knowledge questions are not implemented yet.",
@@ -67,8 +71,10 @@ export const functionChat = async (
 
     // Get the chat history for the chatId, or an empty array if no chatId is provided
     const chatHistory = globalChatHistory.get(chatId) ?? [];
+    console.log("Found chat history?", chatHistory.length);
     const fullMessages = [...chatHistory, ...messages];
-    // console.log(fullMessages);
+
+    console.log("fullMessages", fullMessages);
 
     const response = await openai.chat.completions.create({
       model: TEXT_MODEL,
@@ -76,8 +82,7 @@ export const functionChat = async (
       tools: getAllAiFunctionDescriptions(),
       tool_choice: "auto",
     });
-
-    // console.log(response);
+    console.log("response", response.choices[0]);
     const assistantMessage = response.choices[0].message;
 
     if (
@@ -121,6 +126,7 @@ export const functionChat = async (
 
       const finalMessage = finalResponse.choices[0].message;
 
+      globalChatHistory.set(chatId, [...fullMessages, finalMessage]);
       return {
         chatId,
         reply: finalMessage.content,
@@ -129,6 +135,8 @@ export const functionChat = async (
     } else {
       // No function call, just return the assistant's message
       console.log("No function call detected");
+
+      globalChatHistory.set(chatId, [...fullMessages, assistantMessage]);
       return {
         chatId,
         reply: assistantMessage.content,
