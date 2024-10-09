@@ -1,6 +1,5 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
-import { ErrorWithLogging } from "../../log";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";
@@ -153,11 +152,7 @@ export const generateImage = async (prompt: string) => {
   });
   const image_url = response.data[0].url;
   if (!image_url) {
-    throw new ErrorWithLogging(
-      "No image URL returned from OpenAI",
-      "error",
-      "generateImage"
-    );
+    throw new Error("No image URL returned");
   }
   // console.log('Image URL:', image_url);
   // download the image and save it to the images folder
