@@ -1,12 +1,10 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen">
-    <WebsiteLayoutWrapper
-      title="DevKit - Formbuilder"
-      description="Formulare aus JSON definieren, mittels Valibot validieren und mit PrimeVue
+  <WebsiteLayoutWrapper
+    title="DevKit - Formbuilder"
+    description="Formulare aus JSON definieren, mittels Valibot validieren und mit PrimeVue
       darstellen."
-    />
-
-    <div class="w-2/3 mt-10 mb-10bg-white p-10 rounded-lg shadow-md m-auto">
+  >
+    <div class="mt-10 mb-10bg-white p-10 rounded-lg shadow-md m-auto">
       <GenericForm :definition="userFormConfiguration" v-model="demoData" />
     </div>
     <div class="flex justify-center mt-3 mb-5 w-1/3">
@@ -24,7 +22,7 @@
     >
     <br />{{ userFormConfigurationWithoutValidation }}
     </pre>
-  </div>
+  </WebsiteLayoutWrapper>
 </template>
 
 <script setup lang="ts">

@@ -9,17 +9,17 @@
     >
       <p>Abfragen gegen die API erfolgen via fetch. Beispiel:</p>
       <pre
-        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto max-w-full text-left mb-5"
+        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto ext-left mb-5"
       >
         <br>const data = await fetcher.get("/api/v1/user/me");
       </pre>
       <pre
-        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto max-w-full text-left mb-5"
+        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto text-left mb-5"
       >
         <br>GET /api/v1/user/me
       </pre>
       <pre
-        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto max-w-full text-left mb-5"
+        class="mt-5 p-4 bg-gray-100 rounded-lg overflow-auto text-left mb-5"
       >
         <br>{{ user }}
       </pre>

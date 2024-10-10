@@ -1,13 +1,4 @@
 <template>
-  <div class="flex mt-4 ml-10 w-full">
-    <MarketingButton
-      icon="fas fa-arrow-left"
-      label="Back"
-      link="#"
-      size="small"
-      @click.prevent="goBack"
-    />
-  </div>
   <div class="mt-3 flex flex-col items-center justify-center">
     <img src="/favicon.png" alt="Logo" class="w-16 h-16 mb-6" />
     <h1 class="text-4xl font-bold text-gray-800 mb-4">{{ title }}</h1>
@@ -18,6 +9,23 @@
     </p>
 
     <slot />
+  </div>
+
+  <div class="flex mt-4 mb-5 gap-5 justify-center">
+    <MarketingButton
+      icon="fas fa-arrow-up"
+      label="To the Top"
+      link="#"
+      size="small"
+      @click.prevent="goToTop"
+    />
+    <MarketingButton
+      icon="fas fa-arrow-left"
+      label="Back"
+      link="#"
+      size="small"
+      @click.prevent="goBack"
+    />
   </div>
 </template>
 
@@ -34,5 +42,9 @@ const router = useRouter();
 
 const goBack = () => {
   router.back();
+};
+
+const goToTop = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 </script>
