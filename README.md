@@ -97,6 +97,7 @@ DataModel->Forms (image)
 
 ## Requirements V0.5
 
+- [ ] Extend Collection with "relations" like it is defined from "Hypermedia" in actions and links
 - [ ] Docker container to run DB migrations
 - [ ] Use WhatsApp to interact with the App
 - [ ] Provide a running webserver as docker image

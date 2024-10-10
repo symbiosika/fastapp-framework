@@ -1,5 +1,6 @@
 # use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
+# https://bun.sh/guides/ecosystem/docker
+
 FROM oven/bun:1 as base
 WORKDIR /usr/src/app
 
@@ -7,5 +8,5 @@ WORKDIR /usr/src/app
 COPY . .
 RUN bun install
 
-EXPOSE 3001/tcp
+EXPOSE 3000/tcp
 ENTRYPOINT [ "bun", "run", "./src/index.ts" ]

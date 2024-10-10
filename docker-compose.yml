@@ -1,0 +1,7 @@
+services:
+  app:
+    build: ./backend
+    volumes:
+      - ./tmp_public:/usr/src/app/public/custom
+    ports:
+      - "3000:3000"

@@ -7,7 +7,7 @@
     v-model:show-right-sidebar="showRightSidebar"
     :main-menu-items="mainMenuItems"
     avatar-initials="FA"
-    header="FastApp Development Kit"
+    header="FastApp DevKit"
   >
     <template #main>
       <RouterView />
