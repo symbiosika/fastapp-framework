@@ -1,7 +1,7 @@
 import Stripe from "stripe";
-import type { StripeDetailedItem } from "src/lib/types/shared/payment";
-import { getDb } from "src/lib/db/db-connection";
-import { products } from "src/lib/db/db-schema";
+import type { StripeDetailedItem } from "../../types/shared/payment";
+import { getDb } from "../../db/db-connection";
+import { products } from "../../db/db-schema";
 import { and, eq } from "drizzle-orm";
 
 /**

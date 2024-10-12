@@ -1,6 +1,6 @@
-import { embeddings } from "src/lib/db/db-schema";
-import { getDb } from "src/lib/db/db-connection";
-import { files } from "src/lib/db/db-schema";
+import { embeddings } from "../../db/db-schema";
+import { getDb } from "../../db/db-connection";
+import { files } from "../../db/db-schema";
 import { parsePdfFileAsMardown } from "./pdf";
 import { generateEmbedding } from "../standard/openai";
 import { eq } from "drizzle-orm";

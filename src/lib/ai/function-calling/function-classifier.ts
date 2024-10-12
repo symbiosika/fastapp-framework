@@ -1,4 +1,4 @@
-import log from "src/lib/log";
+import log from "../../log";
 import { openai } from "../standard/openai";
 import { getAllAiFunctionDescriptions } from "./function-calls";
 import * as v from "valibot";

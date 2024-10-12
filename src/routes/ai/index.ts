@@ -1,4 +1,4 @@
-import { functionChat } from "src/lib/ai/function-calling";
+import { functionChat } from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 
 /**

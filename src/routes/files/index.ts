@@ -4,12 +4,12 @@ import {
   deleteFileFromDB,
   saveFileToDb,
   getFileFromDb,
-} from "src/lib/storage/db";
+} from "../../lib/storage/db";
 import {
   deleteFileFromLocalDisc,
   getFileFromLocalDisc,
   saveFileToLocalDisc,
-} from "src/lib/storage/local";
+} from "../../lib/storage/local";
 
 /**
  * Upload a file to the database

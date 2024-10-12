@@ -11,7 +11,7 @@ import {
 } from "../../../../lib/db/db-get-schema";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../../lib/db/db-connection";
-import { getDbSchema } from "src/lib/db/db-schema";
+import { getDbSchema } from "../../../../lib/db/db-schema";
 
 /**
  * GET Route for the collections endpoint

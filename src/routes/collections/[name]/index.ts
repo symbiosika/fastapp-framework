@@ -14,10 +14,10 @@ import {
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../lib/db/db-connection";
-import { getDbSchema } from "src/lib/db/db-schema";
-import type { RawParameters } from "src/lib/types/permission-checker";
+import { getDbSchema } from "../../../lib/db/db-schema";
+import type { RawParameters } from "../../../lib/types/permission-checker";
 import { and } from "drizzle-orm";
-import { CsvService } from "src/lib/csv";
+import { CsvService } from "../../../lib/csv";
 
 const csvService = new CsvService();
 

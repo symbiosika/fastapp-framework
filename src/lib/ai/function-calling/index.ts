@@ -7,7 +7,7 @@ import {
 import { isContentAllowed } from "./content-filter";
 import { classifyMessage } from "./message-classifier";
 import { classifyFunctionMessage } from "./function-classifier";
-import log from "src/lib/log";
+import log from "../../log";
 
 /**
  * A small in memory chat history for the function chat.
