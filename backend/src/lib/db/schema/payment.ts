@@ -27,6 +27,19 @@ export const purchaseTypeEnum = pgEnum("purchase_type", [
   "subscription",
 ]);
 
+// Products and prices
+export const products = pgBaseTable("products", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  group: text("group").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: purchaseTypeEnum("type").notNull(),
+  prodId: text("prod_id").notNull(),
+  priceId: text("price_id").notNull(),
+});
+
 // Active Subscriptions Table
 export const activeSubscriptions = pgBaseTable(
   "active_subscriptions",

@@ -1,6 +1,8 @@
 import Stripe from "stripe";
-import APP_PAYMENT_OPTIONS from "../../../../custom-stripe";
 import type { StripeDetailedItem } from "src/lib/types/shared/payment";
+import { getDb } from "src/lib/db/db-connection";
+import { products } from "src/lib/db/db-schema";
+import { and, eq } from "drizzle-orm";
 
 /**
  * Stripe Service
@@ -98,7 +100,8 @@ export class StripeService {
     if (planName) {
       const targetSubscription = subscriptions.data.find((sub) =>
         sub.items.data.some(
-          (item) => item.price.product === this.getPriceIdByPlanName(planName)
+          async (item) =>
+            item.price.product === (await this.getPriceIdByPlanName(planName))
         )
       );
       return targetSubscription ? [targetSubscription] : [];
@@ -176,13 +179,17 @@ export class StripeService {
     }
     // try to create subscription via stripe API
     try {
-      // search the product
-      const stripeItem = APP_PAYMENT_OPTIONS.stripeItems.find((i) => {
-        return i.priceName === name;
-      });
-      if (!stripeItem) {
+      // find product in DB
+      const stripeItems = await getDb()
+        .select()
+        .from(products)
+        .where(eq(products.name, name));
+
+      if (stripeItems.length === 0) {
         throw new Error("Invalid product");
       }
+      const stripeItem = stripeItems[0];
+
       // set price id depending on type
       const priceId = stripeItem.priceId;
 
@@ -200,7 +207,7 @@ export class StripeService {
       const session = await this.stripe.checkout.sessions.create({
         mode: stripeItem.type,
         // payment method types: card, google pay and apple pay
-        payment_method_types: APP_PAYMENT_OPTIONS.paymentMethodTypes,
+        payment_method_types: ["card"],
         customer: customerId,
         discounts: discount ? [{ coupon: discount }] : undefined,
         line_items: [
@@ -231,7 +238,9 @@ export class StripeService {
       throw new Error("Invalid customer id");
     }
     try {
-      this.log(`Canceling subscription ${subscriptionId} for customer ${customerId}`);
+      this.log(
+        `Canceling subscription ${subscriptionId} for customer ${customerId}`
+      );
       return await this.stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: true,
       });
@@ -273,9 +282,11 @@ export class StripeService {
   ): Promise<StripeDetailedItem[]> {
     try {
       // Find all stripe items for the given group
-      const groupItems = APP_PAYMENT_OPTIONS.stripeItems.filter(
-        (item) => item.group === group && (type ? item.type === type : true)
-      );
+      const where = type
+        ? and(eq(products.group, group), eq(products.type, type))
+        : eq(products.group, group);
+
+      const groupItems = await getDb().select().from(products).where(where);
 
       // Fetch detailed information for each item from Stripe API
       const detailedItems = await Promise.all(
@@ -284,7 +295,7 @@ export class StripeService {
           const price = await this.stripe.prices.retrieve(item.priceId);
 
           return {
-            priceName: item.priceName,
+            priceName: item.name,
             priceId: item.priceId,
             type: item.type,
             price: price.unit_amount ? price.unit_amount / 100 : 0, // Convert from cents to dollars
@@ -318,14 +329,16 @@ export class StripeService {
   }
 
   // Helper method to get price ID by plan name
-  private getPriceIdByPlanName(planName: string): string {
-    const stripeItem = APP_PAYMENT_OPTIONS.stripeItems.find(
-      (i) => i.priceName === planName
-    );
-    if (!stripeItem) {
+  private async getPriceIdByPlanName(planName: string): Promise<string> {
+    const stripeItems = await getDb()
+      .select()
+      .from(products)
+      .where(eq(products.name, planName));
+
+    if (stripeItems.length === 0) {
       throw new Error(`Invalid product: ${planName}`);
     }
-    return stripeItem.priceId;
+    return stripeItems[0].priceId;
   }
 }
 

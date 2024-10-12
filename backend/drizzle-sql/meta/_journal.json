@@ -50,6 +50,13 @@
       "when": 1728296707328,
       "tag": "0006_past_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1728715260071,
+      "tag": "0007_little_starbolt",
+      "breakpoints": true
     }
   ]
 }

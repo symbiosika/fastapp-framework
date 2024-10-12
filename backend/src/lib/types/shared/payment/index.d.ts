@@ -14,11 +14,3 @@ export interface StripeDetailedItem {
   description?: string;
   name?: string;
 }
-
-export interface StripeItem {
-  group: string;
-  priceName: string;
-  prodId: string;
-  priceId: string;
-  type: "subscription" | "payment";
-}
