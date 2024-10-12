@@ -1,80 +1,50 @@
-// backend/src/lib/ai/messageClassifier.ts
-
-import { FAST_TEXT_MODEL, openai } from "../standard/openai";
+import log from "src/lib/log";
+import { openai } from "../standard/openai";
 import { getAllAiFunctionDescriptions } from "./function-calls";
+import * as v from "valibot";
+import { getFunctionClassifierSystemPrompt } from "./function-classifier-system-prompt";
+import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+
+const valSchema = v.object({
+  functionName: v.string(),
+  missingFields: v.array(v.string()),
+  knownFields: v.record(
+    v.string(),
+    v.union([v.string(), v.number(), v.null(), v.undefined()])
+  ),
+});
 
 export const classifyFunctionMessage = async (
-  message: string
+  messages: ChatCompletionMessageParam[]
 ): Promise<{
-  functionName: string;
-  allFieldsAreSet: boolean;
-  knownFields: {
-    [parameterName: string]: any;
+  data: {
+    functionName: string;
+    missingFields: string[];
+    knownFields: {
+      [parameterName: string]: any;
+    };
   };
+  messages: ChatCompletionMessageParam[];
 }> => {
   // Create a system prompt that instructs the assistant on how to extract function details
-  const systemPrompt = `
-You are a function extraction assistant.
+  const systemPrompt = getFunctionClassifierSystemPrompt();
 
-From the user's message, identify the function that the user wants to execute from the list.
+  await log.debug("messages.length", messages.length + "");
 
-For the identified function, extract the parameters required.
-If any parameters are missing, note them and return them in the JSON schema.
+  // send the system prompt only if it is the first users message
+  // length 2 meand ONE system prompt and ONE user prompt until now
+  const messagesToSend: ChatCompletionMessageParam[] =
+    messages.length === 1
+      ? [{ role: "system", content: systemPrompt }, ...messages]
+      : messages;
 
-You will respond in JSON format with only one JSON object if there is no function call detected.
-
-The response format is as follows:
-{
-  functionName: string,
-  missingFields: string[],
-  knownFields: { [parameterName: string]: string | number | null }
-}
-
-You will wisely choose between a string, number or null for the knownFields.
-You will also check all required fields from the function description and return them in the missingFields array.
-You will be very precise and accurate in checking the required fields.
-`;
+  await log.logAChat("FUNCTION_CLASSIFIER", ...messagesToSend);
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini-2024-07-18",
-    functions: [
-      {
-        name: "add_product",
-        description: "Add a product to the database",
-        parameters: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-              description: "The name of the item to add",
-            },
-            type: {
-              type: "string",
-              description:
-                "The type of the item to add. Can be 'product' or 'feature'",
-            },
-            description: {
-              type: "string",
-              description: "The description of the item to add",
-            },
-            price: {
-              type: "number",
-              description: "The price of the item to add",
-            },
-          },
-          required: ["name", "type", "description", "price"],
-          additionalProperties: false,
-        },
-      },
-    ],
+    functions: getAllAiFunctionDescriptions(),
     function_call: "none",
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt.trim(),
-      },
-      { role: "user", content: message },
-    ],
+    messages: messagesToSend,
     temperature: 0,
     response_format: {
       type: "json_schema",
@@ -92,41 +62,61 @@ You will be very precise and accurate in checking the required fields.
                 type: "string",
               },
             },
-            /* knownFields: {
+            knownFields: {
               type: "object",
-              properties: {
-                anyOf: [
-                  {
-                    type: "string",
-                  },
-                  {
-                    type: "number",
-                  },
-                  {
-                    type: "null",
-                  },
-                ],
-              },
-            }, */
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "number",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
         },
       },
     },
   });
-
-  console.log("response", response);
   const content = response?.choices[0]?.message?.content?.trim();
   if (!content) {
+    log.debug(
+      "Something went wrong pre-parsing the function call. Couly not parse AI response.",
+      "System prompt",
+      systemPrompt,
+      "User message",
+      messages[0].content?.toString() ?? "No user message found",
+      "AI response",
+      JSON.stringify(response)
+    );
     throw new Error(
       "Something went wrong pre-parsing the function call. Couly not parse AI response."
     );
   }
-
-  // Parse the JSON response
+  // parse and return valid JSON
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    console.log("parsed", parsed);
+
+    const result = v.safeParse(valSchema, parsed);
+    if (!result.success) {
+      log.error(
+        "Something went wrong parsing the function call parameters.",
+        result.issues?.map((issue) => issue.message).join("\n") ??
+          "No issues found"
+      );
+      throw new Error("Something went wrong pre-parsing the function call.");
+    }
+    return {
+      data: result.output,
+      messages: messagesToSend,
+    };
   } catch (e) {
-    console.error("Failed to parse or validate response:", content);
+    console.error(e);
+    log.error("Something went wrong pre-parsing the function call.", e + "");
     throw new Error("Something went wrong pre-parsing the function call.");
   }
 };

@@ -1,7 +1,7 @@
 import type { FunctionCalling } from "./function-calls";
 
 const item: FunctionCalling = {
-  functionDescription: {
+  functionDefinitionAsJson: {
     type: "function",
     function: {
       name: "add_product",
@@ -35,14 +35,31 @@ const item: FunctionCalling = {
   action: async (args: Record<string, any>) => {
     console.log("add product", args);
     return {
-      id: "L7F5S0D95",
-      args,
+      message: `Product added (${args})`,
+      data: {
+        id: "L7F5S0D95",
+        args,
+      },
     };
   },
   uiResponse: {
     type: "render_text",
     content: "Product added",
   },
+  QAExamples: [
+    {
+      q: `I want to create a new product with the name "My best T-Shirt"`,
+      a: ` \`\`\`json
+          {
+            "functionName": "add_product",
+            "missingFields": [ "type", "description", "price" ],
+            "knownFields": {
+              "name": "My best T-Shirt"
+            }
+          }
+        \`\`\` `,
+    },
+  ],
 };
 
 export default item;

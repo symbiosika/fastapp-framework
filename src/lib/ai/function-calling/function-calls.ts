@@ -2,7 +2,10 @@ import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import addProduct from "./add-product";
 
 // --- SHARED TYPES WITH FRONTEND ---
-export type FunctionCallingAction = (args: Record<string, any>) => Promise<any>;
+export type FunctionCallingAction = (args: Record<string, any>) => Promise<{
+  message: string;
+  data?: any;
+}>;
 
 type UiActionTextBlock = {
   type: "render_text";
@@ -12,7 +15,11 @@ type UiActionTextBlock = {
 export type FunctionCallingResponseUiAction = UiActionTextBlock;
 
 export interface FunctionCalling {
-  functionDescription: ChatCompletionTool;
+  functionDefinitionAsJson: ChatCompletionTool;
+  QAExamples?: {
+    q: string;
+    a: string;
+  }[];
   action: FunctionCallingAction;
   uiResponse: FunctionCallingResponseUiAction;
 }
@@ -28,7 +35,20 @@ export const aiFunctions: FunctionCalling[] = [addProduct];
  * Get all AI callable functions with descriptions for the chat
  */
 export const getAllAiFunctionDescriptions = () => {
-  return aiFunctions.map((func) => func.functionDescription);
+  return aiFunctions.map((func) => func.functionDefinitionAsJson.function);
+};
+
+/**
+ * Get all QA examples for a function or all functions if no function name is provided
+ */
+export const getAllAiFunctionQaExamples = (functionName?: string) => {
+  return aiFunctions
+    .filter(
+      (func) =>
+        !functionName ||
+        func.functionDefinitionAsJson.function.name === functionName
+    )
+    .flatMap((func) => func.QAExamples ?? []);
 };
 
 /**
@@ -39,7 +59,7 @@ export const aiFunctionExecuter = async (
   args: Record<string, any>
 ) => {
   const func = aiFunctions.find(
-    (func) => func.functionDescription.function.name === functionName
+    (func) => func.functionDefinitionAsJson.function.name === functionName
   );
   if (!func) {
     throw new Error(`Function ${functionName} not found`);
@@ -53,7 +73,7 @@ export const aiFunctionExecuter = async (
  */
 export const getUiDescriptionForFunctionCall = (functionName: string) => {
   const func = aiFunctions.find(
-    (func) => func.functionDescription.function.name === functionName
+    (func) => func.functionDefinitionAsJson.function.name === functionName
   );
   if (!func) {
     throw new Error(`Function ${functionName} not found`);

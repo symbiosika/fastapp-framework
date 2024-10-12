@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import path from "path";
 
 class Logger {
@@ -70,16 +71,34 @@ class Logger {
     await this.writeToFile(logMessage);
   }
 
-  async info(message: string) {
-    await this.log("info", message);
+  async info(...messages: string[]) {
+    for (const message of messages) {
+      await this.log("info", message);
+    }
   }
 
-  async error(message: string) {
-    await this.log("error", message);
+  async error(...messages: string[]) {
+    for (const message of messages) {
+      await this.log("error", message);
+    }
   }
 
-  async debug(message: string) {
-    await this.log("debug", message);
+  async debug(...messages: string[]) {
+    for (const message of messages) {
+      await this.log("debug", message);
+    }
+  }
+
+  async logAChat(chatId: string, ...messages: ChatCompletionMessageParam[]) {
+    if (messages.length === 0) {
+      await this.debug(`(${chatId}) No messages to log.`);
+      return;
+    }
+    for (const message of messages) {
+      const content = message.content?.toString() ?? "";
+      const contentSnippet = content.substring(0, 100).replace(/\n/g, " ");
+      await this.debug(`(${chatId}) ${message.role}: ${contentSnippet}`);
+    }
   }
 }
 
