@@ -1,4 +1,4 @@
-import { collectionPermissions } from "../../../lib/db/db-collections";
+import { getCollectionPermissions } from "../../../lib/db/db-collections";
 import type { PermissionDefinition } from "../../../lib/types/permission-checker";
 
 interface QueryParams {
@@ -72,7 +72,8 @@ export const getPermissionDefinionForMethod = (
   tableName: string,
   method: string
 ): PermissionDefinition => {
-  const definition = collectionPermissions[tableName]?.[method];
+  const permissions = getCollectionPermissions();
+  const definition = permissions[tableName]?.[method];
   if (!definition) {
     throw new Error(
       `No permission definition found for table "${tableName}" and method "${method}"`

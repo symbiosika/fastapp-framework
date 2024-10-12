@@ -3,7 +3,7 @@ import { getDb } from "../../lib/db/db-connection";
 import { activeSubscriptions, purchases } from "../../lib/db/schema/payment";
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import type { FastAppHono } from "../../index.d";
+import type { FastAppHono } from "../../types";
 import type { StripeDetailedItem } from "src/lib/types/shared/payment";
 import type Stripe from "stripe";
 

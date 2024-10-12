@@ -1,3 +1,4 @@
 .env
 !backend/static/upload/dummy
 backend/static/upload/
+test/

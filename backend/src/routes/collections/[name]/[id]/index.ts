@@ -11,7 +11,7 @@ import {
 } from "../../../../lib/db/db-get-schema";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../../lib/db/db-connection";
-import { dbSchema } from "src/lib/db/db-schema";
+import { getDbSchema } from "src/lib/db/db-schema";
 
 /**
  * GET Route for the collections endpoint
@@ -35,7 +35,7 @@ export const getCollectionById = async (c: Context) => {
     // for an GET with an given id we can build a direct query
     const filter = parseFilterClause(`id = '${id}'`);
     const where = mapConditionsToDrizzleWhereObject(
-      dbSchema,
+      getDbSchema(),
       tableName,
       filter
     );
@@ -93,7 +93,11 @@ export const putCollectionById = async (c: Context) => {
 
       // get old data by id
       const ast = parseFilterClause(`id = '${id}'`);
-      const where = mapConditionsToDrizzleWhereObject(dbSchema, tableName, ast);
+      const where = mapConditionsToDrizzleWhereObject(
+        getDbSchema(),
+        tableName,
+        ast
+      );
       // @ts-ignore
       const data = await getDb().select().from(table).where([where]);
 
@@ -153,7 +157,11 @@ export const deleteCollectionById = async (c: Context) => {
       filter = `id = '${id}'`;
     }
     const ast = parseFilterClause(filter);
-    const where = mapConditionsToDrizzleWhereObject(dbSchema, tableName, ast);
+    const where = mapConditionsToDrizzleWhereObject(
+      getDbSchema(),
+      tableName,
+      ast
+    );
 
     // pre-fetch data to check permissions on the item
     const item = await getDb()

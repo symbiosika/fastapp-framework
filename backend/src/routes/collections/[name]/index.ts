@@ -14,7 +14,7 @@ import {
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../lib/db/db-connection";
-import { dbSchema } from "src/lib/db/db-schema";
+import { getDbSchema } from "src/lib/db/db-schema";
 import type { RawParameters } from "src/lib/types/permission-checker";
 import { and } from "drizzle-orm";
 import { CsvService } from "src/lib/csv";
@@ -91,10 +91,10 @@ export const getCollection = async (c: Context) => {
 
     // The URL query parameters are optional and can be used to filter, sort and limit the result
     // expample:
-    // http://localhost:3000/v1/db/collections/demo-data?filter=((id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e')||(users.id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e'))
+    // http://localhost:3000/api/v1/db/collections/demo-data?filter=((id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e')||(users.id='278c7dfc1d-90e1-4c83-b7d1-3ce1dc39ac2e'))
     // or:
-    // http://localhost:3000/v1/db/collections/users?filter=(userGroupMembers.userGroupId='d9698fcc-c359-42ba-8a96-2935163cbd29')
-    // /v1/db/collections/users?expand=userGroupMembers&filter=(userGroupMembers.userGroupId=%27d9698fcc-c359-42ba-8a96-2935163cbd29%27)%26%26(createdAt>=%272023-01-01%27)
+    // http://localhost:3000/api/v1/db/collections/users?filter=(userGroupMembers.userGroupId='d9698fcc-c359-42ba-8a96-2935163cbd29')
+    // /api/v1/db/collections/users?expand=userGroupMembers&filter=(userGroupMembers.userGroupId=%27d9698fcc-c359-42ba-8a96-2935163cbd29%27)%26%26(createdAt>=%272023-01-01%27)
 
     // get the URL query parameters
     const searchParams = new URLSearchParams(c.req.url.split("?")[1] || "");
@@ -137,7 +137,7 @@ export const getCollection = async (c: Context) => {
       searchParams.get("csvHeader") === "false" ? false : true;
 
     const whereStatement = mapConditionsToDrizzleWhereObject(
-      dbSchema,
+      getDbSchema(),
       tableName,
       filterClause
     );

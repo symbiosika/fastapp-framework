@@ -1,5 +1,5 @@
 import { functionChat } from "src/lib/ai/function-calling";
-import type { FastAppHono } from "../../index.d";
+import type { FastAppHono } from "../../types";
 
 /**
  * Define the payment routes

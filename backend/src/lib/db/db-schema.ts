@@ -1,3 +1,4 @@
+import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 /**
  * Main Schema for the database
  */
@@ -16,47 +17,33 @@ export * from "./schema/embeddings";
 export * from "./schema/payment";
 export * from "./schema/additional-data";
 
-// import custom drizzle schema
-let customDrizzleSchema = {};
-try {
-  const importedSchema = require("./../../../custom-drizzle-schema");
-  customDrizzleSchema = importedSchema.default || importedSchema;
-  console.log("Custom drizzle schema found. Using custom schema.");
-  console.log("Added custom drizzle schema", Object.keys(customDrizzleSchema));
-} catch (error) {
-  console.log("No custom drizzle schema found. Using only default schema.");
-}
-
-export const dbSchema = {
-  ...customDrizzleSchema,
+const baseDbSchema = {
   // auth tables
-  users: userTables.users,
-  userGroups: userTables.userGroups,
-  userGroupMembers: userTables.userGroupMembers,
-  userGroup: userTables.userGroups,
-  usersRelations: userTables.usersRelations,
-  userGroupsRelations: userTables.userGroupsRelations,
-  userGroupMembersRelations: userTables.userGroupMembersRelations,
-  sessionsRelations: userTables.sessionsRelations,
+  ...userTables,
   // app wide secrets
-  secrets: secrets.secrets,
-  sessions: userTables.sessions,
+  ...secrets,
   // files
-  files: files.files,
+  ...files,
   // embeddings
-  embeddings: embeddings.embeddings,
+  ...embeddings,
   // payment
-  activeSubscriptions: payment.activeSubscriptions,
-  purchases: payment.purchases,
+  ...payment,
   // additional data
-  userSpecificData: additionalData.userSpecificData,
-  appSpecificData: additionalData.appSpecificData,
-  userSpecificDataRelations: additionalData.userSpecificDataRelations,
+  ...additionalData,
 };
-console.log("Collection tables", Object.keys(dbSchema));
+
+export const initializeFullDbSchema = (
+  customSchema: Record<string, PgTableWithColumns<any>>
+) => {
+  Object.assign(baseDbSchema, customSchema);
+  console.log("DB schema tables", Object.keys(baseDbSchema));
+};
+
+export const getDbSchema = () => {
+  return baseDbSchema;
+};
 
 /**
  * Export the database schema and the valid table names.
  */
-export type DatabaseSchema = typeof dbSchema;
-export const validTableNames = Object.keys(dbSchema);
+export type DatabaseSchema = typeof baseDbSchema;
