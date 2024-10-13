@@ -11,9 +11,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
+import { pgBaseTable } from ".";
 
 // Tabelle für benutzerspezifische Daten
-export const userSpecificData = pgTable(
+export const userSpecificData = pgBaseTable(
   "user_specific_data",
   {
     id: uuid("id")
@@ -38,7 +39,7 @@ export type UserSpecificDataSelect = typeof userSpecificData.$inferSelect;
 export type UserSpecificDataInsert = typeof userSpecificData.$inferInsert;
 
 // Tabelle für anwendungsspezifische Daten
-export const appSpecificData = pgTable(
+export const appSpecificData = pgBaseTable(
   "app_specific_data",
   {
     id: uuid("id")
