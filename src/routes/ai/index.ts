@@ -1,3 +1,4 @@
+import { getTemplatePromptById } from "src/lib/ai/generation";
 import { functionChat } from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 
@@ -19,6 +20,19 @@ export default function defineRoutes(app: FastAppHono) {
       messages = [{ role: "user", content: usersMessage }];
     }
     const response = await functionChat(chatId, messages);
+    return c.json(response);
+  });
+
+  app.get("/get-template-prompt/:promptId", async (c) => {
+    const promptId = c.req.param("promptId");
+    const response = await getTemplatePromptById(promptId);
+    return c.json(response);
+  });
+
+  app.post("/generate-by-template", async (c) => {
+    const body = await c.req.json();
+    const promptId = body.promptId;
+    const response = await getTemplatePromptById(promptId);
     return c.json(response);
   });
 }
