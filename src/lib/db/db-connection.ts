@@ -1,6 +1,6 @@
 import pg from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { getDbSchema } from "./db-schema";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { getDbSchema, type DatabaseSchema } from "./db-schema";
 import { readFileSync } from "fs";
 
 const POSTGRES_DB = process.env.POSTGRES_DB ?? "";
@@ -69,7 +69,7 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
 };
 
 // hold the connection
-let dbClient: Awaited<ReturnType<typeof createDbClient>>;
+let dbClient: NodePgDatabase<DatabaseSchema>; // Awaited<ReturnType<typeof createDbClient>>;
 export const createDatabaseClient = async (
   customSchema?: Record<string, unknown>
 ) => {
