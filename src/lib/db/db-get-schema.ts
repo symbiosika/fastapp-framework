@@ -1,6 +1,9 @@
 import { getDb } from "./db-connection";
-import { getDbSchema, type DatabaseSchema } from "./db-schema";
-import { getValidTableNames } from "./db-collections";
+import {
+  getDbSchema,
+  getValidDbSchemaTableNames,
+  type DatabaseSchema,
+} from "./db-schema";
 
 /**
  * check if a table name is valid and return it
@@ -24,8 +27,8 @@ export function getDbSchemaTable<K extends keyof DatabaseSchema>(
 export const normalizeTableName = (name: string): keyof DatabaseSchema => {
   // replace '-'-string to a camelCase string
   const tableName = name.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-  if (!getValidTableNames().includes(tableName)) {
-    throw new Error(`Invalid table name (normalized): ${name}`);
+  if (!getValidDbSchemaTableNames().includes(tableName)) {
+    throw new Error(`Invalid table name (normalized): ${name}/${tableName}`);
   }
   return tableName as keyof DatabaseSchema;
 };

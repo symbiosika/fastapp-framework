@@ -87,4 +87,11 @@ export const getDb = () => {
   return dbClient;
 };
 
+export const waitForDbConnection = async () => {
+  while (!dbClient) {
+    console.log("Waiting for database connection...");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+};
+
 export type AppDbWithSchema = typeof dbClient;

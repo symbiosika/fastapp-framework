@@ -123,6 +123,6 @@ export const getCollectionPermissions = () => {
   return initializedPermissions;
 };
 
-export const getValidTableNames = () => {
+export const getValidCollectionTableNames = () => {
   return validTableNames;
 };

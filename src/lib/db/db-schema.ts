@@ -36,11 +36,18 @@ const baseDbSchema = {
   ...prompts,
 };
 
+let validTableNames: string[] = [];
+
 export const initializeFullDbSchema = (
   customSchema: Record<string, PgTableWithColumns<any>>
 ) => {
   Object.assign(baseDbSchema, customSchema);
   console.log("DB schema tables", Object.keys(baseDbSchema));
+  validTableNames = Object.keys(baseDbSchema);
+};
+
+export const getValidDbSchemaTableNames = () => {
+  return validTableNames;
 };
 
 export const getDbSchema = () => {
