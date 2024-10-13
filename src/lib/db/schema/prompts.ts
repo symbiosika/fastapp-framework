@@ -49,10 +49,10 @@ export const promptTemplates = pgBaseTable(
 export type PromptTemplatesSelect = typeof promptTemplates.$inferSelect;
 export type PromptTemplatesInsert = typeof promptTemplates.$inferInsert;
 
-export const promptTemplatePlaceholderTypeEnum = pgEnum("prompt_template_type", [
-  "text",
-  "image",
-]);
+export const promptTemplatePlaceholderTypeEnum = pgEnum(
+  "prompt_template_type",
+  ["text", "image"]
+);
 
 export const promptTemplatePlaceholders = pgBaseTable(
   "prompt_template_placeholders",
@@ -79,13 +79,49 @@ export type PromptTemplatePlaceholdersSelect =
 export type PromptTemplatePlaceholdersInsert =
   typeof promptTemplatePlaceholders.$inferInsert;
 
+export const promptTemplatePlaceholderDefaults = pgBaseTable(
+  "prompt_template_placeholder_defaults",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    promptTemplateId: uuid("prompt_template_id")
+      .notNull()
+      .references(() => promptTemplates.id, { onDelete: "cascade" }),
+    promptTemplatePlaceholderId: uuid("prompt_template_placeholder_id")
+      .notNull()
+      .references(() => promptTemplatePlaceholders.id, { onDelete: "cascade" }),
+    langCode: varchar("lang_code", { length: 2 }),
+    value: text("value").notNull(),
+  },
+  (promptTemplatePlaceholderDefaults) => ({
+    unq: unique().on(
+      promptTemplatePlaceholderDefaults.promptTemplateId,
+      promptTemplatePlaceholderDefaults.promptTemplatePlaceholderId,
+      promptTemplatePlaceholderDefaults.langCode
+    ),
+    langCodeIdx: index("prompt_template_placeholder_defaults_lang_code_idx").on(
+      promptTemplatePlaceholderDefaults.langCode
+    ),
+    promptTemplateIdIdx: index(
+      "prompt_template_placeholder_defaults_prompt_template_id_idx"
+    ).on(promptTemplatePlaceholderDefaults.promptTemplateId),
+  })
+);
+
+export type PromptTemplatePlaceholderDefaultsSelect =
+  typeof promptTemplatePlaceholderDefaults.$inferSelect;
+export type PromptTemplatePlaceholderDefaultsInsert =
+  typeof promptTemplatePlaceholderDefaults.$inferInsert;
+
 export const promptTemplatePlaceholdersRelations = relations(
   promptTemplatePlaceholders,
-  ({ one }) => ({
+  ({ one, many }) => ({
     promptTemplate: one(promptTemplates, {
       fields: [promptTemplatePlaceholders.promptTemplateId],
       references: [promptTemplates.id],
     }),
+    promptTemplatePlaceholderDefaults: many(promptTemplatePlaceholderDefaults),
   })
 );
 
@@ -93,5 +129,20 @@ export const promptTemplatesRelations = relations(
   promptTemplates,
   ({ many }) => ({
     promptTemplatePlaceholders: many(promptTemplatePlaceholders),
+    promptTemplatePlaceholderDefaults: many(promptTemplatePlaceholderDefaults),
+  })
+);
+
+export const promptTemplatePlaceholderDefaultsRelations = relations(
+  promptTemplatePlaceholderDefaults,
+  ({ one }) => ({
+    promptTemplatePlaceholder: one(promptTemplatePlaceholders, {
+      fields: [promptTemplatePlaceholderDefaults.promptTemplatePlaceholderId],
+      references: [promptTemplatePlaceholders.id],
+    }),
+    promptTemplate: one(promptTemplates, {
+      fields: [promptTemplatePlaceholderDefaults.promptTemplateId],
+      references: [promptTemplates.id],
+    }),
   })
 );

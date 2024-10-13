@@ -22,3 +22,10 @@ export interface ServerConfig {
   customDbSchema?: any; // Drizzle Schema
   customCollectionPermissions?: PermissionDefinitionPerTable;
 }
+
+export interface DBStandardData {
+  name: string;
+  description?: string;
+  schemaName: string;
+  entries: any[];
+}
