@@ -30,6 +30,9 @@ export const users = pgBaseTable("users", {
   extUserId: text("ext_user_id").notNull(),
 });
 
+export type UsersSelect = typeof users.$inferSelect;
+export type UsersInsert = typeof users.$inferInsert;
+
 export const sessions = pgBaseTable("sessions", {
   sessionToken: text("session_token").primaryKey(),
   userId: uuid("user_id")
@@ -37,6 +40,9 @@ export const sessions = pgBaseTable("sessions", {
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
+
+export type SessionsSelect = typeof sessions.$inferSelect;
+export type SessionsInsert = typeof sessions.$inferInsert;
 
 // User Groups Table
 export const userGroups = pgBaseTable("user_groups", {
@@ -47,6 +53,9 @@ export const userGroups = pgBaseTable("user_groups", {
   createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
+
+export type UserGroupsSelect = typeof userGroups.$inferSelect;
+export type UserGroupsInsert = typeof userGroups.$inferInsert;
 
 // User Group Members Table
 export const userGroupMembers = pgBaseTable(
@@ -65,6 +74,9 @@ export const userGroupMembers = pgBaseTable(
     }),
   })
 );
+
+export type UserGroupMembersSelect = typeof userGroupMembers.$inferSelect;
+export type UserGroupMembersInsert = typeof userGroupMembers.$inferInsert;
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions), // sessions will be the name in the "with" clause in the query

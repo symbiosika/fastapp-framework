@@ -34,3 +34,6 @@ export const secrets = pgBaseTable(
     nameIdx: index("name_idx").on(secrets.name),
   })
 );
+
+export type SecretsSelect = typeof secrets.$inferSelect;
+export type SecretsInsert = typeof secrets.$inferInsert;

@@ -34,6 +34,9 @@ export const userSpecificData = pgTable(
   })
 );
 
+export type UserSpecificDataSelect = typeof userSpecificData.$inferSelect;
+export type UserSpecificDataInsert = typeof userSpecificData.$inferInsert;
+
 // Tabelle für anwendungsspezifische Daten
 export const appSpecificData = pgTable(
   "app_specific_data",
@@ -54,6 +57,9 @@ export const appSpecificData = pgTable(
     keyIndex: index("app_data_key_idx").on(table.key),
   })
 );
+
+export type AppSpecificDataSelect = typeof appSpecificData.$inferSelect;
+export type AppSpecificDataInsert = typeof appSpecificData.$inferInsert;
 
 // Beziehungen definieren
 export const userSpecificDataRelations = relations(

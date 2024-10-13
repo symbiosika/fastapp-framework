@@ -40,6 +40,9 @@ export const products = pgBaseTable("products", {
   priceId: text("price_id").notNull(),
 });
 
+export type ProductsSelect = typeof products.$inferSelect;
+export type ProductsInsert = typeof products.$inferInsert;
+
 // Active Subscriptions Table
 export const activeSubscriptions = pgBaseTable(
   "active_subscriptions",
@@ -77,6 +80,9 @@ export const activeSubscriptions = pgBaseTable(
   })
 );
 
+export type ActiveSubscriptionsSelect = typeof activeSubscriptions.$inferSelect;
+export type ActiveSubscriptionsInsert = typeof activeSubscriptions.$inferInsert;
+
 // One-time Purchases Table
 export const purchases = pgBaseTable("purchases", {
   id: uuid("id")
@@ -97,6 +103,9 @@ export const purchases = pgBaseTable("purchases", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
+
+export type PurchasesSelect = typeof purchases.$inferSelect;
+export type PurchasesInsert = typeof purchases.$inferInsert;
 
 // Relations
 export const activeSubscriptionsRelations = relations(

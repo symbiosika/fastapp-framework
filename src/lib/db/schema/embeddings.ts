@@ -32,3 +32,6 @@ export const embeddings = pgBaseTable(
     sourceIdIndex: index("source_id_index").on(embedding.sourceId),
   })
 );
+
+export type EmbeddingsSelect = typeof embeddings.$inferSelect;
+export type EmbeddingsInsert = typeof embeddings.$inferInsert;

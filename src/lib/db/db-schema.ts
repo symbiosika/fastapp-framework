@@ -8,6 +8,7 @@ import * as files from "./schema/files";
 import * as embeddings from "./schema/embeddings";
 import * as payment from "./schema/payment";
 import * as additionalData from "./schema/additional-data";
+import * as prompts from "./schema/prompts";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -16,6 +17,7 @@ export * from "./schema/files";
 export * from "./schema/embeddings";
 export * from "./schema/payment";
 export * from "./schema/additional-data";
+export * from "./schema/prompts";
 
 const baseDbSchema = {
   // auth tables
@@ -30,6 +32,8 @@ const baseDbSchema = {
   ...payment,
   // additional data
   ...additionalData,
+  // prompts
+  ...prompts,
 };
 
 export const initializeFullDbSchema = (

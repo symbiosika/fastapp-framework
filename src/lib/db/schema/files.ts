@@ -1,9 +1,4 @@
-import {
-  varchar,
-  uuid,
-  timestamp,
-  customType,
-} from "drizzle-orm/pg-core";
+import { varchar, uuid, timestamp, customType } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
 
@@ -29,3 +24,6 @@ export const files = pgBaseTable("files", {
   extension: varchar("extension", { length: 255 }).notNull(),
   file: bytea("file").notNull(),
 });
+
+export type FilesSelect = typeof files.$inferSelect;
+export type FilesInsert = typeof files.$inferInsert;
