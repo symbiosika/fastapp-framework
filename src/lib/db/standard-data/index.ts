@@ -7,6 +7,7 @@ export const insertStandardDataEntry = async (
   data: DBStandardData[],
   forceOverwrite = false
 ) => {
+  console.log("Inserting standard data. Overwrite: ", forceOverwrite);
   const db = getDb();
   const insertedIds: { [key: string]: any } = {};
 
@@ -43,19 +44,24 @@ export const insertStandardDataEntry = async (
             .onConflictDoNothing()
             .returning();
         } else {
+          // HACK: I cannot UPDATE since I don´t know the table keys here that must be matched
           result = await db
             .insert(table)
             .values(entry)
-            .onConflictDoUpdate({
-              target: table.id,
-              set: entry,
-            })
+            .onConflictDoNothing()
             .returning();
         }
 
         if (result && Array.isArray(result) && result[0]) {
           const insertedId = result[0].id;
           insertedIds[`${tableCount + 1}.${rowCount + 1}`] = insertedId;
+          console.log(
+            `Inserted standard data into ${tableData.schemaName}: ${insertedId}`
+          );
+        } else {
+          console.log(
+            `Skipping standard data insertion into ${tableData.schemaName}`
+          );
         }
       } catch (error) {
         log.error(

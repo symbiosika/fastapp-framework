@@ -10,7 +10,8 @@ import type { DBStandardData, ServerConfig } from "./types";
 
 export const importAllStandardData = async (
   config: ServerConfig,
-  stdData: DBStandardData[]
+  stdData: DBStandardData[],
+  overwrite = false
 ) => {
   /**
    * validate .ENV variables
@@ -32,7 +33,7 @@ export const importAllStandardData = async (
   /**
    * Iterate through all standard data and insert them
    */
-  await insertStandardDataEntry(stdData, false);
+  await insertStandardDataEntry(stdData, overwrite);
 
   console.log("Standard data imported successfully");
   process.exit(0);

@@ -1,10 +1,14 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
+import log from "src/lib/log";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";
 export const TEXT_MODEL = "gpt-4-turbo";
 export const FAST_TEXT_MODEL = "gpt-3.5-turbo";
+export const TTS_MODEL = "tts-1";
+export const STT_MODEL = "whisper-1";
+export const IMAGE_GENERATION_MODEL = "dall-e-3";
 
 interface MessageContent {
   type: string;
@@ -15,7 +19,7 @@ interface MessageContent {
 }
 
 export interface Message {
-  role: "system" | "user";
+  role: "system" | "user" | "assistant";
   content: MessageContent[] | string;
 }
 
@@ -69,10 +73,10 @@ async function encodeImage(imagePath: string): Promise<string> {
 /**
  * Generate a description for the given image using the OpenAI API.
  */
-export async function generateDescription(imagePath: string) {
+export async function generateImageDescription(imagePath: string) {
   const base64Image = await encodeImage(imagePath);
   const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo",
+    model: TEXT_MODEL,
     messages: [
       {
         role: "user",
@@ -100,10 +104,12 @@ export async function generateDescription(imagePath: string) {
  * Custom ChatCompletion function to generate a response for the given prompt.
  * Will respond with a JSON object always.
  */
-export async function chatCompletion(messages: Message[]): Promise<Message[]> {
+export async function chatCompletionAsJson(
+  messages: Message[]
+): Promise<Message[]> {
   const completion = await openai.chat.completions.create({
     messages: messages as any,
-    model: "gpt-4-turbo",
+    model: TEXT_MODEL,
     response_format: { type: "json_object" },
   });
 
@@ -114,17 +120,82 @@ export async function chatCompletion(messages: Message[]): Promise<Message[]> {
 }
 
 /**
- * Custom ChatCompletion function to generate a response for the given prompt.
+ * ChatCompletion function to generate a response for the given prompt.
  * Will respond with plain Text only.
  */
-export async function chatCompletionText(messages: Message[]): Promise<string> {
+export async function chatCompletion(messages: Message[]): Promise<string> {
   const completion = await openai.chat.completions.create({
     messages: messages as any,
-    model: "gpt-4-turbo",
+    model: TEXT_MODEL,
   });
 
   const response = completion.choices[0].message.content ?? "";
   return response;
+}
+
+/**
+ * Helper to count all real words in a string
+ */
+function countWords(text: string): number {
+  return text.split(/\s+/).filter((word) => word.length > 0).length;
+}
+
+/**
+ * Long Text Generation with ChatCompletion
+ * Generates text longer than the max_tokens limit by iteratively appending outputs
+ */
+export async function generateLongText(
+  messages: Message[],
+  desiredWords: number,
+  maxRetries = 5
+): Promise<string> {
+  let output = "";
+  let currentMessages = [...messages];
+  let retryCount = 0;
+  let finished = false;
+
+  while (!finished) {
+    try {
+      const completion = await openai.chat.completions.create({
+        messages: currentMessages as any,
+        model: TEXT_MODEL,
+        max_tokens: 2000,
+      });
+
+      const newText = completion.choices[0].message.content ?? "";
+      output += newText;
+      log.debug(`ChatCompletionLongText: ${output}`);
+
+      // Update messages to include the assistant's reply and a prompt to continue
+      currentMessages.push({
+        role: "assistant",
+        content: newText,
+      });
+
+      // Add a user message to prompt continuation if needed
+      if (countWords(output) < desiredWords) {
+        log.debug(
+          `ChatCompletionLongText: ${countWords(output)}/${desiredWords} words, continuing...`
+        );
+        currentMessages.push({
+          role: "user",
+          content: `You reached ${countWords(output)} of ${desiredWords} desired words. Please continue in the same language as the text. Don't repeat yourself.`,
+        });
+      } else {
+        log.debug(
+          `ChatCompletionLongText: finished after ${retryCount} retries`
+        );
+        finished = true;
+      }
+    } catch (error) {
+      log.debug(`Error in chatCompletionLongText: ${error}`);
+      retryCount++;
+      if (retryCount >= maxRetries) {
+        throw new Error("Failed to generate text after maximum retries");
+      }
+    }
+  }
+  return output;
 }
 
 /**
@@ -135,7 +206,7 @@ export const speechToText = async (audio: Blob) => {
   const file = new File([audio], "audio.mp3", { type: "audio/mp3" });
   const transcription = await openai.audio.transcriptions.create({
     file,
-    model: "whisper-1",
+    model: STT_MODEL,
   });
   return transcription.text;
 };
@@ -145,7 +216,7 @@ export const speechToText = async (audio: Blob) => {
  */
 export const generateImage = async (prompt: string) => {
   const response = await openai.images.generate({
-    model: "dall-e-3",
+    model: IMAGE_GENERATION_MODEL,
     prompt,
     n: 1,
     size: "1024x1024",
@@ -164,6 +235,11 @@ export const generateImage = async (prompt: string) => {
 /**
  * Parse an image and return a detailed description of its content using the OpenAI API.
  */
+
+const PARSE_IMAGE_PROMPT = `
+You are an expert image analyst.
+Provide a detailed description of the following image.`;
+
 export async function parseImage(imagePath: string): Promise<string> {
   const base64Image = await encodeImage(imagePath);
   const response = await openai.chat.completions.create({
@@ -171,7 +247,7 @@ export async function parseImage(imagePath: string): Promise<string> {
     messages: [
       {
         role: "system",
-        content: `You are an expert image analyst. Provide a detailed description of the following image:`,
+        content: PARSE_IMAGE_PROMPT,
       },
       {
         role: "user",
@@ -199,13 +275,18 @@ export async function parseImage(imagePath: string): Promise<string> {
  * Rewrites the given text in a neutral, descriptive manner suitable for product development.
  * The text will be returned in the same language as the input.
  */
+const REWRITE_TEXT_PROMPT = `
+You are a professional writer and ghost writer.
+Rewrite the following text to be neutral, descriptive, and as concise as needed for product development purposes.
+Maintain the same language as the input! This is important!`;
+
 export async function rewriteText(text: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: TEXT_MODEL,
     messages: [
       {
         role: "system",
-        content: `You are a requirement engineer. Rewrite the following text to be neutral, descriptive, and as concise as needed for product development purposes. Maintain the same language as the input! This is important!`,
+        content: REWRITE_TEXT_PROMPT,
       },
       {
         role: "user",
