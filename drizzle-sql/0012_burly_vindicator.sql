@@ -1,0 +1,1 @@
+ALTER TABLE "base_prompt_template_placeholders" ADD COLUMN "required_by_user" boolean DEFAULT false NOT NULL;

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   pgEnum,
   text,
@@ -22,7 +23,7 @@ export const promptTemplates = pgBaseTable(
     name: text("name").notNull(),
     description: text("description").notNull().default(""),
     // optional type (short string) to group prompts
-    type: varchar("type", { length: 255 }),
+    category: varchar("category", { length: 255 }).notNull().default(""),
     template: text("template").notNull(),
     langCode: varchar("lang_code", { length: 2 }),
     // optional user id of the creator
@@ -36,9 +37,9 @@ export const promptTemplates = pgBaseTable(
       .defaultNow(),
   },
   (promptTemplates) => ({
-    unq: unique().on(promptTemplates.name, promptTemplates.type),
+    unq: unique().on(promptTemplates.name, promptTemplates.category),
     nameIdx: index("prompt_templates_name_idx").on(promptTemplates.name),
-    typeIdx: index("prompt_templates_type_idx").on(promptTemplates.type),
+    typeIdx: index("prompt_templates_type_idx").on(promptTemplates.category),
     userIdIdx: index("prompt_templates_user_id_idx").on(promptTemplates.userId),
     langCodeIdx: index("prompt_templates_lang_code_idx").on(
       promptTemplates.langCode
@@ -66,6 +67,8 @@ export const promptTemplatePlaceholders = pgBaseTable(
     name: text("name").notNull(),
     description: text("description").notNull().default(""),
     type: promptTemplatePlaceholderTypeEnum("type").notNull().default("text"),
+    requiredByUser: boolean("required_by_user").notNull().default(false),
+    defaultValue: text("default_value"),
   },
   (promptTemplatePlaceholders) => ({
     promptTemplateIdIdx: index("prompt_template_id_idx").on(
@@ -79,49 +82,13 @@ export type PromptTemplatePlaceholdersSelect =
 export type PromptTemplatePlaceholdersInsert =
   typeof promptTemplatePlaceholders.$inferInsert;
 
-export const promptTemplatePlaceholderDefaults = pgBaseTable(
-  "prompt_template_placeholder_defaults",
-  {
-    id: uuid("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    promptTemplateId: uuid("prompt_template_id")
-      .notNull()
-      .references(() => promptTemplates.id, { onDelete: "cascade" }),
-    promptTemplatePlaceholderId: uuid("prompt_template_placeholder_id")
-      .notNull()
-      .references(() => promptTemplatePlaceholders.id, { onDelete: "cascade" }),
-    langCode: varchar("lang_code", { length: 2 }),
-    value: text("value").notNull(),
-  },
-  (promptTemplatePlaceholderDefaults) => ({
-    unq: unique().on(
-      promptTemplatePlaceholderDefaults.promptTemplateId,
-      promptTemplatePlaceholderDefaults.promptTemplatePlaceholderId,
-      promptTemplatePlaceholderDefaults.langCode
-    ),
-    langCodeIdx: index("prompt_template_placeholder_defaults_lang_code_idx").on(
-      promptTemplatePlaceholderDefaults.langCode
-    ),
-    promptTemplateIdIdx: index(
-      "prompt_template_placeholder_defaults_prompt_template_id_idx"
-    ).on(promptTemplatePlaceholderDefaults.promptTemplateId),
-  })
-);
-
-export type PromptTemplatePlaceholderDefaultsSelect =
-  typeof promptTemplatePlaceholderDefaults.$inferSelect;
-export type PromptTemplatePlaceholderDefaultsInsert =
-  typeof promptTemplatePlaceholderDefaults.$inferInsert;
-
 export const promptTemplatePlaceholdersRelations = relations(
   promptTemplatePlaceholders,
-  ({ one, many }) => ({
+  ({ one }) => ({
     promptTemplate: one(promptTemplates, {
       fields: [promptTemplatePlaceholders.promptTemplateId],
       references: [promptTemplates.id],
     }),
-    promptTemplatePlaceholderDefaults: many(promptTemplatePlaceholderDefaults),
   })
 );
 
@@ -129,20 +96,5 @@ export const promptTemplatesRelations = relations(
   promptTemplates,
   ({ many }) => ({
     promptTemplatePlaceholders: many(promptTemplatePlaceholders),
-    promptTemplatePlaceholderDefaults: many(promptTemplatePlaceholderDefaults),
-  })
-);
-
-export const promptTemplatePlaceholderDefaultsRelations = relations(
-  promptTemplatePlaceholderDefaults,
-  ({ one }) => ({
-    promptTemplatePlaceholder: one(promptTemplatePlaceholders, {
-      fields: [promptTemplatePlaceholderDefaults.promptTemplatePlaceholderId],
-      references: [promptTemplatePlaceholders.id],
-    }),
-    promptTemplate: one(promptTemplates, {
-      fields: [promptTemplatePlaceholderDefaults.promptTemplateId],
-      references: [promptTemplates.id],
-    }),
   })
 );
