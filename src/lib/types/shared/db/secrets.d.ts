@@ -1,5 +1,5 @@
 /*
-import type { secrets } from "src/lib/db/schema/secrets";
+import type { secrets } from "../../../lib/db/schema/secrets";
 type SecretsEntry = typeof secrets.$inferSelect;
 type InsertSecretsEntry = typeof secrets.$inferInsert;
 */

@@ -1,5 +1,5 @@
 /*
-import type { files } from "src/lib/db/schema/files";
+import type { files } from "../../../lib/db/schema/files";
 type FilesEntry = typeof files.$inferSelect;
 type InsertFilesEntry = typeof files.$inferInsert;
 */

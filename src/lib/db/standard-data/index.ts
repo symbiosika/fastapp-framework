@@ -1,4 +1,4 @@
-import log from "src/lib/log";
+import log from "../../../lib/log";
 import { getDb } from "../db-connection";
 import { getDbSchemaTable, normalizeTableName } from "../db-get-schema";
 import type { DBStandardData } from "./../../../types";
@@ -24,7 +24,7 @@ export const insertStandardDataEntry = async (
         if (typeof entry[key] === "string") {
           entry[key] = entry[key].replace(
             /{{(\$\d+\.\d+)}}/g,
-            (match, placeholder) => {
+            (match: string, placeholder: string) => {
               const [tableIndex, rowIndex] = placeholder
                 .slice(1)
                 .split(".")

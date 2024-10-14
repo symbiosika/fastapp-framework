@@ -9,6 +9,7 @@ import * as embeddings from "./schema/embeddings";
 import * as payment from "./schema/payment";
 import * as additionalData from "./schema/additional-data";
 import * as prompts from "./schema/prompts";
+import * as knowledge from "./schema/knowledge";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -18,22 +19,17 @@ export * from "./schema/embeddings";
 export * from "./schema/payment";
 export * from "./schema/additional-data";
 export * from "./schema/prompts";
+export * from "./schema/knowledge";
 
 const baseDbSchema = {
-  // auth tables
   ...userTables,
-  // app wide secrets
   ...secrets,
-  // files
   ...files,
-  // embeddings
   ...embeddings,
-  // payment
   ...payment,
-  // additional data
   ...additionalData,
-  // prompts
   ...prompts,
+  ...knowledge,
 };
 
 let validTableNames: string[] = [];

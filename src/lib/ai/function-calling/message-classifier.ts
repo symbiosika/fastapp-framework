@@ -1,5 +1,3 @@
-// backend/src/lib/ai/messageClassifier.ts
-
 import { FAST_TEXT_MODEL, openai } from "../standard/openai";
 
 const systemPrompt = `

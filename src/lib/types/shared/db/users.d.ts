@@ -1,5 +1,5 @@
 /*
-import type { users } from "src/lib/db/schema/users";
+import type { users } from "../../../lib/db/schema/users";
 type UsersEntity = typeof users.$inferSelect;
 type InsertUsersEntity = typeof users.$inferInsert;
 */

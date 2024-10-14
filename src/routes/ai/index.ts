@@ -1,8 +1,10 @@
-import { textGenerationByPromptTemplate } from "src/lib/ai/generation";
+import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
 import { functionChat } from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
+import { extractKnowledgeFromText } from "../../lib/ai/knowledge";
+import { FileSourceType } from "../../lib/storage";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -17,6 +19,16 @@ const generateByTemplateValidation = v.object({
 });
 export type GenerateByTemplateInput = v.InferOutput<
   typeof generateByTemplateValidation
+>;
+
+const generateKnowledgeValidation = v.object({
+  fileSourceType: v.enum(FileSourceType),
+  fileSourceId: v.optional(v.string()),
+  fileSourceBucket: v.optional(v.string()),
+  fileSourceUrl: v.optional(v.string()),
+});
+export type GenerateKnowledgeInput = v.InferOutput<
+  typeof generateKnowledgeValidation
 >;
 
 /**
@@ -40,11 +52,24 @@ export default function defineRoutes(app: FastAppHono) {
     return c.json(response);
   });
 
-  app.post("/generate-by-template", async (c) => {
+  app.post("/generate-with-template", async (c) => {
     const body = await c.req.json();
     try {
       const parsedBody = v.parse(generateByTemplateValidation, body);
       const r = await textGenerationByPromptTemplate(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, {
+        message: e + "",
+      });
+    }
+  });
+
+  app.post("/generate-knowledge", async (c) => {
+    const body = await c.req.json();
+    try {
+      const parsedBody = v.parse(generateKnowledgeValidation, body);
+      const r = await extractKnowledgeFromText(parsedBody);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, {

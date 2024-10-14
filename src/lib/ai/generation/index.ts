@@ -6,11 +6,11 @@
  */
 
 import { and, eq } from "drizzle-orm";
-import { getDb } from "src/lib/db/db-connection";
-import { promptTemplates } from "src/lib/db/db-schema";
+import { getDb } from "../../../lib/db/db-connection";
+import { promptTemplates } from "../../../lib/db/db-schema";
 import { generateLongText, type Message } from "../standard/openai";
-import log from "src/lib/log";
-import type { GenerateByTemplateInput } from "src/routes/ai";
+import log from "../../../lib/log";
+import type { GenerateByTemplateInput } from "../../../routes/ai";
 
 type PlaceholderData = Record<
   string,

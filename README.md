@@ -44,6 +44,7 @@ DataModel->Forms (image)
 
 - [x] Simple collections endpoint with custom tables
 - [x] CSV Export for collections
+- [ ] Simple Job Management for long running tasks
 
 ### Mailing
 
@@ -118,6 +119,7 @@ DataModel->Forms (image)
 - [ ] Dark/Light mode for standard pages
 - [ ] OAuth2 Mail Providers
 - [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
+- [ ] Check if crypt should be improved. maybe it is necessary to add a "salt" to prevent having similar entries in the DB
 
 ## Database
 

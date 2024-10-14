@@ -5,6 +5,7 @@ import {
   text,
   vector,
   index,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -19,8 +20,9 @@ export const embeddings = pgBaseTable(
     sourceTable: varchar("source_table", { length: 255 }).notNull(),
     sourceId: uuid("source_id").notNull(),
     order: integer("order_number").notNull().default(0),
-    section: varchar("section", { length: 255 }).notNull().default(""),
+    section: varchar("section", { length: 1000 }).notNull().default(""),
     text: text("text").notNull().default(""),
+    meta: jsonb("meta"),
     embeddingModel: varchar("embedding_model", { length: 255 })
       .notNull()
       .default("")

@@ -1,6 +1,6 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
-import log from "src/lib/log";
+import log from "../../../lib/log";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";

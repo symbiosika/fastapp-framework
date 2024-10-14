@@ -1,5 +1,3 @@
-// backend/src/lib/ai/contentFilter.ts
-
 import { openai } from "../standard/openai";
 
 export const isContentAllowed = async (message: string): Promise<boolean> => {

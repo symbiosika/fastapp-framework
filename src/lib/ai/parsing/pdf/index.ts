@@ -9,8 +9,8 @@ export const parsePdfFileAsMardown = async (
   fileContent: File
 ): Promise<string> => {
   // check if API key is set
-  if (LLAMA_CLOUD_API_KEY || LLAMA_CLOUD_API_KEY === "") {
-    throw new Error("No API key set for LlamaParseReader");
+  if (!LLAMA_CLOUD_API_KEY || LLAMA_CLOUD_API_KEY === "") {
+    throw new Error("No API key set for LlamaParseReader.");
   }
 
   const reader = new LlamaParseReader({
