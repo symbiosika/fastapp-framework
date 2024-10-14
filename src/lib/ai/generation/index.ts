@@ -17,6 +17,18 @@ type PlaceholderData = Record<
   string | number | boolean | null | undefined
 >;
 
+type RawBlock = {
+  template: string;
+  outputVarName: string;
+  forget: boolean;
+};
+
+type MessageBlock = {
+  messages: Message[];
+  outputVarName: string;
+  forget: boolean;
+};
+
 /*
 Beispiel: "Erzeuge einen Text für CSRD Bericht für den Abschnitt ESR "Entsorgung von Abfällen"
 Nötige Schritte:
@@ -52,7 +64,7 @@ Ein Prompt Template ist wie folgt aufgebaut:
 ...{{someVariableName}}...
 {{/role}}
 
-{{#break output=someVariableNameTwo}}
+{{#break output=someVariableNameTwo forget=true}}
 
 {{#role=assistant}}
 ...{{someVariableNameTwo}}...
@@ -60,8 +72,13 @@ Ein Prompt Template ist wie folgt aufgebaut:
 
 {{#break}}
 
-Jeder BREAK-Block kann optional einen Output-Variablen-Namen haben.
-Wird dieser nicht angegeben, wird der Output in die Variable "output" geschrieben.
+Jeder BREAK-Block hat einen Output.
+Das keyword "output" gibt optional einen Namen für die Output-Variable an.
+Der Default Name ist "output".
+
+Jeder BREAK-Block hat optional das keyword "forget".
+Wird dieses gesetzt, werden alle Messages nach Abschluss des Blocks verworfen und der "Chat" beginnt neu.
+Dies kann sinnvoll sein um einen besseren Gesamt-Context zu erhalten.
 
 Das Gesamtergebnis ist ein Dictionary mit allen Output-Variablen-Namen.
 Aus dem Beispiel ergbit sich also:
@@ -116,24 +133,52 @@ const getPromptTemplateByNameAndCategory = async (
 };
 
 /**
+ * Helper to shorten a string by replacing the middle with "...".
+ */
+const shortenString = (
+  val: string | number | boolean | null | undefined,
+  maxLength: number
+) => {
+  return (val + "").slice(0, maxLength) + "...";
+};
+
+/**
  * Helper to replace a dict of placeholders with values in a template.
  */
 const replacePlaceholders = async (
   template: string,
   placeholders: PlaceholderData,
-  whiteList: string[]
+  whitelist?: string[]
 ) => {
   let updatedPrompt = template;
   for (const [key, value] of Object.entries(placeholders)) {
-    if (whiteList.includes(key)) {
-      await log.debug(`Replace key: ${key} Value: ${value}`);
-      updatedPrompt = updatedPrompt.replaceAll(
-        `{{${key}}}`,
-        value?.toString() || ""
-      );
+    if (!whitelist || whitelist.includes(key)) {
+      const exp = new RegExp(`{{${key}}}`, "g");
+      const matches = updatedPrompt.match(exp);
+      if (matches) {
+        await log.debug(
+          `Replace key: ${key} Value: ${shortenString(value, 50)}`
+        );
+        updatedPrompt = updatedPrompt.replaceAll(exp, value?.toString() || "");
+      }
     }
   }
   return updatedPrompt;
+};
+
+/**
+ * Helper to replace placeholders in a list of messages.
+ */
+const replacePlaceholdersInMessages = async (
+  messages: Message[],
+  placeholders: PlaceholderData
+) => {
+  for (const message of messages) {
+    message.content = await replacePlaceholders(
+      message.content.toString(),
+      placeholders
+    );
+  }
 };
 
 /**
@@ -148,12 +193,22 @@ const parseRole = (str: string) => {
 };
 
 /**
+ * Helper to parse a boolean given as string.
+ */
+const parseBoolean = (str: string | undefined) => {
+  if (str && (str === "true" || str === "1")) {
+    return true;
+  }
+  return false;
+};
+
+/**
  * Generate a message
  */
 export const generateMessage = async (
   role: string,
   content: string,
-  whiteList: string[],
+  whitelist: string[],
   usersData: PlaceholderData,
   defaultData: PlaceholderData
 ): Promise<Message> => {
@@ -161,7 +216,7 @@ export const generateMessage = async (
   text = await replacePlaceholders(
     text,
     { ...defaultData, ...usersData },
-    whiteList
+    whitelist
   );
 
   return { role: parseRole(role), content: text };
@@ -172,13 +227,11 @@ export const generateMessage = async (
  * This will parse the template and split it into blocks by the {{#break output?=varName}} keyword.
  * It will return an array of blocks. Each block is an object with the template and the output variable name.
  */
-const getBlocksFromTemplate = (
-  template: string
-): { template: string; outputVarName: string }[] => {
-  const rawBlocks: { template: string; outputVarName: string }[] = [];
+const getBlocksFromTemplate = (template: string): RawBlock[] => {
+  const rawBlocks: RawBlock[] = [];
   const usedVarNames = new Set<string>();
 
-  const breakBlockRegex = /{{#break(?: output=(\w+))?}}/g;
+  const breakBlockRegex = /{{#break(?: output=(\w+))?(?: forget=true)?}}/g;
   let match;
   let lastIndex = 0;
 
@@ -192,7 +245,11 @@ const getBlocksFromTemplate = (
     usedVarNames.add(outputVarName);
 
     const blockTemplate = template.slice(lastIndex, match.index);
-    rawBlocks.push({ template: blockTemplate, outputVarName });
+    rawBlocks.push({
+      template: blockTemplate,
+      outputVarName,
+      forget: parseBoolean(match[2]),
+    });
 
     lastIndex = breakBlockRegex.lastIndex;
   }
@@ -207,13 +264,13 @@ const getBlocksFromTemplate = (
     }
     usedVarNames.add(outputVarName);
     const blockTemplate = template.slice(lastIndex);
-    rawBlocks.push({ template: blockTemplate, outputVarName });
+    rawBlocks.push({ template: blockTemplate, outputVarName, forget: false });
   }
 
   // If no break statements were found, use the entire template as one block
   if (rawBlocks.length === 0) {
     const outputVarName = "output";
-    rawBlocks.push({ template, outputVarName });
+    rawBlocks.push({ template, outputVarName, forget: false });
   }
 
   return rawBlocks;
@@ -225,14 +282,14 @@ const getBlocksFromTemplate = (
  * It will generate the messages for each block and return an array of message blocks.
  */
 const generateMessageBlocksFromRawBlocks = async (
-  rawBlocks: { template: string; outputVarName: string }[],
-  whiteList: string[],
+  rawBlocks: RawBlock[],
+  whitelist: string[],
   usersData: PlaceholderData,
   defaultData: PlaceholderData
-): Promise<{ messages: Message[]; outputVarName: string }[]> => {
+): Promise<MessageBlock[]> => {
   // Regular expressions to match role blocks and placeholders
   const roleBlockRegex = /{{#role=(\w+)}}([\s\S]*?){{\/role}}/g;
-  const blocks: { messages: Message[]; outputVarName: string }[] = [];
+  const blocks: MessageBlock[] = [];
 
   // Iterate over all blocks in the template
   for (let i = 0; i < rawBlocks.length; i++) {
@@ -244,7 +301,7 @@ const generateMessageBlocksFromRawBlocks = async (
         await generateMessage(
           match[1],
           match[2],
-          whiteList,
+          whitelist,
           usersData,
           defaultData
         )
@@ -256,13 +313,17 @@ const generateMessageBlocksFromRawBlocks = async (
         await generateMessage(
           "user",
           block.template,
-          whiteList,
+          whitelist,
           usersData,
           defaultData
         )
       );
     }
-    blocks.push({ messages, outputVarName: block.outputVarName });
+    blocks.push({
+      messages,
+      outputVarName: block.outputVarName,
+      forget: block.forget,
+    });
   }
   return blocks;
 };
@@ -270,14 +331,12 @@ const generateMessageBlocksFromRawBlocks = async (
 /**
  * Debugging helper to print a list of messages
  */
-const printMessages = async (
-  data: { messages: Message[]; outputVarName: string }[]
-) => {
+const printMessages = async (data: MessageBlock[]) => {
   for (let i = 0; i < data.length; i++) {
     const block = data[i];
     for (const message of block.messages) {
       await log.debug(
-        `[Block ${i}, output=${block.outputVarName}] ${message.role}: \n${message.content}`
+        `[Block ${i}, output=${block.outputVarName}, forget=${block.forget}] ${message.role}: \n${message.content}`
       );
     }
   }
@@ -293,7 +352,7 @@ const generateMessageBlocks = async (
   placeholderList: string[],
   usersData: PlaceholderData,
   defaultData: PlaceholderData
-): Promise<{ messages: Message[]; outputVarName: string }[]> => {
+): Promise<MessageBlock[]> => {
   // First split the template into blocks by the break blocks.
   const rawBlocks = getBlocksFromTemplate(template);
 
@@ -358,9 +417,57 @@ export const getDialogByTemplate = async (data: GenerateByTemplateInput) => {
     usersPlaceholders,
     defaultValues
   );
-  await printMessages(rawDialog);
 
   return rawDialog;
+};
+
+/**
+ * Wrapper to iterate over message blocks and generate a response
+ */
+const generateResponseFromMessageBlocks = async (
+  messageBlocks: MessageBlock[]
+) => {
+  let allResponses: Record<string, string> = {};
+
+  let allMessages: Message[] = [];
+  let lastOutputVarName = "output";
+
+  // iterate over all message blocks
+  // the messages will be extended by the assistant response after each block
+  // OR it will be reset by the forget flag
+  for (const block of messageBlocks) {
+    // replace the placeholders in the messages from previous blocks
+    const updatedMessages = await replacePlaceholdersInMessages(
+      block.messages,
+      allResponses
+    );
+
+    await printMessages([block]);
+
+    const outputVarName = block.outputVarName;
+    const assistantResponse = await generateLongText(block.messages);
+    await log.debug(
+      `Assistant Response [${outputVarName}]: ${assistantResponse}`
+    );
+    allResponses[outputVarName] = assistantResponse;
+    lastOutputVarName = outputVarName;
+    if (!block.forget) {
+      allMessages = [
+        ...allMessages,
+        ...block.messages,
+        { role: "assistant", content: assistantResponse },
+      ];
+    } else {
+      // reset the message list if the forget flag is set
+      await log.debug("Resetting the message list because of forget flag.");
+      allMessages = [];
+    }
+  }
+  return {
+    messages: allMessages,
+    responses: allResponses,
+    lastOutputVarName,
+  };
 };
 
 /**
@@ -373,6 +480,7 @@ export const textGenerationByPromptTemplate = async (
   data: GenerateByTemplateInput
 ) => {
   const dialog = await getDialogByTemplate(data);
-  // const response = await generateLongText(dialog);
-  return dialog;
+  const response = await generateResponseFromMessageBlocks(dialog);
+
+  return response.responses[response.lastOutputVarName];
 };

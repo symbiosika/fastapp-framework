@@ -146,8 +146,8 @@ function countWords(text: string): number {
  */
 export async function generateLongText(
   messages: Message[],
-  desiredWords: number,
-  maxRetries = 5
+  desiredWords?: number,
+  maxRetries: number = 5
 ): Promise<string> {
   let output = "";
   let currentMessages = [...messages];
@@ -164,7 +164,6 @@ export async function generateLongText(
 
       const newText = completion.choices[0].message.content ?? "";
       output += newText;
-      log.debug(`ChatCompletionLongText: ${output}`);
 
       // Update messages to include the assistant's reply and a prompt to continue
       currentMessages.push({
@@ -173,7 +172,7 @@ export async function generateLongText(
       });
 
       // Add a user message to prompt continuation if needed
-      if (countWords(output) < desiredWords) {
+      if (desiredWords && countWords(output) < desiredWords) {
         log.debug(
           `ChatCompletionLongText: ${countWords(output)}/${desiredWords} words, continuing...`
         );

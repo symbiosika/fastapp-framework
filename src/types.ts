@@ -24,7 +24,7 @@ export interface ServerConfig {
 }
 
 export interface DBStandardData {
-  name: string;
+  name?: string;
   description?: string;
   schemaName: string;
   entries: any[];
