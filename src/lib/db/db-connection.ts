@@ -10,6 +10,9 @@ const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "";
 const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRE_CA_CERT = readFileSync("ca.pem").toString();
 
+// hold the connection
+let dbClient: NodePgDatabase<DatabaseSchema>; // Awaited<ReturnType<typeof createDbClient>>;
+
 /**
  * Connect to the database
  */
@@ -17,6 +20,11 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
   dbInitSchema: TSchema,
   drizzleCreateClient: typeof drizzle
 ) => {
+  if (dbClient) {
+    console.log("DB Client already initialized");
+    return dbClient;
+  }
+
   /** PG Connection pool */
   const pool = new pg.Pool({
     user: POSTGRES_USER,
@@ -68,8 +76,7 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
   return conn;
 };
 
-// hold the connection
-let dbClient: NodePgDatabase<DatabaseSchema>; // Awaited<ReturnType<typeof createDbClient>>;
+
 export const createDatabaseClient = async (
   customSchema?: Record<string, unknown>
 ) => {

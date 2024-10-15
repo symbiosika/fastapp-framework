@@ -20,5 +20,11 @@ export const parsePdfFileAsMardown = async (
 
   const buffer = Buffer.from(await fileContent.arrayBuffer());
   const documents = await reader.loadDataAsContent(buffer);
-  return documents[0].text;
+
+  let fullText = "";
+  for (const document of documents) {
+    fullText += '\n\n' + document.text;
+  }
+
+  return fullText;
 };

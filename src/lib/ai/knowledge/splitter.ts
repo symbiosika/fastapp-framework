@@ -15,20 +15,23 @@ export const splitTextIntoSectionsOrChunks = (text: string): Chunk[] => {
 
   let blocks: Chunk[] = [];
 
-  if (sections.length > 1) {
-    // Rejoin headings with their content
-    for (let i = 0; i < sections.length; i += 2) {
-      const header = sections[i];
-      const content = sections[i + 1] || "";
-      blocks.push({ text: content, header, order: 0 });
-    }
-  } else {
-    // No headings found, split by paragraphs
-    blocks = text
-      .split(/\n\s*\n/)
-      .filter(Boolean)
-      .map((text) => ({ text, header: undefined, order: 0 }));
-  }
+  // HACK. only split by max words for now
+  blocks.push({ text, header: undefined, order: 0 });
+
+  // if (sections.length > 1) {
+  //   // Rejoin headings with their content
+  //   for (let i = 0; i < sections.length; i += 2) {
+  //     const header = sections[i];
+  //     const content = sections[i + 1] || "";
+  //     blocks.push({ text: header + "\n" + content, header, order: 0 });
+  //   }
+  // } else {
+  //   // No headings found, split by paragraphs
+  //   blocks = text
+  //     .split(/\n\s*\n/)
+  //     .filter(Boolean)
+  //     .map((text) => ({ text, header: undefined, order: 0 }));
+  // }
 
   // Split blocks that are too long
   // Add the order to each block

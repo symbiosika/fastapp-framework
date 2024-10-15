@@ -3,8 +3,9 @@ import { functionChat } from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import { extractKnowledgeFromText } from "../../lib/ai/knowledge";
+import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
+import { askKnowledge } from "src/lib/ai/knowledge/search";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -30,6 +31,15 @@ const generateKnowledgeValidation = v.object({
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
 >;
+
+const askKnowledgeValidation = v.object({
+  question: v.string(),
+  countChunks: v.optional(v.number()),
+  addBeforeN: v.optional(v.number()),
+  addAfterN: v.optional(v.number()),
+  filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+});
+export type AskKnowledgeInput = v.InferOutput<typeof askKnowledgeValidation>;
 
 /**
  * Define the payment routes
@@ -70,6 +80,19 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       const parsedBody = v.parse(generateKnowledgeValidation, body);
       const r = await extractKnowledgeFromText(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, {
+        message: e + "",
+      });
+    }
+  });
+
+  app.post("/ask-knowledge", async (c) => {
+    const body = await c.req.json();
+    try {
+      const parsedBody = v.parse(askKnowledgeValidation, body);
+      const r = await askKnowledge(parsedBody);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, {
