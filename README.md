@@ -1,10 +1,5 @@
 # FastApp Webserver for real fast development
 
-USE AS A SUBMODULE?!
-
-- static und public pfad müssen einstellbar sein
-- die pfade für plugin, collections, drizzle-schema müssen anpassbar sein
-
 ## A base docker image to render websites!
 
 The base image represents the web server.
@@ -24,6 +19,7 @@ This makes the development of apps with authentication, etc., very fast.
 - Full control to enable custom access rules
 - Simple!
 - Vue3 Development kit for fast complex UIs
+- Use AI without any knowledge of AI
 
 ## Marketing
 
@@ -60,41 +56,43 @@ DataModel->Forms (image)
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
 - [ ] Auth0 Login (Cloud)
-- [o] Users profile page
+- [ ] Users profile page
 - [ ] Limited Time-Usage Tokens (to give users without accout access to may do some action)
 
 ### Payment Integration
 
 - [ ] Optional payment functions (checked by middleware)
-- [o] Simple Stripe Integration
-- [o] Standard config for payment plans to the custom app
-- [o] Standard Static page to subscribe to a payment plan
+- [x] Simple Stripe Integration
+- [x] Single Payment actions (one-time buy)
+- [x] Subscription Payment actions (monthly/yearly)
+- [x] Standard config for payment plans to the custom app
+- [ ] Standard Static page to subscribe to a payment plan
 - [ ] Standard config for coupons for the custom app
-- [o] Single Payment actions (one-time buy)
 
 ### AI functions
 
-- [ ] Save embeddings to textes
-- [ ] Simialarity search
-- [ ] Chat interface
-- [ ] Basic AI functions like: summary, embeddings, create image,... (with custom prompts given by config)
+- [x] Save embeddings to textes
+- [x] Simialarity search
+- [x] Chat interface
+- [x] Basic AI functions like: summary, embeddings, create image,... (with custom prompts given by config)
+- [x] Prompt Templates with extended functions like iterations
 - [ ] Chat-2-Action Interface
 
 ### Vue3 Dev Kit
 
-- [ ] Formbuilder
+- [x] Formbuilder
 - [ ] Chat-Kit to build interactive Chats
-- [ ] Some formatter and helper for Vue
+- [x] Some formatter and helper for Vue
 
 ### Use Cases (intern)
 
-- [ ] Perlecto
-- [ ] AI-PM
-- [ ] ePub to Chatbot (PDF -> Fine-Tune -> ChatBot)
-- [ ] FastOn Job
-- [ ] CO2 Manager
-- [ ] CSRD
-- [ ] VALERI
+- Perlecto
+- AI-PM
+- ePub to Chatbot (PDF -> Fine-Tune -> ChatBot)
+- FastOn Job
+- CO2 Manager
+- CSRD
+- VALERI
 
 ## Requirements V0.5
 
