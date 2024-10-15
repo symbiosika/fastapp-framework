@@ -7,13 +7,6 @@ export type FunctionCallingAction = (args: Record<string, any>) => Promise<{
   data?: any;
 }>;
 
-type UiActionTextBlock = {
-  type: "render_text";
-  content: string;
-};
-
-export type FunctionCallingResponseUiAction = UiActionTextBlock;
-
 export interface FunctionCalling {
   functionDefinitionAsJson: ChatCompletionTool;
   QAExamples?: {
@@ -21,7 +14,6 @@ export interface FunctionCalling {
     a: string;
   }[];
   action: FunctionCallingAction;
-  uiResponse: FunctionCallingResponseUiAction;
 }
 
 // ! -------------------------------
@@ -68,15 +60,3 @@ export const aiFunctionExecuter = async (
   return func.action(args);
 };
 
-/*
- * Get the ui response for a function call.
- */
-export const getUiDescriptionForFunctionCall = (functionName: string) => {
-  const func = aiFunctions.find(
-    (func) => func.functionDefinitionAsJson.function.name === functionName
-  );
-  if (!func) {
-    throw new Error(`Function ${functionName} not found`);
-  }
-  return func.uiResponse;
-};

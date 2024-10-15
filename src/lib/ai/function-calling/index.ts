@@ -1,13 +1,13 @@
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
   aiFunctionExecuter,
-  getUiDescriptionForFunctionCall,
-  type FunctionCallingResponseUiAction,
 } from "./function-calls";
 import { isContentAllowed } from "./content-filter";
 import { classifyMessage } from "./message-classifier";
 import { classifyFunctionMessage } from "./function-classifier";
 import log from "../../log";
+import { askKnowledge } from "../knowledge/search";
+import type { GenericFormEntry, ServerChatItem } from "./shared-types";
 
 /**
  * A small in memory chat history for the function chat.
@@ -99,25 +99,19 @@ const overwriteChatMessages = (
  * Will add the return message to the chat history and return it to the UI
  */
 const backToUser = (
-  chatId: string,
-  message: string,
-  uiResponse?: FunctionCallingResponseUiAction,
+  data: ServerChatItem,
   resetHistory?: boolean
-) => {
-  logWithChatId(chatId, message);
+): ServerChatItem => {
+  logWithChatId(data.chatId, data.content);
   if (!resetHistory) {
-    appendToChatHistory(chatId, { role: "assistant", content: message });
+    appendToChatHistory(data.chatId, { role: "assistant", content: data.content });
   } else {
-    setChatHistory(chatId, {
+    setChatHistory(data.chatId, {
       messages: [],
       state: {},
     });
   }
-  return {
-    chatId,
-    reply: message,
-    uiResponse,
-  };
+  return data;
 };
 
 /**
@@ -173,7 +167,7 @@ export const functionChat = async (
   try {
     const isAllowed = true; //await isContentAllowed(lastUserMessage);
     if (!isAllowed) {
-      return backToUser(chatId, "I´m sorry, but I can´t answer that question.");
+      return backToUser({ chatId, role: "assistant", content: "I´m sorry, but I can´t answer that question.", renderType: "text" });
     }
 
     // Classify the message. But only if the actual chat state is not already known.
@@ -191,16 +185,15 @@ export const functionChat = async (
 
     // Handle knowledge messages
     if (chatHistory.state.knowledgeModeActive) {
-      await logWithChatId(
-        chatId,
-        "Knowledge questions are not implemented yet."
-      );
 
-      // setChatState(chatId, "knowledgeModeActive");
+      const response = await askKnowledge({
+        question: messages[messages.length - 1].content as string,
+        countChunks: 5,
+        addBeforeN: 2,
+        addAfterN: 2,
+      });
       return backToUser(
-        chatId,
-        "Knowledge questions are not implemented yet.",
-        undefined,
+        { chatId, role: "assistant", content: response.answer, renderType: "box", type: "info" },
         true
       );
     }
@@ -220,9 +213,12 @@ export const functionChat = async (
     // If not, we will reset the chat history and ask the user to try again with another prompt.
     if (funcClassification.data.functionName === "unknown") {
       return backToUser(
-        chatId,
-        "I am sorry. I don´t have a function that could solve your request. Please try again with another prompt.",
-        undefined,
+        {
+          chatId,
+          role: "assistant",
+          content: "I am sorry. I don´t have a function that could solve your request. Please try again with another prompt.",
+          renderType: "text"
+        },
         true
       );
     }
@@ -247,27 +243,40 @@ export const functionChat = async (
         "functionResponse",
         JSON.stringify(functionResponse)
       );
-      const uiResponse = getUiDescriptionForFunctionCall(functionCall.name);
 
       // back to the user. Reset the chat history to start a new one since it can make problems
       // if different questions and actions are handled in the same chat.
-      return backToUser(chatId, functionResponse.message, uiResponse, true);
+      return backToUser({ chatId, role: "assistant", content: functionResponse.message, renderType: "text" }, true);
     }
 
     // If we reach this point, we have a function call with missing fields.
     // We will return a message asking the user to provide the missing fields.
     else {
-      const missingFieldsString =
-        funcClassification.data.missingFields.join(", ");
-      const reply = `I am sorry, but I need more information to perform this action. Please provide the following fields: ${missingFieldsString}.`;
+      // Create form definition from missing fields
+      const formDefinition: GenericFormEntry[] = funcClassification.data.missingFields.map((field) => ({
+        type: "text",
+        label: field,
+        key: field,
+      }));
 
-      return backToUser(chatId, reply);
+      // Create an object with missing fields as keys and empty strings as values
+      const missingFieldsData = Object.fromEntries(
+        funcClassification.data.missingFields.map((field) => [field, ""])
+      );
+
+      return backToUser({
+        chatId,
+        role: "assistant",
+        content: 'Please provide more information.',
+        renderType: "form",
+        definition: formDefinition,
+        data: missingFieldsData
+      });
     }
   } catch (error) {
     await logWithChatId(chatId, "Error in chat endpoint:", error + "");
     return backToUser(
-      chatId,
-      "An error occurred while processing your request. " + error
+      { chatId, role: "assistant", content: "An error occurred while processing your request. " + error, renderType: "text" }
     );
   }
 };
