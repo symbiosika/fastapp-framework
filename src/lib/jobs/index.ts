@@ -1,0 +1,103 @@
+import { eq } from "drizzle-orm";
+import { jobs, type Job, type JobStatus } from "../db/schema/jobs";
+import { getDb } from "../db/db-connection";
+import log from "../log";
+
+const CHECK_CYCLE_MS = 60000;
+
+interface JobHandler {
+    execute: (metadata: any) => Promise<any>;
+    onError?: (error: Error) => Promise<any>;
+}
+
+const jobHandlers: Record<string, JobHandler> = {};
+
+export function defineJob(type: string, handler: JobHandler) {
+    jobHandlers[type] = handler;
+}
+
+async function processJob(job: Job) {
+    await log.debug(`Executing job: ${job.id} from type ${job.type}`);
+
+    const executor = jobHandlers[job.type];
+    if (!executor) {
+        try {
+            await log.debug(`No executor found for job type: ${job.type} and id: ${job.id}`);
+            await getDb()
+                .update(jobs)
+                .set({ status: "failed", error: { message: `No executor found for job type: ${job.type}` } })
+                .where(eq(jobs.id, job.id));
+        } catch (error) {
+            console.error(`Error updating jobId ${job.id} status: ${error}`);
+        }
+        throw new Error(`No executor found for job type: ${job.type}`);
+    }
+
+    // update the job status to running
+    await getDb()
+        .update(jobs)
+        .set({ status: "running" })
+        .where(eq(jobs.id, job.id));
+
+    try {
+        const result = await executor.execute(job.metadata);
+        // complete the job
+        await getDb()
+            .update(jobs)
+            .set({ status: "completed", result })
+            .where(eq(jobs.id, job.id));
+    }
+
+    // if there is an error, we need to update the job status to failed
+    catch (e) {
+        if (executor.onError) {
+            await executor.onError(e as Error);
+        } else {
+            log.error(`Error executing job: ${job.id} from type ${job.type}: ${e}`);
+            getDb()
+                .update(jobs)
+                .set({ status: "failed", error: { message: (e as Error).message } })
+                .where(eq(jobs.id, job.id));
+        }
+    }
+}
+
+export async function startJobQueue() {
+    setInterval(async () => {
+        log.debug("Checking for pending jobs");
+        const pendingJobs = await getDb()
+            .select()
+            .from(jobs)
+            .where(eq(jobs.status, "pending"));
+
+        for (const job of pendingJobs) {
+            await processJob(job);
+        }
+    }, CHECK_CYCLE_MS);
+}
+
+/*
+..in index.ts use "startJobQueue" to register the job queue
+import { startJobQueue } from "../lib/jobs";
+startJobQueue();
+
+// to register new job handlers:
+import { defineJob } from "../lib/jobQueue";
+
+defineJob("render-video", {
+  async execute(metadata: any) {    
+    // Simulate a long-running task
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    return { test: true };
+  }
+});
+
+// Get the status of a job
+GET /api/v1/collections/jobs/:id
+
+// POST a new job
+POST /api/v1/collections/jobs
+
+// GET all jobs
+GET /api/v1/collections/jobs?query=(userId eq "user_id")
+*/

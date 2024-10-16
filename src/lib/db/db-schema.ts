@@ -10,6 +10,7 @@ import * as payment from "./schema/payment";
 import * as additionalData from "./schema/additional-data";
 import * as prompts from "./schema/prompts";
 import * as knowledge from "./schema/knowledge";
+import * as jobs from "./schema/jobs";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -20,6 +21,7 @@ export * from "./schema/payment";
 export * from "./schema/additional-data";
 export * from "./schema/prompts";
 export * from "./schema/knowledge";
+export * from "./schema/jobs";
 
 const baseDbSchema = {
   ...userTables,
@@ -30,6 +32,7 @@ const baseDbSchema = {
   ...additionalData,
   ...prompts,
   ...knowledge,
+  ...jobs,
 };
 
 let validTableNames: string[] = [];
