@@ -1,5 +1,8 @@
 # FastApp Webserver for real fast development
 
+WIRTE TESTS!
+WRITE DOCUMENTATION!
+
 ## A base docker image to render websites!
 
 The base image represents the web server.
@@ -30,7 +33,7 @@ DataModel->Forms (image)
 
 ### Webserver functions
 
-- [ ] Provide webserver as submodule
+- [x] Provide webserver as submodule
 - [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
@@ -40,32 +43,26 @@ DataModel->Forms (image)
 
 - [x] Simple collections endpoint with custom tables
 - [x] CSV Export for collections
-- [ ] Simple Job Management for long running tasks
+- [x] Simple Job Management for long running tasks
 
 ### Mailing
 
 - [x] Function to send Mails from Backend via SMTP
 
-### Interaction
-
-- [ ] Use Telegram to interact with the App
-- [ ] Send push notifications (PWA)
-
 ### User handling
 
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
-- [ ] Auth0 Login (Cloud)
 - [ ] Users profile page
 - [ ] Limited Time-Usage Tokens (to give users without accout access to may do some action)
+- [ ] Magic Link Login
 
 ### Payment Integration
 
-- [ ] Optional payment functions (checked by middleware)
 - [x] Simple Stripe Integration
 - [x] Single Payment actions (one-time buy)
 - [x] Subscription Payment actions (monthly/yearly)
-- [x] Standard config for payment plans to the custom app
+- [x] Standard config for payment plans to the custom app in DB
 - [ ] Standard Static page to subscribe to a payment plan
 - [ ] Standard config for coupons for the custom app
 
@@ -96,6 +93,9 @@ DataModel->Forms (image)
 
 ## Requirements V0.5
 
+- [ ] Auth0 Login (Cloud)
+- [ ] Use Telegram to interact with the App
+- [ ] Send push notifications (PWA)
 - [ ] Extend Collection with "relations" like it is defined from "Hypermedia" in actions and links
 - [ ] Docker container to run DB migrations
 - [ ] Use WhatsApp to interact with the App
