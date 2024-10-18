@@ -26,6 +26,7 @@ import aiRoutes from "./routes/ai";
 import type { ServerConfig, FastAppHonoContextVariables } from "./types";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import type { DatabaseSchema } from "./lib/db/db-schema";
+import log from "./lib/log";
 
 /**
  * Get all relevant ENV variables
@@ -302,11 +303,13 @@ export const defineServer = (config: ServerConfig) => {
    * Serve all files from ./static/
    * can be images, html, css, js, etc.
    */
+  const staticPrivateDataPath = config.staticPrivateDataPath ?? "./static";
+  log.debug(`Static private data path:", ${staticPrivateDataPath}`);
   app.use(
     "/static/*",
     authOrRedirectToLogin,
     serveStatic({
-      root: "./static",
+      root: staticPrivateDataPath,
       rewriteRequestPath: (path) => path.replace(/^\/static/, "/"),
     })
   );
@@ -315,10 +318,12 @@ export const defineServer = (config: ServerConfig) => {
    * Serve all files from ./public/
    * can be images, html, css, js, etc.
    */
+  const staticPublicDataPath = config.staticPublicDataPath ?? "./public";
+  log.debug(`Static public data path: ${staticPublicDataPath}`);
   app.use(
     "/*",
     serveStatic({
-      root: "./public",
+      root: staticPublicDataPath,
       rewriteRequestPath: (path) => path.replace(/^\/public/, "/"),
     })
   );

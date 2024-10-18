@@ -21,6 +21,8 @@ export interface ServerConfig {
   }[];
   customDbSchema?: any; // Drizzle Schema
   customCollectionPermissions?: PermissionDefinitionPerTable;
+  staticPrivateDataPath?: string;
+  staticPublicDataPath?: string;
 }
 
 export interface DBStandardData {
