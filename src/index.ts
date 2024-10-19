@@ -108,6 +108,7 @@ export const defineServer = (config: ServerConfig) => {
         firstname: users.firstname,
         surname: users.surname,
         image: users.image,
+        meta: users.meta,
       })
       .from(users)
       .where(eq(users.id, id));
