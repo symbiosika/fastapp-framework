@@ -4,6 +4,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  jsonb,
   primaryKey,
   text,
   timestamp,
@@ -28,6 +29,7 @@ export const users = pgBaseTable("users", {
   createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
   extUserId: text("ext_user_id").notNull(),
+  meta: jsonb("meta"),
 });
 
 export type UsersSelect = typeof users.$inferSelect;
@@ -50,6 +52,7 @@ export const userGroups = pgBaseTable("user_groups", {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
+  meta: jsonb("meta"),
   createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
