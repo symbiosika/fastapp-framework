@@ -92,7 +92,51 @@
             const resultDiv = document.getElementById("result");
 
             if (response.ok) {
-              resultDiv.innerHTML = `<a href="${result.path}" target="_blank">Hochgeladene Datei anzeigen</a>`;
+              resultDiv.innerHTML = `
+                <a href="${result.path}" target="_blank">Hochgeladene Datei anzeigen</a><br>
+                <button id="learnButton">Zum Anlernen nutzen</button>
+              `;
+
+              // Add event listener for the "Zum Anlernen nutzen" button
+              const learnButton = document.getElementById("learnButton");
+              learnButton.addEventListener("click", async () => {
+                // Disable the button immediately after clicking
+                learnButton.disabled = true;
+                learnButton.textContent = "Anlernen läuft...";
+
+                try {
+                  const learnResponse = await fetch(
+                    "/api/v1/ai/generate-knowledge",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        fileSourceType: fileType,
+                        fileSourceId: result.id,
+                        fileSourceBucket: bucket,
+                      }),
+                    }
+                  );
+
+                  if (learnResponse.ok) {
+                    resultDiv.innerHTML +=
+                      "<p>Anlernen erfolgreich abgeschlossen!</p>";
+                  } else {
+                    const learnResult = await learnResponse.json();
+                    resultDiv.innerHTML += `<p class="error">Fehler beim Anlernen: ${learnResult.message}</p>`;
+                    // Re-enable the button in case of error
+                    learnButton.disabled = false;
+                    learnButton.textContent = "Zum Anlernen nutzen";
+                  }
+                } catch (error) {
+                  resultDiv.innerHTML += `<p class="error">Fehler beim Anlernen: ${error.message}</p>`;
+                  // Re-enable the button in case of error
+                  learnButton.disabled = false;
+                  learnButton.textContent = "Zum Anlernen nutzen";
+                }
+              });
             } else {
               resultDiv.innerHTML = `<p class="error">Fehler: ${result.message}</p>`;
             }
