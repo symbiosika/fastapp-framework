@@ -21,7 +21,6 @@ export const validateAllEnvVariables = (
     "POSTGRES_DB",
     "OPENAI_API_KEY",
     "LLAMA_CLOUD_API_KEY",
-    "ALLOWED_ORIGINS",
     "AUTH_SECRET",
     "SECRETS_AES_KEY",
     "SECRETS_AES_IV",
