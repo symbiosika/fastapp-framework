@@ -1,5 +1,6 @@
 import log from "../../../../lib/log";
 
+// https://docs.cloud.llamaindex.ai/llamaparse/getting_started/api
 const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY;
 const API_BASE_URL = "https://api.cloud.llamaindex.ai";
 
