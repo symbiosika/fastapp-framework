@@ -76,7 +76,6 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
   return conn;
 };
 
-
 export const createDatabaseClient = async (
   customSchema?: Record<string, unknown>
 ) => {
