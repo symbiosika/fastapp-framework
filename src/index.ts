@@ -193,10 +193,24 @@ export const defineServer = (config: ServerConfig) => {
       const email = body.email;
       const password = body.password;
       const user = await LocalAuth.register(email, password);
+      log.debug(`User registered: ${user.id}`);
       return c.json(user);
     } catch (err) {
-      throw new HTTPException(401, { message: "Unauthorized" });
+      log.error(err + "");
+      throw new HTTPException(500, { message: err + "" });
     }
+  });
+
+  /**
+   * Forgot password endpoint
+   */
+  app.post(BASE_PATH + "/forgot-password", async (c: Context) => {
+    const body = await c.req.json();
+    const email = body.email;
+    // const r = await LocalAuth.forgotPassword(email);
+    return c.json({
+      success: true,
+    });
   });
 
   /**

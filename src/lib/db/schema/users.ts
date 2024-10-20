@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -15,22 +16,33 @@ import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
 import { activeSubscriptions, purchases } from "./payment";
 
-export const users = pgBaseTable("users", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  email: text("email").notNull(),
-  emailVerified: timestamp("email_verified", { mode: "date" }),
-  password: text("password"),
-  salt: text("salt"),
-  image: text("image"),
-  firstname: varchar("firstname", { length: 255 }).notNull(),
-  surname: varchar("surname", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
-  extUserId: text("ext_user_id").notNull(),
-  meta: jsonb("meta"),
-});
+export const users = pgBaseTable(
+  "users",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    email: text("email").notNull(),
+    emailVerified: timestamp("email_verified", { mode: "date" }),
+    password: text("password"),
+    salt: text("salt"),
+    image: text("image"),
+    firstname: varchar("firstname", { length: 255 }).notNull(),
+    surname: varchar("surname", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    extUserId: text("ext_user_id").notNull(),
+    meta: jsonb("meta"),
+  },
+  (users) => ({
+    uniqueEmail: uniqueIndex("unique_email").on(users.email),
+    uniqueExtUserId: uniqueIndex("unique_ext_user_id").on(users.extUserId),
+  })
+);
 
 export type UsersSelect = typeof users.$inferSelect;
 export type UsersInsert = typeof users.$inferInsert;

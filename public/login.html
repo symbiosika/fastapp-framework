@@ -1,229 +1,354 @@
 <!doctype html>
-<html lang="de" class="h-full bg-gray-50">
+<html lang="en" class="h-full bg-gray-50">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login | FastAppFramework</title>
+    <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="h-full">
-    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img
+          class="mx-auto w-24 w-auto"
+          src="/logo.png"
+          alt="FastAppFramework"
+        />
         <h2
-          class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900"
+          class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900"
         >
-          Anmelden bei FastAppFramework
+          Sign in to your account
         </h2>
       </div>
 
-      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div id="error-box" class="mb-4 rounded-md bg-red-50 p-4 hidden">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg
-                  class="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <h3
-                  class="text-sm font-medium text-red-800"
-                  id="error-message"
-                ></h3>
-              </div>
-            </div>
-          </div>
-
-          <form class="space-y-6" id="login-form">
-            <div>
-              <label
-                for="email"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >E-Mail-Adresse</label
+      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <div id="error-box" class="mb-4 rounded-md bg-red-50 p-4 hidden">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
               >
-              <div class="mt-2">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autocomplete="email"
-                  required
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
                 />
-              </div>
+              </svg>
             </div>
-
-            <div>
-              <label
-                for="password"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Passwort</label
-              >
-              <div class="mt-2">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  required
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Anmelden
-              </button>
-            </div>
-          </form>
-
-          <div class="mt-6">
-            <div class="relative">
-              <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
-              </div>
-              <div class="relative flex justify-center text-sm">
-                <span class="bg-white px-2 text-gray-500">Oder</span>
-              </div>
-            </div>
-
-            <div class="mt-6">
-              <h3 class="text-center text-sm font-medium text-gray-900">
-                Noch kein Konto?
-              </h3>
-              <form class="mt-4 space-y-6" id="register-form">
-                <div>
-                  <label
-                    for="register-email"
-                    class="block text-sm font-medium leading-6 text-gray-900"
-                    >E-Mail-Adresse</label
-                  >
-                  <div class="mt-2">
-                    <input
-                      id="register-email"
-                      name="email"
-                      type="email"
-                      autocomplete="email"
-                      required
-                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    for="register-password"
-                    class="block text-sm font-medium leading-6 text-gray-900"
-                    >Passwort</label
-                  >
-                  <div class="mt-2">
-                    <input
-                      id="register-password"
-                      name="password"
-                      type="password"
-                      autocomplete="new-password"
-                      required
-                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    Registrieren
-                  </button>
-                </div>
-              </form>
+            <div class="ml-3">
+              <h3
+                class="text-sm font-medium text-red-800"
+                id="error-message"
+              ></h3>
             </div>
           </div>
         </div>
+
+        <form class="space-y-6" id="login-form">
+          <div>
+            <label
+              for="email"
+              class="block text-sm font-medium leading-6 text-gray-900"
+              >Email address</label
+            >
+            <div class="mt-2">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                class="p-4 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <label
+                for="password"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Password</label
+              >
+              <div class="text-sm">
+                <a
+                  href="#"
+                  id="forgot-password-link"
+                  class="font-semibold text-gray-600 hover:text-gray-500"
+                  >Forgot password?</a
+                >
+              </div>
+            </div>
+            <div class="mt-2" id="password-input">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                class="p-4 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+            <div class="mt-2 hidden" id="forgot-password-section">
+              <button
+                type="button"
+                id="send-link-button"
+                class="flex w-full justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+              >
+                Send reset link
+              </button>
+              <button
+                type="button"
+                id="back-to-login-button"
+                class="mt-2 flex w-full justify-center rounded-md bg-gray-200 px-3 py-1.5 text-sm font-semibold leading-6 text-gray-800 shadow-sm hover:bg-gray-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400"
+              >
+                Back to login
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              id="sign-in-button"
+              class="flex w-full justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+            >
+              Sign in
+            </button>
+          </div>
+        </form>
+
+        <p class="mt-10 text-center text-sm text-gray-500" id="register-prompt">
+          Not a member?
+          <a
+            href="#"
+            id="show-register"
+            class="font-semibold leading-6 text-gray-600 hover:text-gray-500"
+            >Register now</a
+          >
+        </p>
+
+        <p
+          class="mt-10 text-center text-sm text-gray-500 hidden"
+          id="login-prompt"
+        >
+          Already have an account?
+          <a
+            href="#"
+            id="show-login"
+            class="font-semibold leading-6 text-gray-600 hover:text-gray-500"
+            >Back to login</a
+          >
+        </p>
+
+        <form class="mt-8 space-y-6 hidden" id="register-form">
+          <div>
+            <label
+              for="register-email"
+              class="block text-sm font-medium leading-6 text-gray-900"
+              >Email address</label
+            >
+            <div class="mt-2">
+              <input
+                id="register-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                class="p-4 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="register-password"
+              class="block text-sm font-medium leading-6 text-gray-900"
+              >Password</label
+            >
+            <div class="mt-2">
+              <input
+                id="register-password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                required
+                class="p-4 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              class="flex w-full justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+            >
+              Register
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <script>
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
-          const errorBox = document.getElementById("error-box");
+      const redirectUrl = "/static/";
+      const errorBox = document.getElementById("error-box");
+      const errorMessage = document.getElementById("error-message");
+      const loginForm = document.getElementById("login-form");
+      const registerForm = document.getElementById("register-form");
+      const showRegisterLink = document.getElementById("show-register");
+      const showLoginLink = document.getElementById("show-login");
+      const registerPrompt = document.getElementById("register-prompt");
+      const loginPrompt = document.getElementById("login-prompt");
+      const forgotPasswordLink = document.getElementById(
+        "forgot-password-link"
+      );
+      const passwordInput = document.getElementById("password-input");
+      const forgotPasswordSection = document.getElementById(
+        "forgot-password-section"
+      );
+      const sendLinkButton = document.getElementById("send-link-button");
+      const backToLoginButton = document.getElementById("back-to-login-button");
+      const signInButton = document.getElementById("sign-in-button");
 
-          try {
-            const response = await fetch("/api/v1/login", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ email, password }),
-            });
+      function clearErrorMessages() {
+        errorBox.classList.add("hidden");
+        errorBox.classList.remove("bg-green-50");
+        errorBox.classList.add("bg-red-50");
+        errorMessage.textContent = "";
+      }
 
-            if (response.ok) {
-              const data = await response.json();
-              document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
-              window.location.href = "/static/index.html";
-            } else {
+      showRegisterLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+        registerPrompt.classList.add("hidden");
+        loginPrompt.classList.remove("hidden");
+      });
+
+      showLoginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        registerForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+        loginPrompt.classList.add("hidden");
+        registerPrompt.classList.remove("hidden");
+        clearErrorMessages();
+      });
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        try {
+          const response = await fetch("/api/v1/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
+            window.location.href = redirectUrl;
+          } else {
+            let errorText;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
               const errorData = await response.json();
-              errorBox.textContent =
-                errorData.message || "Anmeldung fehlgeschlagen";
-              errorBox.style.display = "block";
-            }
-          } catch (error) {
-            errorBox.textContent =
-              "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
-            errorBox.style.display = "block";
-          }
-        });
-
-      document
-        .getElementById("register-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("register-email").value;
-          const password = document.getElementById("register-password").value;
-          const errorBox = document.getElementById("error-box");
-
-          try {
-            const response = await fetch("/api/v1/register", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ email, password }),
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
-              window.location.href = "/static/index.html";
+              errorText = errorData.message || "Login failed";
             } else {
-              const errorData = await response.json();
-              errorBox.textContent =
-                errorData.message || "Registrierung fehlgeschlagen";
-              errorBox.style.display = "block";
+              errorText = await response.text();
             }
-          } catch (error) {
-            errorBox.textContent =
-              "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
-            errorBox.style.display = "block";
+            errorMessage.textContent = errorText;
+            errorBox.classList.remove("hidden");
           }
-        });
+        } catch (error) {
+          errorMessage.textContent =
+            "An error occurred. Please try again later.";
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("register-email").value;
+        const password = document.getElementById("register-password").value;
+
+        try {
+          const response = await fetch("/api/v1/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
+            window.location.href = redirectUrl;
+          } else {
+            const errorData = await response.json();
+            errorMessage.textContent = errorData.detail || "Registration failed";
+            errorBox.classList.remove("hidden");
+          }
+        } catch (error) {
+          errorMessage.textContent = "An error occurred. Please try again later. " + error;
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      forgotPasswordLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        passwordInput.classList.add("hidden");
+        forgotPasswordSection.classList.remove("hidden");
+        signInButton.classList.add("hidden");
+        registerPrompt.classList.add("hidden");
+      });
+
+      backToLoginButton.addEventListener("click", () => {
+        passwordInput.classList.remove("hidden");
+        forgotPasswordSection.classList.add("hidden");
+        signInButton.classList.remove("hidden");
+        registerPrompt.classList.remove("hidden");
+        clearErrorMessages();
+      });
+
+      sendLinkButton.addEventListener("click", async () => {
+        const email = document.getElementById("email").value;
+        if (!email) {
+          errorMessage.textContent = "Please enter your email address.";
+          errorBox.classList.remove("hidden");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/v1/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+
+          if (response.ok) {
+            errorMessage.textContent =
+              "Password reset link sent to your email.";
+            errorBox.classList.remove("hidden");
+            errorBox.classList.remove("bg-red-50");
+            errorBox.classList.add("bg-green-50");
+          } else {
+            const errorData = await response.json();
+            errorMessage.textContent =
+              errorData.message || "Failed to send reset link.";
+            errorBox.classList.remove("hidden");
+          }
+        } catch (error) {
+          errorMessage.textContent =
+            "An error occurred. Please try again later. " + error;
+          errorBox.classList.remove("hidden");
+        }
+      });
     </script>
   </body>
 </html>

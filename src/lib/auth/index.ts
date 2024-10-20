@@ -40,18 +40,22 @@ const getUserFromDb = async (
 
 const setUserInDb = async (email: string, password: string) => {
   const hash = await saltAndHashPassword(password);
-  const user = await getDb()
-    .insert(users)
-    .values({
-      email: email,
-      password: hash,
-      firstname: "",
-      surname: "",
-      extUserId: "",
-      salt: "",
-    })
-    .returning();
-  return user;
+  try {
+    const user = await getDb()
+      .insert(users)
+      .values({
+        email: email,
+        password: hash,
+        firstname: "",
+        surname: "",
+        extUserId: "",
+        salt: "",
+      })
+      .returning();
+    return user[0];
+  } catch {
+    throw "Email already exists";
+  }
 };
 
 const generateJwt = async (user: UsersEntity, expiresIn: number) => {
