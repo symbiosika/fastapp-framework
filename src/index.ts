@@ -27,6 +27,7 @@ import type { ServerConfig, FastAppHonoContextVariables } from "./types";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import type { DatabaseSchema } from "./lib/db/db-schema";
 import log from "./lib/log";
+import { checkUserSubscription } from "./routes/payment";
 
 /**
  * Get all relevant ENV variables
@@ -337,3 +338,4 @@ export const defineServer = (config: ServerConfig) => {
 
 export { getDb };
 export type { DatabaseSchema };
+export { checkUserSubscription };
