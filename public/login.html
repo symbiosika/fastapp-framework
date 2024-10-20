@@ -286,16 +286,15 @@
           });
 
           if (response.ok) {
-            const data = await response.json();
-            document.cookie = `jwt=${data.token}; path=/; secure; samesite=strict`;
+            const user = await response.json();
             window.location.href = redirectUrl;
           } else {
-            const errorData = await response.json();
-            errorMessage.textContent = errorData.detail || "Registration failed";
+            const errorData = await response.text();
+            errorMessage.textContent = errorData || "Registration failed";
             errorBox.classList.remove("hidden");
           }
         } catch (error) {
-          errorMessage.textContent = "An error occurred. Please try again later. " + error;
+          errorMessage.textContent = "An error occurred. " + error;
           errorBox.classList.remove("hidden");
         }
       });
@@ -345,7 +344,7 @@
           }
         } catch (error) {
           errorMessage.textContent =
-            "An error occurred. Please try again later. " + error;
+            "An error occurred. Please try again later.";
           errorBox.classList.remove("hidden");
         }
       });
