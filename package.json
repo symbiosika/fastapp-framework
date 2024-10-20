@@ -6,7 +6,7 @@
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
     "prettier": "^3.3.3",
-    "drizzle-kit": "^0.24.2",
+    "drizzle-kit": "^0.26.2",
     "@types/nodemailer": "^6.4.16"
   },
   "peerDependencies": {
@@ -15,8 +15,8 @@
   "dependencies": {
     "cron": "^3.1.7",
     "csv": "^6.3.10",
-    "drizzle-orm": "^0.33.0",
-    "hono": "^4.5.8",
+    "drizzle-orm": "^0.35.2",
+    "hono": "^4.6.5",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.15",
     "openai": "^4.40.2",
