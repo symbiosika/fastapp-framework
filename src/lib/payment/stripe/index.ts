@@ -66,7 +66,7 @@ export class StripeService {
   /**
    * Check if a customer exists in Stripe
    */
-  async customerExists(email: null | string): Promise<string> {
+  async customerExists(email: null | string): Promise<string | null> {
     // return if no email is given
     if (!email) {
       throw new Error("Invalid user email");
@@ -74,6 +74,9 @@ export class StripeService {
     // try to get customer via stripe API
     try {
       const customers = await this.stripe.customers.list({ email });
+      if (customers.data.length === 0) {
+        return null;
+      }
       return customers.data[0].id;
     } catch (error) {
       this.error("Error checking customer:" + error);

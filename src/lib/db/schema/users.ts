@@ -35,12 +35,11 @@ export const users = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
-    extUserId: text("ext_user_id").notNull(),
+    extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
   },
   (users) => ({
     uniqueEmail: uniqueIndex("unique_email").on(users.email),
-    uniqueExtUserId: uniqueIndex("unique_ext_user_id").on(users.extUserId),
   })
 );
 

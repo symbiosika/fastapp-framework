@@ -11,22 +11,10 @@ const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRE_CA_CERT = readFileSync("ca.pem").toString();
 
 // hold the connection
-let dbClient: NodePgDatabase<DatabaseSchema>; // Awaited<ReturnType<typeof createDbClient>>;
+let dbClient: NodePgDatabase<DatabaseSchema>;
 
-/**
- * Connect to the database
- */
-const createDbClient = async <TSchema extends Record<string, unknown>>(
-  dbInitSchema: TSchema,
-  drizzleCreateClient: typeof drizzle
-) => {
-  if (dbClient) {
-    console.log("DB Client already initialized");
-    return dbClient;
-  }
-
-  /** PG Connection pool */
-  const pool = new pg.Pool({
+const createPool = () => {
+  return new pg.Pool({
     user: POSTGRES_USER,
     password: POSTGRES_PASSWORD,
     host: POSTGRES_HOST,
@@ -39,52 +27,48 @@ const createDbClient = async <TSchema extends Record<string, unknown>>(
       ca: POSTGRE_CA_CERT,
     },
   });
+};
 
-  pool.on("connect", () => {
-    console.log("PG Pool connected to the database");
-  });
+const setupPoolListeners = (pool: pg.Pool) => {
+  pool.on("connect", () => console.log("PG Pool connected to the database"));
+  pool.on("error", (err) => console.error("PG Pool Error ", err));
+};
 
-  pool.on("error", async (err) => {
-    console.error("PG Pool Error ", err);
-  });
-
-  const client = await pool.connect();
-
+const setupClientListeners = (client: pg.PoolClient) => {
   client.on("error", async (err) => {
     console.error("PG Client error:", err.stack);
-    // delete old client
     client.release();
-    // reconnect to the db
-    await createDbClient(dbInitSchema, drizzleCreateClient);
+    await createDatabaseClient();
   });
 
   client.on("end", async () => {
     console.error("PG Client ended the connection.");
-    await createDbClient(dbInitSchema, drizzleCreateClient);
+    await createDatabaseClient();
   });
 
-  client.on("notification", async (msg) => {
-    console.log("PG Client notification:", msg);
-  });
-
-  client.on("notice", async (msg) => {
-    console.log("PG Client notice:", msg);
-  });
-
-  // assign the database object to the global variable
-  const conn = drizzle(client, { schema: dbInitSchema, logger: false }); // Initialize Drizzle ORM with the connection pool
-  return conn;
+  client.on("notification", (msg) =>
+    console.log("PG Client notification:", msg)
+  );
+  client.on("notice", (msg) => console.log("PG Client notice:", msg));
 };
-
 
 export const createDatabaseClient = async (
   customSchema?: Record<string, unknown>
 ) => {
-  let schema = getDbSchema();
-  if (customSchema) {
-    schema = { ...schema, ...customSchema };
+  if (dbClient) {
+    console.log("DB Client already initialized");
+    return dbClient;
   }
-  dbClient = await createDbClient(schema, drizzle);
+
+  const pool = createPool();
+  setupPoolListeners(pool);
+
+  const client = await pool.connect();
+  setupClientListeners(client);
+
+  const schema = { ...getDbSchema(), ...customSchema };
+  dbClient = drizzle(client, { schema, logger: false });
+  return dbClient;
 };
 
 export const getDb = () => {
