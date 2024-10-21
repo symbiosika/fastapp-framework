@@ -93,6 +93,8 @@ DataModel->Forms (image)
 
 ## Requirements V0.5
 
+- [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.
+- [ ] Give the "GenericForm" a toString() Template. Du give a LLM a better possibility to read out?
 - [ ] Auth0 Login (Cloud)
 - [ ] Use Telegram to interact with the App
 - [ ] Send push notifications (PWA)
