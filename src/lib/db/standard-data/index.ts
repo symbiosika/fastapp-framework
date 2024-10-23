@@ -12,13 +12,16 @@ export const insertStandardDataEntry = async (
   const db = getDb();
   const insertedIds: { [key: string]: any } = {};
 
+  let clearedTables: Record<string, boolean> = {};
+
   for (let tableCount = 0; tableCount < data.length; tableCount++) {
     const tableData = data[tableCount];
     const tableName = normalizeTableName(tableData.schemaName);
     const table = getDbSchemaTable(tableName) as any;
 
-    if (forceDelete) {
+    if (forceDelete && !clearedTables[tableName]) {
       await db.delete(table);
+      clearedTables[tableName] = true;
     }
 
     for (let rowCount = 0; rowCount < tableData.entries.length; rowCount++) {

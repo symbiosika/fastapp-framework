@@ -146,9 +146,13 @@ function countWords(text: string): number {
  */
 export async function generateLongText(
   messages: Message[],
+  outputType: "text" | "json" = "text",
   desiredWords?: number,
   maxRetries: number = 5
-): Promise<string> {
+): Promise<{
+  text: string;
+  json?: any;
+}> {
   let output = "";
   let currentMessages = [...messages];
   let retryCount = 0;
@@ -160,6 +164,8 @@ export async function generateLongText(
         messages: currentMessages as any,
         model: TEXT_MODEL,
         max_tokens: 2000,
+        response_format:
+          outputType === "json" ? { type: "json_object" } : undefined,
       });
 
       const newText = completion.choices[0].message.content ?? "";
@@ -194,7 +200,26 @@ export async function generateLongText(
       }
     }
   }
-  return output;
+
+  let parsedJson: any;
+  if (outputType === "json") {
+    try {
+      parsedJson = JSON.parse(output);
+      return {
+        text: output,
+        json: parsedJson,
+      };
+    } catch (error) {
+      log.error(`Error parsing JSON: ${error}. Output: ${output}`);
+      throw new Error(
+        `Result could not be parsed as JSON. Please check the Logs.`
+      );
+    }
+  } else {
+    return {
+      text: output,
+    };
+  }
 }
 
 /**

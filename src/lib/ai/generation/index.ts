@@ -21,12 +21,14 @@ type RawBlock = {
   template: string;
   outputVarName: string;
   forget: boolean;
+  outputType: "text" | "json";
 };
 
 type MessageBlock = {
   messages: Message[];
   outputVarName: string;
   forget: boolean;
+  outputType: "text" | "json";
 };
 
 /*
@@ -64,7 +66,7 @@ Ein Prompt Template ist wie folgt aufgebaut:
 ...{{someVariableName}}...
 {{/role}}
 
-{{#break output=someVariableNameTwo forget=true}}
+{{#break output=someVariableNameTwo forget=true output_type=json}}
 
 {{#role=assistant}}
 ...{{someVariableNameTwo}}...
@@ -139,7 +141,8 @@ const shortenString = (
   val: string | number | boolean | null | undefined,
   maxLength: number
 ) => {
-  return (val + "").slice(0, maxLength) + "...";
+  const str = (val + "").replace(/[\r\n]+/g, " ").trim();
+  return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
 };
 
 /**
@@ -203,6 +206,17 @@ const parseBoolean = (str: string | undefined) => {
 };
 
 /**
+ * Parse output_type
+ * Possible returns = text | json
+ */
+const parseOutputType = (str: string | undefined) => {
+  if (str && str === "json") {
+    return "json";
+  }
+  return "text";
+};
+
+/**
  * Generate a message
  */
 export const generateMessage = async (
@@ -224,19 +238,21 @@ export const generateMessage = async (
 
 /**
  * Get all blocks from a template
- * This will parse the template and split it into blocks by the {{#break output?=varName}} keyword.
+ * This will parse the template and split it into blocks by the {{#break output?=varName output_type?=json}} keyword.
  * It will return an array of blocks. Each block is an object with the template and the output variable name.
  */
 const getBlocksFromTemplate = (template: string): RawBlock[] => {
   const rawBlocks: RawBlock[] = [];
   const usedVarNames = new Set<string>();
 
-  const breakBlockRegex = /{{#break(?: output=(\w+))?(?: forget=true)?}}/g;
+  const breakBlockRegex =
+    /{{#break(?: output=(\w+))?(?: forget=true)?(?: output_type=json)?}}/g;
   let match;
   let lastIndex = 0;
 
   while ((match = breakBlockRegex.exec(template)) !== null) {
     const outputVarName = match[1] || "output";
+    log.debug(`Found break block with outputVarName: ${outputVarName}`);
     if (usedVarNames.has(outputVarName)) {
       throw new Error(
         `Duplicate output variable name ${outputVarName} was found in Template.`
@@ -249,6 +265,7 @@ const getBlocksFromTemplate = (template: string): RawBlock[] => {
       template: blockTemplate,
       outputVarName,
       forget: parseBoolean(match[2]),
+      outputType: parseOutputType(match[3]),
     });
 
     lastIndex = breakBlockRegex.lastIndex;
@@ -259,18 +276,28 @@ const getBlocksFromTemplate = (template: string): RawBlock[] => {
     const outputVarName = "output";
     if (usedVarNames.has(outputVarName)) {
       throw new Error(
-        `Duplicate output variable name ${outputVarName} was found in Template.`
+        `Last-Block: Duplicate output variable name ${outputVarName} was found in Template.`
       );
     }
     usedVarNames.add(outputVarName);
     const blockTemplate = template.slice(lastIndex);
-    rawBlocks.push({ template: blockTemplate, outputVarName, forget: false });
+    rawBlocks.push({
+      template: blockTemplate,
+      outputVarName,
+      forget: false,
+      outputType: "text",
+    });
   }
 
   // If no break statements were found, use the entire template as one block
   if (rawBlocks.length === 0) {
     const outputVarName = "output";
-    rawBlocks.push({ template, outputVarName, forget: false });
+    rawBlocks.push({
+      template,
+      outputVarName,
+      forget: false,
+      outputType: "text",
+    });
   }
 
   return rawBlocks;
@@ -323,6 +350,7 @@ const generateMessageBlocksFromRawBlocks = async (
       messages,
       outputVarName: block.outputVarName,
       forget: block.forget,
+      outputType: block.outputType,
     });
   }
   return blocks;
@@ -331,23 +359,11 @@ const generateMessageBlocksFromRawBlocks = async (
 /**
  * Debugging helper to print a list of messages
  */
-const printMessageBlocks = async (data: MessageBlock[]) => {
-  for (let i = 0; i < data.length; i++) {
-    const block = data[i];
-    for (const message of block.messages) {
-      await log.debug(
-        `[Block ${i}, output=${block.outputVarName}, forget=${block.forget}] ${message.role}: \n${message.content}`
-      );
-    }
-  }
-};
-
-/**
- * Debugging helper to print a list of messages
- */
 const printMessages = async (data: Message[]) => {
   for (const message of data) {
-    await log.debug(`[${message.role}]: ${message.content}`);
+    await log.debug(
+      `[${message.role}]: ${shortenString(message.content + "", 100)}`
+    );
   }
 };
 
@@ -449,11 +465,16 @@ const generateResponseFromMessageBlocks = async (
 
   let allMessages: Message[] = [];
   let lastOutputVarName = "output";
+  let lastAiResponse: { text: string; json?: any } | undefined;
+
+  log.debug(`Generating response from ${messageBlocks.length} blocks.`);
 
   // iterate over all message blocks
   // the messages will be extended by the assistant response after each block
   // OR it will be reset by the forget flag
-  for (const block of messageBlocks) {
+  for (let i = 0; i < messageBlocks.length; i++) {
+    const block = messageBlocks[i];
+
     // replace the placeholders in the messages from previous blocks
     const updatedMessages = await replacePlaceholdersInMessages(
       block.messages,
@@ -467,23 +488,30 @@ const generateResponseFromMessageBlocks = async (
       await log.debug("Resetting the message list because of forget flag.");
       allMessages = [];
     }
+
+    await log.debug(
+      `Block ${i + 1}, Type: ${block.outputType}, OutputVarName: ${block.outputVarName}`
+    );
     await printMessages(allMessages);
 
     const outputVarName = block.outputVarName;
-    const assistantResponse = await generateLongText(allMessages);
-    await log.debug(
-      `Assistant Response [${outputVarName}]: ${assistantResponse}`
+    const assistantResponse = await generateLongText(
+      allMessages,
+      block.outputType
     );
-    allResponses[outputVarName] = assistantResponse;
+
+    allResponses[outputVarName] = assistantResponse.text;
+    lastAiResponse = assistantResponse;
     lastOutputVarName = outputVarName;
 
     // add the assistant response to the message list
-    allMessages.push({ role: "assistant", content: assistantResponse });
+    allMessages.push({ role: "assistant", content: assistantResponse.text });
   }
   return {
     messages: allMessages,
     responses: allResponses,
     lastOutputVarName,
+    jsonResponse: lastAiResponse?.json,
   };
 };
 
