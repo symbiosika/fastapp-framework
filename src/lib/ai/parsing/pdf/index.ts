@@ -74,5 +74,6 @@ export const parsePdfFileAsMardown = async (
   }
 
   log.debug("Result retrieved successfully.");
-  return await resultResponse.text();
+  const r = await resultResponse.json();
+  return r.markdown;
 };

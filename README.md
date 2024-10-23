@@ -33,19 +33,23 @@ DataModel->Forms (image)
 
 ### Webserver functions
 
-- [x] Provide webserver as submodule
+- [x] Provide webserver as library
 - [x] Serve static public files (e.g. the Main page for an App)
 - [x] Serve static hidden files behind the user login
 - [x] Serve an API for the database (simple query logic)
 - [x] Simple Task scheduler
+- [x] Simple Job Management for long running tasks
+- [x] Logging to disk
 
 ### Database
 
 - [x] Simple collections endpoint with custom tables
+- [x] File storage
+- [ ] Give each file a automativ remove date for temporary data
 - [x] CSV Export for collections
-- [x] Simple Job Management for long running tasks
+- [ ] CSV Import for collections
 
-### Mailing
+### Communication
 
 - [x] Function to send Mails from Backend via SMTP
 
@@ -63,8 +67,8 @@ DataModel->Forms (image)
 - [x] Single Payment actions (one-time buy)
 - [x] Subscription Payment actions (monthly/yearly)
 - [x] Standard config for payment plans to the custom app in DB
-- [ ] Standard Static page to subscribe to a payment plan
-- [ ] Standard config for coupons for the custom app
+- [x] DevKit UI component to show subscription plans and active subscriptions
+- [ ] Standard config for coupons
 
 ### AI functions
 
@@ -81,18 +85,11 @@ DataModel->Forms (image)
 - [ ] Chat-Kit to build interactive Chats
 - [x] Some formatter and helper for Vue
 
-### Use Cases (intern)
 
-- Perlecto
-- AI-PM
-- ePub to Chatbot (PDF -> Fine-Tune -> ChatBot)
-- FastOn Job
-- CO2 Manager
-- CSRD
-- VALERI
+## Requirements Next version
 
-## Requirements V0.5
-
+- [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.
+- [ ] Give the "GenericForm" a toString() Template. Du give a LLM a better possibility to read out?
 - [ ] Auth0 Login (Cloud)
 - [ ] Use Telegram to interact with the App
 - [ ] Send push notifications (PWA)
