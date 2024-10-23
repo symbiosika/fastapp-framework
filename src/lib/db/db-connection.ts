@@ -8,7 +8,7 @@ const POSTGRES_USER = process.env.POSTGRES_USER ?? "";
 const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD ?? "";
 const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "";
 const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
-const POSTGRE_CA_CERT = readFileSync("ca.pem").toString();
+const POSTGRE_CA_CERT = process.env.POSTGRE_CA_CERT ?? "";
 
 // hold the connection
 let dbClient: NodePgDatabase<DatabaseSchema>;

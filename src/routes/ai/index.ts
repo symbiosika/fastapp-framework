@@ -1,7 +1,11 @@
 import {
   getPlaceholdersForPromptTemplate,
-  textGenerationByPromptTemplate,
-} from "../../lib/ai/generation";
+  getPlainPlaceholdersForPromptTemplate,
+  getPlainTemplate,
+  getTemplates,
+  updatePromptTemplate,
+  updatePromptTemplatePlaceholder,
+} from "../../lib/ai/generation/crud";
 import { functionChat } from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
@@ -10,6 +14,7 @@ import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
 import { askKnowledge } from "src/lib/ai/knowledge/search";
 import { parseDocument } from "src/lib/ai/parsing";
+import { textGenerationByPromptTemplate } from "src/lib/ai/generation";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -71,6 +76,57 @@ export default function defineRoutes(app: FastAppHono) {
     }
     const response = await functionChat(chatId, messages);
     return c.json(response);
+  });
+
+  /**
+   * Get a plain template
+   */
+  app.get("/template", async (c) => {
+    const promptId = c.req.query("promptId");
+    const promptName = c.req.query("promptName");
+    const promptCategory = c.req.query("promptCategory");
+
+    if (!promptId && !promptName && !promptCategory) {
+      const r = await getTemplates();
+      return c.json(r);
+    }
+
+    const r = await getPlainTemplate({ promptId, promptName, promptCategory });
+    return c.json(r);
+  });
+
+  /**
+   * Update a prompt template by ID
+   */
+  app.put("/template/:id", async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const r = await updatePromptTemplate({ ...body, id });
+    return c.json(r);
+  });
+
+  /**
+   * Get all placeholders for a prompt template by ID
+   */
+  app.get("/template/:id/placeholders", async (c) => {
+    const id = c.req.param("id");
+    const r = await getPlainPlaceholdersForPromptTemplate(id);
+    return c.json(r);
+  });
+
+  /**
+   * Update a prompt-template placeholder by ID
+   */
+  app.put("/template/:promptTemplateId/placeholders/:id", async (c) => {
+    const promptTemplateId = c.req.param("promptTemplateId");
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const r = await updatePromptTemplatePlaceholder({
+      ...body,
+      id,
+      promptTemplateId: promptTemplateId,
+    });
+    return c.json(r);
   });
 
   /**

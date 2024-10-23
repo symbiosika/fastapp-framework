@@ -99,9 +99,21 @@ export interface Message {
 /**
  * Get a prompt template from the database by id.
  */
-const getPromptTemplateById = async (promptId: string) => {
+const getPromptTemplateById = async (
+  promptId: string,
+  returnHiddenEntries = true
+) => {
+  let where;
+  if (!returnHiddenEntries) {
+    where = and(
+      eq(promptTemplates.hidden, false),
+      eq(promptTemplates.id, promptId)
+    );
+  } else {
+    where = eq(promptTemplates.id, promptId);
+  }
   const result = await getDb().query.promptTemplates.findFirst({
-    where: eq(promptTemplates.id, promptId),
+    where,
     with: {
       promptTemplatePlaceholders: true,
     },
@@ -117,13 +129,24 @@ const getPromptTemplateById = async (promptId: string) => {
  */
 const getPromptTemplateByNameAndCategory = async (
   promptName: string,
-  promptCategory: string
+  promptCategory: string,
+  returnHiddenEntries = true
 ) => {
-  const result = await getDb().query.promptTemplates.findFirst({
-    where: and(
+  let where;
+  if (!returnHiddenEntries) {
+    where = and(
+      eq(promptTemplates.hidden, false),
       eq(promptTemplates.name, promptName),
       eq(promptTemplates.category, promptCategory)
-    ),
+    );
+  } else {
+    where = and(
+      eq(promptTemplates.name, promptName),
+      eq(promptTemplates.category, promptCategory)
+    );
+  }
+  const result = await getDb().query.promptTemplates.findFirst({
+    where,
     with: {
       promptTemplatePlaceholders: true,
     },
@@ -395,17 +418,21 @@ const generateMessageBlocks = async (
 /**
  * Get the definition of a prompt template
  */
-const getPromptTemplateDefinition = async (data: {
-  promptId?: string;
-  promptName?: string;
-  promptCategory?: string;
-}) => {
+export const getPromptTemplateDefinition = async (
+  data: {
+    promptId?: string;
+    promptName?: string;
+    promptCategory?: string;
+  },
+  returnHiddenEntries = true
+) => {
   if (data.promptId) {
-    return await getPromptTemplateById(data.promptId);
+    return await getPromptTemplateById(data.promptId, returnHiddenEntries);
   } else if (data.promptName && data.promptCategory) {
     return await getPromptTemplateByNameAndCategory(
       data.promptName,
-      data.promptCategory
+      data.promptCategory,
+      returnHiddenEntries
     );
   }
   throw new Error(
@@ -528,26 +555,4 @@ export const textGenerationByPromptTemplate = async (
   const response = await generateResponseFromMessageBlocks(dialog);
 
   return response.responses[response.lastOutputVarName];
-};
-
-/**
- * Get all placeholders for one template as an object
- */
-export const getPlaceholdersForPromptTemplate = async (request: {
-  promptId?: string;
-  promptName?: string;
-  promptCategory?: string;
-}) => {
-  const definition = await getPromptTemplateDefinition(request);
-  const prefilledArray = definition.promptTemplatePlaceholders.map((p) => ({
-    [p.name]: p.defaultValue,
-  }));
-  const prefilledObject = prefilledArray.reduce(
-    (acc, curr) => ({ ...acc, ...curr }),
-    {}
-  );
-  return {
-    placeholders: prefilledObject,
-    placeholderDefinitions: definition.promptTemplatePlaceholders,
-  };
 };
