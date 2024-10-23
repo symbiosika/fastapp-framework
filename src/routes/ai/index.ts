@@ -81,7 +81,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get a plain template
    */
-  app.get("/template", async (c) => {
+  app.get("/templates", async (c) => {
     const promptId = c.req.query("promptId");
     const promptName = c.req.query("promptName");
     const promptCategory = c.req.query("promptCategory");
