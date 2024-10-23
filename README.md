@@ -57,9 +57,9 @@ DataModel->Forms (image)
 
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
+- [x] Magic Link Login
 - [ ] Users profile page
 - [ ] Limited Time-Usage Tokens (to give users without accout access to may do some action)
-- [ ] Magic Link Login
 
 ### Payment Integration
 
@@ -84,35 +84,34 @@ DataModel->Forms (image)
 - [x] Formbuilder
 - [ ] Chat-Kit to build interactive Chats
 - [x] Some formatter and helper for Vue
-
+- [x] Default layout wrapper (header + menu)
 
 ## Requirements Next version
 
-- [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.
-- [ ] Give the "GenericForm" a toString() Template. Du give a LLM a better possibility to read out?
-- [ ] Auth0 Login (Cloud)
-- [ ] Use Telegram to interact with the App
 - [ ] Send push notifications (PWA)
 - [ ] Extend Collection with "relations" like it is defined from "Hypermedia" in actions and links
-- [ ] Docker container to run DB migrations
 - [ ] Use WhatsApp to interact with the App
-- [ ] Provide a running webserver as docker image
-- [ ] CSV Import for collections
 - [ ] Custom registration flow to prevent Registration of unallowed users
-- [ ] Default layout wrapper (header + menu)
-- [ ] Internal news page (like messdas)
 - [ ] Connectors to make.com, PowerAutomate und n8n.com
-- [ ] Internal Proxy to connect server-side-rendering frameworks inside
-- [ ] 2FA Auth: https://www.npmjs.com/package/otpauth
 - [ ] Magic Link Auth: https://www.npmjs.com/package/passport-magic-link
+- [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
+- [ ] Check if crypt should be improved. maybe it is necessary to add a "salt" to prevent having similar entries in the DB
+
+
+## Requirements a very later version (Only ideas)
+
+- [ ] Use Telegram to interact with the App
+- [ ] Auth0 Login (Cloud)
+- [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.
+- [ ] Give the "GenericForm" a toString() Template. Du give a LLM a better possibility to read out?
+- [ ] Docker container to run DB migrations. Actually this is solved by GH Actions for each project
+- [ ] Provide a running webserver as docker image
+- [ ] Internal news page (like messdas)
 - [ ] Internal Proxy to connect server-side-rendering frameworks inside
 - [ ] Internal Proxy to connect other webservices
-- [ ] Anbindung von WhatsApp/Telegram
-- [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
 - [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
 - [ ] Graphen ggf. nur als URI speichern. Also http://product1->"is parent of"->http://product2 (Ref.: Knowledge Graph, Prof. Dengler)
 - [ ] Dark/Light mode for standard pages
 - [ ] OAuth2 Mail Providers
+- [ ] 2FA Auth: https://www.npmjs.com/package/otpauth
 - [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
-- [ ] Check if crypt should be improved. maybe it is necessary to add a "salt" to prevent having similar entries in the DB
-

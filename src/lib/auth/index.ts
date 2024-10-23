@@ -3,6 +3,7 @@ import { sessions, users } from "../db/db-schema";
 import { getDb } from "../db/db-connection";
 import jwt from "jsonwebtoken";
 import type { UsersEntity } from "../types/shared/db/users";
+import { sendMagicLink, verifyMagicLink } from "./magic-link";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -58,7 +59,7 @@ const setUserInDb = async (email: string, password: string) => {
   }
 };
 
-const generateJwt = async (user: UsersEntity, expiresIn: number) => {
+export const generateJwt = async (user: UsersEntity, expiresIn: number) => {
   // use same keys as Auth0 here
 
   const token = jwt.sign(
@@ -108,5 +109,13 @@ export const LocalAuth = {
 
   async login(email: string, password: string) {
     return await checkAndCreateSession(email, password);
+  },
+
+  async loginWithMagicLink(token: string) {
+    return await verifyMagicLink(token);
+  },
+
+  async sendMagicLink(email: string) {
+    return await sendMagicLink(email);
   },
 };

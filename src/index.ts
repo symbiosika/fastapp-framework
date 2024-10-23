@@ -172,10 +172,37 @@ export const defineServer = (config: ServerConfig) => {
       const body = await c.req.json();
       const email = body.email;
       const password = body.password;
-      const r = await LocalAuth.login(email, password);
-      return c.json(r);
+      const magicLinkToken = body.magicLinkToken;
+
+      if (magicLinkToken) {
+        const r = await LocalAuth.loginWithMagicLink(magicLinkToken);
+        return c.json(r);
+      } else {
+        const r = await LocalAuth.login(email, password);
+        return c.json(r);
+      }
     } catch (err) {
       throw new HTTPException(401, { message: "Invalid login: " + err });
+    }
+  });
+
+  /**
+   * Endpoint to send a magic link to the user
+   */
+  app.get(BASE_PATH + "/send-magic-link", async (c: Context) => {
+    const email = c.req.query("email");
+    if (!email) {
+      throw new HTTPException(400, { message: "?email=... is required" });
+    }
+    try {
+      await LocalAuth.sendMagicLink(email);
+      return c.json({
+        success: true,
+      });
+    } catch (err) {
+      throw new HTTPException(500, {
+        message: "Error sending magic link: " + err,
+      });
     }
   });
 

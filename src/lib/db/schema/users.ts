@@ -123,3 +123,27 @@ export const userGroupMembersRelations = relations(
     }),
   })
 );
+
+// Table "MagicLink Sessions"
+export const magicLinkSessions = pgBaseTable(
+  "magic_link_sessions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    token: text("token").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (magicLinkSession) => ({
+    uniqueToken: uniqueIndex("unique_token").on(magicLinkSession.token),
+  })
+);
+
+export type MagicLinkSessionsSelect = typeof magicLinkSessions.$inferSelect;
+export type MagicLinkSessionsInsert = typeof magicLinkSessions.$inferInsert;

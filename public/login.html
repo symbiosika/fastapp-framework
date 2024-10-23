@@ -18,27 +18,20 @@
       </div>
 
       <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <div id="error-box" class="mb-4 rounded-md bg-red-50 p-4 hidden">
+        <div id="message-box" class="mb-4 rounded-md p-4 hidden">
           <div class="flex">
             <div class="flex-shrink-0">
-              <svg
-                class="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clip-rule="evenodd"
-                />
+              <!-- Error icon (hidden for success messages) -->
+              <svg id="error-icon" class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+              </svg>
+              <!-- Success icon (hidden for error messages) -->
+              <svg id="success-icon" class="h-5 w-5 text-green-400 hidden" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
-              <h3
-                class="text-sm font-medium text-red-800"
-                id="error-message"
-              ></h3>
+              <h3 class="text-sm font-medium" id="message-text"></h3>
             </div>
           </div>
         </div>
@@ -113,6 +106,16 @@
               class="flex w-full justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
             >
               Sign in
+            </button>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              id="magic-login-button"
+              class="flex w-full justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              Magic Login via Email
             </button>
           </div>
         </form>
@@ -191,8 +194,10 @@
 
     <script>
       const redirectUrl = "/static/";
-      const errorBox = document.getElementById("error-box");
-      const errorMessage = document.getElementById("error-message");
+      const messageBox = document.getElementById("message-box");
+      const messageText = document.getElementById("message-text");
+      const errorIcon = document.getElementById("error-icon");
+      const successIcon = document.getElementById("success-icon");
       const loginForm = document.getElementById("login-form");
       const registerForm = document.getElementById("register-form");
       const showRegisterLink = document.getElementById("show-register");
@@ -209,12 +214,29 @@
       const sendLinkButton = document.getElementById("send-link-button");
       const backToLoginButton = document.getElementById("back-to-login-button");
       const signInButton = document.getElementById("sign-in-button");
+      const magicLoginButton = document.getElementById("magic-login-button");
 
-      function clearErrorMessages() {
-        errorBox.classList.add("hidden");
-        errorBox.classList.remove("bg-green-50");
-        errorBox.classList.add("bg-red-50");
-        errorMessage.textContent = "";
+      function showMessage(message, isError = true) {
+        messageText.textContent = message;
+        messageBox.classList.remove("hidden", "bg-red-50", "bg-green-50");
+        messageText.classList.remove("text-red-800", "text-green-800");
+        errorIcon.classList.add("hidden");
+        successIcon.classList.add("hidden");
+
+        if (isError) {
+          messageBox.classList.add("bg-red-50");
+          messageText.classList.add("text-red-800");
+          errorIcon.classList.remove("hidden");
+        } else {
+          messageBox.classList.add("bg-green-50");
+          messageText.classList.add("text-green-800");
+          successIcon.classList.remove("hidden");
+        }
+      }
+
+      function clearMessages() {
+        messageBox.classList.add("hidden");
+        messageText.textContent = "";
       }
 
       showRegisterLink.addEventListener("click", (e) => {
@@ -231,7 +253,7 @@
         loginForm.classList.remove("hidden");
         loginPrompt.classList.add("hidden");
         registerPrompt.classList.remove("hidden");
-        clearErrorMessages();
+        clearMessages();
       });
 
       loginForm.addEventListener("submit", async (e) => {
@@ -259,13 +281,10 @@
             } else {
               errorText = await response.text();
             }
-            errorMessage.textContent = errorText;
-            errorBox.classList.remove("hidden");
+            showMessage(errorText, true);
           }
         } catch (error) {
-          errorMessage.textContent =
-            "An error occurred. Please try again later.";
-          errorBox.classList.remove("hidden");
+          showMessage("An error occurred. Please try again later.", true);
         }
       });
 
@@ -286,12 +305,10 @@
             window.location.href = redirectUrl;
           } else {
             const errorData = await response.text();
-            errorMessage.textContent = errorData || "Registration failed";
-            errorBox.classList.remove("hidden");
+            showMessage(errorData || "Registration failed", true);
           }
         } catch (error) {
-          errorMessage.textContent = "An error occurred. " + error;
-          errorBox.classList.remove("hidden");
+          showMessage("An error occurred. " + error, true);
         }
       });
 
@@ -308,14 +325,13 @@
         forgotPasswordSection.classList.add("hidden");
         signInButton.classList.remove("hidden");
         registerPrompt.classList.remove("hidden");
-        clearErrorMessages();
+        clearMessages();
       });
 
       sendLinkButton.addEventListener("click", async () => {
         const email = document.getElementById("email").value;
         if (!email) {
-          errorMessage.textContent = "Please enter your email address.";
-          errorBox.classList.remove("hidden");
+          showMessage("Please enter your email address.");
           return;
         }
 
@@ -327,15 +343,51 @@
           });
 
           if (response.ok) {
-            errorMessage.textContent =
-              "Password reset link sent to your email.";
+            showMessage("Password reset link sent to your email.", false);
+          } else {
+            const errorData = await response.json();
+            showMessage(errorData.message || "Failed to send reset link.");
+          }
+        } catch (error) {
+          showMessage("An error occurred. Please try again later.", true);
+        }
+      });
+
+      magicLoginButton.addEventListener("click", async () => {
+        const email = document.getElementById("email").value;
+        if (!email) {
+          showMessage("Please enter your email address.");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/v1/send-magic-link?email=" + encodeURIComponent(email), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (response.ok) {
+            showMessage("Please check your inbox for the magic login link.", false);
+          } else {
+            const errorData = await response.json();
+            showMessage(errorData.message || "Failed to send magic login link.");
+          }
+        } catch (error) {
+          showMessage("An error occurred. Please try again later.", true);
+        }
+      });
+    </script>
+  </body>
+</html>
+
+              "Please check your inbox for the magic login link.";
             errorBox.classList.remove("hidden");
             errorBox.classList.remove("bg-red-50");
             errorBox.classList.add("bg-green-50");
           } else {
             const errorData = await response.json();
             errorMessage.textContent =
-              errorData.message || "Failed to send reset link.";
+              errorData.message || "Failed to send magic login link.";
             errorBox.classList.remove("hidden");
           }
         } catch (error) {
