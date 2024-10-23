@@ -368,31 +368,40 @@ const generateMessageBlocks = async (
 };
 
 /**
- * Generate a dialog by a prompt template.
+ * Get the definition of a prompt template
  */
-export const getDialogByTemplate = async (data: GenerateByTemplateInput) => {
-  // get the prompt template from the database
-  let defintion;
+const getPromptTemplateDefinition = async (data: {
+  promptId?: string;
+  promptName?: string;
+  promptCategory?: string;
+}) => {
   if (data.promptId) {
-    defintion = await getPromptTemplateById(data.promptId);
+    return await getPromptTemplateById(data.promptId);
   } else if (data.promptName && data.promptCategory) {
-    defintion = await getPromptTemplateByNameAndCategory(
+    return await getPromptTemplateByNameAndCategory(
       data.promptName,
       data.promptCategory
     );
-  } else {
-    throw new Error(
-      "Either promptId or promptName and promptCategory have to be set."
-    );
   }
+  throw new Error(
+    "Either promptId or promptName and promptCategory have to be set."
+  );
+};
+
+/**
+ * Generate a dialog by a prompt template.
+ */
+export const getDialogByTemplate = async (request: GenerateByTemplateInput) => {
+  // get the prompt template from the database
+  const definition = await getPromptTemplateDefinition(request);
 
   // get all requrired fields that has to be provided by the user
-  const requiredFields = defintion.promptTemplatePlaceholders
+  const requiredFields = definition.promptTemplatePlaceholders
     .filter((p) => p.requiredByUser)
     .map((p) => p.name);
 
   // check the payload for required fields
-  const usersPlaceholders = data.usersPlaceholders ?? {};
+  const usersPlaceholders = request.usersPlaceholders ?? {};
   for (const key of requiredFields) {
     if (!(key in usersPlaceholders)) {
       throw new Error(
@@ -402,17 +411,17 @@ export const getDialogByTemplate = async (data: GenerateByTemplateInput) => {
   }
 
   // get all needed placeholders from db config
-  const placeholderKeys = defintion.promptTemplatePlaceholders.map(
+  const placeholderKeys = definition.promptTemplatePlaceholders.map(
     (p) => p.name
   );
-  const defaultValues = defintion.promptTemplatePlaceholders
+  const defaultValues = definition.promptTemplatePlaceholders
     .map((p) => ({
       [p.name]: p.defaultValue,
     }))
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
   const rawDialog = await generateMessageBlocks(
-    defintion.template,
+    definition.template,
     placeholderKeys,
     usersPlaceholders,
     defaultValues
@@ -483,4 +492,26 @@ export const textGenerationByPromptTemplate = async (
   const response = await generateResponseFromMessageBlocks(dialog);
 
   return response.responses[response.lastOutputVarName];
+};
+
+/**
+ * Get all placeholders for one template as an object
+ */
+export const getPlaceholdersForPromptTemplate = async (request: {
+  promptId?: string;
+  promptName?: string;
+  promptCategory?: string;
+}) => {
+  const definition = await getPromptTemplateDefinition(request);
+  const prefilledArray = definition.promptTemplatePlaceholders.map((p) => ({
+    [p.name]: p.defaultValue,
+  }));
+  const prefilledObject = prefilledArray.reduce(
+    (acc, curr) => ({ ...acc, ...curr }),
+    {}
+  );
+  return {
+    placeholders: prefilledObject,
+    placeholderDefinitions: definition.promptTemplatePlaceholders,
+  };
 };

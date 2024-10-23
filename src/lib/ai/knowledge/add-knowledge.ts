@@ -29,29 +29,7 @@ import {
   type KnowledgeChunksInsert,
   type KnowledgeEntryInsert,
 } from "../../db/schema/knowledge";
-
-/**
- * Helper function to parse a file and return the text content
- */
-const parseFile = async (file: File): Promise<{ text: string }> => {
-  log.debug(`Parse file: ${file.name} from type ${file.type}`);
-
-  // PDF
-  if (file.type === "application/pdf") {
-    // try tp parse the content
-    const markdown = await parsePdfFileAsMardown(file);
-    return { text: markdown };
-  }
-
-  // Image
-  else if (file.type === "image") {
-    // the the image describe by ai
-    const description = ""; // await generateImageDescription(file);
-    return { text: description };
-  } else {
-    throw new Error(`Unsupported file type for parsing: ${file.type}`);
-  }
-};
+import { parseDocument } from "../parsing";
 
 /**
  * Helper function to store a knowledge entry in the database
@@ -92,46 +70,7 @@ export const extractKnowledgeFromText = async (data: {
   fileSourceUrl?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
-  let content: string;
-  let title: string;
-  if (
-    data.fileSourceType === FileSourceType.DB &&
-    data.fileSourceId &&
-    data.fileSourceBucket
-  ) {
-    log.debug(
-      `Get file from DB: ${data.fileSourceId} ${data.fileSourceBucket}`
-    );
-    const file = await getFileFromDb(data.fileSourceId, data.fileSourceBucket);
-    const { text } = await parseFile(file);
-    content = text;
-    title = file.name;
-  } else if (
-    data.fileSourceType === FileSourceType.LOCAL &&
-    data.fileSourceId &&
-    data.fileSourceBucket
-  ) {
-    log.debug(
-      `Get file from local disc: ${data.fileSourceId} ${data.fileSourceBucket}`
-    );
-    const file = await getFileFromLocalDisc(
-      data.fileSourceId,
-      data.fileSourceBucket
-    );
-    const { text } = await parseFile(file);
-    content = text;
-    title = file.name;
-  } else if (data.fileSourceType === FileSourceType.URL && data.fileSourceUrl) {
-    log.debug(`Get file from URL: ${data.fileSourceUrl}`);
-    content = "";
-    title = "";
-  } else {
-    throw new Error(
-      `Can´t get file. Unsupported file source type '${data.fileSourceType}' or missing parameters.`
-    );
-  }
-  log.debug(`File parsed. Content length: ${content.length}`);
-  log.debug(`Original content:\n${content}`);
+  const { content, title } = await parseDocument(data);
 
   // Split the content into chunks
   const chunks = splitTextIntoSectionsOrChunks(content);
