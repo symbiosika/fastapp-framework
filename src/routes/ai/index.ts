@@ -98,7 +98,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Update a prompt template by ID
    */
-  app.put("/template/:id", async (c) => {
+  app.put("/templates/:id", async (c) => {
     const id = c.req.param("id");
     const body = await c.req.json();
     const r = await updatePromptTemplate({ ...body, id });
@@ -108,7 +108,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get all placeholders for a prompt template by ID
    */
-  app.get("/template/:id/placeholders", async (c) => {
+  app.get("/templates/:id/placeholders", async (c) => {
     const id = c.req.param("id");
     const r = await getPlainPlaceholdersForPromptTemplate(id);
     return c.json(r);
@@ -117,7 +117,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Update a prompt-template placeholder by ID
    */
-  app.put("/template/:promptTemplateId/placeholders/:id", async (c) => {
+  app.put("/templates/:promptTemplateId/placeholders/:id", async (c) => {
     const promptTemplateId = c.req.param("promptTemplateId");
     const id = c.req.param("id");
     const body = await c.req.json();
