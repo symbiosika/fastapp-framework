@@ -5,7 +5,8 @@ import type { DBStandardData } from "./../../../types";
 
 export const insertStandardDataEntry = async (
   data: DBStandardData[],
-  forceOverwrite = false
+  forceOverwrite = false,
+  forceDelete = false
 ) => {
   console.log("Inserting standard data. Overwrite: ", forceOverwrite);
   const db = getDb();
@@ -15,6 +16,10 @@ export const insertStandardDataEntry = async (
     const tableData = data[tableCount];
     const tableName = normalizeTableName(tableData.schemaName);
     const table = getDbSchemaTable(tableName) as any;
+
+    if (forceDelete) {
+      await db.delete(table);
+    }
 
     for (let rowCount = 0; rowCount < tableData.entries.length; rowCount++) {
       const entry = tableData.entries[rowCount];
