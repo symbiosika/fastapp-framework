@@ -44,6 +44,8 @@ DataModel->Forms (image)
 ### Database
 
 - [x] Simple collections endpoint with custom tables
+- [x] File storage
+- [ ] Give each file a automativ remove date for temporary data
 - [x] CSV Export for collections
 - [ ] CSV Import for collections
 

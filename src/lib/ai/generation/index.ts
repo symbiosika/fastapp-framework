@@ -331,7 +331,7 @@ const generateMessageBlocksFromRawBlocks = async (
 /**
  * Debugging helper to print a list of messages
  */
-const printMessages = async (data: MessageBlock[]) => {
+const printMessageBlocks = async (data: MessageBlock[]) => {
   for (let i = 0; i < data.length; i++) {
     const block = data[i];
     for (const message of block.messages) {
@@ -339,6 +339,15 @@ const printMessages = async (data: MessageBlock[]) => {
         `[Block ${i}, output=${block.outputVarName}, forget=${block.forget}] ${message.role}: \n${message.content}`
       );
     }
+  }
+};
+
+/**
+ * Debugging helper to print a list of messages
+ */
+const printMessages = async (data: Message[]) => {
+  for (const message of data) {
+    await log.debug(`[${message.role}]: ${message.content}`);
   }
 };
 
@@ -451,26 +460,25 @@ const generateResponseFromMessageBlocks = async (
       allResponses
     );
 
-    await printMessages([block]);
-
-    const outputVarName = block.outputVarName;
-    const assistantResponse = await generateLongText(block.messages);
-    await log.debug(
-      `Assistant Response [${outputVarName}]: ${assistantResponse}`
-    );
-    allResponses[outputVarName] = assistantResponse;
-    lastOutputVarName = outputVarName;
     if (!block.forget) {
-      allMessages = [
-        ...allMessages,
-        ...block.messages,
-        { role: "assistant", content: assistantResponse },
-      ];
+      allMessages = [...allMessages, ...block.messages];
     } else {
       // reset the message list if the forget flag is set
       await log.debug("Resetting the message list because of forget flag.");
       allMessages = [];
     }
+    await printMessages(allMessages);
+
+    const outputVarName = block.outputVarName;
+    const assistantResponse = await generateLongText(allMessages);
+    await log.debug(
+      `Assistant Response [${outputVarName}]: ${assistantResponse}`
+    );
+    allResponses[outputVarName] = assistantResponse;
+    lastOutputVarName = outputVarName;
+
+    // add the assistant response to the message list
+    allMessages.push({ role: "assistant", content: assistantResponse });
   }
   return {
     messages: allMessages,
