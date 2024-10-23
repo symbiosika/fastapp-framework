@@ -28,6 +28,7 @@ export const promptTemplates = pgBaseTable(
     langCode: varchar("lang_code", { length: 2 }),
     // optional user id of the creator
     userId: uuid("user_id").references(() => users.id),
+    hidden: boolean("hidden").notNull().default(false),
     // metadata
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
@@ -69,6 +70,7 @@ export const promptTemplatePlaceholders = pgBaseTable(
     type: promptTemplatePlaceholderTypeEnum("type").notNull().default("text"),
     requiredByUser: boolean("required_by_user").notNull().default(false),
     defaultValue: text("default_value"),
+    hidden: boolean("hidden").notNull().default(false),
   },
   (promptTemplatePlaceholders) => ({
     promptTemplateIdIdx: index("prompt_template_id_idx").on(

@@ -23,6 +23,7 @@ export const files = pgBaseTable("files", {
   fileType: varchar("file_type", { length: 255 }).notNull(),
   extension: varchar("extension", { length: 255 }).notNull(),
   file: bytea("file").notNull(),
+  expiresAt: timestamp("expires_at", { mode: "string" }),
 });
 
 export type FilesSelect = typeof files.$inferSelect;
