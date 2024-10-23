@@ -45,7 +45,7 @@ DataModel->Forms (image)
 
 - [x] Simple collections endpoint with custom tables
 - [x] File storage
-- [ ] Give each file a automativ remove date for temporary data
+- [x] Temporary data: Give each file a automativ remove date for temporary data
 - [x] CSV Export for collections
 - [ ] CSV Import for collections
 
@@ -58,8 +58,7 @@ DataModel->Forms (image)
 - [x] Simple Username/Password Registration and Login
 - [x] Standard Static page for Login/Logout/Registration
 - [x] Magic Link Login
-- [ ] Users profile page
-- [ ] Limited Time-Usage Tokens (to give users without accout access to may do some action)
+- [x] Simple User-Profile page
 
 ### Payment Integration
 
@@ -100,6 +99,7 @@ DataModel->Forms (image)
 
 ## Requirements a very later version (Only ideas)
 
+- [ ] Limited Time-Usage Tokens for all URLs (to give users without accout access to may do some action) -> redirect to login must include the original page as "redirectTo==xxx"
 - [ ] Use Telegram to interact with the App
 - [ ] Auth0 Login (Cloud)
 - [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.

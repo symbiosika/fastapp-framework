@@ -379,23 +379,3 @@
     </script>
   </body>
 </html>
-
-              "Please check your inbox for the magic login link.";
-            errorBox.classList.remove("hidden");
-            errorBox.classList.remove("bg-red-50");
-            errorBox.classList.add("bg-green-50");
-          } else {
-            const errorData = await response.json();
-            errorMessage.textContent =
-              errorData.message || "Failed to send magic login link.";
-            errorBox.classList.remove("hidden");
-          }
-        } catch (error) {
-          errorMessage.textContent =
-            "An error occurred. Please try again later.";
-          errorBox.classList.remove("hidden");
-        }
-      });
-    </script>
-  </body>
-</html>
