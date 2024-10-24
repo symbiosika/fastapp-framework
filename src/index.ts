@@ -17,7 +17,11 @@ import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import type { DatabaseSchema } from "./lib/db/db-schema";
 import log from "./lib/log";
 import { checkUserSubscription } from "./routes/payment";
-import { definePublicUserRoutes, defineSecuredUserRoutes } from "./routes/user";
+import {
+  definePublicUserRoutes,
+  defineSecuredUserRoutes,
+  registerPreRegisterCustomVerification,
+} from "./routes/user";
 import { defineCollectionRoutes } from "./routes/collections";
 
 /**
@@ -53,6 +57,15 @@ export const defineServer = (config: ServerConfig) => {
   app.use(logger());
 
   /**
+   * Register custom pre-register verifications
+   */
+  if (config.customPreRegisterCustomVerifications) {
+    config.customPreRegisterCustomVerifications.forEach((verification) => {
+      registerPreRegisterCustomVerification(verification);
+    });
+  }
+
+  /**
    * Middleware for CORS
    */
   console.log("Allowed origins:", ALLOWED_ORIGINS);
@@ -62,9 +75,6 @@ export const defineServer = (config: ServerConfig) => {
       origin: ALLOWED_ORIGINS,
     })
   );
-
-  // Hono can´t handle Auth0 JWT tokens
-  // https://github.com/honojs/hono/issues/672
 
   /**
    * A Ping endpoint

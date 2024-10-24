@@ -23,6 +23,8 @@ export interface ServerConfig {
   customCollectionPermissions?: PermissionDefinitionPerTable;
   staticPrivateDataPath?: string;
   staticPublicDataPath?: string;
+
+  customPreRegisterCustomVerifications?: CustomPreRegisterVerification[];
 }
 
 export interface DBStandardData {
@@ -31,3 +33,8 @@ export interface DBStandardData {
   schemaName: string;
   entries: any[];
 }
+
+export type CustomPreRegisterVerification = (
+  email: string,
+  meta: any
+) => Promise<{ success: boolean; message?: string }>;

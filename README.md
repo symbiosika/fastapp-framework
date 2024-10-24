@@ -58,10 +58,11 @@ DataModel->Forms (image)
 
 ### User handling
 
-- [x] Simple Username/Password Registration and Login
+- [x] Simple Username/Password Registration and Login with Email verification
 - [x] Standard Static page for Login/Logout/Registration
 - [x] Magic Link Login
 - [x] Simple User-Profile page
+- [x] Custom registration flow to prevent Registration of unallowed users
 
 ### Payment Integration
 
@@ -92,7 +93,6 @@ DataModel->Forms (image)
 
 - [ ] Extend Collection with "relations" like it is defined from "Hypermedia" in actions and links
 - [ ] Use WhatsApp to interact with the App
-- [ ] Custom registration flow to prevent Registration of unallowed users
 
 ## Requirements a very later version (Only ideas)
 

@@ -1,4 +1,4 @@
-import type { FastAppHono } from "../../types";
+import type { CustomPreRegisterVerification, FastAppHono } from "../../types";
 import { HTTPException } from "hono/http-exception";
 import { users } from "../../lib/db/db-schema";
 import { eq } from "drizzle-orm";
@@ -10,6 +10,20 @@ import { authAndSetUsersInfo } from "../../helper";
 
 const BASE_PATH = "/user";
 const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";
+
+/**
+ * Pre-register custom verification
+ */
+const preRegisterCustomVerifications: CustomPreRegisterVerification[] = [];
+
+/**
+ * Register new verification
+ */
+export const registerPreRegisterCustomVerification = (
+  verification: CustomPreRegisterVerification
+) => {
+  preRegisterCustomVerifications.push(verification);
+};
 
 /**
  * Define the payment routes
@@ -201,6 +215,19 @@ export function definePublicUserRoutes(
       const body = await c.req.json();
       const email = body.email;
       const password = body.password;
+
+      const meta = body.meta; // optional meta data for custom verifications
+
+      // go through all pre-register custom verifications
+      for (const verification of preRegisterCustomVerifications) {
+        const r = await verification(email, meta);
+        if (!r.success) {
+          throw new HTTPException(400, {
+            message: "Custom verification failed: " + r.message,
+          });
+        }
+      }
+
       const user = await LocalAuth.register(email, password);
       log.debug(`User registered: ${user.id}`);
       return c.json(user);

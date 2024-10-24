@@ -5,6 +5,9 @@ import jwtlib from "jsonwebtoken";
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
 const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";
 
+// Hono can´t handle Auth0 JWT tokens
+// https://github.com/honojs/hono/issues/672
+
 /**
  * Validate all environment variables
  */
