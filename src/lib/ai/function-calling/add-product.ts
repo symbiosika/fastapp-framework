@@ -42,10 +42,10 @@ const item: FunctionCalling = {
       },
     };
   },
-  uiResponse: {
-    type: "render_text",
-    content: "Product added",
-  },
+  // uiResponse: {
+  //   type: "render_text",
+  //   content: "Product added",
+  // },
   QAExamples: [
     {
       q: `I want to create a new product with the name "My best T-Shirt"`,

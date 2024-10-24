@@ -1,7 +1,7 @@
-import type { AskKnowledgeInput } from "src/routes/ai";
+import type { AskKnowledgeInput } from "../../../routes/ai";
 import { textGenerationByPromptTemplate } from "../generation";
 import { getNearestEmbeddings } from "./similarity-search";
-import log from "src/lib/log";
+import log from "../../../lib/log";
 
 /**
  * Get an answer to a question from the knowledge base.

@@ -20,24 +20,25 @@ const checkSecrets = async () => {
 
 class AESCipher {
   key: Buffer;
-  iv: Buffer;
 
   constructor() {
     checkSecrets();
     this.key = Buffer.from(process.env.SECRETS_AES_KEY!, "hex");
-    this.iv = Buffer.from(process.env.SECRETS_AES_IV!, "hex");
   }
 
   encrypt(text: string, algorithm = "aes-256-cbc") {
-    const cipher = createCipheriv(algorithm, this.key, this.iv);
+    const iv = randomBytes(16);
+    const cipher = createCipheriv(algorithm, this.key, iv);
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
-    return encrypted;
+    return iv.toString("hex") + ":" + encrypted;
   }
 
   decrypt(encryptedData: string, algorithm = "aes-256-cbc") {
-    const decipher = createDecipheriv(algorithm, this.key, this.iv);
-    let decrypted = decipher.update(encryptedData, "hex", "utf8");
+    const [ivHex, encryptedText] = encryptedData.split(":");
+    const iv = Buffer.from(ivHex, "hex");
+    const decipher = createDecipheriv(algorithm, this.key, iv);
+    let decrypted = decipher.update(encryptedText, "hex", "utf8");
     decrypted += decipher.final("utf8");
     return decrypted;
   }

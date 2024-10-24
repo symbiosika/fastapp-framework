@@ -1,26 +1,15 @@
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
 import {
-  attachLogger,
-  authAndSetUsersInfo,
   authAndSetUsersInfoOrRedirectToLogin,
   authOrRedirectToLogin,
   validateAllEnvVariables,
 } from "./helper";
-import { HTTPException } from "hono/http-exception";
 import { createDatabaseClient, getDb } from "./lib/db/db-connection";
-import { initializeFullDbSchema, users } from "./lib/db/db-schema";
-import { eq } from "drizzle-orm";
-import { LocalAuth } from "./lib/auth";
+import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { serveStatic } from "hono/bun";
-import FileHander from "./routes/files";
-import { getCollection, postCollection } from "./routes/collections/[name]";
-import {
-  deleteCollectionById,
-  getCollectionById,
-  putCollectionById,
-} from "./routes/collections/[name]/[id]";
+import { defineFilesRoutes } from "./routes/files";
 import paymentRoutes from "./routes/payment";
 import aiRoutes from "./routes/ai";
 import type { ServerConfig, FastAppHonoContextVariables } from "./types";
@@ -28,13 +17,15 @@ import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import type { DatabaseSchema } from "./lib/db/db-schema";
 import log from "./lib/log";
 import { checkUserSubscription } from "./routes/payment";
+import { definePublicUserRoutes, defineSecuredUserRoutes } from "./routes/user";
+import { defineCollectionRoutes } from "./routes/collections";
 
 /**
  * Get all relevant ENV variables
  */
 const _PORTSTR = process.env.PORT!;
 const PORT = parseInt(_PORTSTR);
-const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";
+
 const _ORIGINS_FROM_ENV = process.env.ALLOWED_ORIGINS;
 const ALLOWED_ORIGINS = _ORIGINS_FROM_ENV ? _ORIGINS_FROM_ENV.split(",") : [];
 let BASE_PATH = process.env.BASE_PATH || "/api/v1/";
@@ -62,19 +53,9 @@ export const defineServer = (config: ServerConfig) => {
   app.use(logger());
 
   /**
-   * Attach logger
-   */
-  app.use(attachLogger);
-
-  /**
-   * CORS configuration
-   */
-
-  console.log("Allowed origins:", ALLOWED_ORIGINS);
-
-  /**
    * Middleware for CORS
    */
+  console.log("Allowed origins:", ALLOWED_ORIGINS);
   app.use(
     "/*",
     cors({
@@ -97,215 +78,23 @@ export const defineServer = (config: ServerConfig) => {
   });
 
   /**
-   * Get the own user
+   * Add user routes
    */
-  app.get(BASE_PATH + "/user/me", authAndSetUsersInfo, async (c: Context) => {
-    // check if id is set
-    const id = c.get("usersId");
-    const user = await getDb()
-      .select({
-        userId: users.id,
-        email: users.email,
-        firstname: users.firstname,
-        surname: users.surname,
-        image: users.image,
-        meta: users.meta,
-      })
-      .from(users)
-      .where(eq(users.id, id));
-
-    if (!user || user.length === 0) {
-      throw new HTTPException(404, { message: "User not found" });
-    } else {
-      return c.json(user[0]);
-    }
-  });
+  definePublicUserRoutes(app, BASE_PATH);
+  defineSecuredUserRoutes(app, BASE_PATH);
 
   /**
-   * Update the own user
+   * Add collection routes
    */
-  app.put(BASE_PATH + "/user/me", authAndSetUsersInfo, async (c: Context) => {
-    const { firstname, surname, image } = await c.req.json();
-    const user = await getDb()
-      .update(users)
-      .set({ firstname, surname, image })
-      .where(eq(users.id, c.get("usersId")))
-      .returning();
-    return c.json(user);
-  });
+  defineCollectionRoutes(app, BASE_PATH);
 
   /**
-   * Search for users by email address
+   * Add files routes
    */
-  app.get(
-    BASE_PATH + "/user/search",
-    authAndSetUsersInfo,
-    async (c: Context) => {
-      const email = c.req.query("email");
-      if (!email) {
-        throw new HTTPException(400, { message: "email is required" });
-      }
-      const u = await getDb()
-        .select()
-        .from(users)
-        .where(eq(users.email, email));
-      if (!u || u.length === 0) {
-        throw new HTTPException(404, { message: "User not found" });
-      }
-      return c.json({
-        id: u[0].id,
-        email: u[0].email,
-        firstname: u[0].firstname,
-        surname: u[0].surname,
-      });
-    }
-  );
+  defineFilesRoutes(app, BASE_PATH);
 
   /**
-   * Login endpoint
-   */
-  app.post(BASE_PATH + "/login", async (c: Context) => {
-    try {
-      if (AUTH_TYPE !== "local") {
-        throw new HTTPException(400, { message: "Local login is not enabled" });
-      }
-      const body = await c.req.json();
-      const email = body.email;
-      const password = body.password;
-      const magicLinkToken = body.magicLinkToken;
-
-      if (magicLinkToken) {
-        const r = await LocalAuth.loginWithMagicLink(magicLinkToken);
-        return c.json(r);
-      } else {
-        const r = await LocalAuth.login(email, password);
-        return c.json(r);
-      }
-    } catch (err) {
-      throw new HTTPException(401, { message: "Invalid login: " + err });
-    }
-  });
-
-  /**
-   * Endpoint to send a magic link to the user
-   */
-  app.get(BASE_PATH + "/send-magic-link", async (c: Context) => {
-    const email = c.req.query("email");
-    if (!email) {
-      throw new HTTPException(400, { message: "?email=... is required" });
-    }
-    try {
-      await LocalAuth.sendMagicLink(email);
-      return c.json({
-        success: true,
-      });
-    } catch (err) {
-      throw new HTTPException(500, {
-        message: "Error sending magic link: " + err,
-      });
-    }
-  });
-
-  /**
-   * Register endpoint
-   */
-  app.post(BASE_PATH + "/register", async (c: Context) => {
-    try {
-      if (AUTH_TYPE !== "local") {
-        throw new HTTPException(400, {
-          message: "Local register is not enabled",
-        });
-      }
-      const body = await c.req.json();
-      const email = body.email;
-      const password = body.password;
-      const user = await LocalAuth.register(email, password);
-      log.debug(`User registered: ${user.id}`);
-      return c.json(user);
-    } catch (err) {
-      log.error(err + "");
-      throw new HTTPException(500, { message: err + "" });
-    }
-  });
-
-  /**
-   * Forgot password endpoint
-   */
-  app.post(BASE_PATH + "/forgot-password", async (c: Context) => {
-    const body = await c.req.json();
-    const email = body.email;
-    // const r = await LocalAuth.forgotPassword(email);
-    return c.json({
-      success: true,
-    });
-  });
-
-  /**
-   * Collections endpoint
-   */
-  app.all(
-    BASE_PATH + "/db/collections/:name/:id?",
-    authAndSetUsersInfo,
-    async (c: Context) => {
-      // check if id is set
-      const id = c.req.param("id");
-      if (!id) {
-        if (c.req.method === "GET") {
-          return getCollection(c);
-        } else if (c.req.method === "POST") {
-          return postCollection(c);
-        } else {
-          throw new HTTPException(405, { message: "Method not allowed" });
-        }
-      } else {
-        if (c.req.method === "GET") {
-          return getCollectionById(c);
-        } else if (c.req.method === "PUT") {
-          return putCollectionById(c);
-        } else if (c.req.method === "DELETE") {
-          return deleteCollectionById(c);
-        } else {
-          throw new HTTPException(405, { message: "Method not allowed" });
-        }
-      }
-    }
-  );
-
-  /**
-   * Save and serve files that are stored in the database
-   */
-  app.all(
-    BASE_PATH + "/files/:type/:bucket/:id?",
-    authAndSetUsersInfo,
-    async (c: Context) => {
-      // check if id is set
-      const id = c.req.param("id");
-      const type = c.req.param("type");
-
-      if (type !== "local" && type !== "db") {
-        throw new HTTPException(400, { message: "Invalid type" });
-      }
-
-      if (!id) {
-        if (c.req.method === "POST") {
-          return FileHander.postFile(c, type);
-        } else {
-          throw new HTTPException(405, { message: "Method not allowed" });
-        }
-      } else {
-        if (c.req.method === "GET") {
-          return FileHander.getFile(c, type);
-        } else if (c.req.method === "DELETE") {
-          return FileHander.deleteFile(c, type);
-        } else {
-          throw new HTTPException(405, { message: "Method not allowed" });
-        }
-      }
-    }
-  );
-
-  /**
-   * Add all payment routes
+   * Add payment routes
    */
   if (process.env.USE_STRIPE === "true") {
     const paymentApp = new Hono();
@@ -323,9 +112,7 @@ export const defineServer = (config: ServerConfig) => {
    * Add all AI routes
    */
   const aiApp = new Hono();
-  aiApp.use("*", async (c, next) => {
-    await next();
-  });
+  aiApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
   aiRoutes(aiApp as any);
   app.route(BASE_PATH + "/ai", aiApp);
 

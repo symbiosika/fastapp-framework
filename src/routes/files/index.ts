@@ -10,11 +10,13 @@ import {
   getFileFromLocalDisc,
   saveFileToLocalDisc,
 } from "../../lib/storage/local";
+import type { FastAppHono } from "../../types";
+import { authAndSetUsersInfo } from "../../helper";
 
 /**
  * Upload a file to the database
  */
-export default {
+export const FileHandler = {
   async postFile(c: Context, type: "db" | "local") {
     try {
       const bucket = c.req.param("bucket");
@@ -89,3 +91,41 @@ export default {
     }
   },
 };
+
+/**
+ * Define the payment routes
+ */
+export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
+  /**
+   * Save and serve files that are stored in the database
+   */
+  app.all(
+    API_BASE_PATH + "/files/:type/:bucket/:id?",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      // check if id is set
+      const id = c.req.param("id");
+      const type = c.req.param("type");
+
+      if (type !== "local" && type !== "db") {
+        throw new HTTPException(400, { message: "Invalid type" });
+      }
+
+      if (!id) {
+        if (c.req.method === "POST") {
+          return FileHandler.postFile(c, type);
+        } else {
+          throw new HTTPException(405, { message: "Method not allowed" });
+        }
+      } else {
+        if (c.req.method === "GET") {
+          return FileHandler.getFile(c, type);
+        } else if (c.req.method === "DELETE") {
+          return FileHandler.deleteFile(c, type);
+        } else {
+          throw new HTTPException(405, { message: "Method not allowed" });
+        }
+      }
+    }
+  );
+}

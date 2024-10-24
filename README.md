@@ -1,5 +1,8 @@
 # FastApp Webserver for real fast development
 
+Not "Low-Code" -> It´s a Backend for AI Coders.
+Simplified webserver to get AI´s power to write Applications.
+
 WIRTE TESTS!
 WRITE DOCUMENTATION!
 
@@ -87,15 +90,9 @@ DataModel->Forms (image)
 
 ## Requirements Next version
 
-- [ ] Send push notifications (PWA)
 - [ ] Extend Collection with "relations" like it is defined from "Hypermedia" in actions and links
 - [ ] Use WhatsApp to interact with the App
 - [ ] Custom registration flow to prevent Registration of unallowed users
-- [ ] Connectors to make.com, PowerAutomate und n8n.com
-- [ ] Magic Link Auth: https://www.npmjs.com/package/passport-magic-link
-- [ ] Intelligent summaries like: https://the-decoder.de/open-source-tool-pdf2audio-verwandelt-pdfs-in-podcasts-und-zusammenfassungen/
-- [ ] Check if crypt should be improved. maybe it is necessary to add a "salt" to prevent having similar entries in the DB
-
 
 ## Requirements a very later version (Only ideas)
 
@@ -115,3 +112,5 @@ DataModel->Forms (image)
 - [ ] OAuth2 Mail Providers
 - [ ] 2FA Auth: https://www.npmjs.com/package/otpauth
 - [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
+- [ ] Connectors to make.com, PowerAutomate und n8n.com
+- [ ] Send push notifications (PWA) https://www.npmjs.com/package/web-push

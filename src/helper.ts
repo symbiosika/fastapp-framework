@@ -131,11 +131,3 @@ export const authAndSetUsersInfoOrRedirectToLogin = async (
   }
   await next();
 };
-
-/**
- * Attach logger to context
- */
-export const attachLogger = async (c: Context, next: Function) => {
-  c.set("logger", Logger);
-  await next();
-};

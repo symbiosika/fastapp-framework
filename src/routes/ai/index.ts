@@ -12,9 +12,9 @@ import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
-import { askKnowledge } from "src/lib/ai/knowledge/search";
-import { parseDocument } from "src/lib/ai/parsing";
-import { textGenerationByPromptTemplate } from "src/lib/ai/generation";
+import { askKnowledge } from "../../lib/ai/knowledge/search";
+import { parseDocument } from "../../lib/ai/parsing";
+import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),

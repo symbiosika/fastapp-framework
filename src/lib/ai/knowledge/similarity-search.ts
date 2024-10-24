@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
-import { knowledgeChunks } from "src/lib/db/db-schema";
+import { knowledgeChunks } from "../../../lib/db/db-schema";
 import { generateEmbedding } from "../standard/openai";
-import { getDb } from "src/lib/db/db-connection";
-import log from "src/lib/log";
+import { getDb } from "../../../lib/db/db-connection";
+import log from "../../../lib/log";
 
 type KnowledgeChunk = {
     id: string;
