@@ -22,12 +22,32 @@
           <div class="flex">
             <div class="flex-shrink-0">
               <!-- Error icon (hidden for success messages) -->
-              <svg id="error-icon" class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+              <svg
+                id="error-icon"
+                class="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
               </svg>
               <!-- Success icon (hidden for error messages) -->
-              <svg id="success-icon" class="h-5 w-5 text-green-400 hidden" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+              <svg
+                id="success-icon"
+                class="h-5 w-5 text-green-400 hidden"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="ml-3">
@@ -336,7 +356,7 @@
         }
 
         try {
-          const response = await fetch("/api/v1/forgot-password", {
+          const response = await fetch("/api/v1/user/forgot-password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
@@ -361,16 +381,24 @@
         }
 
         try {
-          const response = await fetch("/api/v1/send-magic-link?email=" + encodeURIComponent(email), {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
+          const response = await fetch(
+            "/api/v1/user/send-magic-link?email=" + encodeURIComponent(email),
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
           if (response.ok) {
-            showMessage("Please check your inbox for the magic login link.", false);
+            showMessage(
+              "Please check your inbox for the magic login link.",
+              false
+            );
           } else {
             const errorData = await response.json();
-            showMessage(errorData.message || "Failed to send magic login link.");
+            showMessage(
+              errorData.message || "Failed to send magic login link."
+            );
           }
         } catch (error) {
           showMessage("An error occurred. Please try again later.", true);
