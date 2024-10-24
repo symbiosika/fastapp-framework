@@ -150,6 +150,45 @@ export function definePublicUserRoutes(
   );
 
   /**
+   * Endpoint to send a verification email to the user
+   */
+  app.get(
+    API_BASE_PATH + BASE_PATH + "/send-verification-email",
+    async (c: Context) => {
+      const email = c.req.query("email");
+      if (!email) {
+        throw new HTTPException(400, { message: "?email=... is required" });
+      }
+      try {
+        await LocalAuth.sendVerificationEmail(email);
+        return c.json({
+          success: true,
+        });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error sending verification email: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Verify email endpoint
+   */
+  app.get(API_BASE_PATH + BASE_PATH + "/verify-email", async (c: Context) => {
+    const token = c.req.query("token");
+    if (!token) {
+      throw new HTTPException(400, { message: "?token=... is required" });
+    }
+    try {
+      const r = await LocalAuth.verifyEmail(token);
+      return c.json(r);
+    } catch (err) {
+      throw new HTTPException(401, { message: "Invalid token: " + err });
+    }
+  });
+
+  /**
    * Register endpoint
    */
   app.post(API_BASE_PATH + BASE_PATH + "/register", async (c: Context) => {

@@ -3,7 +3,12 @@ import { sessions, users } from "../db/db-schema";
 import { getDb } from "../db/db-connection";
 import jwt from "jsonwebtoken";
 import type { UsersEntity } from "../types/shared/db/users";
-import { sendMagicLink, verifyMagicLink } from "./magic-link";
+import {
+  sendMagicLink,
+  sendVerificationEmail,
+  verifyEmail,
+  verifyMagicLink,
+} from "./magic-link";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -26,6 +31,13 @@ const getUserFromDb = async (
     if (user.length === 0 || !user[0].password) {
       throw "user not found";
     }
+
+    if (!user[0].emailVerified) {
+      // send verification email again
+      await sendVerificationEmail(email);
+      throw "Email is not verified.";
+    }
+
     const isMatch = await Bun.password.verify(password, user[0].password + "");
 
     if (isMatch) {
@@ -41,22 +53,29 @@ const getUserFromDb = async (
 
 const setUserInDb = async (email: string, password: string) => {
   const hash = await saltAndHashPassword(password);
-  try {
-    const user = await getDb()
-      .insert(users)
-      .values({
-        email: email,
-        password: hash,
-        firstname: "",
-        surname: "",
-        extUserId: "",
-        salt: "",
-      })
-      .returning();
-    return user[0];
-  } catch {
-    throw "Email already exists";
-  }
+
+  const user = await getDb()
+    .insert(users)
+    .values({
+      email: email,
+      password: hash,
+      firstname: "",
+      surname: "",
+      extUserId: "",
+      salt: "",
+      emailVerified: false,
+    })
+    .returning()
+    .catch((err) => {
+      throw "Email already exists. " + err;
+    });
+
+  // send verification email
+  await sendVerificationEmail(email).catch((err) => {
+    throw "Error sending verification email. " + err;
+  });
+
+  return user[0];
 };
 
 export const generateJwt = async (user: UsersEntity, expiresIn: number) => {
@@ -117,5 +136,13 @@ export const LocalAuth = {
 
   async sendMagicLink(email: string) {
     return await sendMagicLink(email);
+  },
+
+  async sendVerificationEmail(email: string) {
+    return await sendVerificationEmail(email);
+  },
+
+  async verifyEmail(token: string) {
+    return await verifyEmail(token);
   },
 };

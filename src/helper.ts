@@ -1,7 +1,6 @@
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import jwtlib from "jsonwebtoken";
-import Logger from "./lib/log";
 
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
 const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";

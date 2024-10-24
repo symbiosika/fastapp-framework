@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -23,7 +24,7 @@ export const users = pgBaseTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     email: text("email").notNull(),
-    emailVerified: timestamp("email_verified", { mode: "date" }),
+    emailVerified: boolean("email_verified").notNull().default(false),
     password: text("password"),
     salt: text("salt"),
     image: text("image"),

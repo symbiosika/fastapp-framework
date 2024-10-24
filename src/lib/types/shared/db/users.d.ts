@@ -7,7 +7,7 @@ type InsertUsersEntity = typeof users.$inferInsert;
 export type UsersEntity = {
   id: string;
   email: string;
-  emailVerified: Date | null;
+  emailVerified: boolean;
   password: string | null;
   salt: string | null;
   image: string | null;
@@ -24,7 +24,7 @@ export type InsertUsersEntity = {
   surname: string;
   extUserId: string;
   id?: string | undefined;
-  emailVerified?: Date | null | undefined;
+  emailVerified?: boolean | undefined;
   password?: string | null | undefined;
   salt?: string | null | undefined;
   image?: string | null | undefined;
