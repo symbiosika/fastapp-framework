@@ -1,7 +1,4 @@
 import pg from "pg";
-import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import { getDbSchema, type DatabaseSchema } from "./db-schema";
-import { readFileSync } from "fs";
 
 const POSTGRES_DB = process.env.POSTGRES_DB ?? "";
 const POSTGRES_USER = process.env.POSTGRES_USER ?? "";
@@ -9,9 +6,6 @@ const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD ?? "";
 const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "";
 const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRE_CA_CERT = process.env.POSTGRE_CA_CERT ?? "";
-
-// hold the connection
-let dbClient: NodePgDatabase<DatabaseSchema>;
 
 const createPool = () => {
   return new pg.Pool({
@@ -38,12 +32,12 @@ const setupClientListeners = (client: pg.PoolClient) => {
   client.on("error", async (err) => {
     console.error("PG Client error:", err.stack);
     client.release();
-    await createDatabaseClient();
+    await createCustomAppDatabaseClient();
   });
 
   client.on("end", async () => {
     console.error("PG Client ended the connection.");
-    await createDatabaseClient();
+    await createCustomAppDatabaseClient();
   });
 
   client.on("notification", (msg) =>
@@ -52,35 +46,12 @@ const setupClientListeners = (client: pg.PoolClient) => {
   client.on("notice", (msg) => console.log("PG Client notice:", msg));
 };
 
-export const createDatabaseClient = async (
-  customSchema?: Record<string, unknown>
-) => {
-  if (dbClient) {
-    console.log("DB Client already initialized");
-    return dbClient;
-  }
-
+export const createCustomAppDatabaseClient = async () => {
   const pool = createPool();
   setupPoolListeners(pool);
 
   const client = await pool.connect();
   setupClientListeners(client);
 
-  const schema = { ...getDbSchema(), ...customSchema };
-  dbClient = drizzle(client, { schema, logger: false });
-  return dbClient;
-};
-
-export const getDb = () => {
-  if (!dbClient) {
-    throw new Error("Database client not initialized");
-  }
-  return dbClient;
-};
-
-export const waitForDbConnection = async () => {
-  while (!dbClient) {
-    console.log("Waiting for database connection...");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
+  return client;
 };
