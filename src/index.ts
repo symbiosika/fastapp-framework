@@ -23,6 +23,7 @@ import {
   registerPreRegisterCustomVerification,
 } from "./routes/user";
 import { defineCollectionRoutes } from "./routes/collections";
+import { defineJob, startJobQueue, type JobHandlerRegister } from "./lib/jobs";
 
 /**
  * Get all relevant ENV variables
@@ -168,6 +169,18 @@ export const defineServer = (config: ServerConfig) => {
     })
   );
 
+  /**
+   * Start job queue if needed
+   */
+  if (config.jobHandlers && config.jobHandlers.length > 0) {
+    log.debug("Starting job queue...");
+    startJobQueue();
+    config.jobHandlers.forEach((jobHandler) => {
+      log.debug(`Registering job handler: ${jobHandler.type}`);
+      defineJob(jobHandler.type, jobHandler.handler);
+    });
+  }
+
   return {
     port: PORT,
     fetch: app.fetch,
@@ -177,3 +190,4 @@ export const defineServer = (config: ServerConfig) => {
 export { getDb };
 export type { DatabaseSchema };
 export { checkUserSubscription };
+export type { JobHandlerRegister };

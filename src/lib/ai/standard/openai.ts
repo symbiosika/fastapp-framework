@@ -1,6 +1,9 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
 import log from "../../../lib/log";
+import { basename } from "path";
+import type { WhisperResponseWithSegmentsAndWords } from "../../../lib/types/openai";
+import { nanoid } from "nanoid";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";
@@ -225,14 +228,41 @@ export async function generateLongText(
 /**
  * Use OpenAI for STT
  */
-export const speechToText = async (audio: Blob) => {
-  // convert blob to a file that can be uploaded to openai
-  const file = new File([audio], "audio.mp3", { type: "audio/mp3" });
+export const speechToText = async (query: {
+  file?: File;
+  filePath?: string;
+  returnSegments?: boolean;
+  returnWords?: boolean;
+}) => {
+  let fileToUpload: File;
+  if (query.file) {
+    fileToUpload = query.file;
+  } else if (query.filePath) {
+    const fileBuffer = await fs.readFile(query.filePath);
+    const fileName = basename(query.filePath);
+    fileToUpload = new File([fileBuffer], fileName);
+  } else {
+    throw new Error("No file or filePath provided");
+  }
+
+  const createTimestampGranularities: ("segment" | "word")[] = [];
+  if (query.returnSegments) {
+    createTimestampGranularities.push("segment");
+  }
+  if (query.returnWords) {
+    createTimestampGranularities.push("word");
+  }
+
   const transcription = await openai.audio.transcriptions.create({
-    file,
-    model: STT_MODEL,
+    file: fileToUpload,
+    model: "whisper-1",
+    response_format: "verbose_json",
+    timestamp_granularities: createTimestampGranularities,
   });
-  return transcription.text;
+
+  const r = transcription as unknown as WhisperResponseWithSegmentsAndWords;
+
+  return r;
 };
 
 /**
@@ -320,3 +350,28 @@ export async function rewriteText(text: string): Promise<string> {
   });
   return response.choices[0].message.content ?? "";
 }
+
+export const textToSpeech = async (
+  text: string,
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy"
+): Promise<{
+  file: File;
+  filename: string;
+}> => {
+  const mp3 = await openai.audio.speech.create({
+    model: TTS_MODEL,
+    voice,
+    input: text,
+  });
+
+  const buffer = await mp3.arrayBuffer();
+  const id = nanoid(16);
+  const filename = `${id}.mp3`;
+
+  const file = new File([buffer], filename, { type: "audio/mp3" });
+
+  return {
+    file,
+    filename,
+  };
+};
