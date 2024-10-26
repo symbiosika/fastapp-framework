@@ -5,6 +5,7 @@ import {
   promptTemplates,
   type PromptTemplatePlaceholdersInsert,
   type PromptTemplatePlaceholdersSelect,
+  type PromptTemplatesInsert,
   type PromptTemplatesSelect,
 } from "../../../lib/db/db-schema";
 import { getPromptTemplateDefinition } from ".";
@@ -104,6 +105,22 @@ export const updatePromptTemplate = async (data: PromptTemplatesSelect) => {
     .where(eq(promptTemplates.id, data.id))
     .returning();
   return updated[0];
+};
+
+/**
+ * Add a new prompt template
+ */
+export const addPromptTemplate = async (data: PromptTemplatesInsert) => {
+  const added = await getDb().insert(promptTemplates).values(data).returning();
+  return added[0];
+};
+
+/**
+ * Delete a prompt template by ID
+ */
+export const deletePromptTemplate = async (id: string) => {
+  await getDb().delete(promptTemplates).where(eq(promptTemplates.id, id));
+  return { success: true };
 };
 
 /**
