@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm";
 import {
   index,
   jsonb,
-  pgTable,
   timestamp,
   uuid,
   varchar,

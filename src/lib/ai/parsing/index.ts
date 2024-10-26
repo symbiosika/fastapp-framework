@@ -3,6 +3,10 @@ import log from "../../../lib/log";
 import { getFileFromDb } from "../../../lib/storage/db";
 import { getFileFromLocalDisc } from "../../../lib/storage/local";
 import { parsePdfFileAsMardown } from "./pdf";
+import { knowledgeTexts } from "src/lib/db/db-schema";
+import { getDb } from "src/lib/db/db-connection";
+import { eq } from "drizzle-orm";
+import { generateImageDescription } from "../standard/openai";
 
 /**
  * Helper function to parse a file and return the text content
@@ -18,9 +22,9 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
   }
 
   // Image
-  else if (file.type === "image") {
+  else if (file.type.startsWith("image")) {
     // the the image describe by ai
-    const description = ""; // await generateImageDescription(file);
+    const description = await generateImageDescription(file);
     return { text: description };
   } else {
     throw new Error(`Unsupported file type for parsing: ${file.type}`);
@@ -69,6 +73,17 @@ export const parseDocument = async (data: {
   } else if (data.fileSourceType === FileSourceType.URL && data.fileSourceUrl) {
     log.debug(`Get file from URL: ${data.fileSourceUrl}`);
     content = "";
+    title = "";
+  } else if (data.fileSourceType === FileSourceType.TEXT) {
+    log.debug(`Get file from TEXT`);
+    const dbResults = await getDb()
+      .select({ text: knowledgeTexts.text })
+      .from(knowledgeTexts)
+      .where(eq(knowledgeTexts.id, data.fileSourceId!));
+    if (dbResults.length === 0) {
+      throw new Error(`Knowledge text not found: ${data.fileSourceId}`);
+    }
+    content = dbResults[0].text;
     title = "";
   } else {
     throw new Error(

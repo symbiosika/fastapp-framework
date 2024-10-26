@@ -17,7 +17,18 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
   "db",
   "local",
   "url",
+  "text",
 ]);
+
+// Table to store input texts
+export const knowledgeTexts = pgBaseTable("knowledge_texts", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
 
 // Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable("knowledge_entry", {
@@ -29,6 +40,7 @@ export const knowledgeEntry = pgBaseTable("knowledge_entry", {
   fileSourceBucket: text("file_source_bucket"),
   fileSourceUrl: text("file_source_url"),
   title: varchar("title", { length: 1000 }).notNull(),
+  text: text("text"),
   abstract: text("abstract"),
   meta: jsonb("meta"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),

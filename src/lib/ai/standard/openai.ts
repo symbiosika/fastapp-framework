@@ -68,16 +68,24 @@ export async function generateSummary(text: string) {
 /**
  * Encode the given image as a base64 string.
  */
-async function encodeImage(imagePath: string): Promise<string> {
+async function encodeImageFromPath(imagePath: string): Promise<string> {
   const imageBuffer = await fs.readFile(imagePath);
+  return Buffer.from(imageBuffer).toString("base64");
+}
+
+/**
+ * Encode a File object as a base64 string.
+ */
+async function encodeImageFromFile(file: File): Promise<string> {
+  const imageBuffer = await file.arrayBuffer();
   return Buffer.from(imageBuffer).toString("base64");
 }
 
 /**
  * Generate a description for the given image using the OpenAI API.
  */
-export async function generateImageDescription(imagePath: string) {
-  const base64Image = await encodeImage(imagePath);
+export async function generateImageDescription(image: File) {
+  const base64Image = await encodeImageFromFile(image);
   const response = await openai.chat.completions.create({
     model: TEXT_MODEL,
     messages: [
@@ -100,7 +108,7 @@ export async function generateImageDescription(imagePath: string) {
     max_tokens: 300,
   });
 
-  return response.choices[0].message.content;
+  return response.choices[0].message.content ?? "";
 }
 
 /**
@@ -294,8 +302,8 @@ const PARSE_IMAGE_PROMPT = `
 You are an expert image analyst.
 Provide a detailed description of the following image.`;
 
-export async function parseImage(imagePath: string): Promise<string> {
-  const base64Image = await encodeImage(imagePath);
+export async function parseImage(image: File): Promise<string> {
+  const base64Image = await encodeImageFromFile(image);
   const response = await openai.chat.completions.create({
     model: VISION_MODEL,
     messages: [

@@ -13,14 +13,8 @@
 */
 import { getDb } from "../../db/db-connection";
 import log from "../../log";
-import { getFileFromDb } from "../../storage/db";
-import { getFileFromLocalDisc } from "../../storage/local";
 import { FileSourceType } from "../../storage";
-import { parsePdfFileAsMardown } from "../parsing/pdf";
-import {
-  generateEmbedding,
-  generateImageDescription,
-} from "../standard/openai";
+import { generateEmbedding } from "../standard/openai";
 import { splitTextIntoSectionsOrChunks } from "./splitter";
 import type { ChunkWithEmbedding } from "./types";
 import {

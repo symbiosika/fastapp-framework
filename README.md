@@ -114,3 +114,4 @@ DataModel->Forms (image)
 - [ ] Python Sandbox mit Python Read-Only Lib Anbindung an die App um mit Daten zu spielen
 - [ ] Connectors to make.com, PowerAutomate und n8n.com
 - [ ] Send push notifications (PWA) https://www.npmjs.com/package/web-push
+- [ ] Der SVG Editor zum Nutzen von Prompt Skizzen
