@@ -12,7 +12,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
-import { description } from "valibot";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -115,3 +114,10 @@ export const knowledgeEntryRelations = relations(
     knowledgeChunks: many(knowledgeChunks),
   })
 );
+
+export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
+  knowledgeEntry: one(knowledgeEntry, {
+    fields: [fineTuningData.knowledgeEntryId],
+    references: [knowledgeEntry.id],
+  }),
+}));

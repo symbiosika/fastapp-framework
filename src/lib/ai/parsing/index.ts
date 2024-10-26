@@ -3,8 +3,8 @@ import log from "../../../lib/log";
 import { getFileFromDb } from "../../../lib/storage/db";
 import { getFileFromLocalDisc } from "../../../lib/storage/local";
 import { parsePdfFileAsMardown } from "./pdf";
-import { knowledgeTexts } from "src/lib/db/db-schema";
-import { getDb } from "src/lib/db/db-connection";
+import { knowledgeTexts } from "../../../lib/db/db-schema";
+import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
 import { generateImageDescription } from "../standard/openai";
 

@@ -19,6 +19,9 @@ import { FileSourceType } from "../../lib/storage";
 import { askKnowledge } from "../../lib/ai/knowledge/search";
 import { parseDocument } from "../../lib/ai/parsing";
 import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
+import { fineTuningData, knowledgeEntry } from "../../lib/db/schema/knowledge";
+import { and, eq, inArray } from "drizzle-orm";
+import { getDb } from "src/lib/db/db-connection";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -61,6 +64,21 @@ const parseDocumentValidation = v.object({
   fileSourceUrl: v.optional(v.string()),
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
+
+// Add new validation schema
+const fineTuningDataValidation = v.object({
+  name: v.optional(v.string()),
+  category: v.optional(v.string()),
+  data: v.array(
+    v.object({
+      question: v.string(),
+      answer: v.string(),
+    })
+  ),
+});
+export type FineTuningDataInput = v.InferOutput<
+  typeof fineTuningDataValidation
+>;
 
 /**
  * Define the payment routes
@@ -252,4 +270,148 @@ export default function defineRoutes(app: FastAppHono) {
       });
     }
   });
+
+  /**
+   * Get fine-tuning data with nested knowledge entry
+   * Optional URL params are:
+   * - name: string[]
+   * - category: string[]
+   */
+  app.get("/fine-tuning/:id?", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const name = c.req.query("name");
+      const category = c.req.query("category");
+
+      // only return one item?
+      if (id) {
+        const data = await getDb().query.fineTuningData.findFirst({
+          where: eq(fineTuningData.id, id),
+          with: {
+            knowledgeEntry: true,
+          },
+        });
+        return c.json(data);
+      }
+
+      // else return all items filtered by the given name and category
+      let names: string[] = [];
+      if (name) {
+        names = name.split(",");
+      }
+      let categories: string[] = [];
+      if (category) {
+        categories = category.split(",");
+      }
+
+      let where;
+      if (names.length > 0) {
+        where = inArray(fineTuningData.name, names);
+      } else if (categories.length > 0) {
+        where = inArray(fineTuningData.category, categories);
+      } else if (names.length > 0 && categories.length > 0) {
+        where = and(
+          inArray(fineTuningData.name, names),
+          inArray(fineTuningData.category, categories)
+        );
+      }
+
+      const data = await getDb().query.fineTuningData.findMany({
+        where,
+        with: {
+          knowledgeEntry: true,
+        },
+      });
+      if (!data) {
+        throw new HTTPException(404, { message: "Fine-tuning data not found" });
+      }
+      return c.json(data);
+    } catch (err) {
+      throw new HTTPException(400, { message: err + "" });
+    }
+  });
+
+  /**
+   * Add new fine-tuning data
+   */
+  app.post("/fine-tuning", async (c) => {
+    const body = await c.req.json();
+    try {
+      const parsedBody = v.parse(fineTuningDataValidation, body);
+
+      // Create knowledge entry first
+      const knowledgeEntryResult = await getDb()
+        .insert(knowledgeEntry)
+        .values({
+          fileSourceType: "finetuning",
+          title: parsedBody.name || "Unnamed Fine-tuning Dataset",
+          description: `Fine-tuning dataset${parsedBody.category ? ` for ${parsedBody.category}` : ""}`,
+        })
+        .returning();
+
+      // Insert all QA pairs
+      const fineTuningEntries = await getDb()
+        .insert(fineTuningData)
+        .values(
+          parsedBody.data.map((item) => ({
+            knowledgeEntryId: knowledgeEntryResult[0].id,
+            name: parsedBody.name,
+            category: parsedBody.category,
+            question: item.question,
+            answer: item.answer,
+          }))
+        )
+        .returning();
+
+      return c.json(fineTuningEntries);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Update fine-tuning data
+   */
+  app.put("/fine-tuning/:id", async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+
+    try {
+      const parsedBody = v.parse(fineTuningDataValidation, body);
+
+      // Delete existing data
+      await getDb().delete(fineTuningData).where(eq(fineTuningData.id, id));
+
+      // Insert new data
+      const fineTuningEntries = await getDb()
+        .insert(fineTuningData)
+        .values(
+          parsedBody.data.map((item) => ({
+            knowledgeEntryId: id,
+            name: parsedBody.name,
+            category: parsedBody.category,
+            question: item.question,
+            answer: item.answer,
+          }))
+        )
+        .returning();
+
+      return c.json({ success: true });
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Delete fine-tuning data
+   */
+  app.delete("/fine-tuning/:id", async (c) => {
+    const id = c.req.param("id");
+    await getDb().delete(fineTuningData).where(eq(fineTuningData.id, id));
+    return c.json({ success: true });
+  });
+
+  /**
+   *
+   */
 }
