@@ -1,4 +1,6 @@
 import {
+  addPromptTemplatePlaceholder,
+  deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
   getPlainPlaceholdersForPromptTemplate,
   getPlainTemplate,
@@ -115,6 +117,19 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
+   * Add a new placeholder to a prompt template
+   */
+  app.post("/templates/:promptTemplateId/placeholders", async (c) => {
+    const promptTemplateId = c.req.param("promptTemplateId");
+    const body = await c.req.json();
+    const r = await addPromptTemplatePlaceholder({
+      ...body,
+      promptTemplateId,
+    });
+    return c.json(r);
+  });
+
+  /**
    * Update a prompt-template placeholder by ID
    */
   app.put("/templates/:promptTemplateId/placeholders/:id", async (c) => {
@@ -126,6 +141,16 @@ export default function defineRoutes(app: FastAppHono) {
       id,
       promptTemplateId: promptTemplateId,
     });
+    return c.json(r);
+  });
+
+  /**
+   * Delete a placeholder for a prompt template by ID
+   */
+  app.delete("/templates/:promptTemplateId/placeholders/:id", async (c) => {
+    const promptTemplateId = c.req.param("promptTemplateId");
+    const id = c.req.param("id");
+    const r = await deletePromptTemplatePlaceholder(id, promptTemplateId);
     return c.json(r);
   });
 

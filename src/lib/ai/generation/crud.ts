@@ -1,8 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, Placeholder } from "drizzle-orm";
 import { getDb } from "../../../lib/db/db-connection";
 import {
   promptTemplatePlaceholders,
   promptTemplates,
+  type PromptTemplatePlaceholdersInsert,
   type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesSelect,
 } from "../../../lib/db/db-schema";
@@ -106,6 +107,19 @@ export const updatePromptTemplate = async (data: PromptTemplatesSelect) => {
 };
 
 /**
+ * Add a new placeholder to a prompt template
+ */
+export const addPromptTemplatePlaceholder = async (
+  data: PromptTemplatePlaceholdersInsert
+) => {
+  const added = await getDb()
+    .insert(promptTemplatePlaceholders)
+    .values(data)
+    .returning();
+  return added[0];
+};
+
+/**
  * Update a placeholder entry by ID
  */
 export const updatePromptTemplatePlaceholder = async (
@@ -125,4 +139,23 @@ export const updatePromptTemplatePlaceholder = async (
     )
     .returning();
   return updated[0];
+};
+
+/**
+ * Delete a placeholder for a prompt template by ID
+ */
+export const deletePromptTemplatePlaceholder = async (
+  id: string,
+  promptTemplateId: string
+) => {
+  await getDb()
+    .delete(promptTemplatePlaceholders)
+    .where(
+      and(
+        eq(promptTemplatePlaceholders.id, id),
+        eq(promptTemplatePlaceholders.promptTemplateId, promptTemplateId)
+      )
+    );
+
+  return { success: true };
 };

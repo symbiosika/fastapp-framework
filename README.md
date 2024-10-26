@@ -63,6 +63,7 @@ DataModel->Forms (image)
 - [x] Magic Link Login
 - [x] Simple User-Profile page
 - [x] Custom registration flow to prevent Registration of unallowed users
+- [ ] Auth0 connector (MS, Google etc, Login)
 
 ### Payment Integration
 
@@ -98,7 +99,6 @@ DataModel->Forms (image)
 
 - [ ] Limited Time-Usage Tokens for all URLs (to give users without accout access to may do some action) -> redirect to login must include the original page as "redirectTo==xxx"
 - [ ] Use Telegram to interact with the App
-- [ ] Auth0 Login (Cloud)
 - [ ] Give each prompt template a "toString()" method for the result with Placeholders. To give back a good predefined result.
 - [ ] Give the "GenericForm" a toString() Template. Du give a LLM a better possibility to read out?
 - [ ] Docker container to run DB migrations. Actually this is solved by GH Actions for each project
