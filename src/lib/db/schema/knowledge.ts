@@ -8,9 +8,11 @@ import {
   varchar,
   jsonb,
   vector,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
+import { description } from "valibot";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -18,6 +20,7 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
   "local",
   "url",
   "text",
+  "finetuning",
 ]);
 
 // Table to store input texts
@@ -40,7 +43,7 @@ export const knowledgeEntry = pgBaseTable("knowledge_entry", {
   fileSourceBucket: text("file_source_bucket"),
   fileSourceUrl: text("file_source_url"),
   title: varchar("title", { length: 1000 }).notNull(),
-  text: text("text"),
+  description: text("description"),
   abstract: text("abstract"),
   meta: jsonb("meta"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
@@ -71,6 +74,30 @@ export const knowledgeChunks = pgBaseTable("knowledge_chunks", {
 
 export type KnowledgeChunksSelect = typeof knowledgeChunks.$inferSelect;
 export type KnowledgeChunksInsert = typeof knowledgeChunks.$inferInsert;
+
+// Table for fine tuning data
+export const fineTuningData = pgBaseTable(
+  "knowledge_fine_tuning_data",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    knowledgeEntryId: uuid("knowledge_entry_id")
+      .notNull()
+      .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }),
+    category: varchar("category", { length: 255 }),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+  },
+  (table) => ({
+    knowledgeEntryIdIdx: index("knowledge_entry_id_idx").on(
+      table.knowledgeEntryId
+    ),
+    nameIdx: index("knowledge_entry_name_idx").on(table.name),
+    categoryIdx: index("knowledge_entry_category_idx").on(table.category),
+  })
+);
 
 export const knowledgeChunksRelations = relations(
   knowledgeChunks,
