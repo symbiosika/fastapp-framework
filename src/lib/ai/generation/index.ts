@@ -554,5 +554,5 @@ export const textGenerationByPromptTemplate = async (
   const dialog = await getDialogByTemplate(data);
   const response = await generateResponseFromMessageBlocks(dialog);
 
-  return response.responses[response.lastOutputVarName];
+  return response;
 };

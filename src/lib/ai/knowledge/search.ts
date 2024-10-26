@@ -7,21 +7,29 @@ import log from "../../../lib/log";
  * Get an answer to a question from the knowledge base.
  */
 export const askKnowledge = async (data: AskKnowledgeInput) => {
-    log.debug("askKnowledge", JSON.stringify(data));
-    const chunks = await getNearestEmbeddings(data.question, data.countChunks, data.addBeforeN, data.addAfterN, data.filterKnowledgeEntryIds);
-    log.debug(`Found ${chunks.length} chunks`);
-    
-    const r = await textGenerationByPromptTemplate({
-        promptName: "answer-knowledge-question",
-        promptCategory: "knowledge",
-        usersPlaceholders: {
-            knowledge_base: chunks.map(c => c.text).join("\n\n"),
-            question: data.question
-        }
-    })
+  log.debug("askKnowledge", JSON.stringify(data));
+  const chunks = await getNearestEmbeddings(
+    data.question,
+    data.countChunks,
+    data.addBeforeN,
+    data.addAfterN,
+    data.filterKnowledgeEntryIds
+  );
+  log.debug(`Found ${chunks.length} chunks`);
 
-    return {
-        answer: r,
-        chunks: chunks
-    }
-}
+  const r = await textGenerationByPromptTemplate({
+    promptName: "answer-knowledge-question",
+    promptCategory: "knowledge",
+    usersPlaceholders: {
+      knowledge_base: chunks.map((c) => c.text).join("\n\n"),
+      question: data.question,
+    },
+  });
+
+  const answer = r.responses[r.lastOutputVarName];
+
+  return {
+    answer,
+    chunks,
+  };
+};

@@ -10,7 +10,10 @@ import {
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
 } from "../../lib/ai/generation/crud";
-import { functionChat } from "../../lib/ai/function-calling";
+import {
+  functionChat,
+  setChatHistoryInServer,
+} from "../../lib/ai/function-calling";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -22,6 +25,7 @@ import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
 import { fineTuningData, knowledgeEntry } from "../../lib/db/schema/knowledge";
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "src/lib/db/db-connection";
+import type { ServerChatItem } from "src/lib/ai/function-calling/shared-types";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -219,7 +223,18 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       const parsedBody = v.parse(generateByTemplateValidation, body);
       const r = await textGenerationByPromptTemplate(parsedBody);
-      return c.json(r);
+
+      // set history in the server
+      const chatId = setChatHistoryInServer(r.messages);
+
+      const result: ServerChatItem = {
+        chatId,
+        renderType: "text",
+        role: "assistant",
+        content: r.responses[r.lastOutputVarName],
+      };
+
+      return c.json(result);
     } catch (e) {
       throw new HTTPException(400, {
         message: e + "",

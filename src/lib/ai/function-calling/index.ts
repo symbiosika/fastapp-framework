@@ -1,13 +1,12 @@
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import {
-  aiFunctionExecuter,
-} from "./function-calls";
+import { aiFunctionExecuter } from "./function-calls";
 import { isContentAllowed } from "./content-filter";
 import { classifyMessage } from "./message-classifier";
 import { classifyFunctionMessage } from "./function-classifier";
 import log from "../../log";
 import { askKnowledge } from "../knowledge/search";
 import type { GenericFormEntry, ServerChatItem } from "./shared-types";
+import type { Message } from "../standard/openai";
 
 /**
  * A small in memory chat history for the function chat.
@@ -80,6 +79,22 @@ const setChatState = (chatId: string, state: keyof ChatState) => {
 };
 
 /**
+ * A function to set a exting chat history
+ * in the store with a new ID
+ */
+export const setChatHistoryInServer = (
+  chatHistory: Message[],
+  chatId: string = ""
+) => {
+  if (chatId === "") chatId = generateId();
+  setChatHistory(chatId, {
+    messages: chatHistory as ChatCompletionMessageParam[],
+    state: {},
+  });
+  return chatId;
+};
+
+/**
  * Overwrite the chat messages
  */
 const overwriteChatMessages = (
@@ -104,7 +119,10 @@ const backToUser = (
 ): ServerChatItem => {
   logWithChatId(data.chatId, data.content);
   if (!resetHistory) {
-    appendToChatHistory(data.chatId, { role: "assistant", content: data.content });
+    appendToChatHistory(data.chatId, {
+      role: "assistant",
+      content: data.content,
+    });
   } else {
     setChatHistory(data.chatId, {
       messages: [],
@@ -167,7 +185,12 @@ export const functionChat = async (
   try {
     const isAllowed = true; //await isContentAllowed(lastUserMessage);
     if (!isAllowed) {
-      return backToUser({ chatId, role: "assistant", content: "I´m sorry, but I can´t answer that question.", renderType: "text" });
+      return backToUser({
+        chatId,
+        role: "assistant",
+        content: "I´m sorry, but I can´t answer that question.",
+        renderType: "text",
+      });
     }
 
     // Classify the message. But only if the actual chat state is not already known.
@@ -185,7 +208,6 @@ export const functionChat = async (
 
     // Handle knowledge messages
     if (chatHistory.state.knowledgeModeActive) {
-
       const response = await askKnowledge({
         question: messages[messages.length - 1].content as string,
         countChunks: 5,
@@ -193,7 +215,13 @@ export const functionChat = async (
         addAfterN: 2,
       });
       return backToUser(
-        { chatId, role: "assistant", content: response.answer, renderType: "box", type: "info" },
+        {
+          chatId,
+          role: "assistant",
+          content: response.answer,
+          renderType: "box",
+          type: "info",
+        },
         true
       );
     }
@@ -216,8 +244,9 @@ export const functionChat = async (
         {
           chatId,
           role: "assistant",
-          content: "I am sorry. I don´t have a function that could solve your request. Please try again with another prompt.",
-          renderType: "text"
+          content:
+            "I am sorry. I don´t have a function that could solve your request. Please try again with another prompt.",
+          renderType: "text",
         },
         true
       );
@@ -246,18 +275,27 @@ export const functionChat = async (
 
       // back to the user. Reset the chat history to start a new one since it can make problems
       // if different questions and actions are handled in the same chat.
-      return backToUser({ chatId, role: "assistant", content: functionResponse.message, renderType: "text" }, true);
+      return backToUser(
+        {
+          chatId,
+          role: "assistant",
+          content: functionResponse.message,
+          renderType: "text",
+        },
+        true
+      );
     }
 
     // If we reach this point, we have a function call with missing fields.
     // We will return a message asking the user to provide the missing fields.
     else {
       // Create form definition from missing fields
-      const formDefinition: GenericFormEntry[] = funcClassification.data.missingFields.map((field) => ({
-        type: "text",
-        label: field,
-        key: field,
-      }));
+      const formDefinition: GenericFormEntry[] =
+        funcClassification.data.missingFields.map((field) => ({
+          type: "text",
+          label: field,
+          key: field,
+        }));
 
       // Create an object with missing fields as keys and empty strings as values
       const missingFieldsData = Object.fromEntries(
@@ -267,16 +305,19 @@ export const functionChat = async (
       return backToUser({
         chatId,
         role: "assistant",
-        content: 'Please provide more information.',
+        content: "Please provide more information.",
         renderType: "form",
         definition: formDefinition,
-        data: missingFieldsData
+        data: missingFieldsData,
       });
     }
   } catch (error) {
     await logWithChatId(chatId, "Error in chat endpoint:", error + "");
-    return backToUser(
-      { chatId, role: "assistant", content: "An error occurred while processing your request. " + error, renderType: "text" }
-    );
+    return backToUser({
+      chatId,
+      role: "assistant",
+      content: "An error occurred while processing your request. " + error,
+      renderType: "text",
+    });
   }
 };
