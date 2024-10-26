@@ -169,6 +169,13 @@
       "when": 1729949454774,
       "tag": "0023_gray_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1729964759107,
+      "tag": "0024_shiny_magma",
+      "breakpoints": true
     }
   ]
 }

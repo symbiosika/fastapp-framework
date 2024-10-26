@@ -21,6 +21,7 @@ export const promptTemplates = pgBaseTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     name: text("name").notNull(),
+    label: text("label").notNull().default(""),
     description: text("description").notNull().default(""),
     // optional type (short string) to group prompts
     category: varchar("category", { length: 255 }).notNull().default(""),
@@ -66,6 +67,7 @@ export const promptTemplatePlaceholders = pgBaseTable(
       .notNull()
       .references(() => promptTemplates.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    label: text("label").notNull().default(""),
     description: text("description").notNull().default(""),
     type: promptTemplatePlaceholderTypeEnum("type").notNull().default("text"),
     requiredByUser: boolean("required_by_user").notNull().default(false),
