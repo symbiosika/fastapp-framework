@@ -11,6 +11,9 @@ import { promptTemplates } from "../../../lib/db/db-schema";
 import { generateLongText, type Message } from "../standard";
 import log from "../../../lib/log";
 import type { GenerateByTemplateInput } from "../../../routes/ai";
+import { getPlainKnowledge } from "../knowledge/get-knowledge";
+import { FileSourceType } from "src/lib/storage";
+import { parseDocument } from "../parsing";
 
 type PlaceholderData = Record<
   string,
@@ -64,6 +67,9 @@ Ein Prompt Template ist wie folgt aufgebaut:
 {{#role=assistant}}
 ...text...
 ...{{someVariableName}}...
+...{{#knowledgebase id?=a category1?=a,b category2?=a,b category3?=a,b name?=a,b}}...
+
+...{{#file id=a fileSource=db|local}}...
 {{/role}}
 
 {{#break output=someVariableNameTwo forget=true output_type=json}}
@@ -97,7 +103,7 @@ export interface Message {
 */
 
 /**
- * Get a prompt template from the database by id.
+ * Hepler to get a prompt template from the database by id.
  */
 const getPromptTemplateById = async (
   promptId: string,
@@ -125,7 +131,7 @@ const getPromptTemplateById = async (
 };
 
 /**
- * Get a prompt template from the database by name and category.
+ * Helper to get a prompt template from the database by name and category.
  */
 const getPromptTemplateByNameAndCategory = async (
   promptName: string,
@@ -159,8 +165,9 @@ const getPromptTemplateByNameAndCategory = async (
 
 /**
  * Helper to shorten a string by replacing the middle with "...".
+ * Unit-Tested: Yes
  */
-const shortenString = (
+export const shortenString = (
   val: string | number | boolean | null | undefined,
   maxLength: number
 ) => {
@@ -168,10 +175,95 @@ const shortenString = (
   return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
 };
 
+type KnowledgebaseQuery = {
+  fullMatch: string;
+  id?: string[]; // Changed from string to string[]
+  category1?: string[];
+  category2?: string[];
+  category3?: string[];
+  names?: string[];
+};
+
+/**
+ * Helper to replace a knowledgebase entry in a template.
+ * Finds: {{#knowledgebase id?=a category?=a,b name?=a,b}}
+ * Unit-Tested: Yes
+ */
+export const parseKnowledgebaseQueries = (template: string) => {
+  const regExp = /{{#knowledgebase(?:\s+(?:id|category[1-3]|name)=[^}\s]+)*}}/g;
+
+  const queries: KnowledgebaseQuery[] = [];
+  for (const match of template.matchAll(regExp)) {
+    const fullMatch = match[0];
+
+    const idMatch = fullMatch.match(/id=([^}\s]+)/);
+    const category1Match = fullMatch.match(/category1=([^}\s]+)/);
+    const category2Match = fullMatch.match(/category2=([^}\s]+)/);
+    const category3Match = fullMatch.match(/category3=([^}\s]+)/);
+    const namesMatch = fullMatch.match(/name=([^}\s]+)/);
+
+    if (
+      !idMatch &&
+      !category1Match &&
+      !category2Match &&
+      !category3Match &&
+      !namesMatch
+    ) {
+      log.error(
+        `No knowledgebase query was found in the template: ${template}`
+      );
+      continue;
+    }
+
+    queries.push({
+      fullMatch,
+      id: idMatch?.[1]?.split(","), // Changed to split by comma like other fields
+      category1: category1Match?.[1]?.split(","),
+      category2: category2Match?.[1]?.split(","),
+      category3: category3Match?.[1]?.split(","),
+      names: namesMatch?.[1]?.split(","),
+    });
+  }
+  return queries;
+};
+
+interface FileQuery {
+  fullMatch: string;
+  id: string;
+  fileSource: FileSourceType;
+  bucket: string;
+}
+
+/**
+ * Helper to parse all file queries in a template.
+ * Finds: {{#file id=a fileSource=db|local}}
+ * Unit-Tested: Yes
+ */
+export const parseFileQueries = (template: string): FileQuery[] => {
+  const regExp =
+    /{{#file(?:\s+(?:id=([^\s}]+)|source=(db|local)|bucket=([^\s}]+)))+}}/g;
+  const matches = [...template.matchAll(regExp)];
+
+  return matches.map((match) => {
+    const fullMatch = match[0];
+    const idMatch = fullMatch.match(/id=([^\s}]+)/);
+    const sourceMatch = fullMatch.match(/source=(db|local)/);
+    const bucketMatch = fullMatch.match(/bucket=([^\s}]+)/);
+
+    return {
+      fullMatch,
+      id: idMatch?.[1] ?? "",
+      fileSource: (sourceMatch?.[1] || "db") as FileSourceType,
+      bucket: bucketMatch?.[1] ?? "default",
+    };
+  });
+};
+
 /**
  * Helper to replace a dict of placeholders with values in a template.
+ * Unit-Tested: Yes
  */
-const replacePlaceholders = async (
+export const replacePlaceholders = async (
   template: string,
   placeholders: PlaceholderData,
   whitelist?: string[]
@@ -199,16 +291,52 @@ const replacePlaceholdersInMessages = async (
   messages: Message[],
   placeholders: PlaceholderData
 ) => {
+  // all messages will be mutated in place
   for (const message of messages) {
     message.content = await replacePlaceholders(
       message.content.toString(),
       placeholders
     );
+
+    // parse all knowledgebase queries
+    const knowledgebaseQueries = parseKnowledgebaseQueries(message.content);
+    for (const query of knowledgebaseQueries) {
+      const knowledgebaseEntry = await getPlainKnowledge(query);
+      // replace the full match with the knowledgebase entry
+      const text = knowledgebaseEntry.map((e) => e.text).join("\n");
+      message.content = message.content.replace(query.fullMatch, text);
+    }
+
+    // parse all file queries
+    const fileQueries = parseFileQueries(message.content);
+    for (const query of fileQueries) {
+      try {
+        if (
+          query.fileSource !== FileSourceType.DB &&
+          query.fileSource !== FileSourceType.LOCAL
+        ) {
+          throw new Error(`Invalid file source type: ${query.fileSource}`);
+        }
+        const parsedFile = await parseDocument({
+          fileSourceType: query.fileSource,
+          fileSourceId: query.id,
+          fileSourceBucket: query.bucket,
+        });
+        message.content = message.content.replace(
+          query.fullMatch,
+          parsedFile.content
+        );
+      } catch (e) {
+        log.error(
+          `Error getting file ${query.id} from ${query.fileSource}: ${e}`
+        );
+      }
+    }
   }
 };
 
 /**
- * Parse a role string.
+ * Helper to parse a role string.
  * Will return "system", "user"(default) or "assistant".
  */
 const parseRole = (str: string) => {
@@ -220,6 +348,7 @@ const parseRole = (str: string) => {
 
 /**
  * Helper to parse a boolean given as string.
+ * Ensures that the value is a boolean.
  */
 const parseBoolean = (str: string | undefined) => {
   if (str && (str === "true" || str === "1")) {
@@ -229,8 +358,9 @@ const parseBoolean = (str: string | undefined) => {
 };
 
 /**
- * Parse output_type
+ * Helper to parse output_type
  * Possible returns = text | json
+ * Ensures that the value is a valid output type.
  */
 const parseOutputType = (str: string | undefined) => {
   if (str && str === "json") {
@@ -240,7 +370,9 @@ const parseOutputType = (str: string | undefined) => {
 };
 
 /**
- * Generate a message
+ * Helper to generate a message object
+ * Uses as a factory to create a message object with the correct role and content.
+ * Unit-Tested: Yes
  */
 export const generateMessage = async (
   role: string,
@@ -259,65 +391,90 @@ export const generateMessage = async (
   return { role: parseRole(role), content: text };
 };
 
+type BlockVariables = {
+  outputVarName: string;
+  forget: boolean;
+  outputType: "text" | "json";
+};
+
 /**
- * Get all blocks from a template
- * This will parse the template and split it into blocks by the {{#break output?=varName output_type?=json}} keyword.
- * It will return an array of blocks. Each block is an object with the template and the output variable name.
+ * Helper to parse block variables to an object
+ * Unit-Tested: Nested
  */
-const getBlocksFromTemplate = (template: string): RawBlock[] => {
+const parseBlockVariables = (str: string): BlockVariables => {
+  // Match all possible arguments regardless of order
+  const matches = str.match(
+    /{{#break(?: (?:output=(\w+)|forget=(true)|output_type=(\w+)))*}}/
+  );
+  if (!matches)
+    return { outputVarName: "output", forget: false, outputType: "text" };
+
+  // Find individual arguments using separate regex matches
+  const outputMatch = str.match(/output=(\w+)/);
+  const forgetMatch = str.match(/forget=(true)/);
+  const outputTypeMatch = str.match(/output_type=(\w+)/);
+
+  return {
+    outputVarName: outputMatch?.[1] || "output",
+    forget: forgetMatch !== null,
+    outputType: parseOutputType(outputTypeMatch?.[1]) || "text",
+  };
+};
+
+/**
+ * Helper to get all blocks from a template
+ * This will parse the template and split it into blocks by the {{#break ...}} keyword.
+ * It will return an array of blocks. Each block is an object with the template and block definition.
+ * Unit-Tested: Yes
+ */
+export const getBlocksFromTemplate = (template: string): RawBlock[] => {
   const rawBlocks: RawBlock[] = [];
   const usedVarNames = new Set<string>();
 
-  const breakBlockRegex =
-    /{{#break(?: output=(\w+))?(?: forget=true)?(?: output_type=json)?}}/g;
+  // Simpler regex that just matches the break block without capturing variables
+  const breakBlockRegex = /{{#break[^}]*}}/g;
   let match;
   let lastIndex = 0;
 
   while ((match = breakBlockRegex.exec(template)) !== null) {
-    const outputVarName = match[1] || "output";
-    log.debug(`Found break block with outputVarName: ${outputVarName}`);
-    if (usedVarNames.has(outputVarName)) {
+    // Get the template content before this break
+    const blockTemplate = template.slice(lastIndex, match.index);
+
+    // Parse the break block variables
+    const blockVars = parseBlockVariables(match[0]);
+
+    // Check for duplicate variable names
+    if (usedVarNames.has(blockVars.outputVarName)) {
       throw new Error(
-        `Duplicate output variable name ${outputVarName} was found in Template.`
+        `Duplicate output variable name ${blockVars.outputVarName} was found in Template.`
       );
     }
-    usedVarNames.add(outputVarName);
+    usedVarNames.add(blockVars.outputVarName);
 
-    const blockTemplate = template.slice(lastIndex, match.index);
     rawBlocks.push({
       template: blockTemplate,
-      outputVarName,
-      forget: parseBoolean(match[2]),
-      outputType: parseOutputType(match[3]),
+      ...blockVars,
     });
 
     lastIndex = breakBlockRegex.lastIndex;
   }
 
-  // Handle the last block after the final break statement
+  // Handle the remaining content after the last break
   if (lastIndex < template.length) {
-    const outputVarName = "output";
-    if (usedVarNames.has(outputVarName)) {
-      throw new Error(
-        `Last-Block: Duplicate output variable name ${outputVarName} was found in Template.`
-      );
-    }
-    usedVarNames.add(outputVarName);
     const blockTemplate = template.slice(lastIndex);
     rawBlocks.push({
       template: blockTemplate,
-      outputVarName,
+      outputVarName: "output",
       forget: false,
       outputType: "text",
     });
   }
 
-  // If no break statements were found, use the entire template as one block
+  // If no breaks found, use entire template as one block
   if (rawBlocks.length === 0) {
-    const outputVarName = "output";
     rawBlocks.push({
       template,
-      outputVarName,
+      outputVarName: "output",
       forget: false,
       outputType: "text",
     });
@@ -327,7 +484,7 @@ const getBlocksFromTemplate = (template: string): RawBlock[] => {
 };
 
 /**
- * Generate an array of message blocks from a list of raw blocks.
+ * Helper to generate an array of message blocks from a list of raw blocks.
  * This will split the raw blocks into message blocks by the {{#role=...}} keyword.
  * It will generate the messages for each block and return an array of message blocks.
  */
@@ -380,7 +537,7 @@ const generateMessageBlocksFromRawBlocks = async (
 };
 
 /**
- * Debugging helper to print a list of messages
+ * Helper for debugging to print a list of messages in a more readable format.
  */
 const printMessages = async (data: Message[]) => {
   for (const message of data) {
@@ -391,7 +548,7 @@ const printMessages = async (data: Message[]) => {
 };
 
 /**
- * Generate an array of message blocks from a raw template text.
+ * Helper to generate an array of message blocks from a raw template text.
  * This function parses the template and extracts all message parts given by the dialog blocks in the template.
  * It returns an array of message blocks and its return variable name.
  */
@@ -416,7 +573,7 @@ const generateMessageBlocks = async (
 };
 
 /**
- * Get the definition of a prompt template
+ * Helper to get the definition of a prompt template
  */
 export const getPromptTemplateDefinition = async (
   data: {

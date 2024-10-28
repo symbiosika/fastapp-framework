@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_text" ADD COLUMN "title" text DEFAULT '' NOT NULL;

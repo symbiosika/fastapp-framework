@@ -3,7 +3,7 @@ import log from "../../../lib/log";
 import { getFileFromDb } from "../../../lib/storage/db";
 import { getFileFromLocalDisc } from "../../../lib/storage/local";
 import { parsePdfFileAsMardown } from "./pdf";
-import { knowledgeTexts } from "../../../lib/db/db-schema";
+import { knowledgeText } from "../../../lib/db/db-schema";
 import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
 import { generateImageDescription } from "../standard";
@@ -77,14 +77,14 @@ export const parseDocument = async (data: {
   } else if (data.fileSourceType === FileSourceType.TEXT) {
     log.debug(`Get file from TEXT`);
     const dbResults = await getDb()
-      .select({ text: knowledgeTexts.text })
-      .from(knowledgeTexts)
-      .where(eq(knowledgeTexts.id, data.fileSourceId!));
+      .select()
+      .from(knowledgeText)
+      .where(eq(knowledgeText.id, data.fileSourceId!));
     if (dbResults.length === 0) {
       throw new Error(`Knowledge text not found: ${data.fileSourceId}`);
     }
     content = dbResults[0].text;
-    title = "";
+    title = dbResults[0].title;
   } else {
     throw new Error(
       `Can´t get file. Unsupported file source type '${data.fileSourceType}' or missing parameters.`

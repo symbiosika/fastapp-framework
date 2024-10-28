@@ -115,3 +115,4 @@ DataModel->Forms (image)
 - [ ] Connectors to make.com, PowerAutomate und n8n.com
 - [ ] Send push notifications (PWA) https://www.npmjs.com/package/web-push
 - [ ] Der SVG Editor zum Nutzen von Prompt Skizzen
+- [ ] Ordner Namen als NPM Paket inpackage.json registrieren um Funktionen zu schreiben die quasi keine Abhängigkeiten haben?

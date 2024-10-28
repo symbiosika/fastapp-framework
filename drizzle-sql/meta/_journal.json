@@ -204,6 +204,20 @@
       "when": 1730113120151,
       "tag": "0028_closed_valeria_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1730130307939,
+      "tag": "0029_gigantic_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1730131257896,
+      "tag": "0030_parallel_songbird",
+      "breakpoints": true
     }
   ]
 }

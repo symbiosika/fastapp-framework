@@ -24,23 +24,13 @@ import {
   type KnowledgeEntryInsert,
 } from "../../db/schema/knowledge";
 import { parseDocument } from "../parsing";
+import { nanoid } from "nanoid";
 
 /**
  * Helper function to store a knowledge entry in the database
  */
 const storeKnowledgeEntry = async (data: KnowledgeEntryInsert) => {
-  const entry = await getDb()
-    .insert(knowledgeEntry)
-    .values({
-      fileSourceType: data.fileSourceType,
-      fileSourceId: data.fileSourceId,
-      fileSourceBucket: data.fileSourceBucket,
-      fileSourceUrl: data.fileSourceUrl,
-      title: data.title,
-      abstract: data.abstract,
-      meta: data.meta,
-    })
-    .returning();
+  const entry = await getDb().insert(knowledgeEntry).values(data).returning();
   if (entry.length === 0) {
     throw new Error("Error storing knowledge entry");
   }
@@ -62,9 +52,13 @@ export const extractKnowledgeFromText = async (data: {
   fileSourceId?: string;
   fileSourceBucket?: string;
   fileSourceUrl?: string;
+  category1?: string;
+  category2?: string;
+  category3?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
-  const { content, title } = await parseDocument(data);
+  let { content, title } = await parseDocument(data);
+  title = title + "-" + nanoid(4);
 
   // Split the content into chunks
   const chunks = splitTextIntoSectionsOrChunks(content);
@@ -79,11 +73,17 @@ export const extractKnowledgeFromText = async (data: {
   log.debug(`Embeddings generated. Chunks: ${chunks.length}`);
 
   // Store the main entry in the database
-  log.debug(`Store knowledge entry: ${title}`);
-  const knowledgeEntry = await storeKnowledgeEntry({ ...data, title });
+  await log.debug(`Store knowledge entry: ${title}`);
+  const knowledgeEntry = await storeKnowledgeEntry({
+    ...data,
+    name: title,
+    category1: data.category1 || undefined,
+    category2: data.category2 || undefined,
+    category3: data.category3 || undefined,
+  });
 
   // Store the chunks in the database
-  log.debug(`Store knowledge chunks: ${allEmbeddings.length}`);
+  await log.debug(`Store knowledge chunks: ${allEmbeddings.length}`);
   await Promise.all(
     allEmbeddings.map((e) =>
       storeKnowledgeChunk({
@@ -96,7 +96,7 @@ export const extractKnowledgeFromText = async (data: {
       })
     )
   );
-  log.debug(`Knowledge chunks stored.`);
+  await log.debug(`Knowledge chunks stored.`);
   return {
     ok: true,
   };

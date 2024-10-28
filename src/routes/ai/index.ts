@@ -47,6 +47,9 @@ const generateKnowledgeValidation = v.object({
   fileSourceId: v.optional(v.string()),
   fileSourceBucket: v.optional(v.string()),
   fileSourceUrl: v.optional(v.string()),
+  category1: v.optional(v.string()),
+  category2: v.optional(v.string()),
+  category3: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -269,6 +272,25 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
+   * Get all knowledge entries
+   */
+  app.get("/knowledge-entries", async (c) => {
+    const r = await getDb().query.knowledgeEntry.findMany();
+    return c.json(r);
+  });
+
+  /**
+   * Delete a knowledge entry by ID
+   */
+  app.delete("/knowledge-entries/:id", async (c) => {
+    const id = c.req.param("id");
+    const r = await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, id));
+    return c.json({ success: true });
+  });
+
+  /**
    * Call the knowledge search
    * Will search for the question in the knowledge base and return the most relevant chunks
    * and give this to a LLM to answer the question
@@ -359,7 +381,7 @@ export default function defineRoutes(app: FastAppHono) {
         .insert(knowledgeEntry)
         .values({
           fileSourceType: "finetuning",
-          title: parsedBody.name || "Unnamed Fine-tuning Dataset",
+          name: parsedBody.name || "Unnamed Fine-tuning Dataset",
           description: `Fine-tuning dataset${parsedBody.category ? ` for ${parsedBody.category}` : ""}`,
         })
         .returning();

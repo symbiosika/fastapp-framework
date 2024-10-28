@@ -53,6 +53,13 @@ export const initializeCollectionPermissions = (
       GET: {},
     },
 
+    knowledgeText: {
+      GET: {},
+      POST: {},
+      PUT: {},
+      DELETE: {},
+    },
+
     secrets: {
       // on this table the user needs access to the assigned instanceId
       // only writing is allowed. not reading!

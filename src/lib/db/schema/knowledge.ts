@@ -24,11 +24,12 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
 ]);
 
 // Table to store input texts
-export const knowledgeTexts = pgBaseTable("knowledge_texts", {
+export const knowledgeText = pgBaseTable("knowledge_text", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   text: text("text").notNull(),
+  title: text("title").notNull().default(""),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });

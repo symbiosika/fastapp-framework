@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_texts" RENAME TO "base_knowledge_text";
