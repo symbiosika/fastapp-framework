@@ -9,6 +9,7 @@ import {
   jsonb,
   vector,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -33,21 +34,48 @@ export const knowledgeTexts = pgBaseTable("knowledge_texts", {
 });
 
 // Main table for all knowledge entries
-export const knowledgeEntry = pgBaseTable("knowledge_entry", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  fileSourceType: fileSourceTypeEnum("file_source_type").notNull(),
-  fileSourceId: uuid("file_source_id"),
-  fileSourceBucket: text("file_source_bucket"),
-  fileSourceUrl: text("file_source_url"),
-  title: varchar("title", { length: 1000 }).notNull(),
-  description: text("description"),
-  abstract: text("abstract"),
-  meta: jsonb("meta"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+export const knowledgeEntry = pgBaseTable(
+  "knowledge_entry",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    fileSourceType: fileSourceTypeEnum("file_source_type").notNull(),
+    fileSourceId: uuid("file_source_id"),
+    fileSourceBucket: text("file_source_bucket"),
+    fileSourceUrl: text("file_source_url"),
+    name: varchar("name", { length: 255 }).notNull(),
+    category1: varchar("category1", { length: 255 }),
+    category2: varchar("category2", { length: 255 }),
+    category3: varchar("category3", { length: 255 }),
+    description: text("description"),
+    abstract: text("abstract"),
+    meta: jsonb("meta"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (knowledgeEntry) => ({
+    nameIdx: uniqueIndex("knowledgeentry_name_idx").on(knowledgeEntry.name),
+    fileSourceTypeIdx: index("knowledge_entry_file_source_type_idx").on(
+      knowledgeEntry.fileSourceType
+    ),
+    category1Idx: index("knowledgeentry_category1_idx").on(
+      knowledgeEntry.category1
+    ),
+    category2Idx: index("knowledgeentry_category2_idx").on(
+      knowledgeEntry.category2
+    ),
+    category3Idx: index("knowledgeentry_category3_idx").on(
+      knowledgeEntry.category3
+    ),
+    createdAtIdx: index("knowledgeentry_created_at_idx").on(
+      knowledgeEntry.createdAt
+    ),
+    updatedAtIdx: index("knowledgeentry_updated_at_idx").on(
+      knowledgeEntry.updatedAt
+    ),
+  })
+);
 
 export type KnowledgeEntrySelect = typeof knowledgeEntry.$inferSelect;
 export type KnowledgeEntryInsert = typeof knowledgeEntry.$inferInsert;

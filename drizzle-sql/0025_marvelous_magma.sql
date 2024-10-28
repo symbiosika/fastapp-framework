@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "file_source_type_idx" ON "base_knowledge_entry" USING btree ("file_source_type");

@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_entry" RENAME COLUMN "title" TO "name";
