@@ -69,7 +69,7 @@ Ein Prompt Template ist wie folgt aufgebaut:
 ...{{someVariableName}}...
 ...{{#knowledgebase id?=a category1?=a,b category2?=a,b category3?=a,b name?=a,b}}...
 
-...{{#file id=a fileSource=db|local}}...
+...{{#file id=32ed9101-0887-4be0-b92c-204d8e7239dd fileSource=db}}...
 {{/role}}
 
 {{#break output=someVariableNameTwo forget=true output_type=json}}
@@ -250,12 +250,19 @@ export const parseFileQueries = (template: string): FileQuery[] => {
     const sourceMatch = fullMatch.match(/source=(db|local)/);
     const bucketMatch = fullMatch.match(/bucket=([^\s}]+)/);
 
-    return {
+    const result: FileQuery = {
       fullMatch,
       id: idMatch?.[1] ?? "",
       fileSource: (sourceMatch?.[1] || "db") as FileSourceType,
       bucket: bucketMatch?.[1] ?? "default",
     };
+
+    // Only add bucket if it's specified
+    if (bucketMatch?.[1]) {
+      result.bucket = bucketMatch[1];
+    }
+
+    return result;
   });
 };
 
