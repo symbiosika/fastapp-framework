@@ -6,7 +6,7 @@ import { classifyFunctionMessage } from "./function-classifier";
 import log from "../../log";
 import { askKnowledge } from "../knowledge/search";
 import type { GenericFormEntry, ServerChatItem } from "./shared-types";
-import type { Message } from "../standard/openai";
+import type { Message } from "../standard";
 
 /**
  * A small in memory chat history for the function chat.

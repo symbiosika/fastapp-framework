@@ -1,10 +1,19 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
-import log from "../../../lib/log";
+import log from "../../log";
 import { basename } from "path";
-import type { WhisperResponseWithSegmentsAndWords } from "../../../lib/types/openai";
+import type { WhisperResponseWithSegmentsAndWords } from "../../types/openai";
 import { nanoid } from "nanoid";
 
+/*
+This library is a wrapper for LLM APIs.
+At the moment it only supports OpenAI.
+All functions should be designed to support different providers in the future!
+*/
+
+/**
+ * Define the standards
+ */
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";
 export const TEXT_MODEL = "gpt-4-turbo";
@@ -31,11 +40,14 @@ export const openai = new OpenAIClient({
 });
 
 /**
- * Generate an embedding for the given text using the OpenAI API.
+ * Generate an embedding for the given text
  */
-export async function generateEmbedding(text: string) {
+export async function generateEmbedding(
+  text: string,
+  embeddingModel: string = EMBEDDING_MODEL
+) {
   const response = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
+    model: embeddingModel,
     input: text,
     encoding_format: "float",
   });
@@ -46,27 +58,7 @@ export async function generateEmbedding(text: string) {
 }
 
 /**
- * Generate a summary for the given text using the OpenAI API.
- */
-export async function generateSummary(text: string) {
-  const response = await openai.chat.completions.create({
-    model: TEXT_MODEL,
-    messages: [
-      {
-        role: "system",
-        content: `You are a professional writer and you have been asked to write a short and relevant summary of the following text:`,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
-  });
-  return response.choices[0].message.content;
-}
-
-/**
- * Encode the given image as a base64 string.
+ * Helper to encode the given image as a base64 string.
  */
 async function encodeImageFromPath(imagePath: string): Promise<string> {
   const imageBuffer = await fs.readFile(imagePath);
@@ -74,7 +66,7 @@ async function encodeImageFromPath(imagePath: string): Promise<string> {
 }
 
 /**
- * Encode a File object as a base64 string.
+ * Helper to encode a File object as a base64 string.
  */
 async function encodeImageFromFile(file: File): Promise<string> {
   const imageBuffer = await file.arrayBuffer();
@@ -84,17 +76,20 @@ async function encodeImageFromFile(file: File): Promise<string> {
 /**
  * Generate a description for the given image using the OpenAI API.
  */
-export async function generateImageDescription(image: File) {
+export async function generateImageDescription(
+  image: File,
+  model: string = TEXT_MODEL
+) {
   const base64Image = await encodeImageFromFile(image);
   const response = await openai.chat.completions.create({
-    model: TEXT_MODEL,
+    model,
     messages: [
       {
         role: "user",
         content: [
           {
             type: "text",
-            text: "What’s in this image?",
+            text: "What’s in this image? Explain it in detail with as many details as possible.",
           },
           {
             type: "image_url",
@@ -105,7 +100,7 @@ export async function generateImageDescription(image: File) {
         ],
       },
     ],
-    max_tokens: 300,
+    max_tokens: 2000,
   });
 
   return response.choices[0].message.content ?? "";
@@ -116,28 +111,38 @@ export async function generateImageDescription(image: File) {
  * Will respond with a JSON object always.
  */
 export async function chatCompletionAsJson(
-  messages: Message[]
+  messages: Message[],
+  model: string = TEXT_MODEL
 ): Promise<Message[]> {
   const completion = await openai.chat.completions.create({
     messages: messages as any,
-    model: TEXT_MODEL,
+    model,
     response_format: { type: "json_object" },
   });
 
   const response = completion.choices[0].message.content;
-  const parsedResponse = JSON.parse(response ?? "");
-
-  return parsedResponse;
+  try {
+    const parsedResponse = JSON.parse(response ?? "");
+    return parsedResponse;
+  } catch (error) {
+    log.error(`Error parsing JSON: ${error}. Response: ${response}`);
+    throw new Error(
+      `Result could not be parsed as JSON. Please check the Logs.`
+    );
+  }
 }
 
 /**
  * ChatCompletion function to generate a response for the given prompt.
  * Will respond with plain Text only.
  */
-export async function chatCompletion(messages: Message[]): Promise<string> {
+export async function chatCompletion(
+  messages: Message[],
+  model = TEXT_MODEL
+): Promise<string> {
   const completion = await openai.chat.completions.create({
     messages: messages as any,
-    model: TEXT_MODEL,
+    model,
   });
 
   const response = completion.choices[0].message.content ?? "";
@@ -159,7 +164,8 @@ export async function generateLongText(
   messages: Message[],
   outputType: "text" | "json" = "text",
   desiredWords?: number,
-  maxRetries: number = 5
+  maxRetries: number = 5,
+  model: string = TEXT_MODEL
 ): Promise<{
   text: string;
   json?: any;
@@ -173,7 +179,7 @@ export async function generateLongText(
     try {
       const completion = await openai.chat.completions.create({
         messages: currentMessages as any,
-        model: TEXT_MODEL,
+        model,
         max_tokens: 2000,
         response_format:
           outputType === "json" ? { type: "json_object" } : undefined,
@@ -236,12 +242,15 @@ export async function generateLongText(
 /**
  * Use OpenAI for STT
  */
-export const speechToText = async (query: {
-  file?: File;
-  filePath?: string;
-  returnSegments?: boolean;
-  returnWords?: boolean;
-}) => {
+export const speechToText = async (
+  query: {
+    file?: File;
+    filePath?: string;
+    returnSegments?: boolean;
+    returnWords?: boolean;
+  },
+  model: string = STT_MODEL
+) => {
   let fileToUpload: File;
   if (query.file) {
     fileToUpload = query.file;
@@ -263,7 +272,7 @@ export const speechToText = async (query: {
 
   const transcription = await openai.audio.transcriptions.create({
     file: fileToUpload,
-    model: "whisper-1",
+    model,
     response_format: "verbose_json",
     timestamp_granularities: createTimestampGranularities,
   });
@@ -276,12 +285,18 @@ export const speechToText = async (query: {
 /**
  * Use OpenAI for Image Generation
  */
-export const generateImage = async (prompt: string) => {
+export const generateImage = async (
+  prompt: string,
+  negativePrompt: string = "",
+  model: string = IMAGE_GENERATION_MODEL,
+  width: number = 1024,
+  height: number = 1024
+) => {
   const response = await openai.images.generate({
-    model: IMAGE_GENERATION_MODEL,
-    prompt,
+    model,
+    prompt: `${prompt} ${negativePrompt ? `. It contains not ${negativePrompt}` : ""}`,
     n: 1,
-    size: "1024x1024",
+    size: `${width}x${height}` as any,
   });
   const image_url = response.data[0].url;
   if (!image_url) {
@@ -295,70 +310,8 @@ export const generateImage = async (prompt: string) => {
 };
 
 /**
- * Parse an image and return a detailed description of its content using the OpenAI API.
+ * Any Text to Speech
  */
-
-const PARSE_IMAGE_PROMPT = `
-You are an expert image analyst.
-Provide a detailed description of the following image.`;
-
-export async function parseImage(image: File): Promise<string> {
-  const base64Image = await encodeImageFromFile(image);
-  const response = await openai.chat.completions.create({
-    model: VISION_MODEL,
-    messages: [
-      {
-        role: "system",
-        content: PARSE_IMAGE_PROMPT,
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Describe this image in detail:",
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`,
-            },
-          },
-        ],
-      },
-    ],
-    max_tokens: 500,
-  });
-
-  return response.choices[0].message.content ?? "";
-}
-
-/**
- * Rewrites the given text in a neutral, descriptive manner suitable for product development.
- * The text will be returned in the same language as the input.
- */
-const REWRITE_TEXT_PROMPT = `
-You are a professional writer and ghost writer.
-Rewrite the following text to be neutral, descriptive, and as concise as needed for product development purposes.
-Maintain the same language as the input! This is important!`;
-
-export async function rewriteText(text: string): Promise<string> {
-  const response = await openai.chat.completions.create({
-    model: TEXT_MODEL,
-    messages: [
-      {
-        role: "system",
-        content: REWRITE_TEXT_PROMPT,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
-  });
-  return response.choices[0].message.content ?? "";
-}
-
 export const textToSpeech = async (
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy"

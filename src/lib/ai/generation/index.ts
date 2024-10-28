@@ -8,7 +8,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../lib/db/db-connection";
 import { promptTemplates } from "../../../lib/db/db-schema";
-import { generateLongText, type Message } from "../standard/openai";
+import { generateLongText, type Message } from "../standard";
 import log from "../../../lib/log";
 import type { GenerateByTemplateInput } from "../../../routes/ai";
 

@@ -6,7 +6,7 @@ import { parsePdfFileAsMardown } from "./pdf";
 import { knowledgeTexts } from "../../../lib/db/db-schema";
 import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
-import { generateImageDescription } from "../standard/openai";
+import { generateImageDescription } from "../standard";
 
 /**
  * Helper function to parse a file and return the text content

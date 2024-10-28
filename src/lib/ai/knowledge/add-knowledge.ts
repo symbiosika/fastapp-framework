@@ -14,7 +14,7 @@
 import { getDb } from "../../db/db-connection";
 import log from "../../log";
 import { FileSourceType } from "../../storage";
-import { generateEmbedding } from "../standard/openai";
+import { generateEmbedding } from "../standard";
 import { splitTextIntoSectionsOrChunks } from "./splitter";
 import type { ChunkWithEmbedding } from "./types";
 import {

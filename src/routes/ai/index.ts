@@ -24,8 +24,8 @@ import { parseDocument } from "../../lib/ai/parsing";
 import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
 import { fineTuningData, knowledgeEntry } from "../../lib/db/schema/knowledge";
 import { and, eq, inArray } from "drizzle-orm";
-import { getDb } from "src/lib/db/db-connection";
-import type { ServerChatItem } from "src/lib/ai/function-calling/shared-types";
+import { getDb } from "../../lib/db/db-connection";
+import type { ServerChatItem } from "../../lib/ai/function-calling/shared-types";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),

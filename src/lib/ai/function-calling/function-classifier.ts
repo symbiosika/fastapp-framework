@@ -1,5 +1,5 @@
 import log from "../../log";
-import { openai } from "../standard/openai";
+import { openai } from "../standard";
 import { getAllAiFunctionDescriptions } from "./function-calls";
 import * as v from "valibot";
 import { getFunctionClassifierSystemPrompt } from "./function-classifier-system-prompt";

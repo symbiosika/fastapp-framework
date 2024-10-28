@@ -1,4 +1,4 @@
-import { FAST_TEXT_MODEL, openai } from "../standard/openai";
+import { FAST_TEXT_MODEL, openai } from "../standard";
 
 const systemPrompt = `
 You are a message classification assistant.
