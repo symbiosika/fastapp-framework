@@ -3,6 +3,7 @@ import type { StripeDetailedItem } from "../../types/shared/payment";
 import { getDb } from "../../db/db-connection";
 import { products } from "../../db/db-schema";
 import { and, eq } from "drizzle-orm";
+import { _GLOBAL_SERVER_CONFIG } from "../../../index";
 
 /**
  * Stripe Service
@@ -13,7 +14,7 @@ export class StripeService {
   private logEnabled: boolean = false;
 
   constructor(apiKey?: string) {
-    const stripeApiKey = apiKey || process.env.STRIPE_API_KEY;
+    const stripeApiKey = apiKey || process.env.STRIPE_API_KEY || "xxx";
     this.logEnabled = process.env.STRIPE_DEBUG === "true";
     if (!stripeApiKey) {
       throw new Error("Stripe API key is not provided");
@@ -198,13 +199,14 @@ export class StripeService {
 
       let successUrl =
         successUrlParam ??
-        `${process.env.BASE_URL}/static/subscriptions.html?session_id={CHECKOUT_SESSION_ID}`;
+        `${_GLOBAL_SERVER_CONFIG.baseUrl}${_GLOBAL_SERVER_CONFIG.basePath}/static/subscriptions.html?session_id={CHECKOUT_SESSION_ID}`;
       // check if success urls ends with ?session_id={CHECKOUT_SESSION_ID}
       if (!successUrl.endsWith("?session_id={CHECKOUT_SESSION_ID}")) {
         successUrl += "?session_id={CHECKOUT_SESSION_ID}";
       }
       const cancelUrl =
-        cancelUrlParam ?? `${process.env.BASE_URL}/static/subscriptions.html`;
+        cancelUrlParam ??
+        `${_GLOBAL_SERVER_CONFIG.baseUrl}/static/subscriptions.html`;
 
       // create a session to checkout
       const session = await this.stripe.checkout.sessions.create({

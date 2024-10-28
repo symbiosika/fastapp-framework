@@ -1,9 +1,9 @@
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import jwtlib from "jsonwebtoken";
+import { _GLOBAL_SERVER_CONFIG } from "./index";
 
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
-const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";
 
 // Hono can´t handle Auth0 JWT tokens
 // https://github.com/honojs/hono/issues/672
@@ -15,7 +15,6 @@ export const validateAllEnvVariables = (
   customEnvVariablesToCheckOnStartup: string[] = []
 ) => {
   const requiredEnvVars = [
-    "PORT",
     "POSTGRES_HOST",
     "POSTGRES_PORT",
     "POSTGRES_USER",
@@ -26,7 +25,6 @@ export const validateAllEnvVariables = (
     "AUTH_SECRET",
     "SECRETS_AES_KEY",
     "SECRETS_AES_IV",
-    "BASE_PATH",
     "JWT_PUBLIC_KEY",
   ];
   const missingEnvVars = requiredEnvVars
@@ -45,7 +43,8 @@ export const validateAllEnvVariables = (
  */
 const getTokenFromJwt = (token: string) => {
   return jwtlib.verify(token, JWT_PUBLIC_KEY, {
-    algorithms: AUTH_TYPE === "auth0" ? ["RS256"] : undefined,
+    algorithms:
+      _GLOBAL_SERVER_CONFIG.authType === "auth0" ? ["RS256"] : undefined,
   });
 };
 

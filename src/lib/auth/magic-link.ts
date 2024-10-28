@@ -5,18 +5,9 @@ import { nanoid } from "nanoid";
 import { smtpService } from "../email";
 import type { UsersEntity } from "../types/shared/db/users";
 import { generateJwt } from ".";
+import { _GLOBAL_SERVER_CONFIG } from "../../index";
 
 const EXPIRE_TIME = 15 * 60 * 1000; // 15 minutes
-
-const getEnvAsNumber = (key: string, defaultValue: number) => {
-  const value = process.env[key];
-  if (typeof value === "string") {
-    return parseInt(value);
-  }
-  return defaultValue;
-};
-
-const JWT_EXPIRE_TIME = getEnvAsNumber("JWT_EXPIRE_TIME", 86400); // 1 day
 
 /**
  * Create a Magic Link Token
@@ -61,14 +52,12 @@ export const sendMagicLink = async (email: string): Promise<void> => {
   await smtpService.sendMail({
     sender: process.env.SMTP_FROM,
     recipients: [email],
-    subject:
-      "Your Login Link" +
-      (process.env.APP_NAME ? " for " + process.env.APP_NAME : ""),
+    subject: "Your Login Link" + _GLOBAL_SERVER_CONFIG.appName,
     html: `
       <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #4a4a4a;">Login to ${process.env.APP_NAME || "Our App"}</h2>
+            <h2 style="color: #4a4a4a;">Login to ${_GLOBAL_SERVER_CONFIG.appName}</h2>
             <p>Hello,</p>
             <p>You've requested to log in to your account. Click the button below to securely access your account:</p>
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
@@ -80,7 +69,7 @@ export const sendMagicLink = async (email: string): Promise<void> => {
             </table>
             <p>If you didn't request this login link, you can safely ignore this email.</p>
             <p>This link will expire in 15 minutes for security reasons.</p>
-            <p>Best regards,<br>The ${process.env.APP_NAME || "App"} Team</p>
+            <p>Best regards,<br>The ${_GLOBAL_SERVER_CONFIG.appName} Team</p>
           </div>
         </body>
       </html>
@@ -102,9 +91,7 @@ export const sendVerificationEmail = async (email: string) => {
   await smtpService.sendMail({
     sender: process.env.SMTP_FROM,
     recipients: [email],
-    subject:
-      "Verify your Email" +
-      (process.env.APP_NAME ? " for " + process.env.APP_NAME : ""),
+    subject: "Verify your Email" + _GLOBAL_SERVER_CONFIG.appName,
     html: `
       <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -121,7 +108,7 @@ export const sendVerificationEmail = async (email: string) => {
             </table>
             <p>If you didn't request this login link, you can safely ignore this email.</p>
             <p>This link will expire in 15 minutes for security reasons.</p>
-            <p>Best regards,<br>The ${process.env.APP_NAME || "App"} Team</p>
+            <p>Best regards,<br>The ${_GLOBAL_SERVER_CONFIG.appName} Team</p>
           </div>
         </body>
       </html>
@@ -179,7 +166,10 @@ export const verifyMagicLink = async (
   const { user, tokenId } = await verifyEmailToken(token);
 
   // Generate a session token (JWT)
-  const { token: sessionToken } = await generateJwt(user, JWT_EXPIRE_TIME);
+  const { token: sessionToken } = await generateJwt(
+    user,
+    _GLOBAL_SERVER_CONFIG.jwtExpiresAfter
+  );
   await deleteMagicLinkToken(tokenId);
 
   return { user, token: sessionToken };
@@ -201,7 +191,10 @@ export const verifyEmail = async (
     .where(eq(users.id, user.id));
 
   // Generate a session token (JWT)
-  const { token: sessionToken } = await generateJwt(user, JWT_EXPIRE_TIME);
+  const { token: sessionToken } = await generateJwt(
+    user,
+    _GLOBAL_SERVER_CONFIG.jwtExpiresAfter
+  );
   await deleteMagicLinkToken(tokenId);
 
   return { user, token: sessionToken };

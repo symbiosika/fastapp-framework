@@ -15,6 +15,13 @@ export interface FastAppHono
   extends Hono<{ Variables: FastAppHonoContextVariables }, BlankSchema, "/"> {}
 
 export interface ServerConfig {
+  port?: number;
+  basePath?: string;
+  baseUrl?: string;
+
+  authType?: "local" | "auth0";
+  jwtExpiresAfter?: number;
+
   jobHandlers?: JobHandlerRegister[];
 
   customEnvVariablesToCheckOnStartup?: string[];
@@ -28,6 +35,9 @@ export interface ServerConfig {
   staticPublicDataPath?: string;
 
   customPreRegisterCustomVerifications?: CustomPreRegisterVerification[];
+
+  // stripe
+  useStripe?: boolean;
 }
 
 export interface DBStandardData {

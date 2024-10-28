@@ -25,20 +25,48 @@ import {
 import { defineCollectionRoutes } from "./routes/collections";
 import { defineJob, startJobQueue, type JobHandlerRegister } from "./lib/jobs";
 
-/**
- * Get all relevant ENV variables
- */
-const _PORTSTR = process.env.PORT!;
-const PORT = parseInt(_PORTSTR);
+export const _GLOBAL_SERVER_CONFIG = {
+  appName: "App",
+  port: 3000,
+  basePath: "/api/v1/",
+  baseUrl: "http://localhost:3000",
+  allowedOrigins: <string[]>[],
+  authType: <"local" | "auth0">"local",
+  jwtExpiresAfter: 60 * 60 * 24 * 30, // 30 days
 
-const _ORIGINS_FROM_ENV = process.env.ALLOWED_ORIGINS;
-const ALLOWED_ORIGINS = _ORIGINS_FROM_ENV ? _ORIGINS_FROM_ENV.split(",") : [];
-let BASE_PATH = process.env.BASE_PATH || "/api/v1/";
-if (BASE_PATH.endsWith("/")) {
-  BASE_PATH = BASE_PATH.slice(0, -1);
-}
+  useStripe: false,
+};
+
+const setGlobalServerConfig = (config: ServerConfig) => {
+  _GLOBAL_SERVER_CONFIG.port = config.port ?? 3000;
+  _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
+  _GLOBAL_SERVER_CONFIG.baseUrl =
+    config.baseUrl ?? process.env.BASE_URL ?? "http://localhost:3000";
+
+  if (_GLOBAL_SERVER_CONFIG.basePath.endsWith("/")) {
+    _GLOBAL_SERVER_CONFIG.basePath = _GLOBAL_SERVER_CONFIG.basePath.slice(
+      0,
+      -1
+    );
+  }
+
+  const _ORIGINS_FROM_ENV = process.env.ALLOWED_ORIGINS;
+  _GLOBAL_SERVER_CONFIG.allowedOrigins = _ORIGINS_FROM_ENV
+    ? _ORIGINS_FROM_ENV.split(",")
+    : [];
+
+  _GLOBAL_SERVER_CONFIG.authType = config.authType ?? "local";
+
+  if (config.jwtExpiresAfter) {
+    _GLOBAL_SERVER_CONFIG.jwtExpiresAfter = config.jwtExpiresAfter;
+  }
+
+  _GLOBAL_SERVER_CONFIG.useStripe = config.useStripe ?? false;
+};
 
 export const defineServer = (config: ServerConfig) => {
+  setGlobalServerConfig(config);
+
   /**
    * validate .ENV variables
    */
@@ -69,18 +97,18 @@ export const defineServer = (config: ServerConfig) => {
   /**
    * Middleware for CORS
    */
-  console.log("Allowed origins:", ALLOWED_ORIGINS);
+  console.log("Allowed origins:", _GLOBAL_SERVER_CONFIG.allowedOrigins);
   app.use(
     "/*",
     cors({
-      origin: ALLOWED_ORIGINS,
+      origin: _GLOBAL_SERVER_CONFIG.allowedOrigins,
     })
   );
 
   /**
    * A Ping endpoint
    */
-  app.get(BASE_PATH + "/ping", async (c) => {
+  app.get(_GLOBAL_SERVER_CONFIG.basePath + "/ping", async (c) => {
     const logger = c.get("logger");
     logger.info("Ping");
     return c.json({
@@ -91,32 +119,32 @@ export const defineServer = (config: ServerConfig) => {
   /**
    * Add user routes
    */
-  definePublicUserRoutes(app, BASE_PATH);
-  defineSecuredUserRoutes(app, BASE_PATH);
+  definePublicUserRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  defineSecuredUserRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Add collection routes
    */
-  defineCollectionRoutes(app, BASE_PATH);
+  defineCollectionRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Add files routes
    */
-  defineFilesRoutes(app, BASE_PATH);
+  defineFilesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Add payment routes
    */
-  if (process.env.USE_STRIPE === "true") {
+  if (_GLOBAL_SERVER_CONFIG.useStripe) {
     const paymentApp = new Hono();
     paymentApp.use("*", async (c, next) => {
-      if (c.req.path !== BASE_PATH + "/payment/success") {
+      if (c.req.path !== _GLOBAL_SERVER_CONFIG.basePath + "/payment/success") {
         return authAndSetUsersInfoOrRedirectToLogin(c, next);
       }
       await next();
     });
     paymentRoutes(paymentApp as any);
-    app.route(BASE_PATH + "/payment", paymentApp);
+    app.route(_GLOBAL_SERVER_CONFIG.basePath + "/payment", paymentApp);
   }
 
   /**
@@ -125,7 +153,7 @@ export const defineServer = (config: ServerConfig) => {
   const aiApp = new Hono();
   aiApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
   aiRoutes(aiApp as any);
-  app.route(BASE_PATH + "/ai", aiApp);
+  app.route(_GLOBAL_SERVER_CONFIG.basePath + "/ai", aiApp);
 
   /**
    * Add custom routes from customHonoApps
@@ -136,7 +164,7 @@ export const defineServer = (config: ServerConfig) => {
       // Add authOrRedirectToLogin middleware
       honoApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
       customApp(honoApp);
-      app.route(BASE_PATH + baseRoute, honoApp);
+      app.route(_GLOBAL_SERVER_CONFIG.basePath + baseRoute, honoApp);
     });
   }
 
@@ -182,7 +210,7 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   return {
-    port: PORT,
+    port: config.port ?? 3000,
     fetch: app.fetch,
   };
 };

@@ -7,9 +7,9 @@ import { getDb } from "../../lib/db/db-connection";
 import { LocalAuth } from "../../lib/auth";
 import log from "../../lib/log";
 import { authAndSetUsersInfo } from "../../helper";
+import { _GLOBAL_SERVER_CONFIG } from "../../index";
 
 const BASE_PATH = "/user";
-const AUTH_TYPE: "local" | "auth0" = (process.env.AUTH_TYPE as any) || "local";
 
 /**
  * Pre-register custom verification
@@ -118,7 +118,7 @@ export function definePublicUserRoutes(
    */
   app.post(API_BASE_PATH + BASE_PATH + "/login", async (c: Context) => {
     try {
-      if (AUTH_TYPE !== "local") {
+      if (_GLOBAL_SERVER_CONFIG.authType !== "local") {
         throw new HTTPException(400, {
           message: "Local login is not enabled",
         });
@@ -207,7 +207,7 @@ export function definePublicUserRoutes(
    */
   app.post(API_BASE_PATH + BASE_PATH + "/register", async (c: Context) => {
     try {
-      if (AUTH_TYPE !== "local") {
+      if (_GLOBAL_SERVER_CONFIG.authType !== "local") {
         throw new HTTPException(400, {
           message: "Local register is not enabled",
         });
