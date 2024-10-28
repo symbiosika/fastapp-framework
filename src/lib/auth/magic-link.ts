@@ -7,7 +7,16 @@ import type { UsersEntity } from "../types/shared/db/users";
 import { generateJwt } from ".";
 
 const EXPIRE_TIME = 15 * 60 * 1000; // 15 minutes
-const JWT_EXPIRE_TIME = 86400; // 1 day
+
+const getEnvAsNumber = (key: string, defaultValue: number) => {
+  const value = process.env[key];
+  if (typeof value === "string") {
+    return parseInt(value);
+  }
+  return defaultValue;
+};
+
+const JWT_EXPIRE_TIME = getEnvAsNumber("JWT_EXPIRE_TIME", 86400); // 1 day
 
 /**
  * Create a Magic Link Token
