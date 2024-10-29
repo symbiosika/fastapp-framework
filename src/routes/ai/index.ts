@@ -21,11 +21,20 @@ import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
 import { askKnowledge } from "../../lib/ai/knowledge/search";
 import { parseDocument } from "../../lib/ai/parsing";
-import { textGenerationByPromptTemplate } from "../../lib/ai/generation";
-import { fineTuningData, knowledgeEntry } from "../../lib/db/schema/knowledge";
+import {
+  shortenString,
+  textGenerationByPromptTemplate,
+} from "../../lib/ai/generation";
+import {
+  fineTuningData,
+  knowledgeEntry,
+  knowledgeText,
+} from "../../lib/db/schema/knowledge";
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "../../lib/db/db-connection";
 import type { ServerChatItem } from "../../lib/ai/function-calling/shared-types";
+import { getMarkdownFromUrl } from "../../lib/ai/parsing/url";
+import log from "../../lib/log";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -449,6 +458,31 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
-   *
+   * Add a text knowledge entry from an URL
    */
+  app.post("/add-textknowledge-from-url", async (c) => {
+    const body = await c.req.json();
+    const url: string = body.url;
+    try {
+      const markdown = await getMarkdownFromUrl(url);
+      log.debug(`Markdown: ${shortenString(markdown, 100)}`);
+
+      // insert in DB as text knowledge entry
+      const e = await getDb()
+        .insert(knowledgeText)
+        .values({
+          text: markdown,
+          title: url,
+        })
+        .returning({
+          id: knowledgeText.id,
+          title: knowledgeText.title,
+          createdAt: knowledgeText.createdAt,
+        });
+
+      return c.json(e);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
 }
