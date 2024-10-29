@@ -16,6 +16,7 @@ export interface GeneralSaveFileFunction {
   ): Promise<{
     path: string;
     id: string;
+    name: string;
   }>;
 }
 

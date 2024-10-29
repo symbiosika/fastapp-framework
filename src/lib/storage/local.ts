@@ -32,8 +32,12 @@ export const getFileFromLocalDisc: GetFileFunction = async (name, bucket) => {
   // Generate the file path
   const filePath = path.join(ATTACHMENT_DIR, bucket, name);
   // return the file
-  const file = await fs.readFile(filePath);
-  return new File([file], name);
+  try {
+    const file = await fs.readFile(filePath);
+    return new File([file], name);
+  } catch (error) {
+    throw new Error("File not found");
+  }
 };
 
 export const deleteFileFromLocalDisc: DeleteFileFunction = async (

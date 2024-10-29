@@ -1,4 +1,10 @@
-import { varchar, uuid, timestamp, customType } from "drizzle-orm/pg-core";
+import {
+  varchar,
+  uuid,
+  timestamp,
+  customType,
+  index,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
 
@@ -12,19 +18,34 @@ const bytea = customType<{
 });
 
 // Table files
-export const files = pgBaseTable("files", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
-  bucket: varchar("bucket", { length: 255 }).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  fileType: varchar("file_type", { length: 255 }).notNull(),
-  extension: varchar("extension", { length: 255 }).notNull(),
-  file: bytea("file").notNull(),
-  expiresAt: timestamp("expires_at", { mode: "string" }),
-});
+export const files = pgBaseTable(
+  "files",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    bucket: varchar("bucket", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    fileType: varchar("file_type", { length: 255 }).notNull(),
+    extension: varchar("extension", { length: 255 }).notNull(),
+    file: bytea("file").notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string" }),
+  },
+  (table) => ({
+    idIdx: index("files_id_idx").on(table.id),
+    bucketNameIdx: index("files_bucket_name_idx").on(table.bucket),
+    createdAtIdx: index("files_created_at_idx").on(table.createdAt),
+    updatedAtIdx: index("files_updated_at_idx").on(table.updatedAt),
+    nameIdx: index("files_name_idx").on(table.name),
+    expiresAtIdx: index("files_expires_at_idx").on(table.expiresAt),
+  })
+);
 
 export type FilesSelect = typeof files.$inferSelect;
 export type FilesInsert = typeof files.$inferInsert;

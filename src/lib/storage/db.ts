@@ -44,6 +44,7 @@ export const saveFileToDb: SaveFileFunction = async (file, bucket) => {
     return {
       path: `/api/v1/files/db/${bucket}/${e[0].id}${fileExtension !== "" ? `.${fileExtension}` : ""}`,
       id: e[0].id,
+      name: e[0].name,
     };
   } catch (error) {
     throw new Error("Failed to save file to database. " + error);
@@ -59,6 +60,7 @@ export const getFileFromDb: GetFileFunction = async (name, bucket) => {
       .select()
       .from(files)
       .where(and(eq(files.id, id), eq(files.bucket, bucket)));
+    console.log("fileRecord", fileRecord[0]?.id);
 
     if (fileRecord.length === 0) {
       throw new Error("File not found");

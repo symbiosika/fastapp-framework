@@ -257,7 +257,7 @@ export default function defineRoutes(app: FastAppHono) {
 
       const result: ServerChatItem = {
         chatId: session.id,
-        renderType: "text",
+        renderType: "markdown",
         role: "assistant",
         content: r.responses[r.lastOutputVarName],
       };
