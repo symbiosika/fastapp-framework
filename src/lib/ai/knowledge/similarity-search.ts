@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { knowledgeChunks } from "../../../lib/db/db-schema";
+import { knowledgeChunks, knowledgeEntry } from "../../../lib/db/db-schema";
 import { generateEmbedding } from "../standard";
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
@@ -14,40 +14,79 @@ type KnowledgeChunk = {
 /**
  * Get the n nearest embeddings to the search text
  */
-export async function getNearestEmbeddings(
-  searchText: string,
-  n: number = 5,
-  addBeforeN: number = 0,
-  addAfterN: number = 0,
-  filterKnowledgeEntryIds?: string[]
-): Promise<{ id: string; text: string }[]> {
+export async function getNearestEmbeddings(q: {
+  searchText: string;
+  n?: number;
+  addBeforeN?: number;
+  addAfterN?: number;
+  filterKnowledgeEntryIds?: string[];
+  filterCategory1?: string[];
+  filterCategory2?: string[];
+  filterCategory3?: string[];
+  filterName?: string[];
+}): Promise<{ id: string; text: string }[]> {
   // Generate the embedding for the search text
-  const embed = await generateEmbedding(searchText);
-  const result = await getDb().execute<KnowledgeChunk>(sql`
-	  SELECT
-		${knowledgeChunks.id}, 
-		${knowledgeChunks.text},
-		${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
-		${knowledgeChunks.order}
-	  FROM 
-		${knowledgeChunks}
+  const embed = await generateEmbedding(q.searchText);
 
-      -- filter by knowledgeEntryId or no filter!
-		${sql.raw(`
-        ${
-          filterKnowledgeEntryIds
-            ? `WHERE knowledgeEntryId IN (${filterKnowledgeEntryIds.map((id) => `'${id}'`).join(",")})`
-            : ""
-        }`)} 
-	  ORDER BY
-		${knowledgeChunks.textEmbedding} <-> ${sql.raw(`'[${embed.embedding}]'`)} ASC
-	  LIMIT
-		${n};
-	`);
+  // set some default values
+  if (!q.n) {
+    q.n = 5;
+  }
+  if (!q.addBeforeN) {
+    q.addBeforeN = 0;
+  }
+  if (!q.addAfterN) {
+    q.addAfterN = 0;
+  }
+
+  const filters = [];
+  if (q.filterKnowledgeEntryIds) {
+    filters.push(
+      sql`${knowledgeEntry.id} IN (${sql.join(q.filterKnowledgeEntryIds)})`
+    );
+  }
+  if (q.filterCategory1 && q.filterCategory1.length > 0) {
+    filters.push(
+      sql`${knowledgeEntry.category1} IN (${sql.join(q.filterCategory1)})`
+    );
+  }
+  if (q.filterCategory2 && q.filterCategory2.length > 0) {
+    filters.push(
+      sql`${knowledgeEntry.category2} IN (${sql.join(q.filterCategory2)})`
+    );
+  }
+  if (q.filterCategory3 && q.filterCategory3.length > 0) {
+    filters.push(
+      sql`${knowledgeEntry.category3} IN (${sql.join(q.filterCategory3)})`
+    );
+  }
+  if (q.filterName && q.filterName.length > 0) {
+    filters.push(sql`${knowledgeEntry.name} IN (${sql.join(q.filterName)})`);
+  }
+
+  const whereClause =
+    filters.length > 0 ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``;
+
+  const result = await getDb().execute<KnowledgeChunk>(sql`
+    SELECT
+      ${knowledgeChunks.id}, 
+      ${knowledgeChunks.text},
+      ${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
+      ${knowledgeChunks.order}
+    FROM 
+      ${knowledgeChunks}
+    JOIN 
+      ${knowledgeEntry} ON ${knowledgeChunks.knowledgeEntryId} = ${knowledgeEntry.id}
+    ${whereClause}
+    ORDER BY
+      ${knowledgeChunks.textEmbedding} <-> ${sql.raw(`'[${embed.embedding}]'`)} ASC
+    LIMIT
+      ${q.n};
+  `);
   log.debug(`Found ${result.rows.length} chunks by similarity search`);
 
   // return if no addBeforeN and addAfterN
-  if (addBeforeN < 1 && addAfterN < 1) {
+  if (q.addBeforeN < 1 && q.addAfterN < 1) {
     return result.rows;
   }
 
@@ -74,8 +113,8 @@ export async function getNearestEmbeddings(
         FROM 
 		${knowledgeChunks}
             WHERE ${knowledgeChunks.knowledgeEntryId} = ${e.knowledgeEntryId}
-            AND ${knowledgeChunks.order} >= ${e.order - addBeforeN}
-            AND ${knowledgeChunks.order} <= ${e.order + addAfterN}
+            AND ${knowledgeChunks.order} >= ${e.order - q.addBeforeN}
+            AND ${knowledgeChunks.order} <= ${e.order + q.addAfterN}
         `);
     log.debug(
       `Found ${entries.rows.length} additional chunks for knowledgeEntryId: ${e.knowledgeEntryId}`

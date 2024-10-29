@@ -1,4 +1,4 @@
-import { and, eq, Placeholder } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../lib/db/db-connection";
 import {
   promptTemplatePlaceholders,

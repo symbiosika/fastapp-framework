@@ -8,13 +8,13 @@ import log from "../../../lib/log";
  */
 export const askKnowledge = async (data: AskKnowledgeInput) => {
   log.debug("askKnowledge", JSON.stringify(data));
-  const chunks = await getNearestEmbeddings(
-    data.question,
-    data.countChunks,
-    data.addBeforeN,
-    data.addAfterN,
-    data.filterKnowledgeEntryIds
-  );
+  const chunks = await getNearestEmbeddings({
+    searchText: data.question,
+    n: data.countChunks,
+    addBeforeN: data.addBeforeN,
+    addAfterN: data.addAfterN,
+    filterKnowledgeEntryIds: data.filterKnowledgeEntryIds,
+  });
   log.debug(`Found ${chunks.length} chunks`);
 
   const r = await textGenerationByPromptTemplate({

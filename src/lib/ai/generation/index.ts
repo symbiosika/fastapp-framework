@@ -14,6 +14,7 @@ import type { GenerateByTemplateInput } from "../../../routes/ai";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import { FileSourceType } from "src/lib/storage";
 import { parseDocument } from "../parsing";
+import { getNearestEmbeddings } from "../knowledge/similarity-search";
 
 type PlaceholderData = Record<
   string,
@@ -65,9 +66,14 @@ Ein Prompt Template ist wie folgt aufgebaut:
 {{#break output=someVariableName}}
 
 {{#role=assistant}}
+
 ...text...
+
 ...{{someVariableName}}...
+
 ...{{#knowledgebase id?=a category1?=a,b category2?=a,b category3?=a,b name?=a,b}}...
+
+...{{#similar_to search_for=a id?=a category1?=a,b category2?=a,b category3?=a,b name?=a,b}}...
 
 ...{{#file id=32ed9101-0887-4be0-b92c-204d8e7239dd fileSource=db}}...
 {{/role}}
@@ -190,7 +196,8 @@ type KnowledgebaseQuery = {
  * Unit-Tested: Yes
  */
 export const parseKnowledgebaseQueries = (template: string) => {
-  const regExp = /{{#knowledgebase(?:\s+(?:id|category[1-3]|name)=[^}\s]+)*}}/g;
+  const regExp =
+    /{{#knowledgebase(?:\s+(?:id|category[1-3]|name|comment)=(?:"[^"]*"|[^}\s]+))*}}/g;
 
   const queries: KnowledgebaseQuery[] = [];
   for (const match of template.matchAll(regExp)) {
@@ -227,6 +234,63 @@ export const parseKnowledgebaseQueries = (template: string) => {
   return queries;
 };
 
+type SimilarToQuery = {
+  fullMatch: string;
+  searchFor: string[];
+  id?: string[]; // Changed from string to string[]
+  category1?: string[];
+  category2?: string[];
+  category3?: string[];
+  names?: string[];
+  count?: number;
+  before?: number;
+  after?: number;
+};
+
+/**
+ * Helper to replace a similar_to entry in a template.
+ * Finds: {{#similar_to search_for=a id?=a category?=a,b name?=a,b count?=n before?=n after?=n}}
+ * Unit-Tested: Yes
+ */
+export const parseSimilarToQueries = (template: string) => {
+  const regExp =
+    /{{#similar_to(?:\s+(?:search_for|id|category[1-3]|name|count|before|after|comment)=(?:"[^"]*"|[^}\s]+))+}}/g;
+
+  const queries: SimilarToQuery[] = [];
+  for (const match of template.matchAll(regExp)) {
+    const fullMatch = match[0];
+
+    const searchForMatch = fullMatch.match(/search_for=([^}\s]+)/);
+    const idMatch = fullMatch.match(/id=([^}\s]+)/);
+    const category1Match = fullMatch.match(/category1=([^}\s]+)/);
+    const category2Match = fullMatch.match(/category2=([^}\s]+)/);
+    const category3Match = fullMatch.match(/category3=([^}\s]+)/);
+    const namesMatch = fullMatch.match(/name=([^}\s]+)/);
+    const countMatch = fullMatch.match(/count=(\d+)/);
+    const beforeMatch = fullMatch.match(/before=(\d+)/);
+    const afterMatch = fullMatch.match(/after=(\d+)/);
+
+    if (!searchForMatch) {
+      log.error(`No search_for query was found in the template: ${template}`);
+      continue;
+    }
+
+    queries.push({
+      fullMatch,
+      id: idMatch?.[1]?.split(","),
+      category1: category1Match?.[1]?.split(","),
+      category2: category2Match?.[1]?.split(","),
+      category3: category3Match?.[1]?.split(","),
+      names: namesMatch?.[1]?.split(","),
+      searchFor: searchForMatch[1].split(","),
+      count: countMatch ? parseInt(countMatch[1]) : undefined,
+      before: beforeMatch ? parseInt(beforeMatch[1]) : undefined,
+      after: afterMatch ? parseInt(afterMatch[1]) : undefined,
+    });
+  }
+  return queries;
+};
+
 interface FileQuery {
   fullMatch: string;
   id: string;
@@ -236,12 +300,12 @@ interface FileQuery {
 
 /**
  * Helper to parse all file queries in a template.
- * Finds: {{#file id=a fileSource=db|local}}
+ * Finds: {{#file id=a source=db|local bucket=a}}
  * Unit-Tested: Yes
  */
 export const parseFileQueries = (template: string): FileQuery[] => {
   const regExp =
-    /{{#file(?:\s+(?:id=([^\s}]+)|source=(db|local)|bucket=([^\s}]+)))+}}/g;
+    /{{#file(?:\s+(?:id|source|bucket|comment)=(?:"[^"]*"|[^}\s]+))+}}/g;
   const matches = [...template.matchAll(regExp)];
 
   return matches.map((match) => {
@@ -308,10 +372,34 @@ const replacePlaceholdersInMessages = async (
     // parse all knowledgebase queries
     const knowledgebaseQueries = parseKnowledgebaseQueries(message.content);
     for (const query of knowledgebaseQueries) {
+      log.debug(`Knowledgebase query: ${JSON.stringify(query)}`);
       const knowledgebaseEntry = await getPlainKnowledge(query);
       // replace the full match with the knowledgebase entry
-      const text = knowledgebaseEntry.map((e) => e.text).join("\n");
+      const text = knowledgebaseEntry.map((e) => e.text).join("\n\n");
       message.content = message.content.replace(query.fullMatch, text);
+    }
+
+    // parse all similar_to queries
+    const similarToQueries = parseSimilarToQueries(message.content);
+    for (const query of similarToQueries) {
+      if (!query.searchFor) {
+        continue;
+      }
+      log.debug(`Similar to query: ${JSON.stringify(query)}`);
+      for (const searchFor of query.searchFor) {
+        const similarToEntries = await getNearestEmbeddings({
+          searchText: searchFor,
+          n: 5,
+          addBeforeN: 0,
+          addAfterN: 0,
+          filterCategory1: query.category1,
+          filterCategory2: query.category2,
+          filterCategory3: query.category3,
+          filterName: query.names,
+        });
+        const text = similarToEntries.map((e) => e.text).join("\n\n");
+        message.content = message.content.replace(query.fullMatch, text);
+      }
     }
 
     // parse all file queries
