@@ -1,7 +1,7 @@
-import { getDb } from "src/lib/db/db-connection";
+import { getDb } from "../../../lib/db/db-connection";
 import { and, inArray } from "drizzle-orm";
 import { knowledgeChunks, knowledgeEntry } from "../../db/schema/knowledge";
-import log from "src/lib/log";
+import log from "../../../lib/log";
 
 type KnowledgeQuery = {
   id?: string[];

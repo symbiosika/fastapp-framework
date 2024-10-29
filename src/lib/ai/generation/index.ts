@@ -12,7 +12,7 @@ import { generateLongText, type Message } from "../standard";
 import log from "../../../lib/log";
 import type { GenerateByTemplateInput } from "../../../routes/ai";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
-import { FileSourceType } from "src/lib/storage";
+import { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 
@@ -428,6 +428,8 @@ const replacePlaceholdersInMessages = async (
       }
     }
   }
+
+  return messages;
 };
 
 /**
@@ -806,5 +808,21 @@ export const textGenerationByPromptTemplate = async (
   const dialog = await getDialogByTemplate(data);
   const response = await generateResponseFromMessageBlocks(dialog);
 
+  return response;
+};
+
+/**
+ * A function to handle a single user message as a template.
+ * This is used to have a UI chat with some magic inside.
+ * That means it can handle:
+ * {{#knowledgebase ...}}
+ * {{#similar_to ...}}
+ * {{#file ...}}
+ */
+export const generateResponseFromUserMessage = async (message: Message) => {
+  // take message and replace all the magic placeholders
+  const updatedMessage = await replacePlaceholdersInMessages([message], {});
+  // then generate a response from the updated message
+  const response = await generateLongText(updatedMessage, "text");
   return response;
 };

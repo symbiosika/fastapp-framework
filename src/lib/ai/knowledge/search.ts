@@ -19,7 +19,7 @@ export const askKnowledge = async (data: AskKnowledgeInput) => {
 
   const r = await textGenerationByPromptTemplate({
     promptName: "answer-knowledge-question",
-    promptCategory: "knowledge",
+    promptCategory: "knowledge-consumer",
     usersPlaceholders: {
       knowledge_base: chunks.map((c) => c.text).join("\n\n"),
       question: data.question,

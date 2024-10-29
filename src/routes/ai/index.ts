@@ -10,10 +10,7 @@ import {
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
 } from "../../lib/ai/generation/crud";
-import {
-  functionChat,
-  setChatHistoryInServer,
-} from "../../lib/ai/function-calling";
+import { functionChat } from "../../lib/ai/smart-chat";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -32,9 +29,12 @@ import {
 } from "../../lib/db/schema/knowledge";
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "../../lib/db/db-connection";
-import type { ServerChatItem } from "../../lib/ai/function-calling/shared-types";
+import type { ServerChatItem } from "../../lib/ai/smart-chat/shared-types";
 import { getMarkdownFromUrl } from "../../lib/ai/parsing/url";
 import log from "../../lib/log";
+import { chatStore } from "../../lib/ai/smart-chat/chat-history";
+import { simpleChat } from "src/lib/ai/simple-chat";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -81,6 +81,12 @@ const parseDocumentValidation = v.object({
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
+const simpleChatValidation = v.object({
+  chatId: v.optional(v.string()),
+  usersMessage: v.string(),
+});
+export type SimpleChatInput = v.InferOutput<typeof simpleChatValidation>;
+
 // Add new validation schema
 const fineTuningDataValidation = v.object({
   name: v.optional(v.string()),
@@ -105,14 +111,24 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post("/smart-chat", async (c) => {
     const body = await c.req.json();
-    const chatId = body.chatId ?? undefined;
+    const parsedBody = v.parse(simpleChatValidation, body);
+    const messages: ChatCompletionMessageParam[] = [
+      { role: "user", content: parsedBody.usersMessage },
+    ];
+    const response = await functionChat(parsedBody.chatId, messages);
+    return c.json(response);
+  });
 
-    let messages = body.messages ?? [];
-    const usersMessage = body.usersMessage ?? undefined;
-    if (usersMessage) {
-      messages = [{ role: "user", content: usersMessage }];
-    }
-    const response = await functionChat(chatId, messages);
+  /**
+   * AI chatbot with template functions
+   */
+  app.post("/template-chat", async (c) => {
+    const body = await c.req.json();
+    const parsedBody = v.parse(simpleChatValidation, body);
+    const response = await simpleChat(
+      parsedBody.chatId,
+      parsedBody.usersMessage
+    );
     return c.json(response);
   });
 
@@ -237,10 +253,10 @@ export default function defineRoutes(app: FastAppHono) {
       const r = await textGenerationByPromptTemplate(parsedBody);
 
       // set history in the server
-      const chatId = setChatHistoryInServer(r.messages);
+      const session = chatStore.get();
 
       const result: ServerChatItem = {
-        chatId,
+        chatId: session.id,
         renderType: "text",
         role: "assistant",
         content: r.responses[r.lastOutputVarName],

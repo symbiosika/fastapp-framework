@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import path from "path";
 
 class Logger {
@@ -83,9 +83,13 @@ class Logger {
     }
   }
 
-  async debug(...messages: string[]) {
+  async debug(...messages: (string | object)[]) {
     for (const message of messages) {
-      await this.log("debug", message);
+      if (typeof message === "object") {
+        await this.log("debug", JSON.stringify(message));
+      } else {
+        await this.log("debug", message);
+      }
     }
   }
 

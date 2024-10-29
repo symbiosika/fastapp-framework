@@ -1,3 +1,4 @@
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { FAST_TEXT_MODEL, openai } from "../standard";
 
 const systemPrompt = `
@@ -7,7 +8,9 @@ Classify the user's message into one of two categories:
 
 "function": The user wants to perform an action.
 "knowledge": The user is asking a knowledge question to get help about the app or a specific task.
-Respond with only one word: "function" or "knowledge" (in English), regardless of the input language. Do not provide any additional text.
+"follow-up": The user is asking a follow-up question to the last message.
+
+Respond with only one word: "function" or "knowledge" or "follow-up" (in English), regardless of the input language. Do not provide any additional text.
 
 Steps
 Analyze the user's message.
@@ -34,12 +37,16 @@ Assistant: function
 
 User: "Wie kann ich neue Daten eintragen?"
 Assistant: knowledge
+
+You will get the messages from the user here including the last message before if existing:
 `;
 
 export const classifyMessage = async (
-  message: string
+  messages: ChatCompletionMessageParam[]
 ): Promise<"function" | "knowledge"> => {
-  console.log("classifyMessage", message);
+  // get the last two messages
+  const lastTwoMessages = messages.slice(-2);
+
   const response = await openai.chat.completions.create({
     model: FAST_TEXT_MODEL,
     messages: [
@@ -47,7 +54,7 @@ export const classifyMessage = async (
         role: "system",
         content: systemPrompt,
       },
-      { role: "user", content: message },
+      ...lastTwoMessages,
     ],
     max_tokens: 1,
     temperature: 0,
