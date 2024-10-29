@@ -15,6 +15,7 @@ import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
+import { getMarkdownFromUrl } from "../parsing/url";
 
 type PlaceholderData = Record<
   string,
@@ -330,6 +331,26 @@ export const parseFileQueries = (template: string): FileQuery[] => {
   });
 };
 
+interface UrlQuery {
+  fullMatch: string;
+  url: string;
+}
+
+/**
+ * Helper to parse all URLs in a template.
+ * Finds: {{#url url=a}}
+ * Unit-Tested: Yes
+ */
+export const parseUrlQueries = (template: string): UrlQuery[] => {
+  const regExp = /{{#url="([^"]+)"(?:\s+(?:comment)=(?:"[^"]*"|[^}\s]+))*}}/g;
+  const matches = [...template.matchAll(regExp)];
+  return matches.map((match) => {
+    const fullMatch = match[0];
+    const url = match[1] ?? "";
+    return { fullMatch, url };
+  });
+};
+
 /**
  * Helper to replace a dict of placeholders with values in a template.
  * Unit-Tested: Yes
@@ -405,6 +426,7 @@ const replacePlaceholdersInMessages = async (
     // parse all file queries
     const fileQueries = parseFileQueries(message.content);
     for (const query of fileQueries) {
+      log.debug(`File query: ${JSON.stringify(query)}`);
       try {
         if (
           query.fileSource !== FileSourceType.DB &&
@@ -426,6 +448,17 @@ const replacePlaceholdersInMessages = async (
           `Error getting file ${query.id} from ${query.fileSource}: ${e}`
         );
       }
+    }
+
+    // parse all URLs
+    const urlQueries = parseUrlQueries(message.content);
+    for (const query of urlQueries) {
+      log.debug(`URL query: ${query.url}`);
+      const markdown = await getMarkdownFromUrl(query.url);
+      message.content = message.content.replace(
+        query.fullMatch,
+        `\n\n<website-content>${markdown}</website-content>\n\n`
+      );
     }
   }
 
