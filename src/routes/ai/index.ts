@@ -317,6 +317,7 @@ export default function defineRoutes(app: FastAppHono) {
           userMessage: parsedBody.userMessage,
           trigger: parsedBody.trigger,
           template,
+          usersVariables: parsedBody.variables,
         });
 
         return c.json({
@@ -331,6 +332,7 @@ export default function defineRoutes(app: FastAppHono) {
           chatId: parsedBody.chatId,
           userMessage: parsedBody.userMessage,
           trigger: parsedBody.trigger,
+          usersVariables: parsedBody.variables,
         });
 
         return c.json({
