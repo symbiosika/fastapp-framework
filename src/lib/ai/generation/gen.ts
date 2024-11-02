@@ -31,7 +31,7 @@ const templateLogger: TemplateChatLogger = {
     await log.error(...items.map((item) => String(item))),
 };
 
-const templateChat = new TemplateChat({
+export const templateChat = new TemplateChat({
   singleLineParsers: standardSingleLineParsers,
   placeholderParsers: standardPlaceholderParsers,
   llmWrapper: generateLongTextWrapper,

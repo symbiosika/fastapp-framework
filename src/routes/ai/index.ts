@@ -19,6 +19,7 @@ import { FileSourceType } from "../../lib/storage";
 import { askKnowledge } from "../../lib/ai/knowledge/search";
 import { parseDocument } from "../../lib/ai/parsing";
 import {
+  getPromptTemplateDefinition,
   shortenString,
   textGenerationByPromptTemplate,
 } from "../../lib/ai/generation";
@@ -35,6 +36,7 @@ import log from "../../lib/log";
 import { chatStore } from "../../lib/ai/smart-chat/chat-history";
 import { simpleChat } from "src/lib/ai/simple-chat";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { templateChat } from "src/lib/ai/generation/gen";
 
 const generateByTemplateValidation = v.object({
   promptId: v.optional(v.string()),
@@ -49,6 +51,30 @@ const generateByTemplateValidation = v.object({
 });
 export type GenerateByTemplateInput = v.InferOutput<
   typeof generateByTemplateValidation
+>;
+
+const chatWithTemplateValidation = v.object({
+  chatId: v.string(),
+  initiateTemplate: v.optional(
+    v.object({
+      promptId: v.optional(v.string()),
+      promptName: v.optional(v.string()),
+      promptCategory: v.optional(v.string()),
+    })
+  ),
+  trigger: v.optional(
+    v.object({
+      next: v.boolean(),
+      skip: v.boolean(),
+    })
+  ),
+  userMessage: v.optional(v.string()),
+  variables: v.optional(
+    v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
+  ),
+});
+export type ChatWithTemplateInput = v.InferOutput<
+  typeof chatWithTemplateValidation
 >;
 
 const generateKnowledgeValidation = v.object({
@@ -263,6 +289,57 @@ export default function defineRoutes(app: FastAppHono) {
       };
 
       return c.json(result);
+    } catch (e) {
+      throw new HTTPException(400, {
+        message: e + "",
+      });
+    }
+  });
+
+  /**
+   * Chat with a Prompt Template
+   */
+  app.post("/chat-with-template", async (c) => {
+    const body = await c.req.json();
+    try {
+      const parsedBody = v.parse(chatWithTemplateValidation, body);
+
+      // start a new chat
+      if (parsedBody.initiateTemplate) {
+        const templateDbEntry = await getPromptTemplateDefinition(
+          parsedBody.initiateTemplate
+        );
+        const template = await templateChat.getParsedTemplateFromString(
+          templateDbEntry.template
+        );
+        const r = await templateChat.chat({
+          chatId: parsedBody.chatId,
+          userMessage: parsedBody.userMessage,
+          trigger: parsedBody.trigger,
+          template,
+        });
+
+        return c.json({
+          chatId: r.result.chatId,
+          message: r.result.message,
+          meta: r.result.meta,
+          finished: r.result.finished,
+        });
+      } else {
+        // continue a chat
+        const r = await templateChat.chat({
+          chatId: parsedBody.chatId,
+          userMessage: parsedBody.userMessage,
+          trigger: parsedBody.trigger,
+        });
+
+        return c.json({
+          chatId: r.result.chatId,
+          message: r.result.message,
+          meta: r.result.meta,
+          finished: r.result.finished,
+        });
+      }
     } catch (e) {
       throw new HTTPException(400, {
         message: e + "",
