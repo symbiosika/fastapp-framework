@@ -162,10 +162,12 @@ function countWords(text: string): number {
  */
 export async function generateLongText(
   messages: Message[],
-  outputType: "text" | "json" = "text",
-  desiredWords?: number,
-  maxRetries: number = 5,
-  model: string = TEXT_MODEL
+  options?: {
+    outputType?: "text" | "json";
+    desiredWords?: number;
+    maxRetries?: number;
+    model?: string;
+  }
 ): Promise<{
   text: string;
   json?: any;
@@ -179,10 +181,10 @@ export async function generateLongText(
     try {
       const completion = await openai.chat.completions.create({
         messages: currentMessages as any,
-        model,
+        model: options?.model ?? TEXT_MODEL,
         max_tokens: 2000,
         response_format:
-          outputType === "json" ? { type: "json_object" } : undefined,
+          options?.outputType === "json" ? { type: "json_object" } : undefined,
       });
 
       const newText = completion.choices[0].message.content ?? "";
@@ -195,13 +197,13 @@ export async function generateLongText(
       });
 
       // Add a user message to prompt continuation if needed
-      if (desiredWords && countWords(output) < desiredWords) {
+      if (options?.desiredWords && countWords(output) < options.desiredWords) {
         log.debug(
-          `ChatCompletionLongText: ${countWords(output)}/${desiredWords} words, continuing...`
+          `ChatCompletionLongText: ${countWords(output)}/${options.desiredWords} words, continuing...`
         );
         currentMessages.push({
           role: "user",
-          content: `You reached ${countWords(output)} of ${desiredWords} desired words. Please continue in the same language as the text. Don't repeat yourself.`,
+          content: `You reached ${countWords(output)} of ${options.desiredWords} desired words. Please continue in the same language as the text. Don't repeat yourself.`,
         });
       } else {
         log.debug(
@@ -212,14 +214,14 @@ export async function generateLongText(
     } catch (error) {
       log.debug(`Error in chatCompletionLongText: ${error}`);
       retryCount++;
-      if (retryCount >= maxRetries) {
+      if (options?.maxRetries && retryCount >= options.maxRetries) {
         throw new Error("Failed to generate text after maximum retries");
       }
     }
   }
 
   let parsedJson: any;
-  if (outputType === "json") {
+  if (options?.outputType === "json") {
     try {
       parsedJson = JSON.parse(output);
       return {

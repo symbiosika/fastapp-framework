@@ -809,10 +809,9 @@ const generateResponseFromMessageBlocks = async (
     await printMessages(allMessages);
 
     const outputVarName = block.outputVarName;
-    const assistantResponse = await generateLongText(
-      allMessages,
-      block.outputType
-    );
+    const assistantResponse = await generateLongText(allMessages, {
+      outputType: block.outputType,
+    });
 
     allResponses[outputVarName] = assistantResponse.text;
     lastAiResponse = assistantResponse;
@@ -856,6 +855,6 @@ export const generateResponseFromUserMessage = async (message: Message) => {
   // take message and replace all the magic placeholders
   const updatedMessage = await replacePlaceholdersInMessages([message], {});
   // then generate a response from the updated message
-  const response = await generateLongText(updatedMessage, "text");
+  const response = await generateLongText(updatedMessage);
   return response;
 };
