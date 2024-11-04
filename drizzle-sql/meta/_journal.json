@@ -225,6 +225,13 @@
       "when": 1730229192215,
       "tag": "0031_unusual_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1730713255293,
+      "tag": "0032_overconfident_iron_lad",
+      "breakpoints": true
     }
   ]
 }

@@ -30,6 +30,7 @@ export const promptTemplates = pgBaseTable(
     // optional user id of the creator
     userId: uuid("user_id").references(() => users.id),
     hidden: boolean("hidden").notNull().default(false),
+    needsInitialCall: boolean("needs_initial_call").notNull().default(false),
     // metadata
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()

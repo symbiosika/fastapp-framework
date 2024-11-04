@@ -1,0 +1,1 @@
+ALTER TABLE "base_prompt_templates" ADD COLUMN "needs_initial_call" boolean DEFAULT false NOT NULL;

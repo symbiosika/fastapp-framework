@@ -54,7 +54,7 @@ export type GenerateByTemplateInput = v.InferOutput<
 >;
 
 const chatWithTemplateValidation = v.object({
-  chatId: v.string(),
+  chatId: v.optional(v.string()),
   initiateTemplate: v.optional(
     v.object({
       promptId: v.optional(v.string()),
@@ -76,6 +76,16 @@ const chatWithTemplateValidation = v.object({
 export type ChatWithTemplateInput = v.InferOutput<
   typeof chatWithTemplateValidation
 >;
+
+export type ChatWithTemplateReturn = {
+  chatId: string;
+  message: {
+    role: "user" | "assistant";
+    content: string;
+  };
+  meta: any;
+  finished?: boolean;
+};
 
 const generateKnowledgeValidation = v.object({
   fileSourceType: v.enum(FileSourceType),
@@ -109,7 +119,7 @@ export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
 const simpleChatValidation = v.object({
   chatId: v.optional(v.string()),
-  usersMessage: v.string(),
+  userMessage: v.string(),
 });
 export type SimpleChatInput = v.InferOutput<typeof simpleChatValidation>;
 
@@ -139,7 +149,7 @@ export default function defineRoutes(app: FastAppHono) {
     const body = await c.req.json();
     const parsedBody = v.parse(simpleChatValidation, body);
     const messages: ChatCompletionMessageParam[] = [
-      { role: "user", content: parsedBody.usersMessage },
+      { role: "user", content: parsedBody.userMessage },
     ];
     const response = await functionChat(parsedBody.chatId, messages);
     return c.json(response);
@@ -153,7 +163,7 @@ export default function defineRoutes(app: FastAppHono) {
     const parsedBody = v.parse(simpleChatValidation, body);
     const response = await simpleChat(
       parsedBody.chatId,
-      parsedBody.usersMessage
+      parsedBody.userMessage
     );
     return c.json(response);
   });
