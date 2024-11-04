@@ -25,6 +25,7 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
   else if (file.type.startsWith("image")) {
     // the the image describe by ai
     const description = await generateImageDescription(file);
+    await log.debug(`Image description: ${description}`);
     return { text: description };
   } else {
     throw new Error(`Unsupported file type for parsing: ${file.type}`);
