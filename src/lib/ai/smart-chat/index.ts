@@ -4,9 +4,9 @@ import { isContentAllowed } from "./content-filter";
 import { classifyMessage } from "./message-classifier";
 import { classifyFunctionMessage } from "./function-classifier";
 import log from "../../log";
-import { askKnowledge } from "../knowledge/search";
 import type { GenericFormEntry, ServerChatItem } from "./shared-types";
 import { chatStore } from "./chat-history";
+import { generateKnowledgebaseAnswer } from "../generation";
 
 /*
 Diese Biliothek dient nicht dem allgemeinen Chat!
@@ -88,12 +88,14 @@ export const functionChat = async (
 
     // Handle knowledge mode
     if (session.state.knowledgeMode) {
-      const response = await askKnowledge({
-        question: messages[messages.length - 1].content as string,
-        countChunks: 5,
-        addBeforeN: 1,
-        addAfterN: 1,
-      });
+      const response = await generateKnowledgebaseAnswer(
+        messages[messages.length - 1].content as string,
+        {
+          countChunks: 5,
+          addBeforeN: 1,
+          addAfterN: 1,
+        }
+      );
 
       // Reset session
       session.messages = [];
@@ -102,7 +104,7 @@ export const functionChat = async (
       return {
         chatId: session.id,
         role: "assistant",
-        content: response.answer,
+        content: response.message.content,
         renderType: "box",
         type: "info",
       };

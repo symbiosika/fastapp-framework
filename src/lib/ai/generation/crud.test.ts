@@ -12,7 +12,7 @@ import {
 import {
   createDatabaseClient,
   waitForDbConnection,
-} from "src/lib/db/db-connection";
+} from "../../../lib/db/db-connection";
 
 beforeAll(async () => {
   await createDatabaseClient();
@@ -52,6 +52,7 @@ describe("Prompt Template CRUD Operations", () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       userId: null,
+      needsInitialCall: false,
     };
     const result = await updatePromptTemplate(updatedTemplate);
     expect(result.name).toBe("Updated Template");

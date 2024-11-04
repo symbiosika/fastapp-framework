@@ -1,4 +1,3 @@
-import log from "../../../../lib/log";
 import TurndownService from "turndown";
 
 export interface Article {

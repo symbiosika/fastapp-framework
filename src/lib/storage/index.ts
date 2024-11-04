@@ -23,9 +23,11 @@ export const saveFile: GeneralSaveFileFunction = async (
   storageType
 ) => {
   if (storageType === "local") {
-    return await saveFileToLocalDisc(file, bucket);
+    const result = await saveFileToLocalDisc(file, bucket);
+    return { ...result, name: file.name };
   } else if (storageType === "db") {
-    return await saveFileToDb(file, bucket);
+    const result = await saveFileToDb(file, bucket);
+    return { ...result, name: file.name };
   } else {
     throw new Error("Invalid storage type");
   }

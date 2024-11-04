@@ -16,13 +16,8 @@ import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
-import { askKnowledge } from "../../lib/ai/knowledge/search";
 import { parseDocument } from "../../lib/ai/parsing";
-import {
-  getPromptTemplateDefinition,
-  shortenString,
-  textGenerationByPromptTemplate,
-} from "../../lib/ai/generation";
+import { getPromptTemplateDefinition } from "../../lib/ai/generation";
 import {
   fineTuningData,
   knowledgeEntry,
@@ -30,28 +25,10 @@ import {
 } from "../../lib/db/schema/knowledge";
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "../../lib/db/db-connection";
-import type { ServerChatItem } from "../../lib/ai/smart-chat/shared-types";
 import { getMarkdownFromUrl } from "../../lib/ai/parsing/url";
 import log from "../../lib/log";
-import { chatStore } from "../../lib/ai/smart-chat/chat-history";
-import { simpleChat } from "src/lib/ai/simple-chat";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { templateChat } from "src/lib/ai/generation/gen";
-
-const generateByTemplateValidation = v.object({
-  promptId: v.optional(v.string()),
-  promptName: v.optional(v.string()),
-  promptCategory: v.optional(v.string()),
-  usersPlaceholders: v.optional(
-    v.record(
-      v.string(),
-      v.union([v.string(), v.number(), v.boolean(), v.null(), v.undefined()])
-    )
-  ),
-});
-export type GenerateByTemplateInput = v.InferOutput<
-  typeof generateByTemplateValidation
->;
+import { templateChat } from "../../lib/ai/generation/";
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
@@ -152,19 +129,6 @@ export default function defineRoutes(app: FastAppHono) {
       { role: "user", content: parsedBody.userMessage },
     ];
     const response = await functionChat(parsedBody.chatId, messages);
-    return c.json(response);
-  });
-
-  /**
-   * AI chatbot with template functions
-   */
-  app.post("/template-chat", async (c) => {
-    const body = await c.req.json();
-    const parsedBody = v.parse(simpleChatValidation, body);
-    const response = await simpleChat(
-      parsedBody.chatId,
-      parsedBody.userMessage
-    );
     return c.json(response);
   });
 
@@ -280,33 +244,6 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
-   * Call the text generation by a prompt template
-   */
-  app.post("/generate-with-template", async (c) => {
-    const body = await c.req.json();
-    try {
-      const parsedBody = v.parse(generateByTemplateValidation, body);
-      const r = await textGenerationByPromptTemplate(parsedBody);
-
-      // set history in the server
-      const session = chatStore.get();
-
-      const result: ServerChatItem = {
-        chatId: session.id,
-        renderType: "markdown",
-        role: "assistant",
-        content: r.responses[r.lastOutputVarName],
-      };
-
-      return c.json(result);
-    } catch (e) {
-      throw new HTTPException(400, {
-        message: e + "",
-      });
-    }
-  });
-
-  /**
    * Chat with a Prompt Template
    */
   app.post("/chat-with-template", async (c) => {
@@ -402,24 +339,6 @@ export default function defineRoutes(app: FastAppHono) {
       .delete(knowledgeEntry)
       .where(eq(knowledgeEntry.id, id));
     return c.json({ success: true });
-  });
-
-  /**
-   * Call the knowledge search
-   * Will search for the question in the knowledge base and return the most relevant chunks
-   * and give this to a LLM to answer the question
-   */
-  app.post("/ask-knowledge", async (c) => {
-    const body = await c.req.json();
-    try {
-      const parsedBody = v.parse(askKnowledgeValidation, body);
-      const r = await askKnowledge(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, {
-        message: e + "",
-      });
-    }
   });
 
   /**
@@ -570,7 +489,7 @@ export default function defineRoutes(app: FastAppHono) {
     const url: string = body.url;
     try {
       const markdown = await getMarkdownFromUrl(url);
-      log.debug(`Markdown: ${shortenString(markdown, 100)}`);
+      log.debug(`Markdown: ${markdown.slice(0, 100)}`);
 
       // insert in DB as text knowledge entry
       const e = await getDb()

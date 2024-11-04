@@ -167,6 +167,7 @@ export async function generateLongText(
     desiredWords?: number;
     maxRetries?: number;
     model?: string;
+    maxTokens?: number;
   }
 ): Promise<{
   text: string;
@@ -182,7 +183,7 @@ export async function generateLongText(
       const completion = await openai.chat.completions.create({
         messages: currentMessages as any,
         model: options?.model ?? TEXT_MODEL,
-        max_tokens: 2000,
+        max_tokens: options?.maxTokens ?? undefined,
         response_format:
           options?.outputType === "json" ? { type: "json_object" } : undefined,
       });
