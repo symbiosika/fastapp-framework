@@ -50,6 +50,30 @@ const templateLogger: TemplateChatLogger = {
  */
 export const customAppPlaceholders: PlaceholderParser[] = [
   {
+    name: "inc_value",
+    replacerFunction: async (
+      match: string,
+      args: PlaceholderArgumentDict,
+      variables: VariableDictionaryInMemory
+    ) => {
+      if (!args.variable) {
+        throw new Error(
+          "variable parameter is required for inc_value placeholder"
+        );
+      }
+      const varName = args.variable + "";
+      const actualValue =
+        variables[varName] && typeof variables[varName] === "number"
+          ? variables[varName]
+          : 0;
+
+      const increaseBy =
+        args.increase && typeof args.increase === "number" ? args.increase : 1;
+      variables[varName] = actualValue + increaseBy;
+      return { content: "" };
+    },
+  },
+  {
     name: "knowledgebase",
     replacerFunction: async (
       match: string,
@@ -59,9 +83,16 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       content: string;
       skipThisBlock?: boolean;
     }> => {
+      let pointerName = args.pointer ? args.pointer + "" : "_chunk_offset";
+
+      let autoIncrease =
+        args.auto_increase && typeof args.auto_increase === "boolean"
+          ? args.auto_increase
+          : true;
+
       let chunkOffset =
-        variables._chunk_offset && typeof variables._chunk_offset === "number"
-          ? variables._chunk_offset
+        variables[pointerName] && typeof variables[pointerName] === "number"
+          ? variables[pointerName]
           : 0;
 
       let chunkCount =
@@ -88,8 +119,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
 
       // write back to variables
-      if (chunkCount) {
-        variables["_chunk_offset"] = chunkOffset + chunkCount;
+      if (chunkCount && autoIncrease) {
+        variables[pointerName] = chunkOffset + chunkCount;
       }
       return { content: knowledgebase.map((k) => k.text).join("\n") };
     },
