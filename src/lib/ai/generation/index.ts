@@ -18,10 +18,8 @@ import { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 import { getMarkdownFromUrl } from "../parsing/url";
-import type {
-  ChatWithTemplateInput,
-  ChatWithTemplateReturn,
-} from "../../../routes/ai";
+import type { ChatWithTemplateInput } from "../../../routes/ai";
+import type { ChatWithTemplateReturn } from "../../../types";
 
 /**
  * Wrapper function for generateLongText that matches the LlmWrapper type signature
@@ -83,13 +81,6 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: VariableDictionaryInMemory
     ): Promise<string> => {
-      const searchFor = args.search_for as string;
-      if (!searchFor) {
-        throw new Error(
-          "search_for parameter is required for similar_to placeholder"
-        );
-      }
-
       const searchForVariable = args.search_for_variable
         ? args.search_for_variable + ""
         : "user_input";
@@ -315,6 +306,9 @@ export const useTemplateChat = async (query: ChatWithTemplateInput) => {
       message: r.result.message,
       meta: r.result.meta,
       finished: r.result.finished,
+      render: {
+        type: "markdown",
+      },
     };
   } else {
     // continue a chat
@@ -330,6 +324,9 @@ export const useTemplateChat = async (query: ChatWithTemplateInput) => {
       message: r.result.message,
       meta: r.result.meta,
       finished: r.result.finished,
+      render: {
+        type: "markdown",
+      },
     };
   }
 };

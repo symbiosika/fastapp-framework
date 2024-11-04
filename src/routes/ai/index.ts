@@ -17,7 +17,7 @@ import { HTTPException } from "hono/http-exception";
 import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
 import { parseDocument } from "../../lib/ai/parsing";
-import { getPromptTemplateDefinition } from "../../lib/ai/generation";
+import { useTemplateChat } from "../../lib/ai/generation";
 import {
   fineTuningData,
   knowledgeEntry,
@@ -28,7 +28,6 @@ import { getDb } from "../../lib/db/db-connection";
 import { getMarkdownFromUrl } from "../../lib/ai/parsing/url";
 import log from "../../lib/log";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { templateChat } from "../../lib/ai/generation/";
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
@@ -53,16 +52,6 @@ const chatWithTemplateValidation = v.object({
 export type ChatWithTemplateInput = v.InferOutput<
   typeof chatWithTemplateValidation
 >;
-
-export type ChatWithTemplateReturn = {
-  chatId: string;
-  message: {
-    role: "user" | "assistant";
-    content: string;
-  };
-  meta: any;
-  finished?: boolean;
-};
 
 const generateKnowledgeValidation = v.object({
   fileSourceType: v.enum(FileSourceType),
@@ -250,45 +239,8 @@ export default function defineRoutes(app: FastAppHono) {
     const body = await c.req.json();
     try {
       const parsedBody = v.parse(chatWithTemplateValidation, body);
-
-      // start a new chat
-      if (parsedBody.initiateTemplate) {
-        const templateDbEntry = await getPromptTemplateDefinition(
-          parsedBody.initiateTemplate
-        );
-        const template = await templateChat.getParsedTemplateFromString(
-          templateDbEntry.template
-        );
-        const r = await templateChat.chat({
-          chatId: parsedBody.chatId,
-          userMessage: parsedBody.userMessage,
-          trigger: parsedBody.trigger,
-          template,
-          usersVariables: parsedBody.variables,
-        });
-
-        return c.json({
-          chatId: r.result.chatId,
-          message: r.result.message,
-          meta: r.result.meta,
-          finished: r.result.finished,
-        });
-      } else {
-        // continue a chat
-        const r = await templateChat.chat({
-          chatId: parsedBody.chatId,
-          userMessage: parsedBody.userMessage,
-          trigger: parsedBody.trigger,
-          usersVariables: parsedBody.variables,
-        });
-
-        return c.json({
-          chatId: r.result.chatId,
-          message: r.result.message,
-          meta: r.result.meta,
-          finished: r.result.finished,
-        });
-      }
+      const r = await useTemplateChat(parsedBody);
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, {
         message: e + "",
