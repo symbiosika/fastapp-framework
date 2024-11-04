@@ -55,23 +55,43 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       match: string,
       args: PlaceholderArgumentDict,
       variables: VariableDictionaryInMemory
-    ): Promise<string> => {
-      await log.debug("parse knowledgebase placeholder", {
-        id: args.id,
-        category1: args.category1,
-        category2: args.category2,
-        category3: args.category3,
-        names: args.names,
-      });
-      const knowledgebase = await getPlainKnowledge({
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+    }> => {
+      let chunkOffset =
+        variables._chunk_offset && typeof variables._chunk_offset === "number"
+          ? variables._chunk_offset
+          : 0;
+
+      let chunkCount =
+        args.chunk_count && typeof args.chunk_count === "number"
+          ? args.chunk_count
+          : undefined;
+
+      const query = {
         id: args.id ? [args.id as string] : undefined,
         category1: args.category1 ? [args.category1 as string] : undefined,
         category2: args.category2 ? [args.category2 as string] : undefined,
         category3: args.category3 ? [args.category3 as string] : undefined,
         names: args.names ? [args.names as string] : undefined,
-      });
+        chunkCount,
+        chunkOffset,
+      };
 
-      return knowledgebase.map((k) => k.text).join("\n");
+      await log.debug("parse knowledgebase placeholder", query);
+      const knowledgebase = await getPlainKnowledge(query);
+
+      if (knowledgebase.length === 0) {
+        await log.debug("no knowledgebase entries found", query);
+        return { content: "", skipThisBlock: true };
+      }
+
+      // write back to variables
+      if (chunkCount) {
+        variables["_chunk_offset"] = chunkOffset + chunkCount;
+      }
+      return { content: knowledgebase.map((k) => k.text).join("\n") };
     },
   },
   {
@@ -80,7 +100,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       match: string,
       args: PlaceholderArgumentDict,
       variables: VariableDictionaryInMemory
-    ): Promise<string> => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+    }> => {
       const searchForVariable = args.search_for_variable
         ? args.search_for_variable + ""
         : "user_input";
@@ -128,7 +151,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         addAfterN: after,
       });
 
-      return results.map((r) => r.text).join("\n");
+      return { content: results.map((r) => r.text).join("\n") };
     },
   },
   {
@@ -136,7 +159,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict
-    ): Promise<string> => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+    }> => {
       if (!args.id) {
         throw new Error("id parameter is required for file placeholder");
       }
@@ -152,7 +178,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         fileSourceBucket: bucket,
       });
 
-      return document.content;
+      return { content: document.content };
     },
   },
   {
@@ -160,14 +186,17 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict
-    ): Promise<string> => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+    }> => {
       if (!args.url) {
         throw new Error("url parameter is required for url placeholder");
       }
       const url = args.url + "";
       await log.debug("parse url placeholder", { url });
       const markdown = await getMarkdownFromUrl(url);
-      return markdown;
+      return { content: markdown };
     },
   },
 ];
@@ -351,7 +380,7 @@ export const generateKnowledgebaseAnswer = async (
 
     Your knowledge about the users question is:
     <knowledgebase>
-      {{knowledgebase}}
+      {{#similar_to count=${query.countChunks} before=${query.addBeforeN} after=${query.addAfterN}}}
     </knowledgebase>
   {{/role}}
 

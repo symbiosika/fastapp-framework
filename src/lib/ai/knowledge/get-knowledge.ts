@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, inArray } from "drizzle-orm";
+import { and, eq, inArray, SQL, type SQLWrapper } from "drizzle-orm";
 import { knowledgeChunks, knowledgeEntry } from "../../db/schema/knowledge";
 import log from "../../../lib/log";
 
@@ -9,6 +9,8 @@ type KnowledgeQuery = {
   category1?: string[];
   category2?: string[];
   category3?: string[];
+  chunkCount?: number;
+  chunkOffset?: number;
 };
 
 type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
@@ -21,6 +23,43 @@ type PlainKnowledgetEntry = {
   chunkId: string;
 };
 
+const getKnowledgeWithChunks = async (
+  id: string,
+  chunkOffset?: number,
+  chunkCount?: number
+) => {
+  const e = await getDb().query.knowledgeEntry.findMany({
+    where: eq(knowledgeEntry.id, id),
+  });
+  const chunks = await getDb().query.knowledgeChunks.findMany({
+    where: eq(knowledgeChunks.knowledgeEntryId, id),
+    orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
+    offset: chunkOffset,
+    limit: chunkCount,
+  });
+  return { ...e[0], knowledgeChunks: chunks };
+};
+
+const getKnowledgeWithChunksWithConditions = async (
+  where: SQL<unknown> | undefined
+) => {
+  const entries = await getDb().query.knowledgeEntry.findMany({
+    where,
+  });
+
+  const entriesWithChunks = await Promise.all(
+    entries.map(async (entry) => ({
+      ...entry,
+      knowledgeChunks: await getDb().query.knowledgeChunks.findMany({
+        where: eq(knowledgeChunks.knowledgeEntryId, entry.id),
+        orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
+      }),
+    }))
+  );
+
+  return entriesWithChunks;
+};
+
 /**
  * Get knowledge by an id, name(s) or categories from DB
  * Will return the knowledge as an array with the original IDs.
@@ -31,19 +70,16 @@ export const getKnowledge = async (
   // Query based on direct ID(s)
   if (query.id) {
     await log.debug(`Getting knowledge by ids: ${query.id}`);
-    const entries = await getDb().query.knowledgeEntry.findMany({
-      where: inArray(knowledgeEntry.id, query.id),
-      with: {
-        knowledgeChunks: {
-          orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.id)],
-        },
-      },
-    });
+
+    const entries = await Promise.all(
+      query.id.map((id) =>
+        getKnowledgeWithChunks(id, query.chunkOffset, query.chunkCount)
+      )
+    );
     return entries;
   }
 
   // Query based on names or categories from fine-tuning data
-
   const conditions = [];
   if (query.names?.length) {
     await log.debug(`Getting knowledge filteredby names: ${query.names}`);
@@ -84,17 +120,9 @@ export const getKnowledge = async (
     where = and(...conditions);
   }
 
-  const entries = await getDb().query.knowledgeEntry.findMany({
-    where,
-    with: {
-      knowledgeChunks: {
-        orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.id)],
-      },
-    },
-  });
-
-  await log.debug(`Return ${entries.length} knowledge entries`);
-  return entries;
+  const entriesWithChunks = await getKnowledgeWithChunksWithConditions(where);
+  await log.debug(`Return ${entriesWithChunks.length} knowledge entries`);
+  return entriesWithChunks;
 };
 
 /**

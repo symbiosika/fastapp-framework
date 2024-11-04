@@ -83,10 +83,15 @@ DataModel->Forms (image)
 - [x] Prompt Templates with extended functions like iterations
 - [ ] Chat-2-Action Interface
 
+### AI Chat Templates
+
+- [x] Flexible Chat templates for complex tasks
+- [ ] Canvas/Image-Input that will be parsed to text before automatically
+
 ### Vue3 Dev Kit
 
 - [x] Formbuilder
-- [ ] Chat-Kit to build interactive Chats
+- [x] Chat-Kit to build interactive Chats
 - [x] Some formatter and helper for Vue
 - [x] Default layout wrapper (header + menu)
 
