@@ -1,28 +1,32 @@
 import { sql } from "drizzle-orm";
 import {
-    pgEnum,
-    text,
-    timestamp,
-    uuid,
-    jsonb,
+  pgEnum,
+  text,
+  timestamp,
+  uuid,
+  jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { pgBaseTable } from ".";
 
 export const jobStatusEnum = pgEnum("job_status", [
-    "pending",
-    "running",
-    "completed",
-    "failed",
+  "pending",
+  "running",
+  "completed",
+  "failed",
 ]);
 
 export type JobStatus = "pending" | "running" | "completed" | "failed";
 
-export const jobs = pgBaseTable("jobs", {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-    userId: uuid("user_id")
-        .references(() => users.id),
+export const jobs = pgBaseTable(
+  "jobs",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid("user_id").references(() => users.id),
     type: text("type").notNull(),
     status: jobStatusEnum("status").notNull().default("pending"),
     metadata: jsonb("metadata"),
@@ -30,13 +34,19 @@ export const jobs = pgBaseTable("jobs", {
     error: jsonb("error"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
+  },
+  (jobs) => ({
+    createdAtIdx: index("jobs_created_at_idx").on(jobs.createdAt),
+    userIdIdx: index("jobs_user_id_idx").on(jobs.userId),
+    statusIdx: index("jobs_status_idx").on(jobs.status),
+  })
+);
 
 export const jobsRelations = relations(jobs, ({ one }) => ({
-    user: one(users, {
-        fields: [jobs.userId],
-        references: [users.id],
-    }),
+  user: one(users, {
+    fields: [jobs.userId],
+    references: [users.id],
+  }),
 }));
 
 export type Job = typeof jobs.$inferSelect;

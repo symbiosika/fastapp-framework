@@ -28,10 +28,10 @@ export const secrets = pgBaseTable(
   },
   (secrets) => ({
     unq: unique().on(secrets.reference, secrets.name),
-    idx: index("idx").on(secrets.referenceId),
-    refIdx: index("ref_idx").on(secrets.reference),
-    refIdIdx: index("ref_id_idx").on(secrets.referenceId),
-    nameIdx: index("name_idx").on(secrets.name),
+    idx: index("secrets_idx").on(secrets.referenceId),
+    refIdx: index("secrets_ref_idx").on(secrets.reference),
+    refIdIdx: index("secrets_ref_id_idx").on(secrets.referenceId),
+    nameIdx: index("secrets_name_idx").on(secrets.name),
   })
 );
 

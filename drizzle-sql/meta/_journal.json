@@ -232,6 +232,13 @@
       "when": 1730713255293,
       "tag": "0032_overconfident_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1731085851376,
+      "tag": "0033_demonic_hellion",
+      "breakpoints": true
     }
   ]
 }

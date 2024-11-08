@@ -30,8 +30,11 @@ export const embeddings = pgBaseTable(
     textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
   },
   (embedding) => ({
-    tableIndex: index("table_index").on(embedding.sourceTable),
-    sourceIdIndex: index("source_id_index").on(embedding.sourceId),
+    tableIndex: index("embeddings_source_table_index").on(
+      embedding.sourceTable
+    ),
+    sourceIdIndex: index("embeddings_source_id_index").on(embedding.sourceId),
+    orderIdx: index("embeddings_order_idx").on(embedding.order),
   })
 );
 

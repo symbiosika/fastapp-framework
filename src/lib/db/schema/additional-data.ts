@@ -31,6 +31,8 @@ export const userSpecificData = pgBaseTable(
   (table) => ({
     userKeyIndex: unique().on(table.userId, table.key),
     keyIndex: index("user_data_type_idx").on(table.key),
+    createdAtIdx: index("user_data_created_at_idx").on(table.createdAt),
+    versionIdx: index("user_data_version_idx").on(table.version),
   })
 );
 
@@ -55,6 +57,8 @@ export const appSpecificData = pgBaseTable(
     keyNameIndex: unique().on(table.key, table.name),
     nameIndex: index("app_data_name_idx").on(table.name),
     keyIndex: index("app_data_key_idx").on(table.key),
+    createdAtIdx: index("app_data_created_at_idx").on(table.createdAt),
+    versionIdx: index("app_data_version_idx").on(table.version),
   })
 );
 

@@ -24,15 +24,27 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
 ]);
 
 // Table to store input texts
-export const knowledgeText = pgBaseTable("knowledge_text", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  text: text("text").notNull(),
-  title: text("title").notNull().default(""),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+export const knowledgeText = pgBaseTable(
+  "knowledge_text",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    text: text("text").notNull(),
+    title: text("title").notNull().default(""),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (knowledgeText) => ({
+    createdAtIdx: index("knowledge_text_created_at_idx").on(
+      knowledgeText.createdAt
+    ),
+    titleIdx: index("knowledge_text_title_idx").on(knowledgeText.title),
+  })
+);
+
+export type KnowledgeTextSelect = typeof knowledgeText.$inferSelect;
+export type KnowledgeTextInsert = typeof knowledgeText.$inferInsert;
 
 // Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable(
@@ -82,23 +94,35 @@ export type KnowledgeEntrySelect = typeof knowledgeEntry.$inferSelect;
 export type KnowledgeEntryInsert = typeof knowledgeEntry.$inferInsert;
 
 // Table to save the raw text chunks for each knowledge entry
-export const knowledgeChunks = pgBaseTable("knowledge_chunks", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  knowledgeEntryId: uuid("knowledge_entry_id")
-    .notNull()
-    .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
-  text: text("text").notNull(),
-  header: text("header"),
-  order: integer("order").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  embeddingModel: varchar("embedding_model", { length: 255 })
-    .notNull()
-    .default("")
-    .notNull(),
-  textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
-});
+export const knowledgeChunks = pgBaseTable(
+  "knowledge_chunks",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    knowledgeEntryId: uuid("knowledge_entry_id")
+      .notNull()
+      .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    header: text("header"),
+    order: integer("order").notNull().default(0),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    embeddingModel: varchar("embedding_model", { length: 255 })
+      .notNull()
+      .default("")
+      .notNull(),
+    textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
+  },
+  (knowledgeChunks) => ({
+    knowledgeEntryIdIdx: index("knowledge_chunks_knowledge_entry_id_idx").on(
+      knowledgeChunks.knowledgeEntryId
+    ),
+    createdAtIdx: index("knowledge_chunks_created_at_idx").on(
+      knowledgeChunks.createdAt
+    ),
+    headerIdx: index("knowledge_chunks_header_idx").on(knowledgeChunks.header),
+  })
+);
 
 export type KnowledgeChunksSelect = typeof knowledgeChunks.$inferSelect;
 export type KnowledgeChunksInsert = typeof knowledgeChunks.$inferInsert;

@@ -28,17 +28,25 @@ export const purchaseTypeEnum = pgEnum("purchase_type", [
 ]);
 
 // Products and prices
-export const products = pgBaseTable("products", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  group: text("group").notNull(),
-  name: text("name").notNull(),
-  description: text("description"),
-  type: purchaseTypeEnum("type").notNull(),
-  prodId: text("prod_id").notNull(),
-  priceId: text("price_id").notNull(),
-});
+export const products = pgBaseTable(
+  "products",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    group: text("group").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    type: purchaseTypeEnum("type").notNull(),
+    prodId: text("prod_id").notNull(),
+    priceId: text("price_id").notNull(),
+  },
+  (products) => ({
+    groupIdx: index("products_group_idx").on(products.group),
+    nameIdx: index("products_name_idx").on(products.name),
+    typeIdx: index("products_type_idx").on(products.type),
+  })
+);
 
 export type ProductsSelect = typeof products.$inferSelect;
 export type ProductsInsert = typeof products.$inferInsert;
@@ -73,10 +81,26 @@ export const activeSubscriptions = pgBaseTable(
       table.stripeCustomerId,
       table.planName
     ),
-    // index on stripeCustomerId and planName
     stripeCustomerIdPlanNameIndex: index(
       "stripe_customer_id_plan_name_index"
     ).on(table.stripeCustomerId, table.planName),
+    statusIdx: index("active_subscriptions_status_idx").on(table.status),
+    createdAtIdx: index("active_subscriptions_created_at_idx").on(
+      table.createdAt
+    ),
+    updatedAtIdx: index("active_subscriptions_updated_at_idx").on(
+      table.updatedAt
+    ),
+    cancelAtPeriodEndIdx: index(
+      "active_subscriptions_cancel_at_period_end_idx"
+    ).on(table.cancelAtPeriodEnd),
+    currentPeriodStartIdx: index(
+      "active_subscriptions_current_period_start_idx"
+    ).on(table.currentPeriodStart),
+    currentPeriodEndIdx: index(
+      "active_subscriptions_current_period_end_idx"
+    ).on(table.currentPeriodEnd),
+    userIdIdx: index("active_subscriptions_user_id_idx").on(table.userId),
   })
 );
 
@@ -84,25 +108,37 @@ export type ActiveSubscriptionsSelect = typeof activeSubscriptions.$inferSelect;
 export type ActiveSubscriptionsInsert = typeof activeSubscriptions.$inferInsert;
 
 // One-time Purchases Table
-export const purchases = pgBaseTable("purchases", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  stripePaymentIntentId: text("stripe_payment_intent_id").notNull(),
-  stripeCustomerId: text("stripe_customer_id").notNull(),
-  type: purchaseTypeEnum("type").notNull(),
-  status: purchaseStatusEnum("status").notNull(),
-  used: boolean("used").notNull().default(false),
-  amount: integer("amount").notNull(), // Amount in cents
-  currency: text("currency").notNull(),
-  productName: text("product_name").notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+export const purchases = pgBaseTable(
+  "purchases",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    stripePaymentIntentId: text("stripe_payment_intent_id").notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    type: purchaseTypeEnum("type").notNull(),
+    status: purchaseStatusEnum("status").notNull(),
+    used: boolean("used").notNull().default(false),
+    amount: integer("amount").notNull(), // Amount in cents
+    currency: text("currency").notNull(),
+    productName: text("product_name").notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    createdAtIdx: index("purchases_created_at_idx").on(table.createdAt),
+    updatedAtIdx: index("purchases_updated_at_idx").on(table.updatedAt),
+    userIdIdx: index("purchases_user_id_idx").on(table.userId),
+    statusIdx: index("purchases_status_idx").on(table.status),
+    typeIdx: index("purchases_type_idx").on(table.type),
+    usedIdx: index("purchases_used_idx").on(table.used),
+    productNameIdx: index("purchases_product_name_idx").on(table.productName),
+  })
+);
 
 export type PurchasesSelect = typeof purchases.$inferSelect;
 export type PurchasesInsert = typeof purchases.$inferInsert;
