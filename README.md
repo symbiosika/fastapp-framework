@@ -6,6 +6,17 @@ Simplified webserver to get AI´s power to write Applications.
 WIRTE TESTS!
 WRITE DOCUMENTATION!
 
+
+Nötige Rollen:
+
+Gruppe      Endpunkt                                        Geht mit RegEx?     Bemerkung
+AI          Templates, Knowledge, Fine-Tuning, Parsing      Sollte              
+AI          Chat                                            Ja                  Die Frage ist, ob man Templates einzeln berechtigen muss
+Files       Files                                           Ja                  Über die URL ist auch Bucket und Type definiert und prüfbar
+Secrets     Secrets                                         Ja
+Collections Collections                                     Ja                  Hier muss man mal prüfen, ob alle Tabellen sicher genug sind...
+
+
 ## A base docker image to render websites!
 
 The base image represents the web server.

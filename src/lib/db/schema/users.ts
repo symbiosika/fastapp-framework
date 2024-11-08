@@ -13,6 +13,7 @@ import {
   varchar,
   boolean,
   index,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -116,38 +117,6 @@ export const userGroupMembers = pgBaseTable(
 export type UserGroupMembersSelect = typeof userGroupMembers.$inferSelect;
 export type UserGroupMembersInsert = typeof userGroupMembers.$inferInsert;
 
-export const usersRelations = relations(users, ({ many, one }) => ({
-  sessions: many(sessions),
-  userGroupMembers: many(userGroupMembers),
-  activeSubscriptions: many(activeSubscriptions),
-  purchases: many(purchases),
-}));
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  users: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
-  }),
-}));
-
-export const userGroupsRelations = relations(userGroups, ({ many }) => ({
-  userGroupMembers: many(userGroupMembers),
-}));
-
-export const userGroupMembersRelations = relations(
-  userGroupMembers,
-  ({ one }) => ({
-    users: one(users, {
-      fields: [userGroupMembers.userId],
-      references: [users.id],
-    }),
-    userGroups: one(userGroups, {
-      fields: [userGroupMembers.userGroupId],
-      references: [userGroups.id],
-    }),
-  })
-);
-
 // Table "MagicLink Sessions"
 export const magicLinkSessions = pgBaseTable(
   "magic_link_sessions",
@@ -177,3 +146,123 @@ export const magicLinkSessions = pgBaseTable(
 
 export type MagicLinkSessionsSelect = typeof magicLinkSessions.$inferSelect;
 export type MagicLinkSessionsInsert = typeof magicLinkSessions.$inferInsert;
+
+// Permission Type Enum
+export const permissionTypeEnum = pgEnum("permission_type", ["regex"]);
+
+// Path Permissions Table
+export const pathPermissions = pgBaseTable(
+  "path_permissions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    system: boolean("system").notNull().default(false),
+    category: varchar("category", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    type: permissionTypeEnum("type").notNull().default("regex"),
+    method: varchar("method", { length: 10 }).notNull(), // GET, POST, DELETE, PUT
+    pathExpression: text("path_expression").notNull(), // e.g. "^/api/.*$"
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (permissions) => ({
+    uniqueCategoryName: uniqueIndex("unique_category_name").on(
+      permissions.category,
+      permissions.name
+    ),
+    methodIdx: index("permissions_method_idx").on(permissions.method),
+    typeIdx: index("permissions_type_idx").on(permissions.type),
+  })
+);
+
+export type PathPermissionsSelect = typeof pathPermissions.$inferSelect;
+export type PathPermissionsInsert = typeof pathPermissions.$inferInsert;
+
+// Group to Permission Table
+export const groupPermissions = pgBaseTable(
+  "group_permissions",
+  {
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => userGroups.id, { onDelete: "cascade" }),
+    permissionId: uuid("permission_id")
+      .notNull()
+      .references(() => pathPermissions.id, { onDelete: "cascade" }),
+  },
+  (groupPermissions) => ({
+    compositePK: primaryKey({
+      columns: [groupPermissions.groupId, groupPermissions.permissionId],
+    }),
+    groupIdIdx: index("group_permissions_group_id_idx").on(
+      groupPermissions.groupId
+    ),
+    permissionIdIdx: index("group_permissions_permission_id_idx").on(
+      groupPermissions.permissionId
+    ),
+  })
+);
+
+export type GroupPermissionsSelect = typeof groupPermissions.$inferSelect;
+export type GroupPermissionsInsert = typeof groupPermissions.$inferInsert;
+
+// RELATIONS
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  sessions: many(sessions),
+  userGroupMembers: many(userGroupMembers),
+  activeSubscriptions: many(activeSubscriptions),
+  purchases: many(purchases),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  users: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const pathPermissionsRelations = relations(
+  pathPermissions,
+  ({ many }) => ({
+    groupPermissions: many(groupPermissions),
+  })
+);
+
+export const userGroupsRelations = relations(userGroups, ({ many }) => ({
+  userGroupMembers: many(userGroupMembers),
+  groupPermissions: many(groupPermissions),
+}));
+
+export const userGroupMembersRelations = relations(
+  userGroupMembers,
+  ({ one }) => ({
+    users: one(users, {
+      fields: [userGroupMembers.userId],
+      references: [users.id],
+    }),
+    userGroups: one(userGroups, {
+      fields: [userGroupMembers.userGroupId],
+      references: [userGroups.id],
+    }),
+  })
+);
+
+export const groupPermissionsRelations = relations(
+  groupPermissions,
+  ({ one }) => ({
+    group: one(userGroups, {
+      fields: [groupPermissions.groupId],
+      references: [userGroups.id],
+    }),
+    permission: one(pathPermissions, {
+      fields: [groupPermissions.permissionId],
+      references: [pathPermissions.id],
+    }),
+  })
+);
