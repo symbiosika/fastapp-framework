@@ -26,26 +26,26 @@ const consoleDebug = (
   whereStatement: any,
   tablesToExpand: any
 ) => {
-  console.log(
-    "withObject",
-    JSON.stringify(
-      withObject,
-      (key, value) => {
-        if (key.startsWith("where")) {
-          return undefined;
-        }
-        return value;
-      },
-      2
-    )
-  );
+  // console.log(
+  //   "withObject",
+  //   JSON.stringify(
+  //     withObject,
+  //     (key, value) => {
+  //       if (key.startsWith("where")) {
+  //         return undefined;
+  //       }
+  //       return value;
+  //     },
+  //     2
+  //   )
+  // );
 
-  console.log(
-    "whereStatement",
-    Object.keys(whereStatement ?? {}),
-    "tablesToExpand",
-    tablesToExpand
-  );
+  // console.log(
+  //   "whereStatement",
+  //   Object.keys(whereStatement ?? {}),
+  //   "tablesToExpand",
+  //   tablesToExpand
+  // );
 };
 
 const generateWithObject = (
@@ -116,7 +116,7 @@ export const getCollection = async (c: Context) => {
 
     // get the filter parameter
     let filterString = searchParams.get("filter") ?? undefined;
-    console.log("filterString", filterString);
+    // console.log("filterString", filterString);
     const filterClause = parseFilterClause(filterString);
 
     // get the expand parameter. if set, the result will be joined with the referenced tables

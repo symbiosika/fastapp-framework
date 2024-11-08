@@ -6,6 +6,7 @@ import { HTTPException } from "hono/http-exception";
 import type { FastAppHono } from "../../types";
 import type { StripeDetailedItem } from "../../lib/types/shared/payment";
 import type Stripe from "stripe";
+import log from "../../lib/log";
 
 /**
  * Check if the user has an active subscription
@@ -98,7 +99,7 @@ export default function defineRoutes(app: FastAppHono) {
         type as "subscription" | "payment" | undefined
       )
       .catch((e) => {
-        console.error(e);
+        log.error(e);
         throw new HTTPException(500, { message: e });
       });
 
@@ -112,10 +113,10 @@ export default function defineRoutes(app: FastAppHono) {
     const userId = c.get("usersId");
     const planName = c.req.query("planName");
 
-    console.log("Checking user subscription", userId, planName);
+    log.debug("Checking user subscription", userId, planName);
     const subscription = await checkUserSubscription(userId, planName).catch(
       (e) => {
-        console.error(e);
+        log.error(e);
         throw new HTTPException(500, {
           message: "Error checking user subscription. " + e,
         });
@@ -188,7 +189,7 @@ export default function defineRoutes(app: FastAppHono) {
     if (!returnUrl) {
       throw new HTTPException(400, { message: "Return URL is required" });
     }
-    console.log("Getting account link for user", userId);
+    log.debug("Getting account link for user", userId);
 
     try {
       const subscriptions = await getDb()
@@ -218,7 +219,7 @@ export default function defineRoutes(app: FastAppHono) {
       }
       return c.json({ accountLinks });
     } catch (error) {
-      console.error("Error getting account link", error);
+      log.error("Error getting account link", error + "");
       throw new HTTPException(500, {
         message: "Error getting account link. " + error,
       });
@@ -233,7 +234,7 @@ export default function defineRoutes(app: FastAppHono) {
     const userId = c.get("usersId");
     const userEmail = c.get("usersEmail");
 
-    console.log("Creating checkout session for product", {
+    log.debug("Creating checkout session for product", {
       productName,
       discount,
       successUrl,
@@ -268,7 +269,7 @@ export default function defineRoutes(app: FastAppHono) {
   // Redirect page after payment for both subscriptions and one-time payments
   app.get("/success", async (c) => {
     const sessionId = c.req.query("session_id");
-    console.log("Finished session ID:", sessionId);
+    log.debug("Finished session ID:", sessionId);
 
     if (!sessionId) {
       throw new HTTPException(400, { message: "Session ID is required" });
@@ -277,20 +278,20 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       // Verify the session and update the database
       const session = await stripeService.retrieveCheckoutSession(sessionId);
-      // console.log("Success Session", session);
+      // log.debug("Success Session", session);
 
       if (
         session.mode === "subscription" &&
         session.payment_status === "paid"
       ) {
-        console.log("Updating subscription in database");
+        log.debug("Updating subscription in database");
         const purchase = await getDb()
           .select()
           .from(purchases)
           .where(eq(purchases.stripePaymentIntentId, session.id))
           .limit(1);
         if (purchase.length === 0) {
-          console.error("No purchase found for session", session.id);
+          log.error("No purchase found for session", session.id);
           throw new HTTPException(404, { message: "No purchase found" });
         }
         await updatePaymentInDatabase(session.id, "succeeded", true);
@@ -305,7 +306,7 @@ export default function defineRoutes(app: FastAppHono) {
         session.mode === "payment" &&
         session.payment_status === "paid"
       ) {
-        console.log("Updating payment in database");
+        log.debug("Updating payment in database");
         await updatePaymentInDatabase(session.id, "succeeded");
         // redirect to the success page
         return c.redirect("/static/");
@@ -317,7 +318,7 @@ export default function defineRoutes(app: FastAppHono) {
         });
       }
     } catch (error) {
-      console.error("Error processing success page:", error);
+      log.error("Error processing success page:", error + "");
       throw new HTTPException(500, {
         message: "Error processing success page. " + error,
       });
@@ -334,7 +335,7 @@ async function storeCheckoutSession(
   session: Stripe.Checkout.Session,
   type: "payment" | "subscription"
 ) {
-  console.log("storeCheckoutSession", userId, session.id);
+  log.debug("storeCheckoutSession", userId, session.id);
   const db = getDb();
 
   await db.insert(purchases).values({
@@ -359,7 +360,7 @@ async function updateOrCreateSubscriptionInDatabase(
   session: Stripe.Checkout.Session,
   planName: string
 ) {
-  console.log("updateOrCreateSubscriptionInDatabase", session.id);
+  log.debug("updateOrCreateSubscriptionInDatabase", session.id);
 
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;

@@ -29,7 +29,7 @@ export class StripeService {
    */
   private log(message: string): void {
     if (this.logEnabled) {
-      console.log(`[StripeService] Log:${message}`);
+      this.log(`[StripeService] Log:${message}`);
     }
   }
 
@@ -224,7 +224,6 @@ export class StripeService {
         success_url: successUrl,
         cancel_url: cancelUrl,
       });
-      // console.log("Created checkout session: ", session.id);
       return session;
     } catch (error) {
       this.error("Error creating subscription:" + error);

@@ -26,8 +26,6 @@ export class CsvService {
       columns = Object.keys(data[0] || {}),
     } = mergedOptions;
 
-    console.log("Create CSV with options", mergedOptions);
-
     return new Promise((resolve, reject) => {
       stringify(
         data,

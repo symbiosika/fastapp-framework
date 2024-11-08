@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import jwtlib from "jsonwebtoken";
 import { _GLOBAL_SERVER_CONFIG } from "./index";
+import { hasPermission } from "./lib/auth/permissions";
 
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
 
@@ -58,6 +59,20 @@ export function addUserToContext(
   c.set("usersEmail", decodedAndVerifiedToken.email ?? "");
   c.set("usersId", decodedAndVerifiedToken.sub ?? "");
   // c.set("usersRoles", decodedAndVerifiedToken["symbiosika/roles"] ?? []);
+}
+
+/**
+ * Check if the user has permission for the given path and method
+ */
+export async function checkUserPermission(c: Context, next: Function) {
+  const userId = c.get("usersId");
+  const method = c.req.method;
+  const path = c.req.path;
+  const userCanAccess = await hasPermission(userId, method, path);
+  if (!userCanAccess) {
+    return c.text("Not permitted", 403);
+  }
+  await next();
 }
 
 /**

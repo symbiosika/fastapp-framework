@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import * as v from "valibot";
+import log from "../log";
 
 const emailSchema = v.object({
   sender: v.optional(v.string()),
@@ -36,13 +37,13 @@ class SMTPService {
 
   private log(message: string): void {
     if (this.logEnabled) {
-      console.log(`[SMTPService] Log: ${message}`);
+      log.debug(`[SMTPService] Log: ${message}`);
     }
   }
 
   private error(message: string): void {
     if (this.logEnabled) {
-      console.error(`[SMTPService] Error: ${message}`);
+      log.error(`[SMTPService] Error: ${message}`);
     }
   }
 

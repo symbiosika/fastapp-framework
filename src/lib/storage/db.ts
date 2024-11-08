@@ -60,7 +60,6 @@ export const getFileFromDb: GetFileFunction = async (name, bucket) => {
       .select()
       .from(files)
       .where(and(eq(files.id, id), eq(files.bucket, bucket)));
-    console.log("fileRecord", fileRecord[0]?.id);
 
     if (fileRecord.length === 0) {
       throw new Error("File not found");

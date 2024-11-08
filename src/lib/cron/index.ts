@@ -1,4 +1,5 @@
 import { CronJob } from "cron";
+import log from "../log";
 
 export interface Task {
   name: string;
@@ -7,19 +8,14 @@ export interface Task {
 }
 
 class Scheduler {
-  private logEnabled = process.env.CRON_LOG === "true";
   private tasks: Map<string, CronJob> = new Map();
 
   private log(message: string): void {
-    if (this.logEnabled) {
-      console.log(`[CronService] Log: ${message}`);
-    }
+    log.debug(`[CronService] Log: ${message}`);
   }
 
   private error(message: string): void {
-    if (this.logEnabled) {
-      console.error(`[CronService] Error: ${message}`);
-    }
+    log.debug(`[CronService] Error: ${message}`);
   }
 
   registerTask(name: string, schedule: string, handler: () => Promise<void>) {

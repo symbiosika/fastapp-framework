@@ -2,8 +2,10 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
 import {
+  authAndSetUsersInfo,
   authAndSetUsersInfoOrRedirectToLogin,
   authOrRedirectToLogin,
+  checkUserPermission,
   validateAllEnvVariables,
 } from "./helper";
 import { createDatabaseClient, getDb } from "./lib/db/db-connection";
@@ -141,13 +143,16 @@ export const defineServer = (config: ServerConfig) => {
   /**
    * A Ping endpoint
    */
-  app.get(_GLOBAL_SERVER_CONFIG.basePath + "/ping", async (c) => {
-    const logger = c.get("logger");
-    logger.info("Ping");
-    return c.json({
-      online: true,
-    });
-  });
+  app.get(
+    _GLOBAL_SERVER_CONFIG.basePath + "/ping",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      return c.json({
+        online: true,
+      });
+    }
+  );
 
   /**
    * Add user routes

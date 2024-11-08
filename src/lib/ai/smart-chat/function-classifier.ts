@@ -186,8 +186,6 @@ export const classifyFunctionMessage = async (
   // parse and return valid JSON
   try {
     const parsed = JSON.parse(content);
-    console.log("parsed", parsed);
-
     const result = v.safeParse(valSchema, parsed);
     if (!result.success) {
       log.error(

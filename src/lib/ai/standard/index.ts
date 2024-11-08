@@ -305,7 +305,6 @@ export const generateImage = async (
   if (!image_url) {
     throw new Error("No image URL returned");
   }
-  // console.log('Image URL:', image_url);
   // download the image and save it to the images folder
   // the url will be a web url, so we need to download it
   const imageBuffer = await (await fetch(image_url)).arrayBuffer();

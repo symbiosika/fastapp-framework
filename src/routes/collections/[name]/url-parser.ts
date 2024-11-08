@@ -16,6 +16,7 @@ import {
   asc,
 } from "drizzle-orm";
 import type { DatabaseSchema } from "../../../lib/db/db-schema";
+import log from "../../../lib/log";
 
 type Operator =
   | "=" // eq
@@ -80,8 +81,6 @@ export function parseFilterClause(
 }
 
 function tokenize(input: string): Token[] {
-  // console.log("Tokenizing input:", input);
-
   const tokens: Token[] = [];
   let current = 0;
   const operators = [
@@ -424,7 +423,7 @@ export const getOrderBy = (
 
   const columnKey = table[orderBy as keyof typeof table] ?? null;
   if (!columnKey) {
-    console.error(`column ${orderBy} not found in table`);
+    log.error(`column ${orderBy} not found in table`);
     throw new Error(`column ${orderBy} not found in table`);
   }
   if (ascending) return [asc(columnKey)];

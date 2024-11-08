@@ -38,7 +38,7 @@ async function processJob(job: Job) {
         })
         .where(eq(jobs.id, job.id));
     } catch (error) {
-      console.error(`Error updating jobId ${job.id} status: ${error}`);
+      log.error(`Error updating jobId ${job.id} status: ${error}`);
     }
     throw new Error(`No executor found for job type: ${job.type}`);
   }

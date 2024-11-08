@@ -43,7 +43,8 @@
     "valibot": "^1.0.0-beta.0"
   },
   "scripts": {
-    "dev": "bun --inspect --hot run .\\src\\index.ts",
+    "dev": "bun --hot run demo.ts",
+    "dev:inspect": "bun --inspect --hot run demo.ts",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
     "generate": "drizzle-kit generate",
