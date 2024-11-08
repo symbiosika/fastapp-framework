@@ -1,0 +1,2 @@
+ALTER TABLE "base_knowledge_text" ADD COLUMN "source" varchar(1000) DEFAULT '' NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "knowledge_text_source_idx" ON "base_knowledge_text" USING btree ("source");

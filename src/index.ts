@@ -37,6 +37,7 @@ import { useTemplateChat } from "./lib/ai/generation";
 import { parseDocument } from "./lib/ai/parsing";
 import {
   addKnowledgeFromUrl,
+  addPlainKnowledgeText,
   extractKnowledgeFromText,
 } from "./lib/ai/knowledge/add-knowledge";
 import { getKnowledgeEntries } from "./lib/ai/knowledge/get-knowledge";
@@ -253,6 +254,7 @@ export const aiService = {
   extractKnowledgeFromText,
   getKnowledgeEntries,
   addKnowledgeFromUrl,
+  addPlainKnowledgeText,
   // fine-tuning
   getFineTuningEntryById,
   getFineTuningEntries,
