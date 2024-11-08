@@ -57,6 +57,7 @@ export const extractKnowledgeFromText = async (data: {
   category1?: string;
   category2?: string;
   category3?: string;
+  metadata?: Record<string, string | number | boolean | undefined>;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, title } = await parseDocument(data);
@@ -82,6 +83,7 @@ export const extractKnowledgeFromText = async (data: {
     category1: data.category1 || undefined,
     category2: data.category2 || undefined,
     category3: data.category3 || undefined,
+    meta: data.metadata || undefined,
   });
 
   // Store the chunks in the database
@@ -100,6 +102,7 @@ export const extractKnowledgeFromText = async (data: {
   );
   await log.debug(`Knowledge chunks stored.`);
   return {
+    id: knowledgeEntry.id,
     ok: true,
   };
 };
