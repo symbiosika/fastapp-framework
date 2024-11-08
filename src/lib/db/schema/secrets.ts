@@ -3,7 +3,14 @@
  */
 
 import { sql } from "drizzle-orm";
-import { uuid, timestamp, text, unique, index } from "drizzle-orm/pg-core";
+import {
+  uuid,
+  timestamp,
+  text,
+  unique,
+  index,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 
 // Secrets
@@ -13,12 +20,12 @@ export const secrets = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    reference: text("reference").notNull(),
-    referenceId: uuid("reference_id").notNull(),
-    name: text("name").notNull(),
-    label: text("label").notNull(),
+    reference: varchar("reference", { length: 255 }).notNull(),
+    referenceId: uuid("reference_id"),
+    name: varchar("name", { length: 255 }).notNull(),
+    label: varchar("label", { length: 255 }).notNull(),
     value: text("value").notNull(),
-    type: text("type").notNull(),
+    type: varchar("type", { length: 255 }).notNull(), // encryption type like aes-256-cbc
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
@@ -32,6 +39,7 @@ export const secrets = pgBaseTable(
     refIdx: index("secrets_ref_idx").on(secrets.reference),
     refIdIdx: index("secrets_ref_id_idx").on(secrets.referenceId),
     nameIdx: index("secrets_name_idx").on(secrets.name),
+    typeIdx: index("secrets_type_idx").on(secrets.type),
   })
 );
 

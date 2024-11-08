@@ -43,6 +43,7 @@ DataModel->Forms (image)
 - [x] Simple Task scheduler
 - [x] Simple Job Management for long running tasks
 - [x] Logging to disk
+- [ ] Implement Webhooks
 
 ### Database
 
@@ -64,6 +65,7 @@ DataModel->Forms (image)
 - [x] Simple User-Profile page
 - [x] Custom registration flow to prevent Registration of unallowed users
 - [ ] Auth0 connector (MS, Google etc, Login)
+- [ ] Token Auth
 
 ### Payment Integration
 
@@ -94,6 +96,10 @@ DataModel->Forms (image)
 - [x] Chat-Kit to build interactive Chats
 - [x] Some formatter and helper for Vue
 - [x] Default layout wrapper (header + menu)
+
+### Secret handling
+
+- [ ] Manage secrets like API keys crypted in the database. Secrets can only be used in the backend.
 
 ## Requirements Next version
 

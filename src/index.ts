@@ -56,6 +56,7 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
+import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -278,8 +279,15 @@ export const urlQueryParser = {
   parseCommaSeparatedListFromUrlParam,
 };
 
+export const secretHandler = {
+  setSecret,
+  getSecret,
+  deleteSecret,
+};
+
 export { getDb };
 export type { DatabaseSchema };
 export { checkUserSubscription };
 export type { JobHandlerRegister };
 export * from "./types";
+export { HTTPException } from "hono/http-exception";

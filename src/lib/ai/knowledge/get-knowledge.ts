@@ -175,13 +175,16 @@ export const deleteKnowledgeEntry = async (id: string) => {
  * Get the full plain source text/documents for a knowledge entry id
  */
 export const getFullSourceDocumentsForKnowledgeEntry = async (id: string) => {
+  const entry = await getDb().query.knowledgeEntry.findFirst({
+    where: eq(knowledgeEntry.id, id),
+  });
   const chunks = await getDb().query.knowledgeChunks.findMany({
     where: eq(knowledgeChunks.knowledgeEntryId, id),
     orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
   });
   const text = chunks.map((chunk) => chunk.text).join("\n");
   return {
-    id,
+    entry,
     text,
   };
 };
