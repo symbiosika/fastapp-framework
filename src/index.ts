@@ -33,7 +33,6 @@ export const _GLOBAL_SERVER_CONFIG = {
   allowedOrigins: <string[]>[],
   authType: <"local" | "auth0">"local",
   jwtExpiresAfter: 60 * 60 * 24 * 30, // 30 days
-
   useStripe: false,
 };
 
