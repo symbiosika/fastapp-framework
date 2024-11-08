@@ -24,6 +24,29 @@ import {
 } from "./routes/user";
 import { defineCollectionRoutes } from "./routes/collections";
 import { defineJob, startJobQueue, type JobHandlerRegister } from "./lib/jobs";
+import {
+  addPromptTemplate,
+  deletePromptTemplate,
+  deletePromptTemplatePlaceholder,
+  getPlaceholdersForPromptTemplate,
+  getPlainPlaceholdersForPromptTemplate,
+  updatePromptTemplate,
+  updatePromptTemplatePlaceholder,
+} from "./lib/ai/generation/crud";
+import { useTemplateChat } from "./lib/ai/generation";
+import { parseDocument } from "./lib/ai/parsing";
+import {
+  addKnowledgeFromUrl,
+  extractKnowledgeFromText,
+} from "./lib/ai/knowledge/add-knowledge";
+import { getKnowledgeEntries } from "./lib/ai/knowledge/get-knowledge";
+import {
+  addFineTuningData,
+  deleteFineTuningData,
+  getFineTuningEntries,
+  getFineTuningEntryById,
+  updateFineTuningData,
+} from "./lib/ai/fine-tuning";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -212,6 +235,30 @@ export const defineServer = (config: ServerConfig) => {
     port: config.port ?? 3000,
     fetch: app.fetch,
   };
+};
+
+export const aiService = {
+  // prompt templates
+  addPromptTemplate,
+  updatePromptTemplate,
+  deletePromptTemplate,
+  getPlainPlaceholdersForPromptTemplate,
+  updatePromptTemplatePlaceholder,
+  deletePromptTemplatePlaceholder,
+  getPlaceholdersForPromptTemplate,
+  // chat
+  useTemplateChat,
+  // knowledge
+  parseDocument,
+  extractKnowledgeFromText,
+  getKnowledgeEntries,
+  addKnowledgeFromUrl,
+  // fine-tuning
+  getFineTuningEntryById,
+  getFineTuningEntries,
+  addFineTuningData,
+  updateFineTuningData,
+  deleteFineTuningData,
 };
 
 export { getDb };
