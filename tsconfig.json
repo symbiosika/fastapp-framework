@@ -4,15 +4,22 @@
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "ESNext",
+    // "module": "commonjs",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
 
+    // Output
+    "declaration": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+
     // Bundler mode
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    // "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true,
+    "noEmit": false,
+    "forceConsistentCasingInFileNames": true,
 
     // Best practices
     "strict": true,
@@ -25,12 +32,9 @@
     // "emitDecoratorMetadata": true,
     // "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "noPropertyAccessFromIndexSignature": false,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/"],
-      "@lib/*": ["src/lib/"],
-      "@routes/*": ["src/routes/"]
-    }
-  }
+    "noPropertyAccessFromIndexSignature": false
+    // "baseUrl": ".",
+    // "paths": {}
+  },
+  "include": ["src/**/*.ts"]
 }
