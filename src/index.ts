@@ -57,6 +57,7 @@ import {
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
 import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
+import defineManageSecretsRoutes from "./routes/secrets";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -163,6 +164,11 @@ export const defineServer = (config: ServerConfig) => {
    * Add files routes
    */
   defineFilesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
+   * Add routes to manage internal secrets
+   */
+  defineManageSecretsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Add payment routes

@@ -17,26 +17,25 @@ export function isValidSecretName(name: string) {
 /**
  * Set a new secret to use it in the backend
  */
-export async function setSecret({
-  name,
-  value,
-  type,
-}: SecretsInsert): Promise<SecretsSelect> {
-  if (!isValidSecretName(name)) {
+export async function setSecret(data: {
+  name: string;
+  value: string;
+}): Promise<SecretsSelect> {
+  if (!isValidSecretName(data.name)) {
     throw new Error(
       "Invalid secret name Only. uppercase letters, numbers and underscores are allowed"
     );
   }
   // Encrypt the value before storing
-  const encrypted = encryptAes(value);
+  const encrypted = encryptAes(data.value);
 
   // Insert new secret
   const entries = await getDb()
     .insert(secrets)
     .values({
       reference: "VARIABLES",
-      name,
-      label: name,
+      name: data.name,
+      label: data.name,
       value: encrypted.value,
       type: encrypted.algorithm,
     })
@@ -80,4 +79,17 @@ export async function deleteSecret(name: string) {
     .delete(secrets)
     .where(and(eq(secrets.reference, "VARIABLES"), eq(secrets.name, name)))
     .returning();
+}
+
+/**
+ * Get all backend secrets
+ */
+export async function getSecrets() {
+  return await getDb()
+    .select({
+      id: secrets.id,
+      name: secrets.name,
+    })
+    .from(secrets)
+    .where(eq(secrets.reference, "VARIABLES"));
 }
