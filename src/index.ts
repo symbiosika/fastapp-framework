@@ -48,6 +48,10 @@ import {
   getFineTuningEntryById,
   updateFineTuningData,
 } from "./lib/ai/fine-tuning";
+import {
+  parseCommaSeparatedListFromUrlParam,
+  parseNumberFromUrlParam,
+} from "./lib/url";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -261,6 +265,11 @@ export const aiService = {
   addFineTuningData,
   updateFineTuningData,
   deleteFineTuningData,
+};
+
+export const urlQueryParser = {
+  parseNumberFromUrlParam,
+  parseCommaSeparatedListFromUrlParam,
 };
 
 export { getDb };
