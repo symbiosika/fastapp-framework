@@ -2,6 +2,18 @@
   "name": "fastapp-framework-backend",
   "module": "index.ts",
   "type": "module",
+  "version": "0.1.0",
+  "description": "FastApp Framework Backend",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
