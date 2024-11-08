@@ -126,3 +126,14 @@ export const addKnowledgeFromUrl = async (url: string) => {
 
   return e;
 };
+
+/**
+ * Add plain knowledge text to the database
+ */
+export const addPlainKnowledgeText = async (text: string, title?: string) => {
+  const e = await getDb()
+    .insert(knowledgeText)
+    .values({ text, title })
+    .returning();
+  return e;
+};
