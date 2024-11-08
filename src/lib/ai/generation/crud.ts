@@ -9,6 +9,7 @@ import {
   type PromptTemplatesSelect,
 } from "../../../lib/db/db-schema";
 import { getPromptTemplateDefinition } from ".";
+import { RESPONSES } from "../../responses";
 
 /**
  * Get all placeholders for one template as an object
@@ -120,7 +121,7 @@ export const addPromptTemplate = async (data: PromptTemplatesInsert) => {
  */
 export const deletePromptTemplate = async (id: string) => {
   await getDb().delete(promptTemplates).where(eq(promptTemplates.id, id));
-  return { success: true };
+  return RESPONSES.SUCCESS;
 };
 
 /**
@@ -174,5 +175,5 @@ export const deletePromptTemplatePlaceholder = async (
       )
     );
 
-  return { success: true };
+  return RESPONSES.SUCCESS;
 };

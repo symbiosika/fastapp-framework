@@ -14,20 +14,27 @@ import { functionChat } from "../../lib/ai/smart-chat";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import { extractKnowledgeFromText } from "../../lib/ai/knowledge/add-knowledge";
+import {
+  addKnowledgeFromUrl,
+  extractKnowledgeFromText,
+} from "../../lib/ai/knowledge/add-knowledge";
 import { FileSourceType } from "../../lib/storage";
 import { parseDocument } from "../../lib/ai/parsing";
 import { useTemplateChat } from "../../lib/ai/generation";
-import {
-  fineTuningData,
-  knowledgeEntry,
-  knowledgeText,
-} from "../../lib/db/schema/knowledge";
-import { and, eq, inArray } from "drizzle-orm";
-import { getDb } from "../../lib/db/db-connection";
-import { getMarkdownFromUrl } from "../../lib/ai/parsing/url";
-import log from "../../lib/log";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import {
+  deleteKnowledgeEntry,
+  getKnowledgeEntries,
+} from "../../lib/ai/knowledge/get-knowledge";
+import {
+  addFineTuningData,
+  deleteFineTuningData,
+  getFineTuningEntries,
+  getFineTuningEntryById,
+  updateFineTuningData,
+} from "../../lib/ai/fine-tuning";
+import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
+import { RESPONSES } from "../../lib/responses";
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
@@ -112,132 +119,170 @@ export default function defineRoutes(app: FastAppHono) {
    * AI chatbot with function calling
    */
   app.post("/smart-chat", async (c) => {
-    const body = await c.req.json();
-    const parsedBody = v.parse(simpleChatValidation, body);
-    const messages: ChatCompletionMessageParam[] = [
-      { role: "user", content: parsedBody.userMessage },
-    ];
-    const response = await functionChat(parsedBody.chatId, messages);
-    return c.json(response);
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(simpleChatValidation, body);
+      const messages: ChatCompletionMessageParam[] = [
+        { role: "user", content: parsedBody.userMessage },
+      ];
+      const response = await functionChat(parsedBody.chatId, messages);
+      return c.json(response);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Get a plain template
    */
   app.get("/templates", async (c) => {
-    const promptId = c.req.query("promptId");
-    const promptName = c.req.query("promptName");
-    const promptCategory = c.req.query("promptCategory");
-
-    if (!promptId && !promptName && !promptCategory) {
-      const r = await getTemplates();
+    try {
+      const promptId = c.req.query("promptId");
+      const promptName = c.req.query("promptName");
+      const promptCategory = c.req.query("promptCategory");
+      if (!promptId && !promptName && !promptCategory) {
+        const r = await getTemplates();
+        return c.json(r);
+      }
+      const r = await getPlainTemplate({
+        promptId,
+        promptName,
+        promptCategory,
+      });
       return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
     }
-
-    const r = await getPlainTemplate({ promptId, promptName, promptCategory });
-    return c.json(r);
   });
 
   /**
    * Add a new prompt template
    */
   app.post("/templates", async (c) => {
-    const body = await c.req.json();
-    const r = await addPromptTemplate(body);
-    return c.json(r);
+    try {
+      const body = await c.req.json();
+      const r = await addPromptTemplate(body);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Update a prompt template by ID
    */
   app.put("/templates/:id", async (c) => {
-    const id = c.req.param("id");
-    const body = await c.req.json();
-    const r = await updatePromptTemplate({ ...body, id });
-    return c.json(r);
+    try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
+      const r = await updatePromptTemplate({ ...body, id });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Delete a prompt template by ID
    */
   app.delete("/templates/:id", async (c) => {
-    const id = c.req.param("id");
-    const r = await deletePromptTemplate(id);
-    return c.json(r);
+    try {
+      const id = c.req.param("id");
+      const r = await deletePromptTemplate(id);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Get all placeholders for a prompt template by ID
    */
   app.get("/templates/:id/placeholders", async (c) => {
-    const id = c.req.param("id");
-    const r = await getPlainPlaceholdersForPromptTemplate(id);
-    return c.json(r);
+    try {
+      const id = c.req.param("id");
+      const r = await getPlainPlaceholdersForPromptTemplate(id);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Add a new placeholder to a prompt template
    */
   app.post("/templates/:promptTemplateId/placeholders", async (c) => {
-    const promptTemplateId = c.req.param("promptTemplateId");
-    const body = await c.req.json();
-    const r = await addPromptTemplatePlaceholder({
-      ...body,
-      promptTemplateId,
-    });
-    return c.json(r);
+    try {
+      const promptTemplateId = c.req.param("promptTemplateId");
+      const body = await c.req.json();
+      const r = await addPromptTemplatePlaceholder({
+        ...body,
+        promptTemplateId,
+      });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Update a prompt-template placeholder by ID
    */
   app.put("/templates/:promptTemplateId/placeholders/:id", async (c) => {
-    const promptTemplateId = c.req.param("promptTemplateId");
-    const id = c.req.param("id");
-    const body = await c.req.json();
-    const r = await updatePromptTemplatePlaceholder({
-      ...body,
-      id,
-      promptTemplateId: promptTemplateId,
-    });
-    return c.json(r);
+    try {
+      const promptTemplateId = c.req.param("promptTemplateId");
+      const id = c.req.param("id");
+      const body = await c.req.json();
+      const r = await updatePromptTemplatePlaceholder({
+        ...body,
+        id,
+        promptTemplateId: promptTemplateId,
+      });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Delete a placeholder for a prompt template by ID
    */
   app.delete("/templates/:promptTemplateId/placeholders/:id", async (c) => {
-    const promptTemplateId = c.req.param("promptTemplateId");
-    const id = c.req.param("id");
-    const r = await deletePromptTemplatePlaceholder(id, promptTemplateId);
-    return c.json(r);
+    try {
+      const promptTemplateId = c.req.param("promptTemplateId");
+      const id = c.req.param("id");
+      const r = await deletePromptTemplatePlaceholder(id, promptTemplateId);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Get an object with all placeholders for a prompt template with the default values
    */
   app.get("/get-placeholders", async (c) => {
-    const promptId = c.req.query("promptId");
-    const promptName = c.req.query("promptName");
-    const promptCategory = c.req.query("promptCategory");
-    const r = await getPlaceholdersForPromptTemplate({
-      promptId,
-      promptName,
-      promptCategory,
-    }).catch((e) => {
-      throw new HTTPException(400, {
-        message: e + "",
+    try {
+      const promptId = c.req.query("promptId");
+      const promptName = c.req.query("promptName");
+      const promptCategory = c.req.query("promptCategory");
+      const r = await getPlaceholdersForPromptTemplate({
+        promptId,
+        promptName,
+        promptCategory,
       });
-    });
-    return c.json(r);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Chat with a Prompt Template
    */
   app.post("/chat-with-template", async (c) => {
-    const body = await c.req.json();
     try {
+      const body = await c.req.json();
       const parsedBody = v.parse(chatWithTemplateValidation, body);
       const r = await useTemplateChat(parsedBody);
       return c.json(r);
@@ -252,18 +297,22 @@ export default function defineRoutes(app: FastAppHono) {
    * Parse a document
    */
   app.post("/parse-document", async (c) => {
-    const body = await c.req.json();
-    const parsedBody = v.parse(parseDocumentValidation, body);
-    const r = await parseDocument(parsedBody);
-    return c.json(r);
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(parseDocumentValidation, body);
+      const r = await parseDocument(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Call the knowledge extraction from a text to gnerate knowledge in the database
    */
   app.post("/generate-knowledge", async (c) => {
-    const body = await c.req.json();
     try {
+      const body = await c.req.json();
       const parsedBody = v.parse(generateKnowledgeValidation, body);
       const r = await extractKnowledgeFromText(parsedBody);
       return c.json(r);
@@ -276,77 +325,59 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Get all knowledge entries
+   * URL params:
+   * - limit: number
+   * - page: number
    */
   app.get("/knowledge-entries", async (c) => {
-    const r = await getDb().query.knowledgeEntry.findMany();
-    return c.json(r);
+    try {
+      const limitStr = c.req.query("limit");
+      const pageStr = c.req.query("page");
+      const limit = parseInt(limitStr ?? "100");
+      const page = parseInt(pageStr ?? "0");
+      const r = await getKnowledgeEntries({ limit, page });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Delete a knowledge entry by ID
    */
   app.delete("/knowledge-entries/:id", async (c) => {
-    const id = c.req.param("id");
-    const r = await getDb()
-      .delete(knowledgeEntry)
-      .where(eq(knowledgeEntry.id, id));
-    return c.json({ success: true });
+    try {
+      const id = c.req.param("id");
+      const r = await deleteKnowledgeEntry(id);
+      return c.json(RESPONSES.SUCCESS);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Get fine-tuning data with nested knowledge entry
    * Optional URL params are:
-   * - name: string[]
-   * - category: string[]
+   * - name: string[] comma separated
+   * - category: string[] comma separated
    */
   app.get("/fine-tuning/:id?", async (c) => {
     try {
       const id = c.req.param("id");
-      const name = c.req.query("name");
-      const category = c.req.query("category");
-
+      const names = parseCommaSeparatedListFromUrlParam(
+        c.req.query("name"),
+        []
+      );
+      const categories = parseCommaSeparatedListFromUrlParam(
+        c.req.query("category"),
+        []
+      );
       // only return one item?
       if (id) {
-        const data = await getDb().query.fineTuningData.findFirst({
-          where: eq(fineTuningData.id, id),
-          with: {
-            knowledgeEntry: true,
-          },
-        });
+        const data = await getFineTuningEntryById(id);
         return c.json(data);
-      }
-
-      // else return all items filtered by the given name and category
-      let names: string[] = [];
-      if (name) {
-        names = name.split(",");
-      }
-      let categories: string[] = [];
-      if (category) {
-        categories = category.split(",");
-      }
-
-      let where;
-      if (names.length > 0) {
-        where = inArray(fineTuningData.name, names);
-      } else if (categories.length > 0) {
-        where = inArray(fineTuningData.category, categories);
-      } else if (names.length > 0 && categories.length > 0) {
-        where = and(
-          inArray(fineTuningData.name, names),
-          inArray(fineTuningData.category, categories)
-        );
-      }
-
-      const data = await getDb().query.fineTuningData.findMany({
-        where,
-        with: {
-          knowledgeEntry: true,
-        },
-      });
-      if (!data) {
-        throw new HTTPException(404, { message: "Fine-tuning data not found" });
-      }
+      } // else
+      const data = await getFineTuningEntries({ names, categories });
       return c.json(data);
     } catch (err) {
       throw new HTTPException(400, { message: err + "" });
@@ -357,35 +388,11 @@ export default function defineRoutes(app: FastAppHono) {
    * Add new fine-tuning data
    */
   app.post("/fine-tuning", async (c) => {
-    const body = await c.req.json();
     try {
+      const body = await c.req.json();
       const parsedBody = v.parse(fineTuningDataValidation, body);
-
-      // Create knowledge entry first
-      const knowledgeEntryResult = await getDb()
-        .insert(knowledgeEntry)
-        .values({
-          fileSourceType: "finetuning",
-          name: parsedBody.name || "Unnamed Fine-tuning Dataset",
-          description: `Fine-tuning dataset${parsedBody.category ? ` for ${parsedBody.category}` : ""}`,
-        })
-        .returning();
-
-      // Insert all QA pairs
-      const fineTuningEntries = await getDb()
-        .insert(fineTuningData)
-        .values(
-          parsedBody.data.map((item) => ({
-            knowledgeEntryId: knowledgeEntryResult[0].id,
-            name: parsedBody.name,
-            category: parsedBody.category,
-            question: item.question,
-            answer: item.answer,
-          }))
-        )
-        .returning();
-
-      return c.json(fineTuningEntries);
+      const r = await addFineTuningData(parsedBody);
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
@@ -395,30 +402,12 @@ export default function defineRoutes(app: FastAppHono) {
    * Update fine-tuning data
    */
   app.put("/fine-tuning/:id", async (c) => {
-    const id = c.req.param("id");
-    const body = await c.req.json();
-
     try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
       const parsedBody = v.parse(fineTuningDataValidation, body);
-
-      // Delete existing data
-      await getDb().delete(fineTuningData).where(eq(fineTuningData.id, id));
-
-      // Insert new data
-      const fineTuningEntries = await getDb()
-        .insert(fineTuningData)
-        .values(
-          parsedBody.data.map((item) => ({
-            knowledgeEntryId: id,
-            name: parsedBody.name,
-            category: parsedBody.category,
-            question: item.question,
-            answer: item.answer,
-          }))
-        )
-        .returning();
-
-      return c.json({ success: true });
+      const r = await updateFineTuningData(id, parsedBody);
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
@@ -428,35 +417,24 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete fine-tuning data
    */
   app.delete("/fine-tuning/:id", async (c) => {
-    const id = c.req.param("id");
-    await getDb().delete(fineTuningData).where(eq(fineTuningData.id, id));
-    return c.json({ success: true });
+    try {
+      const id = c.req.param("id");
+      await deleteFineTuningData(id);
+      return c.json(RESPONSES.SUCCESS);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 
   /**
    * Add a text knowledge entry from an URL
    */
   app.post("/add-textknowledge-from-url", async (c) => {
-    const body = await c.req.json();
-    const url: string = body.url;
     try {
-      const markdown = await getMarkdownFromUrl(url);
-      log.debug(`Markdown: ${markdown.slice(0, 100)}`);
-
-      // insert in DB as text knowledge entry
-      const e = await getDb()
-        .insert(knowledgeText)
-        .values({
-          text: markdown,
-          title: url,
-        })
-        .returning({
-          id: knowledgeText.id,
-          title: knowledgeText.title,
-          createdAt: knowledgeText.createdAt,
-        });
-
-      return c.json(e);
+      const body = await c.req.json();
+      const url: string = body.url;
+      const r = await addKnowledgeFromUrl(url);
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }

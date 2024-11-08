@@ -1,6 +1,10 @@
 import { getDb } from "../../../lib/db/db-connection";
 import { and, eq, inArray, SQL, type SQLWrapper } from "drizzle-orm";
-import { knowledgeChunks, knowledgeEntry } from "../../db/schema/knowledge";
+import {
+  knowledgeChunks,
+  knowledgeEntry,
+  type KnowledgeEntrySelect,
+} from "../../db/schema/knowledge";
 import log from "../../../lib/log";
 
 type KnowledgeQuery = {
@@ -144,4 +148,25 @@ export const getPlainKnowledge = async (
     }
   }
   return plainKnowledge;
+};
+
+/**
+ * Get only the knowledgebase entries
+ */
+export const getKnowledgeEntries = async (query?: {
+  limit: number;
+  page: number;
+}): Promise<KnowledgeEntrySelect[]> => {
+  return await getDb().query.knowledgeEntry.findMany({
+    limit: query?.limit ?? 100,
+    offset: query?.page ? query.page * query.limit : undefined,
+    orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
+  });
+};
+
+/**
+ * Delete a knowledge entry by ID
+ */
+export const deleteKnowledgeEntry = async (id: string) => {
+  await getDb().delete(knowledgeEntry).where(eq(knowledgeEntry.id, id));
 };

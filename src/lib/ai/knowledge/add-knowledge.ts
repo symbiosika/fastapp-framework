@@ -20,11 +20,13 @@ import type { ChunkWithEmbedding } from "./types";
 import {
   knowledgeChunks,
   knowledgeEntry,
+  knowledgeText,
   type KnowledgeChunksInsert,
   type KnowledgeEntryInsert,
 } from "../../db/schema/knowledge";
 import { parseDocument } from "../parsing";
 import { nanoid } from "nanoid";
+import { getMarkdownFromUrl } from "../parsing/url";
 
 /**
  * Helper function to store a knowledge entry in the database
@@ -100,4 +102,27 @@ export const extractKnowledgeFromText = async (data: {
   return {
     ok: true,
   };
+};
+
+/**
+ * Add knowledge from an URL
+ */
+export const addKnowledgeFromUrl = async (url: string) => {
+  const markdown = await getMarkdownFromUrl(url);
+  log.debug(`Markdown: ${markdown.slice(0, 100)}`);
+
+  // insert in DB as text knowledge entry
+  const e = await getDb()
+    .insert(knowledgeText)
+    .values({
+      text: markdown,
+      title: url,
+    })
+    .returning({
+      id: knowledgeText.id,
+      title: knowledgeText.title,
+      createdAt: knowledgeText.createdAt,
+    });
+
+  return e;
 };
