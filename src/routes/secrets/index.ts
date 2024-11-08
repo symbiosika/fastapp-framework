@@ -37,7 +37,7 @@ export default function defineManageSecretsRoutes(
       return c.json(secret);
     } catch (error) {
       throw new HTTPException(400, {
-        message: "Invalid request body",
+        message: error + "",
       });
     }
   });

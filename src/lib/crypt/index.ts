@@ -1,8 +1,4 @@
-import {
-  secrets,
-  type SecretsInsert,
-  type SecretsSelect,
-} from "../db/schema/secrets";
+import { secrets, type SecretsSelect } from "../db/schema/secrets";
 import { eq, and } from "drizzle-orm";
 import { encryptAes, decryptAes } from "./aes";
 import { getDb } from "../db/db-connection";
