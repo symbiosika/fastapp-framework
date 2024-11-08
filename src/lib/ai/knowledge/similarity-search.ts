@@ -3,6 +3,7 @@ import { knowledgeChunks, knowledgeEntry } from "../../../lib/db/db-schema";
 import { generateEmbedding } from "../standard";
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
+import { getFullSourceDocumentsForKnowledgeEntry } from "./get-knowledge";
 
 type KnowledgeChunk = {
   id: string;
@@ -24,7 +25,9 @@ export async function getNearestEmbeddings(q: {
   filterCategory2?: string[];
   filterCategory3?: string[];
   filterName?: string[];
-}): Promise<{ id: string; text: string }[]> {
+}): Promise<
+  { id: string; text: string; knowledgeEntryId: string; order: number }[]
+> {
   // Generate the embedding for the search text
   const embed = await generateEmbedding(q.searchText);
 
@@ -122,4 +125,30 @@ export async function getNearestEmbeddings(q: {
     resultRows.push(...entries.rows);
   }
   return resultRows;
+}
+
+/**
+ * Get full source documents to a simalialarity search
+ * This will search for the nearest chunks and then get the full source documents
+ */
+export async function getFullSourceDocumentsForSimilaritySearch(q: {
+  searchText: string;
+  n?: number;
+  filterKnowledgeEntryIds?: string[];
+  filterCategory1?: string[];
+  filterCategory2?: string[];
+  filterCategory3?: string[];
+  filterName?: string[];
+}) {
+  // search for the nearest chunks
+  const nearestChunks = await getNearestEmbeddings(q);
+
+  // get the full source documents
+  const fullSourceDocuments = await Promise.all(
+    nearestChunks.map((chunk) =>
+      getFullSourceDocumentsForKnowledgeEntry(chunk.knowledgeEntryId)
+    )
+  );
+
+  return fullSourceDocuments;
 }

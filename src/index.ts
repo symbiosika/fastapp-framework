@@ -52,6 +52,10 @@ import {
   parseCommaSeparatedListFromUrlParam,
   parseNumberFromUrlParam,
 } from "./lib/url";
+import {
+  getFullSourceDocumentsForSimilaritySearch,
+  getNearestEmbeddings,
+} from "./lib/ai/knowledge/similarity-search";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -259,6 +263,8 @@ export const aiService = {
   getKnowledgeEntries,
   addKnowledgeFromUrl,
   addPlainKnowledgeText,
+  getNearestEmbeddings,
+  getFullSourceDocumentsForSimilaritySearch,
   // fine-tuning
   getFineTuningEntryById,
   getFineTuningEntries,
