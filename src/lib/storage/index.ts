@@ -1,9 +1,4 @@
-export enum FileSourceType {
-  DB = "db",
-  LOCAL = "local",
-  URL = "url",
-  TEXT = "text",
-}
+export type FileSourceType = "db" | "local" | "url" | "text";
 
 import {
   saveFileToLocalDisc,

@@ -18,7 +18,6 @@ import {
   addKnowledgeFromUrl,
   extractKnowledgeFromText,
 } from "../../lib/ai/knowledge/add-knowledge";
-import { FileSourceType } from "../../lib/storage";
 import { parseDocument } from "../../lib/ai/parsing";
 import { useTemplateChat } from "../../lib/ai/generation";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
@@ -35,6 +34,13 @@ import {
 } from "../../lib/ai/fine-tuning";
 import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
 import { RESPONSES } from "../../lib/responses";
+
+const FileSourceType = {
+  DB: "db",
+  LOCAL: "local",
+  URL: "url",
+  TEXT: "text",
+} as const;
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),

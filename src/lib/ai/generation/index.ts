@@ -14,7 +14,7 @@ import { getDb } from "../../../lib/db/db-connection";
 import { promptTemplates } from "../../../lib/db/db-schema";
 import log from "../../../lib/log";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
-import { FileSourceType } from "../../../lib/storage";
+import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 import { getMarkdownFromUrl } from "../parsing/url";

@@ -1,4 +1,4 @@
-import { FileSourceType } from "../../../lib/storage";
+import type { FileSourceType } from "../../../lib/storage";
 import log from "../../../lib/log";
 import { getFileFromDb } from "../../../lib/storage/db";
 import { getFileFromLocalDisc } from "../../../lib/storage/local";
@@ -45,7 +45,7 @@ export const parseDocument = async (data: {
   let content: string;
   let title: string;
   if (
-    data.fileSourceType === FileSourceType.DB &&
+    data.fileSourceType === "db" &&
     data.fileSourceId &&
     data.fileSourceBucket
   ) {
@@ -57,7 +57,7 @@ export const parseDocument = async (data: {
     content = text;
     title = file.name;
   } else if (
-    data.fileSourceType === FileSourceType.LOCAL &&
+    data.fileSourceType === "local" &&
     data.fileSourceId &&
     data.fileSourceBucket
   ) {
@@ -71,11 +71,11 @@ export const parseDocument = async (data: {
     const { text } = await parseFile(file);
     content = text;
     title = file.name;
-  } else if (data.fileSourceType === FileSourceType.URL && data.fileSourceUrl) {
+  } else if (data.fileSourceType === "url" && data.fileSourceUrl) {
     log.debug(`Get file from URL: ${data.fileSourceUrl}`);
     content = "";
     title = "";
-  } else if (data.fileSourceType === FileSourceType.TEXT) {
+  } else if (data.fileSourceType === "text") {
     log.debug(`Get file from TEXT`);
     const dbResults = await getDb()
       .select()
