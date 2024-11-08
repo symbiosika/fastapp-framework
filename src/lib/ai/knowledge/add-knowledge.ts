@@ -135,5 +135,5 @@ export const addPlainKnowledgeText = async (text: string, title?: string) => {
     .insert(knowledgeText)
     .values({ text, title })
     .returning();
-  return e;
+  return e[0];
 };
