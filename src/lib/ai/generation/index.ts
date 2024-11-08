@@ -45,6 +45,13 @@ const templateLogger: TemplateChatLogger = {
     await log.error(...items.map((item) => String(item))),
 };
 
+const isNumber = (value: unknown): number | null => {
+  if (value && typeof value === "number" && !isNaN(value)) {
+    return value;
+  }
+  return null;
+};
+
 /**
  * Custom App Placeholders
  */
@@ -62,13 +69,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         );
       }
       const varName = args.variable + "";
-      const actualValue =
-        variables[varName] && typeof variables[varName] === "number"
-          ? variables[varName]
-          : 0;
+      const actualValue: number = isNumber(variables[varName]) ?? 0;
+      const increaseBy: number = isNumber(args.increase) ?? 1;
 
-      const increaseBy =
-        args.increase && typeof args.increase === "number" ? args.increase : 1;
       variables[varName] = actualValue + increaseBy;
       return { content: "" };
     },
@@ -90,15 +93,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
           ? args.auto_increase
           : true;
 
-      let chunkOffset =
-        variables[pointerName] && typeof variables[pointerName] === "number"
-          ? variables[pointerName]
-          : 0;
-
-      let chunkCount =
-        args.chunk_count && typeof args.chunk_count === "number"
-          ? args.chunk_count
-          : undefined;
+      let chunkOffset = isNumber(variables[pointerName]) ?? 0;
+      let chunkCount = isNumber(args.chunk_count) ?? undefined;
 
       const query = {
         id: args.id ? [args.id as string] : undefined,
