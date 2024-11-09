@@ -25,6 +25,7 @@ class Logger {
   }
 
   private async rotateFiles() {
+    console.log("Rotating log files");
     for (let i = this.maxFiles - 1; i > 0; i--) {
       const oldPath = `${this.logFilePath}.${i}`;
       const newPath = `${this.logFilePath}.${i + 1}`;

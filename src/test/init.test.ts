@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { generateJwt, saltAndHashPassword } from "../lib/auth";
 import { createDatabaseClient, getDb } from "../lib/db/db-connection";
 import { waitForDbConnection } from "../lib/db/db-connection";
-import { products, users } from "../lib/db/db-schema";
+import { jobs, products, users } from "../lib/db/db-schema";
 import type { UsersEntity } from "../lib/types/shared/db/users";
 import { eq } from "drizzle-orm";
 
@@ -16,8 +16,10 @@ export const initTests = async () => {
   const randomPassword = nanoid(24);
   const hash = await saltAndHashPassword(randomPassword);
 
+  // delete old test data
   await getDb().delete(users).where(eq(users.email, "newuser@example.com"));
   await getDb().delete(products).where(eq(products.prodId, testProductId));
+  await getDb().delete(jobs).where(eq(jobs.type, "test-job"));
 
   await getDb()
     .insert(users)

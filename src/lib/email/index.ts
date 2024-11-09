@@ -83,6 +83,22 @@ class SMTPService {
       return false;
     }
   }
+
+  async sendTestMail(recipient: string): Promise<boolean> {
+    const testEmailOptions: EmailOptions = {
+      recipients: [recipient],
+      subject: "SMTP Test Email from FastApp-Framework",
+      html: "<h1>SMTP Test Email</h1><p>This is a test email to verify SMTP configuration.</p>",
+    };
+
+    const result = await this.sendMail(testEmailOptions);
+    if (result) {
+      this.log("Test email sent successfully");
+    } else {
+      this.error("Failed to send test email");
+    }
+    return result;
+  }
 }
 
 export const smtpService = new SMTPService();

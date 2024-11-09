@@ -95,12 +95,12 @@ export async function getJob(id: string) {
   return res[0];
 }
 
-export function createJob(type: string, metadata: any) {
-  const res = getDb()
+export async function createJob(type: string, metadata: any) {
+  const res = await getDb()
     .insert(jobs)
     .values({ type, metadata, status: "pending" })
     .returning();
-  return res;
+  return res[0];
 }
 
 /*
