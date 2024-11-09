@@ -138,3 +138,4 @@ DataModel->Forms (image)
 - [ ] Send push notifications (PWA) https://www.npmjs.com/package/web-push
 - [ ] Der SVG Editor zum Nutzen von Prompt Skizzen
 - [ ] Ordner Namen als NPM Paket inpackage.json registrieren um Funktionen zu schreiben die quasi keine Abhängigkeiten haben?
+- [ ] Docker Container mit verschlüsseltem App Order der erst in betrieb entschlüsselt wird. Dann public stellen

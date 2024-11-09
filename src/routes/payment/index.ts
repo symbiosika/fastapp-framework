@@ -247,7 +247,7 @@ export default function defineRoutes(app: FastAppHono) {
       customerId = customer.id;
     }
 
-    const session = await stripeService.createSubscription(
+    const session = await stripeService.createSubscriptionSession(
       customerId,
       productName,
       discount ?? "",

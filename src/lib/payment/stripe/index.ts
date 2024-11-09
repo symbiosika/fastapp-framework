@@ -4,22 +4,23 @@ import { getDb } from "../../db/db-connection";
 import { products } from "../../db/db-schema";
 import { and, eq } from "drizzle-orm";
 import { _GLOBAL_SERVER_CONFIG } from "../../../index";
+import log from "../../log";
 
 /**
  * Stripe Service
  * @description This service is used to interact with the Stripe API.
  */
 export class StripeService {
-  private stripe: Stripe;
+  public _stripe: Stripe;
   private logEnabled: boolean = false;
 
-  constructor(apiKey?: string) {
-    const stripeApiKey = apiKey || process.env.STRIPE_API_KEY || "xxx";
+  constructor(apiKey: string) {
+    const stripeApiKey = apiKey;
     this.logEnabled = process.env.STRIPE_DEBUG === "true";
     if (!stripeApiKey) {
       throw new Error("Stripe API key is not provided");
     }
-    this.stripe = new Stripe(stripeApiKey, {
+    this._stripe = new Stripe(stripeApiKey, {
       apiVersion: "2024-09-30.acacia",
     });
   }
@@ -29,13 +30,13 @@ export class StripeService {
    */
   private log(message: string): void {
     if (this.logEnabled) {
-      this.log(`[StripeService] Log:${message}`);
+      log.debug(`[StripeService] Log:${message}`);
     }
   }
 
   private error(message: string): void {
     if (this.logEnabled) {
-      this.log(`[StripeService] Err:${message}`);
+      log.debug(`[StripeService] Err:${message}`);
     }
   }
 
@@ -53,7 +54,7 @@ export class StripeService {
     }
     // try to create customer via stripe API
     try {
-      const customer = await this.stripe.customers.create({
+      const customer = await this._stripe.customers.create({
         email,
         metadata: { userId },
       });
@@ -74,7 +75,7 @@ export class StripeService {
     }
     // try to get customer via stripe API
     try {
-      const customers = await this.stripe.customers.list({ email });
+      const customers = await this._stripe.customers.list({ email });
       if (customers.data.length === 0) {
         return null;
       }
@@ -93,7 +94,7 @@ export class StripeService {
     planName?: string
   ): Promise<Stripe.Subscription[]> {
     this.log(`Fetching active subscriptions for customer ${customerId}`);
-    const subscriptions = await this.stripe.subscriptions.list({
+    const subscriptions = await this._stripe.subscriptions.list({
       customer: customerId,
       status: "active",
     });
@@ -120,7 +121,7 @@ export class StripeService {
   async getSubscriptionById(
     subscriptionId: string
   ): Promise<Stripe.Subscription> {
-    return this.stripe.subscriptions.retrieve(subscriptionId);
+    return this._stripe.subscriptions.retrieve(subscriptionId);
   }
 
   /**
@@ -170,7 +171,7 @@ export class StripeService {
    * in this session there will be a URL to redirect the user to the checkout page
    * types: 'standard'
    */
-  async createSubscription(
+  async createSubscriptionSession(
     customerId: null | string,
     name: string,
     discount: string,
@@ -209,7 +210,7 @@ export class StripeService {
         `${_GLOBAL_SERVER_CONFIG.baseUrl}/static/subscriptions.html`;
 
       // create a session to checkout
-      const session = await this.stripe.checkout.sessions.create({
+      const session = await this._stripe.checkout.sessions.create({
         mode: stripeItem.type,
         // payment method types: card, google pay and apple pay
         payment_method_types: ["card"],
@@ -245,7 +246,7 @@ export class StripeService {
       this.log(
         `Canceling subscription ${subscriptionId} for customer ${customerId}`
       );
-      return await this.stripe.subscriptions.update(subscriptionId, {
+      return await this._stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: true,
       });
     } catch (error) {
@@ -267,7 +268,7 @@ export class StripeService {
     }
     // try to generate account link via stripe API
     try {
-      return await this.stripe.billingPortal.sessions.create({
+      return await this._stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: returnUrl,
       });
@@ -295,8 +296,8 @@ export class StripeService {
       // Fetch detailed information for each item from Stripe API
       const detailedItems = await Promise.all(
         groupItems.map(async (item) => {
-          const product = await this.stripe.products.retrieve(item.prodId);
-          const price = await this.stripe.prices.retrieve(item.priceId);
+          const product = await this._stripe.products.retrieve(item.prodId);
+          const price = await this._stripe.prices.retrieve(item.priceId);
 
           return {
             priceName: item.name,
@@ -329,7 +330,7 @@ export class StripeService {
   async retrieveCheckoutSession(
     sessionId: string
   ): Promise<Stripe.Checkout.Session> {
-    return this.stripe.checkout.sessions.retrieve(sessionId);
+    return this._stripe.checkout.sessions.retrieve(sessionId);
   }
 
   // Helper method to get price ID by plan name
@@ -344,6 +345,58 @@ export class StripeService {
     }
     return stripeItems[0].priceId;
   }
+
+  /**
+   * Creates a database entry for an existing Stripe product and price
+   */
+  async createProductInDb({
+    name,
+    group,
+    type,
+    stripeProductId,
+    stripePriceId,
+  }: {
+    name: string;
+    group: string;
+    type: "subscription" | "payment";
+    stripeProductId: string;
+    stripePriceId: string;
+  }) {
+    try {
+      // Verify product exists in Stripe
+      const product = await this._stripe.products.retrieve(stripeProductId);
+      if (!product) {
+        throw new Error(`Product ${stripeProductId} not found in Stripe`);
+      }
+
+      // Verify price exists in Stripe
+      const price = await this._stripe.prices.retrieve(stripePriceId);
+      if (!price || price.product !== stripeProductId) {
+        throw new Error(
+          `Invalid price ${stripePriceId} for product ${stripeProductId}`
+        );
+      }
+
+      // Store in local database
+      await getDb().insert(products).values({
+        name,
+        group,
+        type,
+        prodId: stripeProductId,
+        priceId: stripePriceId,
+      });
+
+      return {
+        productId: stripeProductId,
+        priceId: stripePriceId,
+      };
+    } catch (error) {
+      this.error("Error creating product and price entry:" + error);
+      throw error;
+    }
+  }
 }
 
-export const stripeService = new StripeService();
+export const stripeService = new StripeService(
+  process.env.STRIPE_API_KEY ?? ""
+);

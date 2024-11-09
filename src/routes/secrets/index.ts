@@ -1,6 +1,6 @@
 import { HTTPException } from "../..";
 import { authAndSetUsersInfo } from "../../helper";
-import { getSecrets, setSecret } from "../../lib/crypt";
+import { deleteSecret, getSecrets, setSecret } from "../../lib/crypt";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 
@@ -42,4 +42,23 @@ export default function defineManageSecretsRoutes(
       });
     }
   });
+
+  /**
+   * Delete a secret
+   */
+  app.delete(
+    API_BASE_PATH + "/secrets/:name",
+    authAndSetUsersInfo,
+    async (c) => {
+      const name = c.req.param("name");
+      try {
+        await deleteSecret(name);
+        return c.json({ message: "Secret deleted" });
+      } catch (error) {
+        throw new HTTPException(500, {
+          message: "Failed to delete secret",
+        });
+      }
+    }
+  );
 }

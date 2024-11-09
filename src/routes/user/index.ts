@@ -68,13 +68,19 @@ export function defineSecuredUserRoutes(
     API_BASE_PATH + BASE_PATH + "/me",
     authAndSetUsersInfo,
     async (c: Context) => {
-      const { firstname, surname, image } = await c.req.json();
-      const user = await getDb()
-        .update(users)
-        .set({ firstname, surname, image })
-        .where(eq(users.id, c.get("usersId")))
-        .returning();
-      return c.json(user);
+      try {
+        const { firstname, surname, image } = await c.req.json();
+        const user = await getDb()
+          .update(users)
+          .set({ firstname, surname, image })
+          .where(eq(users.id, c.get("usersId")))
+          .returning();
+        return c.json(user);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error updating user: " + err,
+        });
+      }
     }
   );
 
@@ -215,6 +221,10 @@ export function definePublicUserRoutes(
       const body = await c.req.json();
       const email = body.email;
       const password = body.password;
+      const sendVerificationEmail: boolean =
+        (body.sendVerificationEmail &&
+          typeof body.sendVerificationEmail === "boolean") ??
+        true;
 
       const meta = body.meta; // optional meta data for custom verifications
 
@@ -228,7 +238,7 @@ export function definePublicUserRoutes(
         }
       }
 
-      const user = await LocalAuth.register(email, password);
+      const user = await LocalAuth.register(email, password, sendVerificationEmail);
       log.debug(`User registered: ${user.id}`);
       return c.json(user);
     } catch (err) {

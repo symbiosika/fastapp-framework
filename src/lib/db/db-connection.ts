@@ -1,7 +1,6 @@
 import pg from "pg";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { getDbSchema, type DatabaseSchema } from "./db-schema";
-import { readFileSync } from "fs";
 
 const POSTGRES_DB = process.env.POSTGRES_DB ?? "";
 const POSTGRES_USER = process.env.POSTGRES_USER ?? "";
@@ -11,7 +10,8 @@ const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRE_CA_CERT = process.env.POSTGRE_CA_CERT ?? "";
 
 // hold the connection
-let dbClient: NodePgDatabase<DatabaseSchema>;
+let drizzleClient: NodePgDatabase<DatabaseSchema>;
+let dbClient: pg.PoolClient | pg.Client;
 
 const createPool = () => {
   return new pg.Pool({
@@ -20,8 +20,22 @@ const createPool = () => {
     host: POSTGRES_HOST,
     port: POSTGRES_PORT,
     database: POSTGRES_DB,
-    max: 3,
+    max: 10,
     idleTimeoutMillis: 60000,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: POSTGRE_CA_CERT,
+    },
+  });
+};
+
+const createClient = async () => {
+  return new pg.Client({
+    user: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+    host: POSTGRES_HOST,
+    port: POSTGRES_PORT,
+    database: POSTGRES_DB,
     ssl: {
       rejectUnauthorized: false,
       ca: POSTGRE_CA_CERT,
@@ -55,32 +69,49 @@ const setupClientListeners = (client: pg.PoolClient) => {
 export const createDatabaseClient = async (
   customSchema?: Record<string, unknown>
 ) => {
-  if (dbClient) {
+  if (drizzleClient) {
     console.log("DB Client already initialized");
-    return dbClient;
+    return drizzleClient;
   }
 
   const pool = createPool();
   setupPoolListeners(pool);
 
-  const client = await pool.connect();
-  setupClientListeners(client);
+  dbClient = await pool.connect();
+  setupClientListeners(dbClient);
 
   const schema = { ...getDbSchema(), ...customSchema };
-  dbClient = drizzle(client, { schema, logger: false });
-  return dbClient;
+  drizzleClient = drizzle(dbClient, { schema, logger: false });
+  return drizzleClient;
 };
 
 export const getDb = () => {
-  if (!dbClient) {
+  if (!drizzleClient) {
     throw new Error("Database client not initialized");
   }
-  return dbClient;
+  return drizzleClient;
+};
+
+export const createDatabaseTestingClient = async (usePool = false) => {
+  console.log("create testing db client");
+  if (usePool) {
+    const pool = createPool();
+    dbClient = await pool.connect();
+  } else {
+    const client = await createClient();
+    await client.connect();
+    dbClient = client;
+  }
+  console.log("client created");
+  drizzleClient = drizzle(dbClient, { schema: getDbSchema(), logger: false });
+  return drizzleClient;
 };
 
 export const waitForDbConnection = async () => {
-  while (!dbClient) {
+  console.log("check db connection");
+  while (!drizzleClient) {
     console.log("Waiting for database connection...");
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+  console.log("db connection established");
 };

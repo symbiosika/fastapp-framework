@@ -12,7 +12,9 @@ import {
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
-const saltAndHashPassword = async (password: string): Promise<string> => {
+export const saltAndHashPassword = async (
+  password: string
+): Promise<string> => {
   const hash = await Bun.password.hash(password);
   return hash;
 };
@@ -51,7 +53,11 @@ const getUserFromDb = async (
   }
 };
 
-const setUserInDb = async (email: string, password: string) => {
+const setUserInDb = async (
+  email: string,
+  password: string,
+  sendMailAfterRegister: boolean
+) => {
   const hash = await saltAndHashPassword(password);
 
   const user = await getDb()
@@ -71,9 +77,11 @@ const setUserInDb = async (email: string, password: string) => {
     });
 
   // send verification email
-  await sendVerificationEmail(email).catch((err) => {
-    throw "Error sending verification email. " + err;
-  });
+  if (sendMailAfterRegister) {
+    await sendVerificationEmail(email).catch((err) => {
+      throw "Error sending verification email. " + err;
+    });
+  }
 
   return user[0];
 };
@@ -122,8 +130,12 @@ export const LocalAuth = {
     return await getUserFromDb(email, password);
   },
 
-  async register(email: string, password: string) {
-    return await setUserInDb(email, password);
+  async register(
+    email: string,
+    password: string,
+    sendVerificationEmail: boolean
+  ) {
+    return await setUserInDb(email, password, sendVerificationEmail);
   },
 
   async login(email: string, password: string) {

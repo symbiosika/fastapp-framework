@@ -45,6 +45,10 @@ export const products = pgBaseTable(
     groupIdx: index("products_group_idx").on(products.group),
     nameIdx: index("products_name_idx").on(products.name),
     typeIdx: index("products_type_idx").on(products.type),
+    prodIdPriceIdIdx: unique("products_prod_id_price_id_idx").on(
+      products.prodId,
+      products.priceId
+    ),
   })
 );
 
