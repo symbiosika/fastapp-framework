@@ -26,6 +26,7 @@ class Scheduler {
 
     const job = new CronJob(schedule, async () => {
       try {
+        this.log(`Executing task "${name}"`);
         await handler();
       } catch (error) {
         this.error(`Error executing task "${name}": ${error}`);
