@@ -31,13 +31,22 @@ class AESCipher {
     const cipher = createCipheriv(algorithm, this.key, iv);
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
-    return iv.toString("hex") + ":" + encrypted;
+    const authTag = algorithm.includes("gcm")
+      ? (cipher as any).getAuthTag().toString("hex")
+      : "";
+    return (
+      iv.toString("hex") + ":" + encrypted + (authTag ? ":" + authTag : "")
+    );
   }
 
   decrypt(encryptedData: string, algorithm = "aes-256-cbc") {
-    const [ivHex, encryptedText] = encryptedData.split(":");
+    const parts = encryptedData.split(":");
+    const [ivHex, encryptedText, authTag] = parts;
     const iv = Buffer.from(ivHex, "hex");
-    const decipher = createDecipheriv(algorithm, this.key, iv);
+    const decipher = createDecipheriv(algorithm, this.key, iv) as any;
+    if (algorithm.includes("gcm") && authTag) {
+      decipher.setAuthTag(Buffer.from(authTag, "hex"));
+    }
     let decrypted = decipher.update(encryptedText, "hex", "utf8");
     decrypted += decipher.final("utf8");
     return decrypted;
