@@ -274,6 +274,13 @@
       "when": 1731347363016,
       "tag": "0038_perpetual_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1731350830963,
+      "tag": "0039_abandoned_multiple_man",
+      "breakpoints": true
     }
   ]
 }

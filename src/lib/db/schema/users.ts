@@ -212,6 +212,48 @@ export const groupPermissions = pgBaseTable(
 export type GroupPermissionsSelect = typeof groupPermissions.$inferSelect;
 export type GroupPermissionsInsert = typeof groupPermissions.$inferInsert;
 
+// Teams Table
+export const teams = pgBaseTable(
+  "teams",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    meta: jsonb("meta"),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (teams) => ({
+    nameIdx: index("teams_name_idx").on(teams.name),
+  })
+);
+
+// Team Members Table mit optionaler Rolle
+export const teamMembers = pgBaseTable(
+  "team_members",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    role: varchar("role", { length: 50 }), // z.B. 'admin', 'member', etc.
+    joinedAt: timestamp("joined_at", { mode: "string" }).notNull().defaultNow(),
+  },
+  (teamMembers) => ({
+    compositePK: primaryKey({
+      columns: [teamMembers.userId, teamMembers.teamId],
+    }),
+  })
+);
+
 // RELATIONS
 
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -220,6 +262,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   activeSubscriptions: many(activeSubscriptions),
   purchases: many(purchases),
   promptSnippets: many(promptSnippets),
+  teamMembers: many(teamMembers),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -268,3 +311,18 @@ export const groupPermissionsRelations = relations(
     }),
   })
 );
+
+export const teamsRelations = relations(teams, ({ many }) => ({
+  teamMembers: many(teamMembers),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  user: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+  }),
+  team: one(teams, {
+    fields: [teamMembers.teamId],
+    references: [teams.id],
+  }),
+}));
