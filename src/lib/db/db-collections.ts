@@ -2,6 +2,8 @@ import {
   jobs,
   promptSnippets,
   promptTemplates,
+  teamMembers,
+  teams,
   userGroupMembers,
   userGroups,
   users,
@@ -150,6 +152,20 @@ export const initializeCollectionPermissions = (
       DELETE: {
         customWhere(params) {
           return eq(promptSnippets.userId, params.userId);
+        },
+      },
+    },
+
+    teams: {
+      GET: {
+        customWhere(params) {
+          return inArray(
+            teams.id,
+            getDb()
+              .select({ id: teamMembers.teamId })
+              .from(teamMembers)
+              .where(eq(teamMembers.userId, params.userId))
+          );
         },
       },
     },
