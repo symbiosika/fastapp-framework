@@ -1,12 +1,18 @@
-import { secrets, userGroupMembers, userGroups, users } from "./db-schema";
+import {
+  jobs,
+  promptSnippets,
+  promptTemplates,
+  userGroupMembers,
+  userGroups,
+  users,
+  userSpecificData,
+} from "./db-schema";
 import { getDb } from "./db-connection";
-import { encryptAes } from "../crypt/aes";
 import type {
   CrudPermission,
   PermissionDefinitionPerTable,
 } from "../types/permission-checker";
-import type { SecretsEntry } from "../types/shared/db/secrets";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 
 const allowAll = async (): Promise<CrudPermission> => {
   return {
@@ -27,6 +33,7 @@ export const initializeCollectionPermissions = (
   // init permissions
   const permissions: PermissionDefinitionPerTable = {
     ...customPermissions,
+    // read-only for the user itself
     users: {
       GET: {
         customWhere(params) {
@@ -35,6 +42,7 @@ export const initializeCollectionPermissions = (
       },
     },
 
+    // read-only for the user itself
     userGroups: {
       GET: {
         customWhere(params) {
@@ -49,75 +57,100 @@ export const initializeCollectionPermissions = (
       },
     },
 
+    // read-only for the user itself
     userGroupMembers: {
-      GET: {},
-    },
-
-    knowledgeText: {
-      GET: {},
-      POST: {},
-      PUT: {},
-      DELETE: {},
-    },
-
-    secrets: {
-      // on this table the user needs access to the assigned instanceId
-      // only writing is allowed. not reading!
-      POST: {
-        checkPermissionsFor: [],
-        preAction: async (userId, body) => {
-          // encrypt the value
-          const b = body as SecretsEntry;
-          if (!b.value) throw "No value in body";
-          const encrypted = encryptAes(b.value);
-          b.value = encrypted.value;
-          b.type = encrypted.algorithm;
-          return body;
+      GET: {
+        customWhere(params) {
+          return eq(userGroupMembers.userId, params.userId);
         },
-        inserter: async (_userId, body) => {
-          const added = await getDb()
-            .insert(secrets)
-            .values({
-              ...body,
-              id: undefined,
-            })
-            .onConflictDoUpdate({
-              target: [secrets.reference, secrets.name],
-              set: {
-                value: body.value,
-              },
-            })
-            .returning();
-          return added[0];
+      },
+    },
+
+    // crud for the user itself
+    userSpecificData: {
+      GET: {
+        customWhere(params) {
+          return eq(userSpecificData.userId, params.userId);
+        },
+      },
+      POST: {
+        customWhere(params) {
+          return eq(userSpecificData.userId, params.userId);
         },
       },
       PUT: {
-        checkPermissionsFor: [
-          {
-            name: "instanceId",
-            permission: "write",
-            checker: allowAll,
-          },
-        ],
-        preAction: async (userId, body) => {
-          // encrypt the value
-          const b = body as SecretsEntry;
-          if (!b.value) throw "No value in body";
-          const encrypted = encryptAes(b.value);
-          b.value = encrypted.value;
-          b.type = encrypted.algorithm;
-          return body;
+        customWhere(params) {
+          return eq(userSpecificData.userId, params.userId);
         },
       },
       DELETE: {
-        neededParameters: [{ name: "id", operator: "eq", valueType: "uuid" }],
-        checkPermissionsFor: [
-          {
-            name: "instanceId",
-            permission: "delete",
-            checker: allowAll,
-          },
-        ],
+        customWhere(params) {
+          return eq(userSpecificData.userId, params.userId);
+        },
+      },
+    },
+
+    // read-only for the user itself
+    jobs: {
+      GET: {
+        customWhere(params) {
+          return eq(jobs.userId, params.userId);
+        },
+      },
+    },
+
+    promptTemplates: {
+      GET: {
+        customWhere(params) {
+          return and(
+            or(
+              eq(promptTemplates.userId, params.userId),
+              isNull(promptTemplates.userId)
+            ),
+            eq(promptTemplates.hidden, false)
+          );
+        },
+      },
+      POST: {
+        customWhere(params) {
+          return eq(promptTemplates.userId, params.userId);
+        },
+      },
+      PUT: {
+        customWhere(params) {
+          return eq(promptTemplates.userId, params.userId);
+        },
+      },
+      DELETE: {
+        customWhere(params) {
+          return eq(promptTemplates.userId, params.userId);
+        },
+      },
+    },
+
+    promptSnippets: {
+      GET: {
+        customWhere(params) {
+          return or(
+            eq(promptSnippets.userId, params.userId),
+            isNull(promptSnippets.userId)
+          );
+        },
+      },
+      POST: {
+        customWhere(params) {
+          return eq(promptSnippets.userId, params.userId);
+        },
+      },
+      PUT: {
+        customWhere(params) {
+          return eq(promptSnippets.userId, params.userId);
+        },
+      },
+      DELETE: {
+        customWhere(params) {
+          return eq(promptSnippets.userId, params.userId);
+        },
       },
     },
   };

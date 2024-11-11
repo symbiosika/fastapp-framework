@@ -23,7 +23,7 @@ export interface RawParameters {
 
 export interface PermissionDefinition {
   simpleFilter?: string; // simple filter for the query like "id = '123'"
-  customWhere?: (params: RawParameters) => SQL<unknown>; // custom where clause
+  customWhere?: (params: RawParameters) => SQL<unknown> | undefined; // custom where clause
   neededParameters?: {
     name: string;
     operator: string;
