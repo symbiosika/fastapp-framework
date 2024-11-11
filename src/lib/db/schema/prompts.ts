@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { getTableColumns, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -103,3 +103,41 @@ export const promptTemplatesRelations = relations(
     promptTemplatePlaceholders: many(promptTemplatePlaceholders),
   })
 );
+
+// Table to store reusable prompt snippets for prompt building
+export const promptSnippets = pgBaseTable(
+  "prompt_snippets",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: text("name").notNull(),
+    content: text("content").notNull(),
+    category: varchar("category", { length: 255 }).notNull().default(""),
+    userId: uuid("user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (promptSnippets) => ({
+    unq: unique().on(promptSnippets.name, promptSnippets.category),
+    nameIdx: index("prompt_snippets_name_idx").on(promptSnippets.name),
+    categoryIdx: index("prompt_snippets_category_idx").on(
+      promptSnippets.category
+    ),
+    userIdIdx: index("prompt_snippets_user_id_idx").on(promptSnippets.userId),
+  })
+);
+
+export type PromptSnippetsSelect = typeof promptSnippets.$inferSelect;
+export type PromptSnippetsInsert = typeof promptSnippets.$inferInsert;
+
+export const promptSnippetsRelations = relations(promptSnippets, ({ one }) => ({
+  user: one(users, {
+    fields: [promptSnippets.userId],
+    references: [users.id],
+  }),
+}));

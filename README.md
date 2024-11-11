@@ -54,7 +54,7 @@ DataModel->Forms (image)
 - [x] Simple Task scheduler
 - [x] Simple Job Management for long running tasks
 - [x] Logging to disk
-- [ ] Implement Webhooks
+- [x] Webhooks
 
 ### Database
 
@@ -126,8 +126,6 @@ DataModel->Forms (image)
 - [ ] Docker container to run DB migrations. Actually this is solved by GH Actions for each project
 - [ ] Provide a running webserver as docker image
 - [ ] Internal news page (like messdas)
-- [ ] Internal Proxy to connect server-side-rendering frameworks inside
-- [ ] Internal Proxy to connect other webservices
 - [ ] Support for "Grapshs" in Postgre: https://dylanpaulus.com/posts/postgres-is-a-graph-database/ or https://www.adesso.de/de/news/blog/graphrag-komplexe-datenbeziehungen-fuer-effizientere-llm-abfragen-nutzen.jsp
 - [ ] Graphen ggf. nur als URI speichern. Also http://product1->"is parent of"->http://product2 (Ref.: Knowledge Graph, Prof. Dengler)
 - [ ] Dark/Light mode for standard pages
@@ -137,5 +135,4 @@ DataModel->Forms (image)
 - [ ] Connectors to make.com, PowerAutomate und n8n.com
 - [ ] Send push notifications (PWA) https://www.npmjs.com/package/web-push
 - [ ] Der SVG Editor zum Nutzen von Prompt Skizzen
-- [ ] Ordner Namen als NPM Paket inpackage.json registrieren um Funktionen zu schreiben die quasi keine Abhängigkeiten haben?
 - [ ] Docker Container mit verschlüsseltem App Order der erst in betrieb entschlüsselt wird. Dann public stellen

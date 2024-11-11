@@ -267,6 +267,13 @@
       "when": 1731164029427,
       "tag": "0037_cynical_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1731347363016,
+      "tag": "0038_perpetual_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }
