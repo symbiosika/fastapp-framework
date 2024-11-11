@@ -18,7 +18,9 @@ export class StripeService {
     const stripeApiKey = apiKey;
     this.logEnabled = process.env.STRIPE_DEBUG === "true";
     if (!stripeApiKey) {
-      throw new Error("Stripe API key is not provided");
+      log.debug("[StripeService] Stripe API key is not provided");
+      return;
+      // throw new Error("Stripe API key is not provided");
     }
     this._stripe = new Stripe(stripeApiKey, {
       apiVersion: "2024-09-30.acacia",
