@@ -281,6 +281,13 @@
       "when": 1731350830963,
       "tag": "0039_abandoned_multiple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1731351538161,
+      "tag": "0040_tiny_vengeance",
+      "breakpoints": true
     }
   ]
 }

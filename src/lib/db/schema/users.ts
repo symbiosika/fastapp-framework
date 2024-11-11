@@ -230,7 +230,7 @@ export const teams = pgBaseTable(
       .defaultNow(),
   },
   (teams) => ({
-    nameIdx: index("teams_name_idx").on(teams.name),
+    nameIdx: uniqueIndex("teams_name_idx").on(teams.name),
   })
 );
 
