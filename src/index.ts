@@ -60,6 +60,7 @@ import {
 } from "./lib/ai/knowledge/similarity-search";
 import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 import defineManageSecretsRoutes from "./routes/secrets";
+import scheduler from "./lib/cron";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -113,6 +114,15 @@ export const defineServer = (config: ServerConfig) => {
   initializeFullDbSchema(config.customDbSchema ?? {});
   initializeCollectionPermissions(config.customCollectionPermissions ?? {});
   createDatabaseClient(config.customDbSchema);
+
+  /**
+   * Register custom cron jobs
+   */
+  if (config.customCronJobs) {
+    config.customCronJobs.forEach((cronJob) => {
+      scheduler.registerTask(cronJob.name, cronJob.schedule, cronJob.handler);
+    });
+  }
 
   /**
    * Init main Hono app

@@ -4,6 +4,7 @@ import Logger from "./lib/log";
 import type { PermissionDefinitionPerTable } from "./lib/types/permission-checker";
 import type { JobHandlerRegister } from "./lib/jobs";
 import type { GenericFormEntry } from "./lib/ai/smart-chat/shared-types";
+import type { Task } from "./lib/cron";
 
 export type FastAppHonoContextVariables = {
   usersId: string;
@@ -35,7 +36,11 @@ export interface ServerConfig {
   staticPrivateDataPath?: string;
   staticPublicDataPath?: string;
 
+  // Registration Flow
   customPreRegisterCustomVerifications?: CustomPreRegisterVerification[];
+
+  // CRON
+  customCronJobs?: Task[];
 
   // stripe
   useStripe?: boolean;
