@@ -39,15 +39,28 @@ export const createMagicLinkToken = async (email: string): Promise<string> => {
 };
 
 /**
+ * Create a Magic Login Link
+ * @param email
+ * @param redirectUrl
+ */
+export const createMagicLoginLink = async (
+  email: string,
+  redirectUrl?: string
+): Promise<string> => {
+  const token = await createMagicLinkToken(email);
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const magicLink = `${frontendUrl}/magic-login.html?token=${encodeURIComponent(token)}&redirectUrl=${encodeURIComponent(redirectUrl || "")}`;
+  return magicLink;
+};
+
+/**
  * Send Magic Link to the users Email address
  */
-export const sendMagicLink = async (email: string): Promise<void> => {
-  // Create a token
-  const token = await createMagicLinkToken(email);
-
-  // Construct the magic link URL
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const magicLink = `${frontendUrl}/magic-login.html?token=${encodeURIComponent(token)}`;
+export const sendMagicLink = async (
+  email: string,
+  redirectUrl?: string
+): Promise<void> => {
+  const magicLink = await createMagicLoginLink(email, redirectUrl);
 
   await smtpService.sendMail({
     sender: process.env.SMTP_FROM,
@@ -141,6 +154,14 @@ export const verifyEmailToken = async (token: string) => {
   if (user.length === 0) {
     throw new Error("User not found");
   }
+
+  if (!user[0].emailVerified) {
+    await getDb()
+      .update(users)
+      .set({ emailVerified: true })
+      .where(eq(users.id, userId));
+  }
+
   return {
     user: user[0],
     tokenId: magicLinkResult[0].id,

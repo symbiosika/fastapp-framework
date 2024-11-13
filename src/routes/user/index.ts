@@ -133,13 +133,14 @@ export function definePublicUserRoutes(
       const email = body.email;
       const password = body.password;
       const magicLinkToken = body.magicLinkToken;
+      const redirectUrl = body.redirectUrl;
 
       if (magicLinkToken) {
         const r = await LocalAuth.loginWithMagicLink(magicLinkToken);
-        return c.json(r);
+        return c.json({ ...r, redirectUrl });
       } else {
         const r = await LocalAuth.login(email, password);
-        return c.json(r);
+        return c.json({ ...r, redirectUrl });
       }
     } catch (err) {
       throw new HTTPException(401, { message: "Invalid login: " + err });
@@ -238,7 +239,11 @@ export function definePublicUserRoutes(
         }
       }
 
-      const user = await LocalAuth.register(email, password, sendVerificationEmail);
+      const user = await LocalAuth.register(
+        email,
+        password,
+        sendVerificationEmail
+      );
       log.debug(`User registered: ${user.id}`);
       return c.json(user);
     } catch (err) {
