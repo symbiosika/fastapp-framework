@@ -9,6 +9,7 @@ import {
   verifyEmail,
   verifyMagicLink,
 } from "./magic-link";
+import { _GLOBAL_SERVER_CONFIG } from "../..";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -100,14 +101,13 @@ export const generateJwt = async (user: UsersEntity, expiresIn: number) => {
   };
 };
 
-const checkAndCreateSession = async (
-  email: string,
-  password: string,
-  expiresIn = 86400
-) => {
+const checkAndCreateSession = async (email: string, password: string) => {
   const user = await getUserFromDb(email, password);
 
-  const { token, expiresAt } = await generateJwt(user, expiresIn);
+  const { token, expiresAt } = await generateJwt(
+    user,
+    _GLOBAL_SERVER_CONFIG.jwtExpiresAfter
+  );
   const session = await getDb()
     .insert(sessions)
     .values({
