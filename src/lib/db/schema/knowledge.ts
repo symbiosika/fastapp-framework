@@ -32,7 +32,9 @@ export const knowledgeText = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     text: text("text").notNull(),
     title: text("title").notNull().default(""),
-    source: varchar("source", { length: 1000 }).notNull().default(""),
+    source: varchar("source", { length: 1000 }),
+    sourceId: varchar("source_id", { length: 255 }),
+    meta: jsonb("meta").notNull().default("{}"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },
@@ -42,6 +44,9 @@ export const knowledgeText = pgBaseTable(
     ),
     titleIdx: index("knowledge_text_title_idx").on(knowledgeText.title),
     sourceIdx: index("knowledge_text_source_idx").on(knowledgeText.source),
+    sourceIdIdx: index("knowledge_text_source_id_idx").on(
+      knowledgeText.sourceId
+    ),
   })
 );
 

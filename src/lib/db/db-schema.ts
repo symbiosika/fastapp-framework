@@ -11,6 +11,7 @@ import * as additionalData from "./schema/additional-data";
 import * as prompts from "./schema/prompts";
 import * as knowledge from "./schema/knowledge";
 import * as jobs from "./schema/jobs";
+import * as plugins from "./schema/plugins";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -22,6 +23,7 @@ export * from "./schema/additional-data";
 export * from "./schema/prompts";
 export * from "./schema/knowledge";
 export * from "./schema/jobs";
+export * from "./schema/plugins";
 
 const baseDbSchema = {
   ...userTables,
@@ -33,6 +35,7 @@ const baseDbSchema = {
   ...prompts,
   ...knowledge,
   ...jobs,
+  ...plugins,
 };
 
 let validTableNames: string[] = [];

@@ -61,6 +61,7 @@ import {
 import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 import defineManageSecretsRoutes from "./routes/secrets";
 import scheduler from "./lib/cron";
+import { registerServerPlugin } from "./lib/plugins";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -308,7 +309,7 @@ export const secretHandler = {
 
 export { getDb };
 export type { DatabaseSchema };
-export { checkUserSubscription };
+export { checkUserSubscription, registerServerPlugin };
 export type { JobHandlerRegister };
 export * from "./types";
 export { HTTPException } from "hono/http-exception";
