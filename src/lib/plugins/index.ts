@@ -7,7 +7,12 @@ const availablePlugins: { [key: string]: ServerPlugin } = {};
 
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
-import { plugins, secrets } from "../db/db-schema";
+import {
+  plugins,
+  secrets,
+  type PluginsInsert,
+  type PluginsUpdate,
+} from "../db/db-schema";
 import { decryptAes, encryptAes } from "../crypt/aes";
 import type {
   DecryptedParameters,
@@ -20,6 +25,7 @@ import type {
   PluginParameterBoolean,
   PluginParameterNumber,
   PluginParameterSecret,
+  PluginConfigurationWithoutSecretsAndState,
 } from "../types/plugins";
 import log from "../log";
 import * as v from "valibot";
@@ -28,7 +34,7 @@ const pluginConfigSchemaInDb = v.object({
   pluginId: v.string(),
   name: v.string(),
   version: v.number(),
-  parameters: v.record(
+  meta: v.record(
     v.string(),
     v.union([
       v.object({
@@ -54,8 +60,10 @@ const pluginConfigSchemaInDb = v.object({
 const pluginConfigSchemaFromUser = v.object({
   pluginId: v.string(),
   name: v.string(),
+  description: v.string(),
+  pluginType: v.string(),
   version: v.number(),
-  parameters: v.record(
+  meta: v.record(
     v.string(),
     v.union([
       v.object({
@@ -180,7 +188,7 @@ export const encryptParameters = async (
             value: val.value,
             type: val.algorithm,
             reference: `plugin:${plugin.name}`,
-            referenceId: plugin.id,
+            // referenceId: plugin.id,
           })
           .where(eq(secrets.id, id));
 
@@ -191,7 +199,7 @@ export const encryptParameters = async (
           .insert(secrets)
           .values({
             reference: `plugin:${plugin.name}`,
-            referenceId: plugin.id,
+            // referenceId: plugin.id,
             name: key,
             value: val.value,
             type: val.algorithm,
@@ -214,7 +222,8 @@ export const encryptParameters = async (
  */
 export function validatePluginConfiguration(
   serverPluginParameters: PluginParameterDescription[],
-  config: PluginConfigurationWithoutSecrets
+  config: Record<string, any>,
+  encrypted: boolean = true
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -253,8 +262,10 @@ export function validatePluginConfiguration(
         }
         break;
       case "secret":
-        if (!("id" in value)) {
+        if (!("id" in value) && encrypted) {
           errors.push(`Secret parameter ${param.name} must have an id`);
+        } else if (!encrypted && !("inputValue" in value)) {
+          errors.push(`Secret parameter ${param.name} must have an inputValue`);
         }
         break;
     }
@@ -269,7 +280,7 @@ export function validatePluginConfiguration(
  * Helper to get a plugin from the database
  * Will also check if the meta configuration is valid
  */
-const getPlugin = async (query: {
+export const getPlugin = async (query: {
   id?: string;
   name?: string;
 }): Promise<PluginConfigurationWithoutSecrets> => {
@@ -300,7 +311,13 @@ const getPlugin = async (query: {
 
   try {
     // check basic structure
-    await v.parseAsync(pluginConfigSchemaInDb, pluginDbResult[0].meta);
+    // await v.parseAsync(pluginConfigSchemaInDb, pluginDbResult[0]);
+  } catch (error) {
+    log.error("Error parsing body for plugin configuration", error + "");
+    throw error;
+  }
+
+  try {
     // check structure and types
     const checked = validatePluginConfiguration(
       serverPlugin.neededParameters,
@@ -312,7 +329,13 @@ const getPlugin = async (query: {
       throw new Error(err);
     }
 
-    return pluginDbResult[0] as PluginConfigurationWithoutSecrets;
+    // Add version update check
+    const updatedConfig = await updatePluginVersion(
+      serverPlugin,
+      pluginDbResult[0] as PluginConfigurationWithSecrets
+    );
+
+    return updatedConfig;
   } catch (error) {
     log.error("Error parsing plugin configuration", error + "");
     throw error;
@@ -365,11 +388,11 @@ export const getPluginConfigWithSecrets = async (query: {
  * Update an existing plugin configuration
  */
 export const setPluginConfig = async (
-  pluginConfig: PluginConfigurationWithoutSecrets
+  pluginConfig: PluginsUpdate
 ): Promise<PluginConfigurationWithoutSecrets> => {
   // check input
   await v.safeParseAsync(pluginConfigSchemaFromUser, pluginConfig);
-  const encryptedParams = await encryptParameters(pluginConfig);
+  const encryptedParams = await encryptParameters(pluginConfig as any);
 
   const plugin = await getPlugin({ id: pluginConfig.id });
 
@@ -379,6 +402,16 @@ export const setPluginConfig = async (
     ...encryptedParams,
   };
 
+  // check if the new config is valid
+  const serverPlugin = availablePlugins[plugin.name] ?? null;
+  if (!serverPlugin) {
+    throw new Error("Plugin type is not registered");
+  }
+  const checked = validatePluginConfiguration(
+    serverPlugin.neededParameters,
+    pluginConfig
+  );
+
   const updated = await getDb()
     .update(plugins)
     .set({
@@ -386,8 +419,137 @@ export const setPluginConfig = async (
       meta: mergedMeta,
       description: pluginConfig.description,
     })
-    .where(eq(plugins.id, pluginConfig.id))
+    .where(eq(plugins.id, plugin.id))
     .returning();
 
   return updated[0] as PluginConfigurationWithoutSecrets;
+};
+
+/**
+ * Get all availableplugins
+ */
+export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
+  return Object.values(availablePlugins).map((plugin) => ({
+    name: plugin.name,
+    version: plugin.version,
+    neededParameters: plugin.neededParameters,
+  }));
+};
+
+/**
+ * Get all installed plugins with their validated configuration but encrypted secrets
+ */
+export const getAllInstalledPlugins = async (): Promise<
+  PluginConfigurationWithoutSecretsAndState[]
+> => {
+  const installed = await getDb().select().from(plugins);
+  const result: PluginConfigurationWithoutSecretsAndState[] = [];
+
+  for (const plugin of installed) {
+    // get the plugin in validated state
+    try {
+      const p = await getPlugin({ id: plugin.id });
+      result.push({
+        ...p,
+        isValid: true,
+        error: null,
+      });
+    } catch (error) {
+      result.push({
+        ...plugin,
+        meta: {},
+        isValid: false,
+        error: error + "",
+      });
+    }
+  }
+  return result;
+};
+
+/**
+ * Create a new plugin configuration
+ */
+export const createPlugin = async (
+  pluginConfig: PluginsInsert
+): Promise<PluginConfigurationWithoutSecrets> => {
+  // Validate input structure
+  await v.safeParseAsync(pluginConfigSchemaFromUser, pluginConfig);
+
+  // Check if plugin type is registered
+  const serverPlugin = availablePlugins[pluginConfig.name];
+  if (!serverPlugin) {
+    throw new Error(`Plugin type '${pluginConfig.name}' is not registered`);
+  }
+
+  // check if the plugin name is already installed
+  const existing = await getDb()
+    .select()
+    .from(plugins)
+    .where(eq(plugins.name, pluginConfig.name));
+  if (existing.length > 0) {
+    throw new Error(`Plugin '${pluginConfig.name}' is already installed`);
+  }
+
+  // Validate configuration
+  const checked = validatePluginConfiguration(
+    serverPlugin.neededParameters,
+    pluginConfig,
+    false
+  );
+  if (!checked.isValid) {
+    throw new Error(
+      "Invalid plugin configuration: " + checked.errors.join("\n")
+    );
+  }
+
+  // Encrypt parameters
+  const encryptedParams = await encryptParameters(pluginConfig as any);
+
+  // Insert new plugin
+  const [newPlugin] = await getDb()
+    .insert(plugins)
+    .values({
+      name: pluginConfig.name,
+      description: pluginConfig.description,
+      pluginType: pluginConfig.name,
+      version: serverPlugin.version,
+      meta: encryptedParams,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .returning();
+
+  return newPlugin as PluginConfigurationWithoutSecrets;
+};
+
+/**
+ * Delete a plugin configuration and its associated secrets
+ */
+export const deletePlugin = async (query: {
+  id?: string;
+  name?: string;
+}): Promise<void> => {
+  let where;
+  if (query.id) {
+    where = eq(plugins.id, query.id);
+  } else if (query.name) {
+    where = eq(plugins.name, query.name);
+  } else {
+    throw new Error("Either id or name must be provided");
+  }
+  const plugin = (await getDb()
+    .select()
+    .from(plugins)
+    .where(where)) as PluginConfigurationWithoutSecrets[];
+  if (plugin.length === 0) {
+    throw new Error("Plugin not found");
+  }
+  // Delete associated secrets first
+  for (const [_, param] of Object.entries(plugin[0].meta ?? {})) {
+    if (param.type === "secret" && param.id) {
+      await getDb().delete(secrets).where(eq(secrets.id, param.id));
+    }
+  }
+  // Delete the plugin configuration
+  await getDb().delete(plugins).where(eq(plugins.id, plugin[0].id));
 };

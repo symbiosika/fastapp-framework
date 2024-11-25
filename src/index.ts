@@ -63,6 +63,8 @@ import {
   addKnowledgeFromUrl,
   addPlainKnowledgeText,
 } from "./lib/ai/knowledge-texts";
+import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge/sync";
+import definePluginRoutes from "./routes/plugins";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -186,6 +188,11 @@ export const defineServer = (config: ServerConfig) => {
    * Add routes to manage internal secrets
    */
   defineManageSecretsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
+   * Add routes to manage plugins
+   */
+  definePluginRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Add payment routes
@@ -314,3 +321,4 @@ export { checkUserSubscription, registerServerPlugin };
 export type { JobHandlerRegister };
 export * from "./types";
 export { HTTPException } from "hono/http-exception";
+export { syncKnowledgeFromPlugin };

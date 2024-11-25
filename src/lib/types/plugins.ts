@@ -60,6 +60,12 @@ export type PluginConfigurationWithoutSecrets = PluginsSelect & {
   meta: EncryptedParameters;
 };
 
+export type PluginConfigurationWithoutSecretsAndState =
+  PluginConfigurationWithoutSecrets & {
+    isValid: boolean;
+    error: string | null;
+  };
+
 export interface PluginParameterDescription {
   category: string; // e.g. "general", "security", "advanced"
   type: "string" | "boolean" | "number" | "secret";

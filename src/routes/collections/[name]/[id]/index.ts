@@ -12,6 +12,7 @@ import {
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../../../../lib/db/db-connection";
 import { getDbSchema } from "../../../../lib/db/db-schema";
+import { RESPONSES } from "../../../../lib/responses";
 
 /**
  * GET Route for the collections endpoint
@@ -180,7 +181,7 @@ export const deleteCollectionById = async (c: Context) => {
     // @ts-ignore
     await getDb().delete(table).where([where]);
 
-    return c.json({ message: "success" });
+    return c.json(RESPONSES.SUCCESS);
   } catch (err) {
     throw new HTTPException(400, { message: err + "" });
   }

@@ -37,3 +37,4 @@ export const plugins = pgBaseTable(
 
 export type PluginsSelect = typeof plugins.$inferSelect;
 export type PluginsInsert = typeof plugins.$inferInsert;
+export type PluginsUpdate = Partial<PluginsInsert>;
