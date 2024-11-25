@@ -32,8 +32,12 @@ export const jobs = pgBaseTable(
     metadata: jsonb("metadata"),
     result: jsonb("result"),
     error: jsonb("error"),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
   },
   (jobs) => ({
     createdAtIdx: index("jobs_created_at_idx").on(jobs.createdAt),

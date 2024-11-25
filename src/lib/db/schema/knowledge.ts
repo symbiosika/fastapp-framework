@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
+import { plugins } from "./plugins";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -21,6 +22,7 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
   "url",
   "text",
   "finetuning",
+  "plugin",
 ]);
 
 // Table to store input texts
@@ -32,21 +34,19 @@ export const knowledgeText = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     text: text("text").notNull(),
     title: text("title").notNull().default(""),
-    source: varchar("source", { length: 1000 }),
-    sourceId: varchar("source_id", { length: 255 }),
     meta: jsonb("meta").notNull().default("{}"),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (knowledgeText) => ({
     createdAtIdx: index("knowledge_text_created_at_idx").on(
       knowledgeText.createdAt
     ),
     titleIdx: index("knowledge_text_title_idx").on(knowledgeText.title),
-    sourceIdx: index("knowledge_text_source_idx").on(knowledgeText.source),
-    sourceIdIdx: index("knowledge_text_source_id_idx").on(
-      knowledgeText.sourceId
-    ),
   })
 );
 
@@ -60,33 +60,25 @@ export const knowledgeEntry = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    fileSourceType: fileSourceTypeEnum("file_source_type").notNull(),
-    fileSourceId: uuid("file_source_id"),
-    fileSourceBucket: text("file_source_bucket"),
-    fileSourceUrl: text("file_source_url"),
+    sourceType: fileSourceTypeEnum("source_type").notNull(),
+    sourceId: uuid("source_id"),
+    sourceFileBucket: text("source_file_bucket"),
+    sourceUrl: text("source_url"),
     name: varchar("name", { length: 255 }).notNull(),
-    category1: varchar("category1", { length: 255 }),
-    category2: varchar("category2", { length: 255 }),
-    category3: varchar("category3", { length: 255 }),
     description: text("description"),
     abstract: text("abstract"),
     meta: jsonb("meta"),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (knowledgeEntry) => ({
     nameIdx: uniqueIndex("knowledgeentry_name_idx").on(knowledgeEntry.name),
     fileSourceTypeIdx: index("knowledge_entry_file_source_type_idx").on(
-      knowledgeEntry.fileSourceType
-    ),
-    category1Idx: index("knowledgeentry_category1_idx").on(
-      knowledgeEntry.category1
-    ),
-    category2Idx: index("knowledgeentry_category2_idx").on(
-      knowledgeEntry.category2
-    ),
-    category3Idx: index("knowledgeentry_category3_idx").on(
-      knowledgeEntry.category3
+      knowledgeEntry.sourceType
     ),
     createdAtIdx: index("knowledgeentry_created_at_idx").on(
       knowledgeEntry.createdAt
@@ -113,7 +105,9 @@ export const knowledgeChunks = pgBaseTable(
     text: text("text").notNull(),
     header: text("header"),
     order: integer("order").notNull().default(0),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
     embeddingModel: varchar("embedding_model", { length: 255 })
       .notNull()
       .default("")
@@ -168,16 +162,152 @@ export const knowledgeChunksRelations = relations(
   })
 );
 
-export const knowledgeEntryRelations = relations(
-  knowledgeEntry,
-  ({ many }) => ({
-    knowledgeChunks: many(knowledgeChunks),
-  })
-);
-
 export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
   knowledgeEntry: one(knowledgeEntry, {
     fields: [fineTuningData.knowledgeEntryId],
     references: [knowledgeEntry.id],
   }),
 }));
+
+// Neue Tabelle für Filter-Definitionen
+export const knowledgeFilters = pgBaseTable(
+  "knowledge_filters",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    category: varchar("category", { length: 50 }).notNull(), // z.B. 'department', 'topic', 'level'
+    name: varchar("name", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    nameTypeUnique: uniqueIndex("knowledge_filters_name_type_unique").on(
+      table.name,
+      table.category
+    ),
+    categoryNameIdx: index("knowledge_filters_category_name_idx").on(
+      table.category,
+      table.name
+    ),
+  })
+);
+
+// Verbindungstabelle zwischen Einträgen und Filtern
+export const knowledgeEntryFilters = pgBaseTable(
+  "knowledge_entry_filters",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    knowledgeEntryId: uuid("knowledge_entry_id")
+      .notNull()
+      .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
+    knowledgeFilterId: uuid("knowledge_filter_id")
+      .notNull()
+      .references(() => knowledgeFilters.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    entryFilterUnique: uniqueIndex("knowledge_entry_filter_unique").on(
+      table.knowledgeEntryId,
+      table.knowledgeFilterId
+    ),
+    entryIdIdx: index("knowledge_entry_filters_entry_id_idx").on(
+      table.knowledgeEntryId
+    ),
+    filterIdIdx: index("knowledge_entry_filters_filter_id_idx").on(
+      table.knowledgeFilterId
+    ),
+  })
+);
+
+// Neue Typen exportieren
+export type KnowledgeFiltersSelect = typeof knowledgeFilters.$inferSelect;
+export type KnowledgeFiltersInsert = typeof knowledgeFilters.$inferInsert;
+export type KnowledgeEntryFiltersSelect =
+  typeof knowledgeEntryFilters.$inferSelect;
+export type KnowledgeEntryFiltersInsert =
+  typeof knowledgeEntryFilters.$inferInsert;
+
+// Neue Relationen definieren
+export const knowledgeEntryFiltersRelations = relations(
+  knowledgeEntryFilters,
+  ({ one }) => ({
+    knowledgeEntry: one(knowledgeEntry, {
+      fields: [knowledgeEntryFilters.knowledgeEntryId],
+      references: [knowledgeEntry.id],
+    }),
+    filter: one(knowledgeFilters, {
+      fields: [knowledgeEntryFilters.knowledgeFilterId],
+      references: [knowledgeFilters.id],
+    }),
+  })
+);
+
+export const knowledgeEntryRelations = relations(
+  knowledgeEntry,
+  ({ many }) => ({
+    knowledgeChunks: many(knowledgeChunks),
+    filters: many(knowledgeEntryFilters),
+  })
+);
+
+// Tabelle für externe Quellen
+export const knowledgeSource = pgBaseTable(
+  "knowledge_source",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    pluginId: uuid("plugin_id")
+      .notNull()
+      .references(() => plugins.id),
+    externalId: varchar("external_id", { length: 255 }).notNull(),
+    lastSynced: timestamp("last_synced", { mode: "string" }),
+    lastHash: text("last_hash"),
+    lastChange: timestamp("last_change", { mode: "string" }),
+    knowledgeEntryId: uuid("knowledge_entry_id")
+      .notNull()
+      .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
+    meta: jsonb("meta").default("{}"),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pluginExternalIdIdx: uniqueIndex(
+      "knowledge_source_plugin_external_id_idx"
+    ).on(table.pluginId, table.externalId),
+    knowledgeEntryIdIdx: index("knowledge_source_entry_id_idx").on(
+      table.knowledgeEntryId
+    ),
+  })
+);
+
+// Erweiterte Relations
+export const knowledgeSourceRelations = relations(
+  knowledgeSource,
+  ({ one }) => ({
+    knowledgeEntry: one(knowledgeEntry, {
+      fields: [knowledgeSource.knowledgeEntryId],
+      references: [knowledgeEntry.id],
+    }),
+    plugin: one(plugins, {
+      fields: [knowledgeSource.pluginId],
+      references: [plugins.id],
+    }),
+  })
+);

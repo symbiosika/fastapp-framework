@@ -96,12 +96,18 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       let chunkOffset = isNumber(variables[pointerName]) ?? 0;
       let chunkCount = isNumber(args.chunk_count) ?? undefined;
 
+      // Parse dynamic filters
+      const filters: Record<string, string[]> = {};
+      Object.entries(args).forEach(([key, value]) => {
+        if (key.startsWith("filter:")) {
+          const filterKey = key.substring(7); // Remove 'filter:' prefix
+          filters[filterKey] = String(value).split(",");
+        }
+      });
+
       const query = {
         id: args.id ? [args.id as string] : undefined,
-        category1: args.category1 ? [args.category1 as string] : undefined,
-        category2: args.category2 ? [args.category2 as string] : undefined,
-        category3: args.category3 ? [args.category3 as string] : undefined,
-        names: args.names ? [args.names as string] : undefined,
+        filters,
         chunkCount,
         chunkOffset,
       };
@@ -135,15 +141,16 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         ? args.search_for_variable + ""
         : "user_input";
       const question = variables[searchForVariable];
-      const category1 = args.category1
-        ? String(args.category1).split(",")
-        : undefined;
-      const category2 = args.category2
-        ? String(args.category2).split(",")
-        : undefined;
-      const category3 = args.category3
-        ? String(args.category3).split(",")
-        : undefined;
+
+      // Parse dynamic filters
+      const filters: Record<string, string[]> = {};
+      Object.entries(args).forEach(([key, value]) => {
+        if (key.startsWith("filter:")) {
+          const filterKey = key.substring(7); // Remove 'filter:' prefix
+          filters[filterKey] = String(value).split(",");
+        }
+      });
+
       const names = args.names ? String(args.names).split(",") : undefined;
       const count =
         args.count && typeof args.count === "number" ? args.count : undefined;
@@ -159,9 +166,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         searchText: question,
         count,
         ids,
-        category1,
-        category2,
-        category3,
+        filters,
         names,
         before,
         after,
@@ -170,9 +175,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         searchText: String(question),
         n: count,
         filterKnowledgeEntryIds: ids,
-        filterCategory1: category1,
-        filterCategory2: category2,
-        filterCategory3: category3,
+        filter: filters,
         filterName: names,
         addBeforeN: before,
         addAfterN: after,
@@ -200,9 +203,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
 
       await log.debug("parse file placeholder", { fileSource, bucket, id });
       const document = await parseDocument({
-        fileSourceType: fileSource,
-        fileSourceId: id,
-        fileSourceBucket: bucket,
+        sourceType: fileSource,
+        sourceId: id,
+        sourceFileBucket: bucket,
       });
 
       return { content: document.content };

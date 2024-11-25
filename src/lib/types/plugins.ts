@@ -1,35 +1,35 @@
 import type { PluginsSelect } from "../db/db-schema";
 
-type PluginParameterString = {
+export type PluginParameterString = {
   type: "string";
   value: string;
 };
 
-type PluginParameterBoolean = {
+export type PluginParameterBoolean = {
   type: "boolean";
   value: boolean;
 };
 
-type PluginParameterNumber = {
+export type PluginParameterNumber = {
   type: "number";
   value: number;
 };
 
 // used to insert or update a secret
-type InsertPluginParameterSecret = {
+export type InsertPluginParameterSecret = {
   type: "secret";
   id?: string;
   inputValue?: string;
 };
 
 // used to select a secret with hidden value
-type PluginParameterSecret = {
+export type PluginParameterSecret = {
   type: "secret";
   id: string;
 };
 
 // used to select a secret with decrypted value. can only be used in the server
-type PluginParameterSecretDecrypted = {
+export type PluginParameterSecretDecrypted = {
   type: "secret";
   id: string;
   decryptedValue: string;

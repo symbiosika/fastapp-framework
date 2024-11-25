@@ -1,4 +1,4 @@
-import type { Chunk } from "./types";
+import type { Chunk } from "../../types/chunks";
 
 const MAX_WORDS_PER_CHUNK = 500;
 /**

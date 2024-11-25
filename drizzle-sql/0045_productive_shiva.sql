@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_text" ALTER COLUMN "source" SET DEFAULT 'default';

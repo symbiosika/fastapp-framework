@@ -1,20 +1,23 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, eq, inArray, SQL, type SQLWrapper } from "drizzle-orm";
+import { and, eq, inArray, SQL, sql } from "drizzle-orm";
 import {
   knowledgeChunks,
   knowledgeEntry,
+  knowledgeEntryFilters,
+  knowledgeFilters,
+  knowledgeText,
   type KnowledgeEntrySelect,
 } from "../../db/schema/knowledge";
 import log from "../../../lib/log";
+import { deleteFileFromDB } from "../../storage/db";
+import { deleteFileFromLocalDisc } from "../../storage/local";
 
 type KnowledgeQuery = {
   id?: string[];
   names?: string[];
-  category1?: string[];
-  category2?: string[];
-  category3?: string[];
   chunkCount?: number;
   chunkOffset?: number;
+  filters?: Record<string, string[]>;
 };
 
 type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
@@ -65,7 +68,7 @@ const getKnowledgeWithChunksWithConditions = async (
 };
 
 /**
- * Get knowledge by an id, name(s) or categories from DB
+ * Get knowledge by an id, name(s) or filters from DB
  * Will return the knowledge as an array with the original IDs.
  */
 export const getKnowledge = async (
@@ -89,23 +92,30 @@ export const getKnowledge = async (
     await log.debug(`Getting knowledge filteredby names: ${query.names}`);
     conditions.push(inArray(knowledgeEntry.name, query.names));
   }
-  if (query.category1?.length) {
+  if (query.filters) {
     await log.debug(
-      `Getting knowledge filtered by category1: ${query.category1}`
+      `Getting knowledge filtered by: ${JSON.stringify(query.filters)}`
     );
-    conditions.push(inArray(knowledgeEntry.category1, query.category1));
-  }
-  if (query.category2?.length) {
-    await log.debug(
-      `Getting knowledge filtered by category2: ${query.category2}`
-    );
-    conditions.push(inArray(knowledgeEntry.category2, query.category2));
-  }
-  if (query.category3?.length) {
-    await log.debug(
-      `Getting knowledge filtered by category3: ${query.category3}`
-    );
-    conditions.push(inArray(knowledgeEntry.category3, query.category3));
+
+    for (const [category, values] of Object.entries(query.filters)) {
+      if (values.length) {
+        const subquery = getDb()
+          .select({ id: knowledgeEntryFilters.knowledgeEntryId })
+          .from(knowledgeEntryFilters)
+          .innerJoin(
+            knowledgeFilters,
+            eq(knowledgeFilters.id, knowledgeEntryFilters.knowledgeFilterId)
+          )
+          .where(
+            and(
+              eq(knowledgeFilters.category, category),
+              inArray(knowledgeFilters.name, values)
+            )
+          );
+
+        conditions.push(sql`${knowledgeEntry.id} IN (${subquery})`);
+      }
+    }
   }
 
   if (conditions.length === 0) {
@@ -130,8 +140,7 @@ export const getKnowledge = async (
 };
 
 /**
- * Get all knowledge in a simpler format
- * A helper wrapper over the getKnowledge function.
+ * Get the full knowledge entry with all chunks
  */
 export const getPlainKnowledge = async (
   query: KnowledgeQuery
@@ -151,7 +160,9 @@ export const getPlainKnowledge = async (
 };
 
 /**
- * Get only the knowledgebase entries
+ * Get the knowledgebase entries from DB
+ * with pagination
+ * without the chunks
  */
 export const getKnowledgeEntries = async (query?: {
   limit: number;
@@ -167,7 +178,23 @@ export const getKnowledgeEntries = async (query?: {
 /**
  * Delete a knowledge entry by ID
  */
-export const deleteKnowledgeEntry = async (id: string) => {
+export const deleteKnowledgeEntry = async (
+  id: string,
+  deleteSource = false
+) => {
+  // also delete the source if requested
+  if (deleteSource) {
+    const e = await getDb().query.knowledgeEntry.findFirst({
+      where: eq(knowledgeEntry.id, id),
+    });
+    if (e?.sourceType === "db" && e.sourceId && e.sourceFileBucket) {
+      await deleteFileFromDB(e.sourceId, e.sourceFileBucket);
+    } else if (e?.sourceType === "local" && e.sourceId && e.sourceFileBucket) {
+      await deleteFileFromLocalDisc(e.sourceId, e.sourceFileBucket);
+    } else if (e?.sourceType === "text") {
+      await getDb().delete(knowledgeText).where(eq(knowledgeText.id, id));
+    }
+  }
   await getDb().delete(knowledgeEntry).where(eq(knowledgeEntry.id, id));
 };
 

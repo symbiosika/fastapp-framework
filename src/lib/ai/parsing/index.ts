@@ -36,59 +36,53 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
  * Parse a variety of file types
  */
 export const parseDocument = async (data: {
-  fileSourceType: FileSourceType;
-  fileSourceId?: string;
-  fileSourceBucket?: string;
-  fileSourceUrl?: string;
+  sourceType: FileSourceType;
+  sourceId?: string;
+  sourceFileBucket?: string;
+  sourceUrl?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let content: string;
   let title: string;
-  if (
-    data.fileSourceType === "db" &&
-    data.fileSourceId &&
-    data.fileSourceBucket
-  ) {
-    log.debug(
-      `Get file from DB: ${data.fileSourceId} ${data.fileSourceBucket}`
-    );
-    const file = await getFileFromDb(data.fileSourceId, data.fileSourceBucket);
+  if (data.sourceType === "db" && data.sourceId && data.sourceFileBucket) {
+    log.debug(`Get file from DB: ${data.sourceId} ${data.sourceFileBucket}`);
+    const file = await getFileFromDb(data.sourceId, data.sourceFileBucket);
     const { text } = await parseFile(file);
     content = text;
     title = file.name;
   } else if (
-    data.fileSourceType === "local" &&
-    data.fileSourceId &&
-    data.fileSourceBucket
+    data.sourceType === "local" &&
+    data.sourceId &&
+    data.sourceFileBucket
   ) {
     log.debug(
-      `Get file from local disc: ${data.fileSourceId} ${data.fileSourceBucket}`
+      `Get file from local disc: ${data.sourceId} ${data.sourceFileBucket}`
     );
     const file = await getFileFromLocalDisc(
-      data.fileSourceId,
-      data.fileSourceBucket
+      data.sourceId,
+      data.sourceFileBucket
     );
     const { text } = await parseFile(file);
     content = text;
     title = file.name;
-  } else if (data.fileSourceType === "url" && data.fileSourceUrl) {
-    log.debug(`Get file from URL: ${data.fileSourceUrl}`);
+  } else if (data.sourceType === "url" && data.sourceUrl) {
+    log.debug(`Get file from URL: ${data.sourceUrl}`);
     content = "";
     title = "";
-  } else if (data.fileSourceType === "text") {
+  } else if (data.sourceType === "text") {
     log.debug(`Get file from TEXT`);
     const dbResults = await getDb()
       .select()
       .from(knowledgeText)
-      .where(eq(knowledgeText.id, data.fileSourceId!));
+      .where(eq(knowledgeText.id, data.sourceId!));
     if (dbResults.length === 0) {
-      throw new Error(`Knowledge text not found: ${data.fileSourceId}`);
+      throw new Error(`Knowledge text not found: ${data.sourceId}`);
     }
     content = dbResults[0].text;
     title = dbResults[0].title;
   } else {
     throw new Error(
-      `Can´t get file. Unsupported file source type '${data.fileSourceType}' or missing parameters.`
+      `Can´t get file. Unsupported file source type '${data.sourceType}' or missing parameters.`
     );
   }
   log.debug(`File parsed. Content length: ${content.length}`);

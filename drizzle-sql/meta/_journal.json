@@ -309,6 +309,48 @@
       "when": 1732377484975,
       "tag": "0043_nappy_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1732382137235,
+      "tag": "0044_cold_silver_sable",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1732384591166,
+      "tag": "0045_productive_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1732524607994,
+      "tag": "0046_rainy_forge",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1732525518636,
+      "tag": "0047_friendly_brood",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1732529861011,
+      "tag": "0048_famous_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1732531791464,
+      "tag": "0049_pretty_bucky",
+      "breakpoints": true
     }
   ]
 }

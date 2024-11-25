@@ -1,0 +1,2 @@
+ALTER TABLE "base_knowledge_text" ALTER COLUMN "source_id" SET DEFAULT gen_random_uuid();--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "knowledge_text_source_and_source_id_unique" ON "base_knowledge_text" USING btree ("source","source_id");

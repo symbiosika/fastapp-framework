@@ -14,10 +14,7 @@ import { functionChat } from "../../lib/ai/smart-chat";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import {
-  addKnowledgeFromUrl,
-  extractKnowledgeFromText,
-} from "../../lib/ai/knowledge/add-knowledge";
+import { extractKnowledgeFromExistingDbEntry } from "../../lib/ai/knowledge/add-knowledge";
 import { parseDocument } from "../../lib/ai/parsing";
 import { useTemplateChat } from "../../lib/ai/generation";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
@@ -34,6 +31,7 @@ import {
 } from "../../lib/ai/fine-tuning";
 import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
 import { RESPONSES } from "../../lib/responses";
+import { addKnowledgeFromUrl } from "../../lib/ai/knowledge-texts";
 
 const FileSourceType = {
   DB: "db",
@@ -67,13 +65,11 @@ export type ChatWithTemplateInput = v.InferOutput<
 >;
 
 const generateKnowledgeValidation = v.object({
-  fileSourceType: v.enum(FileSourceType),
-  fileSourceId: v.optional(v.string()),
-  fileSourceBucket: v.optional(v.string()),
-  fileSourceUrl: v.optional(v.string()),
-  category1: v.optional(v.string()),
-  category2: v.optional(v.string()),
-  category3: v.optional(v.string()),
+  sourceType: v.enum(FileSourceType),
+  sourceId: v.optional(v.string()),
+  sourceFileBucket: v.optional(v.string()),
+  sourceUrl: v.optional(v.string()),
+  filters: v.optional(v.record(v.string(), v.string())),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -89,10 +85,10 @@ const askKnowledgeValidation = v.object({
 export type AskKnowledgeInput = v.InferOutput<typeof askKnowledgeValidation>;
 
 const parseDocumentValidation = v.object({
-  fileSourceType: v.enum(FileSourceType),
-  fileSourceId: v.optional(v.string()),
-  fileSourceBucket: v.optional(v.string()),
-  fileSourceUrl: v.optional(v.string()),
+  sourceType: v.enum(FileSourceType),
+  sourceId: v.optional(v.string()),
+  sourceFileBucket: v.optional(v.string()),
+  sourceUrl: v.optional(v.string()),
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
@@ -122,6 +118,7 @@ export type FineTuningDataInput = v.InferOutput<
  */
 export default function defineRoutes(app: FastAppHono) {
   /**
+   * DEPRECATED!!!
    * AI chatbot with function calling
    */
   app.post("/smart-chat", async (c) => {
@@ -140,12 +137,17 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Get a plain template
+   * URL params:
+   * - promptId: string (optional)
+   * - promptName: string (optional)
+   * - promptCategory: string (optional)
    */
   app.get("/templates", async (c) => {
     try {
       const promptId = c.req.query("promptId");
       const promptName = c.req.query("promptName");
       const promptCategory = c.req.query("promptCategory");
+
       if (!promptId && !promptName && !promptCategory) {
         const r = await getTemplates();
         return c.json(r);
@@ -204,9 +206,9 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get all placeholders for a prompt template by ID
    */
-  app.get("/templates/:id/placeholders", async (c) => {
+  app.get("/templates/:promptTemplateId/placeholders", async (c) => {
     try {
-      const id = c.req.param("id");
+      const id = c.req.param("promptTemplateId");
       const r = await getPlainPlaceholdersForPromptTemplate(id);
       return c.json(r);
     } catch (e) {
@@ -267,7 +269,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get an object with all placeholders for a prompt template with the default values
    */
-  app.get("/get-placeholders", async (c) => {
+  app.get("/templates/placeholders", async (c) => {
     try {
       const promptId = c.req.query("promptId");
       const promptName = c.req.query("promptName");
@@ -284,6 +286,7 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
+   * Main CHAT Route. Can handle simple and complex chats.
    * Chat with a Prompt Template
    */
   app.post("/chat-with-template", async (c) => {
@@ -302,7 +305,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Parse a document
    */
-  app.post("/parse-document", async (c) => {
+  app.post("/knowledge-texts/parse-document", async (c) => {
     try {
       const body = await c.req.json();
       const parsedBody = v.parse(parseDocumentValidation, body);
@@ -314,13 +317,47 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
-   * Call the knowledge extraction from a text to gnerate knowledge in the database
+   * Add a text knowledge entry from an URL
    */
-  app.post("/generate-knowledge", async (c) => {
+  app.post("/knowledge-texts/from-text", async (c) => {
+    try {
+      const body = await c.req.json();
+      const text: string = body.text;
+      if (!text || typeof text !== "string") {
+        throw new HTTPException(400, {
+          message: "Text is required and must be a string",
+        });
+      }
+      // const r = await addPlainKnowledgeText({ text });
+      // return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Add a text knowledge entry from an URL
+   */
+  app.post("/knowledge-texts/from-url", async (c) => {
+    try {
+      const body = await c.req.json();
+      const url: string = body.url;
+      const r = await addKnowledgeFromUrl(url);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Call the knowledge extraction from a document to generate embeddings in the database
+   * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
+   */
+  app.post("/knowledge/extract-knowledge", async (c) => {
     try {
       const body = await c.req.json();
       const parsedBody = v.parse(generateKnowledgeValidation, body);
-      const r = await extractKnowledgeFromText(parsedBody);
+      const r = await extractKnowledgeFromExistingDbEntry(parsedBody);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, {
@@ -335,7 +372,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - limit: number
    * - page: number
    */
-  app.get("/knowledge-entries", async (c) => {
+  app.get("/knowledge/entries", async (c) => {
     try {
       const limitStr = c.req.query("limit");
       const pageStr = c.req.query("page");
@@ -351,7 +388,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Delete a knowledge entry by ID
    */
-  app.delete("/knowledge-entries/:id", async (c) => {
+  app.delete("/knowledge/entries/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const r = await deleteKnowledgeEntry(id);
@@ -427,20 +464,6 @@ export default function defineRoutes(app: FastAppHono) {
       const id = c.req.param("id");
       await deleteFineTuningData(id);
       return c.json(RESPONSES.SUCCESS);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
-    }
-  });
-
-  /**
-   * Add a text knowledge entry from an URL
-   */
-  app.post("/add-textknowledge-from-url", async (c) => {
-    try {
-      const body = await c.req.json();
-      const url: string = body.url;
-      const r = await addKnowledgeFromUrl(url);
-      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }

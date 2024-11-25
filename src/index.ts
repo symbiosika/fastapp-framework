@@ -37,11 +37,7 @@ import {
 } from "./lib/ai/generation/crud";
 import { useTemplateChat } from "./lib/ai/generation";
 import { parseDocument } from "./lib/ai/parsing";
-import {
-  addKnowledgeFromUrl,
-  addPlainKnowledgeText,
-  extractKnowledgeFromText,
-} from "./lib/ai/knowledge/add-knowledge";
+import { extractKnowledgeFromExistingDbEntry } from "./lib/ai/knowledge/add-knowledge";
 import { getKnowledgeEntries } from "./lib/ai/knowledge/get-knowledge";
 import {
   addFineTuningData,
@@ -62,6 +58,11 @@ import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 import defineManageSecretsRoutes from "./routes/secrets";
 import scheduler from "./lib/cron";
 import { registerServerPlugin } from "./lib/plugins";
+import type { ServerPlugin } from "./lib/types/plugins";
+import {
+  addKnowledgeFromUrl,
+  addPlainKnowledgeText,
+} from "./lib/ai/knowledge-texts";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -282,7 +283,7 @@ export const aiService = {
   useTemplateChat,
   // knowledge
   parseDocument,
-  extractKnowledgeFromText,
+  extractKnowledgeFromExistingDbEntry,
   getKnowledgeEntries,
   addKnowledgeFromUrl,
   addPlainKnowledgeText,
@@ -308,7 +309,7 @@ export const secretHandler = {
 };
 
 export { getDb };
-export type { DatabaseSchema };
+export type { DatabaseSchema, ServerPlugin };
 export { checkUserSubscription, registerServerPlugin };
 export type { JobHandlerRegister };
 export * from "./types";

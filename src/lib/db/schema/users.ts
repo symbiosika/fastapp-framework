@@ -61,7 +61,7 @@ export const sessions = pgBaseTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
+    expires: timestamp("expires", { mode: "string" }).notNull(),
   },
   (sessions) => ({
     userIdIdx: index("sessions_user_id_idx").on(sessions.userId),

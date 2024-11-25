@@ -77,8 +77,12 @@ export const activeSubscriptions = pgBaseTable(
     }).notNull(),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
     metadata: jsonb("metadata"),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     stripeCustomerIdPlanName: unique().on(
@@ -130,8 +134,12 @@ export const purchases = pgBaseTable(
     currency: text("currency").notNull(),
     productName: text("product_name").notNull(),
     metadata: jsonb("metadata"),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     createdAtIdx: index("purchases_created_at_idx").on(table.createdAt),

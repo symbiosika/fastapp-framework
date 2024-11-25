@@ -106,16 +106,16 @@
 
                 try {
                   const learnResponse = await fetch(
-                    "/api/v1/ai/generate-knowledge",
+                    "/api/v1/ai/knowledge/extract-knowledge",
                     {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
                       },
                       body: JSON.stringify({
-                        fileSourceType: fileType,
-                        fileSourceId: result.id,
-                        fileSourceBucket: bucket,
+                        sourceType: fileType,
+                        sourceId: result.id,
+                        sourceFileBucket: bucket,
                       }),
                     }
                   );

@@ -33,7 +33,7 @@ export async function checkUserSubscription(
   const results: { planName: string; valid: boolean; end?: string }[] = [];
 
   for (const subscription of subscriptions) {
-    if (subscription.updatedAt >= yesterday) {
+    if (new Date(subscription.updatedAt).getTime() >= yesterday.getTime()) {
       // Subscription data is recent, use it
       results.push({
         planName: subscription.planName,
@@ -55,7 +55,7 @@ export async function checkUserSubscription(
           currentPeriodEnd: stripeSubscription.end
             ? new Date(stripeSubscription.end)
             : now,
-          updatedAt: now,
+          updatedAt: now.toISOString(),
         })
         .where(
           and(
@@ -160,7 +160,7 @@ export default function defineRoutes(app: FastAppHono) {
         status: "canceled",
         cancelAtPeriodEnd: true,
         currentPeriodEnd: new Date(cancelledSubscription.current_period_end),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
         metadata: cancelledSubscription,
       })
       .where(
@@ -379,8 +379,8 @@ async function updateOrCreateSubscriptionInDatabase(
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       metadata: subscription,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
     .onConflictDoUpdate({
       target: [
@@ -394,7 +394,7 @@ async function updateOrCreateSubscriptionInDatabase(
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         metadata: subscription,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       },
     });
 }

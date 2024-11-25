@@ -4,6 +4,11 @@ import { generateEmbedding } from "../standard";
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { getFullSourceDocumentsForKnowledgeEntry } from "./get-knowledge";
+import { and, eq, inArray } from "drizzle-orm";
+import {
+  knowledgeEntryFilters,
+  knowledgeFilters,
+} from "../../db/schema/knowledge";
 
 type KnowledgeChunk = {
   id: string;
@@ -21,9 +26,7 @@ export async function getNearestEmbeddings(q: {
   addBeforeN?: number;
   addAfterN?: number;
   filterKnowledgeEntryIds?: string[];
-  filterCategory1?: string[];
-  filterCategory2?: string[];
-  filterCategory3?: string[];
+  filter?: Record<string, string[]>;
   filterName?: string[];
 }): Promise<
   { id: string; text: string; knowledgeEntryId: string; order: number }[]
@@ -48,21 +51,29 @@ export async function getNearestEmbeddings(q: {
       sql`${knowledgeEntry.id} IN (${sql.join(q.filterKnowledgeEntryIds)})`
     );
   }
-  if (q.filterCategory1 && q.filterCategory1.length > 0) {
-    filters.push(
-      sql`${knowledgeEntry.category1} IN (${sql.join(q.filterCategory1)})`
-    );
+
+  if (q.filter) {
+    for (const [category, values] of Object.entries(q.filter)) {
+      if (values.length) {
+        const subquery = getDb()
+          .select({ id: knowledgeEntryFilters.knowledgeEntryId })
+          .from(knowledgeEntryFilters)
+          .innerJoin(
+            knowledgeFilters,
+            eq(knowledgeFilters.id, knowledgeEntryFilters.knowledgeFilterId)
+          )
+          .where(
+            and(
+              eq(knowledgeFilters.category, category),
+              inArray(knowledgeFilters.name, values)
+            )
+          );
+
+        filters.push(sql`${knowledgeEntry.id} IN (${subquery})`);
+      }
+    }
   }
-  if (q.filterCategory2 && q.filterCategory2.length > 0) {
-    filters.push(
-      sql`${knowledgeEntry.category2} IN (${sql.join(q.filterCategory2)})`
-    );
-  }
-  if (q.filterCategory3 && q.filterCategory3.length > 0) {
-    filters.push(
-      sql`${knowledgeEntry.category3} IN (${sql.join(q.filterCategory3)})`
-    );
-  }
+
   if (q.filterName && q.filterName.length > 0) {
     filters.push(sql`${knowledgeEntry.name} IN (${sql.join(q.filterName)})`);
   }
@@ -135,9 +146,7 @@ export async function getFullSourceDocumentsForSimilaritySearch(q: {
   searchText: string;
   n?: number;
   filterKnowledgeEntryIds?: string[];
-  filterCategory1?: string[];
-  filterCategory2?: string[];
-  filterCategory3?: string[];
+  filter?: Record<string, string[]>;
   filterName?: string[];
 }) {
   // search for the nearest chunks

@@ -25,8 +25,12 @@ export const userSpecificData = pgBaseTable(
     key: varchar("key", { length: 50 }).notNull(),
     version: integer("version").notNull().default(0),
     data: jsonb("data").notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     userKeyIndex: unique().on(table.userId, table.key),
@@ -50,8 +54,12 @@ export const appSpecificData = pgBaseTable(
     name: varchar("name", { length: 100 }).notNull(),
     version: integer("version").notNull().default(0),
     data: jsonb("data").notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     keyNameIndex: unique().on(table.key, table.name),

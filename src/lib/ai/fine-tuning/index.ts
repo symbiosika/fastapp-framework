@@ -63,7 +63,7 @@ export const addFineTuningData = async (input: FineTuningDataInput) => {
   const knowledgeEntryResult = await getDb()
     .insert(knowledgeEntry)
     .values({
-      fileSourceType: "finetuning",
+      sourceType: "finetuning",
       name: input.name || "Unnamed Fine-tuning Dataset",
       description: `Fine-tuning dataset${input.category ? ` for ${input.category}` : ""}`,
     })

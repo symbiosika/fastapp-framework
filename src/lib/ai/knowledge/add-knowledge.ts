@@ -16,27 +16,47 @@ import log from "../../log";
 import type { FileSourceType } from "../../storage";
 import { generateEmbedding } from "../standard";
 import { splitTextIntoSectionsOrChunks } from "./splitter";
-import type { ChunkWithEmbedding } from "./types";
+import type { ChunkWithEmbedding } from "../../types/chunks";
 import {
   knowledgeChunks,
   knowledgeEntry,
-  knowledgeText,
   type KnowledgeChunksInsert,
   type KnowledgeEntryInsert,
+  knowledgeEntryFilters,
 } from "../../db/schema/knowledge";
 import { parseDocument } from "../parsing";
 import { nanoid } from "nanoid";
-import { getMarkdownFromUrl } from "../parsing/url";
+import { upsertFilter } from "./knowledge-filters";
 
 /**
  * Helper function to store a knowledge entry in the database
  */
-const storeKnowledgeEntry = async (data: KnowledgeEntryInsert) => {
-  const entry = await getDb().insert(knowledgeEntry).values(data).returning();
-  if (entry.length === 0) {
+const storeKnowledgeEntry = async (
+  data: KnowledgeEntryInsert,
+  filters: Record<string, string>
+) => {
+  const db = getDb();
+
+  // Store the main entry
+  const [entry] = await db.insert(knowledgeEntry).values(data).returning();
+
+  if (!entry) {
     throw new Error("Error storing knowledge entry");
   }
-  return entry[0];
+
+  // Handle filters
+  const filterPromises = Object.entries(filters).map(
+    async ([category, name]) => {
+      const filterId = await upsertFilter(category, name);
+      return db.insert(knowledgeEntryFilters).values({
+        knowledgeEntryId: entry.id,
+        knowledgeFilterId: filterId,
+      });
+    }
+  );
+  await Promise.all(filterPromises);
+
+  return entry;
 };
 
 /**
@@ -50,21 +70,15 @@ const storeKnowledgeChunk = async (data: KnowledgeChunksInsert) => {
  * Extract knowledge from a file and store it in the database
  */
 export const extractKnowledgeFromText = async (data: {
-  fileSourceType: FileSourceType;
-  fileSourceId?: string;
-  fileSourceBucket?: string;
-  fileSourceUrl?: string;
-  category1?: string;
-  category2?: string;
-  category3?: string;
+  title: string;
+  text: string;
+  filters?: Record<string, string>;
   metadata?: Record<string, string | number | boolean | undefined>;
 }) => {
-  // Get the file (from DB or local disc) or content from URL
-  let { content, title } = await parseDocument(data);
-  title = title + "-" + nanoid(4);
+  const title = data.title + "-" + nanoid(4);
 
   // Split the content into chunks
-  const chunks = splitTextIntoSectionsOrChunks(content);
+  const chunks = splitTextIntoSectionsOrChunks(data.text);
 
   // Generate embeddings for all chunks
   const allEmbeddings: ChunkWithEmbedding[] = await Promise.all(
@@ -77,14 +91,15 @@ export const extractKnowledgeFromText = async (data: {
 
   // Store the main entry in the database
   await log.debug(`Store knowledge entry: ${title}`);
-  const knowledgeEntry = await storeKnowledgeEntry({
-    ...data,
-    name: title,
-    category1: data.category1 || undefined,
-    category2: data.category2 || undefined,
-    category3: data.category3 || undefined,
-    meta: data.metadata || undefined,
-  });
+  const knowledgeEntry = await storeKnowledgeEntry(
+    {
+      ...data,
+      name: title,
+      sourceType: "text" as const,
+      meta: data.metadata || {},
+    },
+    data.filters || {}
+  );
 
   // Store the chunks in the database
   await log.debug(`Store knowledge chunks: ${allEmbeddings.length}`);
@@ -108,35 +123,23 @@ export const extractKnowledgeFromText = async (data: {
 };
 
 /**
- * Add knowledge from an URL
+ * Extract knowledge from a file and store it in the database
  */
-export const addKnowledgeFromUrl = async (url: string) => {
-  const markdown = await getMarkdownFromUrl(url);
-  log.debug(`Markdown: ${markdown.slice(0, 100)}`);
+export const extractKnowledgeFromExistingDbEntry = async (data: {
+  sourceType: FileSourceType;
+  sourceId?: string;
+  sourceFileBucket?: string;
+  sourceUrl?: string;
+  filters?: Record<string, string>;
+  metadata?: Record<string, string | number | boolean | undefined>;
+}) => {
+  // Get the file (from DB or local disc) or content from URL
+  let { content, title } = await parseDocument(data);
 
-  // insert in DB as text knowledge entry
-  const e = await getDb()
-    .insert(knowledgeText)
-    .values({
-      text: markdown,
-      title: url,
-    })
-    .returning({
-      id: knowledgeText.id,
-      title: knowledgeText.title,
-      createdAt: knowledgeText.createdAt,
-    });
-
-  return e;
-};
-
-/**
- * Add plain knowledge text to the database
- */
-export const addPlainKnowledgeText = async (text: string, title?: string) => {
-  const e = await getDb()
-    .insert(knowledgeText)
-    .values({ text, title })
-    .returning();
-  return e[0];
+  return extractKnowledgeFromText({
+    title,
+    text: content,
+    filters: data.filters,
+    metadata: data.metadata,
+  });
 };

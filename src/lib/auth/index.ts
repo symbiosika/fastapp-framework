@@ -113,12 +113,12 @@ const checkAndCreateSession = async (email: string, password: string) => {
     .values({
       sessionToken: "",
       userId: user.id,
-      expires: expiresAt,
+      expires: expiresAt.toISOString(),
     })
     .onConflictDoUpdate({
       target: sessions.sessionToken,
       set: {
-        expires: expiresAt,
+        expires: expiresAt.toISOString(),
       },
     })
     .returning();

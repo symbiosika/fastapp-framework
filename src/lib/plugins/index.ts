@@ -16,6 +16,10 @@ import type {
   PluginConfigurationWithSecrets,
   PluginParameterDescription,
   ServerPlugin,
+  PluginParameterString,
+  PluginParameterBoolean,
+  PluginParameterNumber,
+  PluginParameterSecret,
 } from "../types/plugins";
 import log from "../log";
 import * as v from "valibot";
@@ -91,25 +95,32 @@ export const decryptParameters = async (
   const decryptedParams: DecryptedParameters = {};
 
   for (const key in plugin.meta) {
-    // all non-secret parameters can be directly returned
-    if (plugin.meta[key].type !== "secret") {
-      decryptedParams[key] = plugin.meta[key];
+    const param = plugin.meta[key];
+
+    // Handle non-secret parameters by direct assignment
+    if (param.type !== "secret") {
+      decryptedParams[key] = param as
+        | PluginParameterString
+        | PluginParameterBoolean
+        | PluginParameterNumber;
       continue;
     }
 
-    // decrypt all secrets
-    const id = plugin.meta[key].id;
-    if (!id || id === "") {
+    // Handle secret parameters
+    const secretParam = param as PluginParameterSecret;
+    if (!secretParam.id || secretParam.id === "") {
       log.error("secret id is empty for plugin", plugin.name, key);
       continue;
     }
+
     const secretDbResult = await getDb()
       .select()
       .from(secrets)
-      .where(eq(secrets.id, id));
+      .where(eq(secrets.id, secretParam.id));
+
     if (!secretDbResult || secretDbResult.length === 0) {
       log.error(
-        `Secret with id ${id} (${key}) not found for plugin ${plugin.name}`
+        `Secret with id ${secretParam.id} (${key}) not found for plugin ${plugin.name}`
       );
       continue;
     }
