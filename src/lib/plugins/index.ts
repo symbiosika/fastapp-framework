@@ -2,9 +2,6 @@
 Get and set configurations for server plugins
 */
 
-// In memory cache of available plugins
-const availablePlugins: { [key: string]: ServerPlugin } = {};
-
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
@@ -29,6 +26,56 @@ import type {
 } from "../types/plugins";
 import log from "../log";
 import * as v from "valibot";
+
+// In memory cache of available plugins
+const availablePlugins: { [type: string]: ServerPlugin } = {};
+const installedPlugins: {
+  [name: string]: PluginConfigurationWithSecrets;
+} = {};
+
+/**
+ * Access the in-memory cache of installed plugins safely
+ */
+export const getActivePluginByName = (
+  name: string
+): PluginConfigurationWithSecrets => {
+  if (!installedPlugins[name]) {
+    throw new Error(`Plugin ${name} is not installed`);
+  }
+  return installedPlugins[name];
+};
+
+/**
+ * Update/Insert a plugin configuration to the in-memory cache
+ */
+export const updateInstalledPlugin = async (pluginName: string) => {
+  const plugin = await getPluginConfigWithSecrets({ name: pluginName });
+  installedPlugins[pluginName] = plugin;
+};
+
+/**
+ * Remove a plugin from the in-memory cache
+ */
+export const removeInstalledPlugin = (pluginName: string) => {
+  delete installedPlugins[pluginName];
+};
+
+/**
+ * Access the in-memory cache of available plugins safely
+ */
+export const getAvailablePluginByType = (type: string): ServerPlugin => {
+  if (!availablePlugins[type]) {
+    throw new Error(`Plugin ${type} is not available`);
+  }
+  return availablePlugins[type];
+};
+
+/**
+ * Add a plugin to the available plugins. Needs to be done on every startup
+ */
+export const registerServerPlugin = (plugin: ServerPlugin) => {
+  availablePlugins[plugin.name] = plugin;
+};
 
 const pluginConfigSchemaInDb = v.object({
   pluginId: v.string(),
@@ -86,13 +133,6 @@ const pluginConfigSchemaFromUser = v.object({
     ])
   ),
 });
-
-/**
- * Add a plugin to the available plugins. Needs to be done on every startup
- */
-export const registerServerPlugin = (plugin: ServerPlugin) => {
-  availablePlugins[plugin.name] = plugin;
-};
 
 /**
  * Decrypt a plugin configuration
@@ -303,11 +343,11 @@ export const getPlugin = async (query: {
     throw new Error("Plugin not found");
   }
 
-  // check if the plugin is registered
-  if (!availablePlugins[pluginDbResult[0].name]) {
+  // check if the plugin type is registered
+  if (!availablePlugins[pluginDbResult[0].pluginType]) {
     throw new Error("Plugin type is not registered");
   }
-  const serverPlugin = availablePlugins[pluginDbResult[0].name];
+  const serverPlugin = availablePlugins[pluginDbResult[0].pluginType];
 
   try {
     // check basic structure
@@ -375,7 +415,7 @@ const updatePluginVersion = async (
 export const getPluginConfigWithSecrets = async (query: {
   id?: string;
   name?: string;
-}): Promise<PluginConfigurationWithoutSecrets> => {
+}): Promise<PluginConfigurationWithSecrets> => {
   const plugin = await getPlugin(query);
   const decrypted = await decryptParameters(plugin);
   return {
@@ -403,7 +443,7 @@ export const setPluginConfig = async (
   };
 
   // check if the new config is valid
-  const serverPlugin = availablePlugins[plugin.name] ?? null;
+  const serverPlugin = availablePlugins[plugin.pluginType] ?? null;
   if (!serverPlugin) {
     throw new Error("Plugin type is not registered");
   }
@@ -411,6 +451,11 @@ export const setPluginConfig = async (
     serverPlugin.neededParameters,
     pluginConfig
   );
+  if (!checked.isValid) {
+    throw new Error(
+      "Invalid plugin configuration: " + checked.errors.join("\n")
+    );
+  }
 
   const updated = await getDb()
     .update(plugins)
@@ -422,11 +467,14 @@ export const setPluginConfig = async (
     .where(eq(plugins.id, plugin.id))
     .returning();
 
+  // Update in-memory cache
+  await updateInstalledPlugin(updated[0].name);
+
   return updated[0] as PluginConfigurationWithoutSecrets;
 };
 
 /**
- * Get all availableplugins
+ * Get all available plugins to return it to the user
  */
 export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
   return Object.values(availablePlugins).map((plugin) => ({
@@ -476,9 +524,11 @@ export const createPlugin = async (
   await v.safeParseAsync(pluginConfigSchemaFromUser, pluginConfig);
 
   // Check if plugin type is registered
-  const serverPlugin = availablePlugins[pluginConfig.name];
+  const serverPlugin = availablePlugins[pluginConfig.pluginType];
   if (!serverPlugin) {
-    throw new Error(`Plugin type '${pluginConfig.name}' is not registered`);
+    throw new Error(
+      `Plugin type '${pluginConfig.pluginType}' is not registered`
+    );
   }
 
   // check if the plugin name is already installed
@@ -511,13 +561,16 @@ export const createPlugin = async (
     .values({
       name: pluginConfig.name,
       description: pluginConfig.description,
-      pluginType: pluginConfig.name,
+      pluginType: pluginConfig.pluginType,
       version: serverPlugin.version,
       meta: encryptedParams,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
     .returning();
+
+  // Update in-memory cache with the new plugin
+  await updateInstalledPlugin(newPlugin.name);
 
   return newPlugin as PluginConfigurationWithoutSecrets;
 };
@@ -550,6 +603,19 @@ export const deletePlugin = async (query: {
       await getDb().delete(secrets).where(eq(secrets.id, param.id));
     }
   }
+  // Remove from in-memory cache
+  removeInstalledPlugin(plugin[0].name);
+
   // Delete the plugin configuration
   await getDb().delete(plugins).where(eq(plugins.id, plugin[0].id));
+};
+
+// Refresh the in-memory cache
+export const initializePluginCache = async () => {
+  const plugins = await getAllInstalledPlugins();
+  for (const plugin of plugins) {
+    if (plugin.isValid) {
+      await updateInstalledPlugin(plugin.name);
+    }
+  }
 };

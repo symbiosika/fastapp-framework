@@ -275,7 +275,10 @@ export const knowledgeSource = pgBaseTable(
     externalId: varchar("external_id", { length: 255 }).notNull(),
     lastSynced: timestamp("last_synced", { mode: "string" }),
     lastHash: text("last_hash"),
-    lastChange: timestamp("last_change", { mode: "string" }),
+    lastChange: timestamp("last_change", {
+      mode: "string",
+      withTimezone: true,
+    }),
     knowledgeEntryId: uuid("knowledge_entry_id")
       .notNull()
       .references(() => knowledgeEntry.id, { onDelete: "cascade" }),

@@ -8,7 +8,11 @@ import {
   checkUserPermission,
   validateAllEnvVariables,
 } from "./helper";
-import { createDatabaseClient, getDb } from "./lib/db/db-connection";
+import {
+  createDatabaseClient,
+  getDb,
+  waitForDbConnection,
+} from "./lib/db/db-connection";
 import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { serveStatic } from "hono/bun";
 import { defineFilesRoutes } from "./routes/files";
@@ -57,7 +61,7 @@ import {
 import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 import defineManageSecretsRoutes from "./routes/secrets";
 import scheduler from "./lib/cron";
-import { registerServerPlugin } from "./lib/plugins";
+import { initializePluginCache, registerServerPlugin } from "./lib/plugins";
 import type { ServerPlugin } from "./lib/types/plugins";
 import {
   addKnowledgeFromUrl,
@@ -272,7 +276,15 @@ export const defineServer = (config: ServerConfig) => {
     });
   }
 
+  /**
+   * Initialize caches after DB is connected
+   */
+  waitForDbConnection().then(() => {
+    initializePluginCache();
+  });
+
   return {
+    idleTimeout: 120,
     port: config.port ?? 3000,
     fetch: app.fetch,
   };

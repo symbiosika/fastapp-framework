@@ -3,7 +3,7 @@ import { knowledgeEntry, knowledgeSource } from "../../db/schema/knowledge";
 import { extractKnowledgeFromText } from "../knowledge/add-knowledge";
 import log from "../../log";
 import { eq } from "drizzle-orm";
-import type { SyncItem } from "../../types/sync";
+import type { SyncItem, SyncResult, SyncItemStatus } from "../../types/sync";
 
 /**
  * Synchronizes a list of knowledge items from an external plugin source.
@@ -13,11 +13,7 @@ import type { SyncItem } from "../../types/sync";
 export const syncKnowledgeFromPlugin = async (
   pluginId: string,
   items: SyncItem[]
-): Promise<{
-  added: number;
-  updated: number;
-  deleted: number;
-}> => {
+): Promise<SyncResult> => {
   const db = getDb();
 
   // Fetch existing knowledge sources for this plugin
@@ -44,26 +40,45 @@ export const syncKnowledgeFromPlugin = async (
   }[] = [];
   const itemsToDelete: (typeof knowledgeSource.$inferSelect)[] = [];
 
+  // Track status of each item
+  const itemStatuses: SyncItemStatus[] = [];
+
   // Determine which items to add, update (delete and recreate), or delete
   for (const item of items) {
     const existingSource = existingSourceMap.get(item.externalId);
 
     if (!existingSource) {
-      // Item does not exist, need to add
       itemsToAdd.push(item);
+      itemStatuses.push({
+        externalId: item.externalId,
+        status: "added",
+      });
     } else {
-      // Check if the lastChange or lastHash differs
       const lastChangeDiffers =
-        item.lastChange && item.lastChange !== existingSource.lastChange;
+        item.lastChange && existingSource.lastChange
+          ? Math.abs(
+              new Date(item.lastChange!).getTime() -
+                new Date(existingSource.lastChange!).getTime()
+            ) > 1000 // Toleranz von 1 Sekunde
+          : item.lastChange !== existingSource.lastChange;
+
       const lastHashDiffers =
         item.lastHash && item.lastHash !== existingSource.lastHash;
 
       if (lastChangeDiffers || lastHashDiffers) {
-        // Item has changed, need to update (actually delete and recreate)
+        console.log(
+          item.lastChange,
+          existingSource.lastChange,
+          new Date(item.lastChange!).getTime(),
+          new Date(existingSource.lastChange!).getTime()
+        );
         itemsToUpdate.push({ item, existingSource });
+        itemStatuses.push({
+          externalId: item.externalId,
+          status: "updated",
+        });
       }
 
-      // Remove from the map to prevent deletion
       existingSourceMap.delete(item.externalId);
     }
   }
@@ -82,6 +97,11 @@ export const syncKnowledgeFromPlugin = async (
     log.debug(
       `Deleted knowledge entry ${source.knowledgeEntryId} for source ${source.externalId}`
     );
+
+    itemStatuses.push({
+      externalId: source.externalId,
+      status: "deleted",
+    });
   }
 
   // Process updates (delete old entries and create new ones)
@@ -108,12 +128,18 @@ export const syncKnowledgeFromPlugin = async (
       pluginId: pluginId,
       externalId: item.externalId,
       knowledgeEntryId: knowledgeResult.id,
-      lastChange: item.lastChange,
+      lastChange: new Date(item.lastChange!).toISOString(),
       lastHash: item.lastHash,
       meta: item.meta || {},
+      lastSynced: new Date().toISOString(),
     });
 
     log.debug(`Updated knowledge entry for externalId ${item.externalId}`);
+
+    itemStatuses.push({
+      externalId: item.externalId,
+      status: "updated",
+    });
   }
 
   // Process additions
@@ -130,17 +156,41 @@ export const syncKnowledgeFromPlugin = async (
       pluginId: pluginId,
       externalId: item.externalId,
       knowledgeEntryId: knowledgeResult.id,
-      lastChange: item.lastChange,
+      lastChange: new Date(item.lastChange!).toISOString(),
       lastHash: item.lastHash,
       meta: item.meta || {},
+      lastSynced: new Date().toISOString(),
     });
 
     log.debug(`Added new knowledge entry for externalId ${item.externalId}`);
+
+    itemStatuses.push({
+      externalId: item.externalId,
+      status: "added",
+    });
   }
 
+  // Add unchanged items to status list
+  items.forEach((item) => {
+    if (!itemStatuses.some((status) => status.externalId === item.externalId)) {
+      itemStatuses.push({
+        externalId: item.externalId,
+        status: "unchanged",
+      });
+    }
+  });
+
+  // Calculate unchanged items (total items minus changed ones)
+  const unchangedCount =
+    items.length - (itemsToAdd.length + itemsToUpdate.length);
+
   return {
-    added: itemsToAdd.length,
-    updated: itemsToUpdate.length,
-    deleted: itemsToDelete.length,
+    items: itemStatuses,
+    stats: {
+      added: itemsToAdd.length,
+      updated: itemsToUpdate.length,
+      deleted: itemsToDelete.length,
+      unchanged: unchangedCount,
+    },
   };
 };

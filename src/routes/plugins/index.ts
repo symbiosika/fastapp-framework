@@ -9,8 +9,12 @@ import {
   getAllAvailablePlugins,
   createPlugin,
   deletePlugin,
+  getActivePluginByName,
+  getAvailablePluginByType,
 } from "../../lib/plugins";
 import { RESPONSES } from "../../lib/responses";
+import type { Context } from "hono";
+import { isValidUuid } from "../../lib/helper/uuid";
 
 const pluginConfigSchema = v.object({
   id: v.string(),
@@ -21,8 +25,39 @@ const pluginConfigSchema = v.object({
   meta: v.record(v.string(), v.any()),
 });
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const executeEndpoint = async (
+  c: Context,
+  pluginName: string,
+  endpoint: string,
+  method: string,
+  body?: any,
+  params?: { [k: string]: string }
+) => {
+  // check if the plugin exists and get its type
+  const pluginConfig = getActivePluginByName(pluginName);
+  const plugin = getAvailablePluginByType(pluginConfig.pluginType);
+
+  // execute the action if it is a valid GET endpoint
+  if (
+    plugin.apiEndpoints &&
+    plugin.apiEndpoints[endpoint] &&
+    plugin.apiEndpoints[endpoint].method === method
+  ) {
+    try {
+      const response = await plugin.apiEndpoints[endpoint].action(
+        pluginConfig,
+        params ?? {},
+        body ?? {}
+      );
+      console.log("Response", response);
+      return c.json(response);
+    } catch (err) {
+      throw new HTTPException(400, { message: err + "" });
+    }
+  } else {
+    throw new HTTPException(400, { message: "Endpoint or method not found" });
+  }
+};
 
 /**
  * Define the plugin management routes
@@ -34,55 +69,67 @@ export default function definePluginRoutes(
   /**
    * Get plugin configuration
    */
-  app.get(API_BASE_PATH + "/available", authAndSetUsersInfo, async (c) => {
-    try {
-      const plugins = await getAllAvailablePlugins();
-      return c.json(plugins);
-    } catch (error) {
-      throw new HTTPException(400, {
-        message: `Failed to get plugin: ${error}`,
-      });
+  app.get(
+    API_BASE_PATH + "/plugins/available",
+    authAndSetUsersInfo,
+    async (c) => {
+      try {
+        const plugins = await getAllAvailablePlugins();
+        return c.json(plugins);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: `Failed to get plugin: ${error}`,
+        });
+      }
     }
-  });
-
-  /**
-   * Get plugin configuration
-   */
-  app.get(API_BASE_PATH + "/installed", authAndSetUsersInfo, async (c) => {
-    try {
-      const plugins = await getAllInstalledPlugins();
-      return c.json(plugins);
-    } catch (error) {
-      throw new HTTPException(400, {
-        message: `Failed to get plugin: ${error}`,
-      });
-    }
-  });
-
-  /**
-   * Register a new plugin
-   */
-  app.post(API_BASE_PATH + "/installed", authAndSetUsersInfo, async (c) => {
-    const body = await c.req.json();
-    try {
-      const newPlugin = await createPlugin(body);
-      return c.json(newPlugin);
-    } catch (error) {
-      throw new HTTPException(400, {
-        message: `Failed to install plugin: ${error}`,
-      });
-    }
-  });
+  );
 
   /**
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/installed/:idOrName",
+    API_BASE_PATH + "/plugins/installed",
+    authAndSetUsersInfo,
+    async (c) => {
+      try {
+        const plugins = await getAllInstalledPlugins();
+        return c.json(plugins);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: `Failed to get plugin: ${error}`,
+        });
+      }
+    }
+  );
+
+  /**
+   * Register a new plugin
+   */
+  app.post(
+    API_BASE_PATH + "/plugins/installed",
+    authAndSetUsersInfo,
+    async (c) => {
+      const body = await c.req.json();
+      try {
+        const newPlugin = await createPlugin(body);
+        return c.json(newPlugin);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: `Failed to install plugin: ${error}`,
+        });
+      }
+    }
+  );
+
+  /**
+   * Get plugin configuration
+   */
+  app.get(
+    API_BASE_PATH + "/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
-      const isUUID = uuidPattern.test(idOrName);
+      const isUUID = isValidUuid(idOrName);
 
       try {
         const plugin = await getPlugin({
@@ -101,35 +148,39 @@ export default function definePluginRoutes(
   /**
    * Update plugin configuration
    */
-  app.put(API_BASE_PATH + "/installed/:id", authAndSetUsersInfo, async (c) => {
-    const id = c.req.param("id");
-    const body = await c.req.json();
+  app.put(
+    API_BASE_PATH + "/plugins/installed/:id",
+    authAndSetUsersInfo,
+    async (c) => {
+      const id = c.req.param("id");
+      const body = await c.req.json();
 
-    try {
-      const parsed = v.parse(pluginConfigSchema, {
-        ...body,
-        id, // Ensure ID from URL is used
-      });
-      const updated = await setPluginConfig(parsed);
-      return c.json(updated);
-    } catch (error) {
-      throw new HTTPException(400, {
-        message: `Failed to update plugin: ${error}`,
-      });
+      try {
+        const parsed = v.parse(pluginConfigSchema, {
+          ...body,
+          id, // Ensure ID from URL is used
+        });
+        const updated = await setPluginConfig(parsed);
+        return c.json(updated);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: `Failed to update plugin: ${error}`,
+        });
+      }
     }
-  });
+  );
 
   /**
    * Delete a plugin configuration
    */
   app.delete(
-    API_BASE_PATH + "/installed/:idOrName",
+    API_BASE_PATH + "/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       try {
-        // UUID regex pattern
-        const isUUID = uuidPattern.test(idOrName);
+        const isUUID = isValidUuid(idOrName);
+
         await deletePlugin({
           id: isUUID ? idOrName : undefined,
           name: isUUID ? undefined : idOrName,
@@ -140,6 +191,100 @@ export default function definePluginRoutes(
           message: `Failed to delete plugin: ${error}`,
         });
       }
+    }
+  );
+
+  /**
+   * API Gateway for the plugin endpoints: GET
+   */
+  app.get(
+    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    authAndSetUsersInfo,
+    async (c) => {
+      const url = new URL(c.req.url);
+      const pluginName = c.req.param("pluginName");
+      const endpoint = c.req.param("endpoint");
+      // create a dict from all search params
+      const searchParams = Object.fromEntries(url.searchParams.entries());
+      return executeEndpoint(
+        c,
+        pluginName,
+        endpoint,
+        "GET",
+        undefined,
+        searchParams
+      );
+    }
+  );
+
+  /**
+   * API Gateway for the plugin endpoints: POST
+   */
+  app.post(
+    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    authAndSetUsersInfo,
+    async (c) => {
+      const url = new URL(c.req.url);
+      const pluginName = c.req.param("pluginName");
+      const endpoint = c.req.param("endpoint");
+      // create a dict from all search params
+      const searchParams = Object.fromEntries(url.searchParams.entries());
+      const body = await c.req.json();
+      return executeEndpoint(
+        c,
+        pluginName,
+        endpoint,
+        "POST",
+        body,
+        searchParams
+      );
+    }
+  );
+
+  /**
+   * API Gateway for the plugin endpoints: DELETE
+   */
+  app.delete(
+    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    authAndSetUsersInfo,
+    async (c) => {
+      const pluginName = c.req.param("pluginName");
+      const endpoint = c.req.param("endpoint");
+      const url = new URL(c.req.url);
+      // create a dict from all search params
+      const searchParams = Object.fromEntries(url.searchParams.entries());
+      return executeEndpoint(
+        c,
+        pluginName,
+        endpoint,
+        "DELETE",
+        undefined,
+        searchParams
+      );
+    }
+  );
+
+  /**
+   * API Gateway for the plugin endpoints: PUT
+   */
+  app.put(
+    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    authAndSetUsersInfo,
+    async (c) => {
+      const url = new URL(c.req.url);
+      const pluginName = c.req.param("pluginName");
+      const endpoint = c.req.param("endpoint");
+      // create a dict from all search params
+      const searchParams = Object.fromEntries(url.searchParams.entries());
+      const body = await c.req.json();
+      return executeEndpoint(
+        c,
+        pluginName,
+        endpoint,
+        "PUT",
+        body,
+        searchParams
+      );
     }
   );
 }

@@ -101,13 +101,23 @@ POST /api/v1/plugins/installed
 
 ```json
 {
-  "id": "plugin-uuid",
-  "name": "plugin-name",
-  "description": "Plugin description",
-  "pluginType": "plugin-type",
+  "name": "github-demo",
+  "description": "Demo",
+  "pluginType": "github-issues",
   "version": 1,
   "meta": {
-    "parameterName": "value"
+    "apiToken": {
+      "type": "secret",
+      "inputValue": "github_pat_so-secret"
+    },
+    "owner": {
+      "type": "string",
+      "value": "my-org"
+    },
+    "repo": {
+      "type": "string",
+      "value": "my-repo"
+    }
   }
 }
 ```

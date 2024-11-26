@@ -6,3 +6,18 @@ export interface SyncItem {
   lastHash?: string;
   meta?: Record<string, any>;
 }
+
+export interface SyncItemStatus {
+  externalId: string;
+  status: "added" | "updated" | "deleted" | "unchanged";
+}
+
+export interface SyncResult {
+  items: SyncItemStatus[];
+  stats: {
+    added: number;
+    updated: number;
+    deleted: number;
+    unchanged: number;
+  };
+}

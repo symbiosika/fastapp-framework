@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_source" ALTER COLUMN "last_change" SET DATA TYPE timestamp with time zone;

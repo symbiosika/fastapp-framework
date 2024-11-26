@@ -351,6 +351,13 @@
       "when": 1732531791464,
       "tag": "0049_pretty_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1732636756624,
+      "tag": "0050_new_daredevil",
+      "breakpoints": true
     }
   ]
 }
