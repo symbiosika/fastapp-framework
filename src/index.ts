@@ -63,7 +63,8 @@ import {
   addKnowledgeFromUrl,
   addPlainKnowledgeText,
 } from "./lib/ai/knowledge-texts";
-import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge/sync";
+import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge-sync/sync";
+import type { SyncItem } from "./lib/types/sync";
 import definePluginRoutes from "./routes/plugins";
 
 export const _GLOBAL_SERVER_CONFIG = {
@@ -321,4 +322,6 @@ export { checkUserSubscription, registerServerPlugin };
 export type { JobHandlerRegister };
 export * from "./types";
 export { HTTPException } from "hono/http-exception";
+
 export { syncKnowledgeFromPlugin };
+export type { SyncItem };

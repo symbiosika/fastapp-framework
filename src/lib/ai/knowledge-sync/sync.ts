@@ -1,20 +1,9 @@
 import { getDb } from "../../db/db-connection";
 import { knowledgeEntry, knowledgeSource } from "../../db/schema/knowledge";
-import { extractKnowledgeFromText } from "./add-knowledge";
+import { extractKnowledgeFromText } from "../knowledge/add-knowledge";
 import log from "../../log";
 import { eq } from "drizzle-orm";
-
-/**
- * Interface representing the data structure that a plugin will provide for synchronization
- */
-export interface SyncItem {
-  externalId: string;
-  title: string;
-  text: string;
-  lastChange?: string;
-  lastHash?: string;
-  meta?: Record<string, any>;
-}
+import type { SyncItem } from "../../types/sync";
 
 /**
  * Synchronizes a list of knowledge items from an external plugin source.
