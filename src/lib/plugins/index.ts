@@ -2,7 +2,7 @@
 Get and set configurations for server plugins
 */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
   plugins,
@@ -201,13 +201,11 @@ export const encryptParameters = async (
       continue;
     }
 
-    // Handle secret parameters
+    // ELSE: Handle secret parameters
     if ("inputValue" in param) {
-      // Case: Parameter has optional inputValue field
       const { id, inputValue } = param;
 
       if (!inputValue) {
-        // Skip if no new value provided but id exists
         if (id) {
           encryptedParams[key] = { type: "secret", id };
           continue;
@@ -220,35 +218,30 @@ export const encryptParameters = async (
       // Encrypt the new value
       const val = encryptAes(inputValue);
 
-      if (id) {
-        // Update existing secret
-        await getDb()
-          .update(secrets)
-          .set({
-            value: val.value,
-            type: val.algorithm,
-            reference: `plugin:${plugin.name}`,
-            // referenceId: plugin.id,
-          })
-          .where(eq(secrets.id, id));
+      // Delete old secret first due to unique constraint on name + reference
+      await getDb()
+        .delete(secrets)
+        .where(
+          and(
+            eq(secrets.reference, `plugin:${plugin.name}`),
+            eq(secrets.name, key)
+          )
+        );
 
-        encryptedParams[key] = { type: "secret", id };
-      } else {
-        // Create new secret
-        const [newSecret] = await getDb()
-          .insert(secrets)
-          .values({
-            reference: `plugin:${plugin.name}`,
-            // referenceId: plugin.id,
-            name: key,
-            value: val.value,
-            type: val.algorithm,
-            label: key,
-          })
-          .returning();
+      // Create new secret with same ID
+      const [newSecret] = await getDb()
+        .insert(secrets)
+        .values({
+          id: id && id !== "" ? id : undefined,
+          reference: `plugin:${plugin.name}`,
+          name: key,
+          value: val.value,
+          type: val.algorithm,
+          label: key,
+        })
+        .returning();
 
-        encryptedParams[key] = { type: "secret", id: newSecret.id };
-      }
+      encryptedParams[key] = { type: "secret", id: newSecret.id };
     } else {
       // Case: Parameter only has id field
       encryptedParams[key] = { type: "secret", id: param.id };

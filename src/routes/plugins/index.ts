@@ -149,17 +149,14 @@ export default function definePluginRoutes(
    * Update plugin configuration
    */
   app.put(
-    API_BASE_PATH + "/plugins/installed/:id",
+    API_BASE_PATH + "/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
-      const id = c.req.param("id");
+      const idOrName = c.req.param("idOrName");
+      const isUUID = isValidUuid(idOrName);
       const body = await c.req.json();
-
       try {
-        const parsed = v.parse(pluginConfigSchema, {
-          ...body,
-          id, // Ensure ID from URL is used
-        });
+        const parsed = v.parse(pluginConfigSchema, body);
         const updated = await setPluginConfig(parsed);
         return c.json(updated);
       } catch (error) {
