@@ -26,6 +26,7 @@ import { checkUserSubscription } from "./routes/payment";
 import {
   definePublicUserRoutes,
   defineSecuredUserRoutes,
+  registerPostRegisterAction,
   registerPreRegisterCustomVerification,
 } from "./routes/user";
 import { defineCollectionRoutes } from "./routes/collections";
@@ -145,6 +146,15 @@ export const defineServer = (config: ServerConfig) => {
   if (config.customPreRegisterCustomVerifications) {
     config.customPreRegisterCustomVerifications.forEach((verification) => {
       registerPreRegisterCustomVerification(verification);
+    });
+  }
+
+  /**
+   * Register custom post-register actions
+   */
+  if (config.customPostRegisterActions) {
+    config.customPostRegisterActions.forEach((action) => {
+      registerPostRegisterAction(action);
     });
   }
 
