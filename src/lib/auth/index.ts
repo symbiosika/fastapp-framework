@@ -73,13 +73,13 @@ const setUserInDb = async (
       emailVerified: false,
     })
     .returning()
-    .catch((err) => {
-      throw "Email already exists. " + err;
+    .catch(() => {
+      throw "This email address is already in use.";
     });
 
-  // send verification email
+  // send verification email. no need to wait for it
   if (sendMailAfterRegister) {
-    await sendVerificationEmail(email).catch((err) => {
+    sendVerificationEmail(email).catch((err) => {
       throw "Error sending verification email. " + err;
     });
   }
