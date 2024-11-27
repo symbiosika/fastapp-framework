@@ -167,11 +167,36 @@ export const getPlainKnowledge = async (
 export const getKnowledgeEntries = async (query?: {
   limit: number;
   page: number;
-}): Promise<KnowledgeEntrySelect[]> => {
+}): Promise<
+  (KnowledgeEntrySelect & {
+    filters: {
+      id: string;
+      filter: {
+        category: string;
+        name: string;
+      };
+    }[];
+  })[]
+> => {
   return await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * query.limit : undefined,
     orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
+    with: {
+      filters: {
+        columns: {
+          id: true,
+        },
+        with: {
+          filter: {
+            columns: {
+              category: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
   });
 };
 
