@@ -26,6 +26,7 @@ import { checkUserSubscription } from "./routes/payment";
 import {
   definePublicUserRoutes,
   defineSecuredUserRoutes,
+  registerPostRegisterAction,
   registerPreRegisterCustomVerification,
 } from "./routes/user";
 import { defineCollectionRoutes } from "./routes/collections";
@@ -149,6 +150,15 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   /**
+   * Register custom post-register actions
+   */
+  if (config.customPostRegisterActions) {
+    config.customPostRegisterActions.forEach((action) => {
+      registerPostRegisterAction(action);
+    });
+  }
+
+  /**
    * Middleware for CORS
    */
   console.log("Allowed origins:", _GLOBAL_SERVER_CONFIG.allowedOrigins);
@@ -167,8 +177,17 @@ export const defineServer = (config: ServerConfig) => {
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
+      let canConnectToInternet = false;
+      try {
+        const response = await fetch("https://www.github.com");
+        canConnectToInternet = response.ok;
+      } catch (error) {
+        canConnectToInternet = false;
+      }
+
       return c.json({
         online: true,
+        canConnectToInternet,
       });
     }
   );

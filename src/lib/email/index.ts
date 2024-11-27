@@ -18,20 +18,38 @@ export interface EmailOptions {
   html?: string;
 }
 
+const getMailCredentials = () => {
+  return {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  };
+};
+
 class SMTPService {
   private transporter: nodemailer.Transporter;
   private logEnabled: boolean = false;
 
   constructor() {
     this.logEnabled = process.env.SMTP_DEBUG === "true";
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587", 10),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+    this.transporter = nodemailer.createTransport(getMailCredentials());
+
+    this.transporter.verify((error) => {
+      if (error) {
+        this.error(`SMTP connection verification failed: ${error}`);
+        this.error(
+          JSON.stringify({ ...getMailCredentials(), auth: undefined })
+        );
+      } else {
+        this.log("SMTP connection verified successfully");
+      }
     });
   }
 
@@ -80,6 +98,7 @@ class SMTPService {
       return true;
     } catch (error) {
       this.error(`Failed to send email: ${error}`);
+      this.error(JSON.stringify({ ...getMailCredentials(), auth: undefined }));
       return false;
     }
   }

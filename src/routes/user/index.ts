@@ -1,4 +1,8 @@
-import type { CustomPreRegisterVerification, FastAppHono } from "../../types";
+import type {
+  CustomPostRegisterAction,
+  CustomPreRegisterVerification,
+  FastAppHono,
+} from "../../types";
 import { HTTPException } from "hono/http-exception";
 import { users } from "../../lib/db/db-schema";
 import { eq } from "drizzle-orm";
@@ -15,6 +19,7 @@ const BASE_PATH = "/user";
  * Pre-register custom verification
  */
 const preRegisterCustomVerifications: CustomPreRegisterVerification[] = [];
+const postRegisterActions: CustomPostRegisterAction[] = [];
 
 /**
  * Register new verification
@@ -23,6 +28,15 @@ export const registerPreRegisterCustomVerification = (
   verification: CustomPreRegisterVerification
 ) => {
   preRegisterCustomVerifications.push(verification);
+};
+
+/**
+ * Register new post-register action
+ */
+export const registerPostRegisterAction = (
+  action: CustomPostRegisterAction
+) => {
+  postRegisterActions.push(action);
 };
 
 /**
@@ -244,6 +258,12 @@ export function definePublicUserRoutes(
         password,
         sendVerificationEmail
       );
+
+      // go through all post-register actions
+      for (const action of postRegisterActions) {
+        await action(user.id, user.email);
+      }
+
       log.debug(`User registered: ${user.id}`);
       return c.json(user);
     } catch (err) {

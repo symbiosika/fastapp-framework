@@ -38,6 +38,7 @@ export interface ServerConfig {
 
   // Registration Flow
   customPreRegisterCustomVerifications?: CustomPreRegisterVerification[];
+  customPostRegisterActions?: CustomPostRegisterAction[];
 
   // CRON
   customCronJobs?: Task[];
@@ -57,6 +58,11 @@ export type CustomPreRegisterVerification = (
   email: string,
   meta: any
 ) => Promise<{ success: boolean; message?: string }>;
+
+export type CustomPostRegisterAction = (
+  userId: string,
+  email: string
+) => Promise<void>;
 
 export type RenderTypeText = {
   type: "text";
