@@ -167,8 +167,17 @@ export const defineServer = (config: ServerConfig) => {
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
+      let canConnectToInternet = false;
+      try {
+        const response = await fetch("https://www.github.com");
+        canConnectToInternet = response.ok;
+      } catch (error) {
+        canConnectToInternet = false;
+      }
+
       return c.json({
         online: true,
+        canConnectToInternet,
       });
     }
   );
