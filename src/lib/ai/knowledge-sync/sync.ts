@@ -149,6 +149,7 @@ export const syncKnowledgeFromPlugin = async (
       title: item.title,
       text: item.text,
       metadata: item.meta,
+      filters: item.filters,
     });
 
     // Create new knowledge source entry
