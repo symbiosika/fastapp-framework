@@ -1,4 +1,4 @@
-export type FileSourceType = "db" | "local" | "url" | "text";
+export type FileSourceType = "db" | "local" | "url" | "text" | "plugin";
 
 import {
   saveFileToLocalDisc,

@@ -121,18 +121,31 @@ export const syncKnowledgeFromPlugin = async (
       title: item.title,
       text: item.text,
       metadata: item.meta,
+      sourceType: "plugin",
+      sourceFileBucket: undefined,
+      sourceId: undefined,
+      sourceUrl: undefined,
     });
 
     // Create new knowledge source entry
-    await db.insert(knowledgeSource).values({
-      pluginId: pluginId,
-      externalId: item.externalId,
-      knowledgeEntryId: knowledgeResult.id,
-      lastChange: new Date(item.lastChange!).toISOString(),
-      lastHash: item.lastHash,
-      meta: item.meta || {},
-      lastSynced: new Date().toISOString(),
-    });
+    const insertedSource = await db
+      .insert(knowledgeSource)
+      .values({
+        pluginId: pluginId,
+        externalId: item.externalId,
+        knowledgeEntryId: knowledgeResult.id,
+        lastChange: new Date(item.lastChange!).toISOString(),
+        lastHash: item.lastHash,
+        meta: item.meta || {},
+        lastSynced: new Date().toISOString(),
+      })
+      .returning();
+
+    // update the source id of the knowledge entry
+    await db
+      .update(knowledgeEntry)
+      .set({ sourceId: insertedSource[0].id })
+      .where(eq(knowledgeEntry.id, knowledgeResult.id));
 
     log.debug(`Updated knowledge entry for externalId ${item.externalId}`);
 
@@ -150,20 +163,31 @@ export const syncKnowledgeFromPlugin = async (
       text: item.text,
       metadata: item.meta,
       filters: item.filters,
+      sourceType: "plugin",
+      sourceFileBucket: undefined,
+      sourceId: undefined,
+      sourceUrl: undefined,
     });
 
     // Create new knowledge source entry
-    await db.insert(knowledgeSource).values({
-      pluginId: pluginId,
-      externalId: item.externalId,
-      knowledgeEntryId: knowledgeResult.id,
-      lastChange: new Date(item.lastChange!).toISOString(),
-      lastHash: item.lastHash,
-      meta: item.meta || {},
-      lastSynced: new Date().toISOString(),
-    });
+    const insertedSource = await db
+      .insert(knowledgeSource)
+      .values({
+        pluginId: pluginId,
+        externalId: item.externalId,
+        knowledgeEntryId: knowledgeResult.id,
+        lastChange: new Date(item.lastChange!).toISOString(),
+        lastHash: item.lastHash,
+        meta: item.meta || {},
+        lastSynced: new Date().toISOString(),
+      })
+      .returning();
 
-    log.debug(`Added new knowledge entry for externalId ${item.externalId}`);
+    // update the source id of the knowledge entry
+    await db
+      .update(knowledgeEntry)
+      .set({ sourceId: insertedSource[0].id })
+      .where(eq(knowledgeEntry.id, knowledgeResult.id));
 
     itemStatuses.push({
       externalId: item.externalId,

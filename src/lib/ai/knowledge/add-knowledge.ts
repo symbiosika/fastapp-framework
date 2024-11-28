@@ -74,6 +74,10 @@ export const extractKnowledgeFromText = async (data: {
   text: string;
   filters?: Record<string, string>;
   metadata?: Record<string, string | number | boolean | undefined>;
+  sourceType?: FileSourceType;
+  sourceFileBucket?: string;
+  sourceId?: string;
+  sourceUrl?: string;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -95,7 +99,7 @@ export const extractKnowledgeFromText = async (data: {
     {
       ...data,
       name: title,
-      sourceType: "text" as const,
+      sourceType: data.sourceType || ("text" as const),
       meta: data.metadata || {},
     },
     data.filters || {}
@@ -141,5 +145,9 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     text: content,
     filters: data.filters,
     metadata: data.metadata,
+    sourceType: data.sourceType,
+    sourceFileBucket: data.sourceFileBucket,
+    sourceId: data.sourceId,
+    sourceUrl: data.sourceUrl,
   });
 };
