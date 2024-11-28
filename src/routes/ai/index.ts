@@ -20,6 +20,7 @@ import { useTemplateChat } from "../../lib/ai/generation";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
   deleteKnowledgeEntry,
+  getFullSourceDocumentsForKnowledgeEntry,
   getKnowledgeEntries,
 } from "../../lib/ai/knowledge/get-knowledge";
 import {
@@ -379,6 +380,19 @@ export default function defineRoutes(app: FastAppHono) {
       const limit = parseInt(limitStr ?? "100");
       const page = parseInt(pageStr ?? "0");
       const r = await getKnowledgeEntries({ limit, page });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Get a full source document for a knowledge entry by ID
+   */
+  app.get("/knowledge/entries/:id", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const r = await getFullSourceDocumentsForKnowledgeEntry(id);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });

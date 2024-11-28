@@ -472,6 +472,8 @@ export const setPluginConfig = async (
 export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
   return Object.values(availablePlugins).map((plugin) => ({
     name: plugin.name,
+    label: plugin.label,
+    description: plugin.description,
     version: plugin.version,
     neededParameters: plugin.neededParameters,
   }));

@@ -74,11 +74,19 @@ export interface PluginParameterDescription {
   description: string;
 }
 
-export interface ServerPlugin<TConfig = any> {
+export interface ServerPlugin {
   /**
    * The unique name of the plugin
    */
   name: string;
+  /**
+   * Label of the plugin
+   */
+  label: string;
+  /**
+   * The description of the plugin
+   */
+  description: string;
   /**
    * The server-side version of the plugin
    */
