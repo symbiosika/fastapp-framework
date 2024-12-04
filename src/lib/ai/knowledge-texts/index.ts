@@ -23,7 +23,7 @@ export const addKnowledgeFromUrl = async (url: string) => {
       createdAt: knowledgeText.createdAt,
     });
 
-  return e;
+  return e[0];
 };
 
 /**
