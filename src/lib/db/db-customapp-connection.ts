@@ -6,6 +6,11 @@ const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD ?? "";
 const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "";
 const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRE_CA_CERT = process.env.POSTGRE_CA_CERT ?? "";
+const POSTGRES_USE_SSL = !process.env.POSTGRES_USE_SSL
+  ? true
+  : process.env.POSTGRES_USE_SSL !== "false";
+
+console.log("POSTGRES_USE_SSL is", POSTGRES_USE_SSL);
 
 const createPool = () => {
   return new pg.Pool({
@@ -16,10 +21,15 @@ const createPool = () => {
     database: POSTGRES_DB,
     max: 3,
     idleTimeoutMillis: 60000,
-    ssl: {
-      rejectUnauthorized: false,
-      ca: POSTGRE_CA_CERT,
-    },
+    ...(POSTGRES_USE_SSL && {
+      ssl: {
+        rejectUnauthorized: false,
+        ca: POSTGRE_CA_CERT,
+      },
+    }),
+    ...(POSTGRES_USE_SSL === false && {
+      ssl: false,
+    }),
   });
 };
 
