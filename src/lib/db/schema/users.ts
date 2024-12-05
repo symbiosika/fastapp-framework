@@ -19,6 +19,7 @@ import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
 import { activeSubscriptions, purchases } from "./payment";
 import { promptSnippets } from "./prompts";
+import { chatSessions } from "./chat";
 
 export const users = pgBaseTable(
   "users",
@@ -263,6 +264,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   purchases: many(purchases),
   promptSnippets: many(promptSnippets),
   teamMembers: many(teamMembers),
+  chatSessions: many(chatSessions),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({

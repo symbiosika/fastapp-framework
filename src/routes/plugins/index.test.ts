@@ -14,6 +14,8 @@ describe("Plugin API Endpoints", () => {
   // Define a mock plugin for testing
   const mockPlugin: ServerPlugin = {
     name: "test-plugin",
+    label: "Test Plugin",
+    description: "A test plugin",
     version: 1,
     neededParameters: [
       {

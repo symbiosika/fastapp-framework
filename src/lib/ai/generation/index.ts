@@ -18,8 +18,9 @@ import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 import { getMarkdownFromUrl } from "../parsing/url";
-import type { ChatWithTemplateInput } from "../../../routes/ai";
+import type { ChatWithTemplateInputWithUserId } from "../../../routes/ai";
 import type { ChatWithTemplateReturn } from "../../../types";
+import { chatStoreInDb } from "../smart-chat/chat-history";
 
 /**
  * Wrapper function for generateLongText that matches the LlmWrapper type signature
@@ -239,6 +240,7 @@ export const templateChat = new TemplateChat({
   placeholderParsers: customAppPlaceholders,
   llmWrapper: generateLongTextWrapper,
   logger: templateLogger,
+  chatStore: chatStoreInDb,
   defaultTemplate: `{{#block
   name=main_loop
   allow_open_chat=true
@@ -344,7 +346,9 @@ export const getPromptTemplateDefinition = async (
 /**
  * Use the chat
  */
-export const useTemplateChat = async (query: ChatWithTemplateInput) => {
+export const useTemplateChat = async (
+  query: ChatWithTemplateInputWithUserId
+) => {
   if (query.initiateTemplate) {
     const templateDbEntry = await getPromptTemplateDefinition(
       query.initiateTemplate
@@ -354,6 +358,7 @@ export const useTemplateChat = async (query: ChatWithTemplateInput) => {
     );
     const r = await templateChat.chat({
       chatId: query.chatId,
+      userId: query.userId,
       userMessage: query.userMessage,
       trigger: query.trigger,
       template,
@@ -373,6 +378,7 @@ export const useTemplateChat = async (query: ChatWithTemplateInput) => {
     // continue a chat
     const r = await templateChat.chat({
       chatId: query.chatId,
+      userId: query.userId,
       userMessage: query.userMessage,
       trigger: query.trigger,
       usersVariables: query.variables,
@@ -423,6 +429,7 @@ export const generateKnowledgebaseAnswer = async (
 
   const r = await templateChat.chat({
     userMessage: question,
+    userId: undefined,
     template,
   });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "base_chat_sessions" ADD COLUMN "name" text NOT NULL;

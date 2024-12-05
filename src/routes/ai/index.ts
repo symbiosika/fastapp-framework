@@ -10,14 +10,12 @@ import {
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
 } from "../../lib/ai/generation/crud";
-import { functionChat } from "../../lib/ai/smart-chat";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import { extractKnowledgeFromExistingDbEntry } from "../../lib/ai/knowledge/add-knowledge";
 import { parseDocument } from "../../lib/ai/parsing";
 import { useTemplateChat } from "../../lib/ai/generation";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
   deleteKnowledgeEntry,
   getFullSourceDocumentsForKnowledgeEntry,
@@ -33,6 +31,7 @@ import {
 import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
 import { RESPONSES } from "../../lib/responses";
 import { addKnowledgeFromUrl } from "../../lib/ai/knowledge-texts";
+import { chatStoreInDb } from "../../lib/ai/smart-chat/chat-history";
 
 const FileSourceType = {
   DB: "db",
@@ -61,9 +60,10 @@ const chatWithTemplateValidation = v.object({
     v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
   ),
 });
-export type ChatWithTemplateInput = v.InferOutput<
-  typeof chatWithTemplateValidation
->;
+type ChatWithTemplateInput = v.InferOutput<typeof chatWithTemplateValidation>;
+export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
+  userId: string | undefined;
+};
 
 const generateKnowledgeValidation = v.object({
   sourceType: v.enum(FileSourceType),
@@ -118,24 +118,6 @@ export type FineTuningDataInput = v.InferOutput<
  * Define the payment routes
  */
 export default function defineRoutes(app: FastAppHono) {
-  /**
-   * DEPRECATED!!!
-   * AI chatbot with function calling
-   */
-  app.post("/smart-chat", async (c) => {
-    try {
-      const body = await c.req.json();
-      const parsedBody = v.parse(simpleChatValidation, body);
-      const messages: ChatCompletionMessageParam[] = [
-        { role: "user", content: parsedBody.userMessage },
-      ];
-      const response = await functionChat(parsedBody.chatId, messages);
-      return c.json(response);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
-    }
-  });
-
   /**
    * Get a plain template
    * URL params:
@@ -293,8 +275,9 @@ export default function defineRoutes(app: FastAppHono) {
   app.post("/chat-with-template", async (c) => {
     try {
       const body = await c.req.json();
+      const usersId = c.get("usersId");
       const parsedBody = v.parse(chatWithTemplateValidation, body);
-      const r = await useTemplateChat(parsedBody);
+      const r = await useTemplateChat({ ...parsedBody, userId: usersId });
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, {
@@ -481,5 +464,27 @@ export default function defineRoutes(app: FastAppHono) {
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
+  });
+
+  /**
+   * Chat History for the current user
+   */
+  app.get("/chat/history", async (c) => {
+    const usersId = c.get("usersId");
+    const startFrom = c.req.query("startFrom") ?? "2000-01-01";
+    const r = await chatStoreInDb.getHistoryByUserId(usersId, startFrom);
+    return c.json(r);
+  });
+
+  /**
+   * Chat History for one chat session
+   */
+  app.get("/chat/history/:id", async (c) => {
+    const id = c.req.param("id");
+    const r = await chatStoreInDb.getChatHistory(id);
+    return c.json({
+      chatId: id,
+      history: r,
+    });
   });
 }
