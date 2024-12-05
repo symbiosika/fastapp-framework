@@ -28,6 +28,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
 
     const session = {
       id: chatId,
+      name: `Chat ${chatId}`,
       userId: options?.userId,
       fullHistory: [],
       actualChat: [],
@@ -82,6 +83,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
 
     return {
       id: updatedSession[0].id,
+      name: updatedSession[0].name,
       fullHistory: updatedSession[0].messages as ChatMessage[],
       actualChat: updatedSession[0].messages as ChatMessage[],
       state: updatedSession[0].state as any,
@@ -231,7 +233,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
   async getHistoryByUserId(
     userId: string,
     startFrom: string
-  ): Promise<{ chatId: string; history: ChatMessage[] }[]> {
+  ): Promise<{ chatId: string; name: string; history: ChatMessage[] }[]> {
     log.debug(`Get chat history for user ${userId}`);
 
     const result = await getDb()
@@ -245,6 +247,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       );
     return result.map((r) => ({
       chatId: r.id,
+      name: r.name,
       history: r.messages as ChatMessage[],
     }));
   }

@@ -481,10 +481,14 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.get("/chat/history/:id", async (c) => {
     const id = c.req.param("id");
-    const r = await chatStoreInDb.getChatHistory(id);
+    const r = await chatStoreInDb.get(id);
+    if (!r) {
+      throw new HTTPException(404, { message: `Chat session ${id} not found` });
+    }
     return c.json({
       chatId: id,
-      history: r,
+      name: r.name,
+      history: r.fullHistory,
     });
   });
 }
