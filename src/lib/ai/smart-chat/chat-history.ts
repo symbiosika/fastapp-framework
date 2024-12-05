@@ -92,6 +92,10 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
     };
   }
 
+  async drop(chatId: string): Promise<void> {
+    await getDb().delete(chatSessions).where(eq(chatSessions.id, chatId));
+  }
+
   async set(
     chatId: string,
     set: {

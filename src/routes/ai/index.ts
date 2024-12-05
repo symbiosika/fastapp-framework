@@ -491,4 +491,13 @@ export default function defineRoutes(app: FastAppHono) {
       history: r.fullHistory,
     });
   });
+
+  /**
+   * Drop a chat session by ID
+   */
+  app.delete("/chat/history/:id", async (c) => {
+    const id = c.req.param("id");
+    await chatStoreInDb.drop(id);
+    return c.json(RESPONSES.SUCCESS);
+  });
 }
