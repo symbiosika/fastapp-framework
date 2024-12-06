@@ -89,7 +89,7 @@
       function parseQueryString() {
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
-        const redirect = params.get("redirect") || "/";
+        const redirect = params.get("redirectUrl") || "/";
         return { token, redirect };
       }
 
