@@ -48,7 +48,7 @@ export const createMagicLoginLink = async (
   redirectUrl?: string
 ): Promise<string> => {
   const token = await createMagicLinkToken(email);
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = process.env.BASE_URL || "http://localhost:3000";
   const magicLink = `${frontendUrl}/magic-login.html?token=${encodeURIComponent(token)}&redirectUrl=${encodeURIComponent(redirectUrl || "")}`;
   return magicLink;
 };
@@ -98,7 +98,7 @@ export const sendVerificationEmail = async (email: string) => {
   const token = await createMagicLinkToken(email);
 
   // Construct the magic link URL
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = process.env.BASE_URL || "http://localhost:3000";
   const magicLink = `${frontendUrl}/verify-email.html?token=${encodeURIComponent(token)}`;
 
   await smtpService.sendMail({

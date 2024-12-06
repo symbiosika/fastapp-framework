@@ -112,6 +112,7 @@ const setGlobalServerConfig = (config: ServerConfig) => {
 
 export const defineServer = (config: ServerConfig) => {
   setGlobalServerConfig(config);
+  console.log("Global server config:", JSON.stringify(_GLOBAL_SERVER_CONFIG));
 
   /**
    * validate .ENV variables
