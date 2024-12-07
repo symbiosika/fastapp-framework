@@ -66,6 +66,11 @@ export async function getArticleFromUrl(url: string) {
 }
 
 export async function getMarkdownFromUrl(url: string) {
+  // check if url contains http or https
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
+  }
+
   const tds = new TurndownService();
 
   const response = await fetch("https://api.zyte.com/v1/extract", {
