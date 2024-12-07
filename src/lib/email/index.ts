@@ -40,17 +40,6 @@ class SMTPService {
   constructor() {
     this.logEnabled = process.env.SMTP_DEBUG === "true";
     this.transporter = nodemailer.createTransport(getMailCredentials());
-
-    this.transporter.verify((error) => {
-      if (error) {
-        this.error(`SMTP connection verification failed: ${error}`);
-        this.error(
-          JSON.stringify({ ...getMailCredentials(), auth: undefined })
-        );
-      } else {
-        this.log("SMTP connection verified successfully");
-      }
-    });
   }
 
   private log(message: string): void {
@@ -117,6 +106,23 @@ class SMTPService {
       this.error("Failed to send test email");
     }
     return result;
+  }
+
+  async verifyConnection(): Promise<boolean> {
+    return new Promise((resolve) =>
+      this.transporter.verify((error) => {
+        if (error) {
+          this.error(`SMTP connection verification failed: ${error}`);
+          this.error(
+            JSON.stringify({ ...getMailCredentials(), auth: undefined })
+          );
+          resolve(false);
+        } else {
+          this.log("SMTP connection verified successfully");
+          resolve(true);
+        }
+      })
+    );
   }
 }
 

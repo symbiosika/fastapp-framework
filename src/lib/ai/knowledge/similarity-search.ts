@@ -14,6 +14,7 @@ type KnowledgeChunk = {
   id: string;
   text: string;
   knowledgeEntryId: string;
+  knowledgeEntryName: string;
   order: number;
 };
 
@@ -29,7 +30,13 @@ export async function getNearestEmbeddings(q: {
   filter?: Record<string, string[]>;
   filterName?: string[];
 }): Promise<
-  { id: string; text: string; knowledgeEntryId: string; order: number }[]
+  {
+    id: string;
+    text: string;
+    knowledgeEntryId: string;
+    knowledgeEntryName: string;
+    order: number;
+  }[]
 > {
   // Generate the embedding for the search text
   const embed = await generateEmbedding(q.searchText);
@@ -86,6 +93,7 @@ export async function getNearestEmbeddings(q: {
       ${knowledgeChunks.id}, 
       ${knowledgeChunks.text},
       ${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
+      ${knowledgeEntry.name} AS "knowledgeEntryName",
       ${knowledgeChunks.order}
     FROM 
       ${knowledgeChunks}
@@ -98,6 +106,12 @@ export async function getNearestEmbeddings(q: {
       ${q.n};
   `);
   log.debug(`Found ${result.rows.length} chunks by similarity search`);
+  // log the knowledgeEntry.name of the chunks
+  for (const chunk of result.rows) {
+    log.debug(
+      `Chunk: ${chunk.knowledgeEntryName} - ${chunk.text} - ${chunk.knowledgeEntryId}`
+    );
+  }
 
   // return if no addBeforeN and addAfterN
   if (q.addBeforeN < 1 && q.addAfterN < 1) {

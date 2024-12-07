@@ -26,6 +26,7 @@ import type {
 } from "../types/plugins";
 import log from "../log";
 import * as v from "valibot";
+import { _GLOBAL_SERVER_CONFIG } from "../..";
 
 // In memory cache of available plugins
 export const AVAILABLE_PLUGINS: { [type: string]: ServerPlugin } = {};
@@ -470,13 +471,16 @@ export const setPluginConfig = async (
  * Get all available plugins to return it to the user
  */
 export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
-  return Object.values(AVAILABLE_PLUGINS).map((plugin) => ({
-    name: plugin.name,
-    label: plugin.label,
-    description: plugin.description,
-    version: plugin.version,
-    neededParameters: plugin.neededParameters,
-  }));
+  return Object.values(AVAILABLE_PLUGINS).map((plugin) => {
+    return {
+      name: plugin.name,
+      label: plugin.label,
+      description: plugin.description,
+      version: plugin.version,
+      neededParameters: plugin.neededParameters,
+      uiActions: plugin.uiActions,
+    };
+  });
 };
 
 /**

@@ -74,6 +74,12 @@ export interface PluginParameterDescription {
   description: string;
 }
 
+export interface ServerPluginConfigUiAction {
+  name: string;
+  label: string;
+  urlPath: string;
+}
+
 export interface ServerPlugin {
   /**
    * The unique name of the plugin
@@ -106,7 +112,11 @@ export interface ServerPlugin {
         params: { [key: string]: string },
         body: any
       ) => Promise<any>;
+      showAsWebhookInConfigUi?: boolean;
     };
+  };
+  uiActions?: {
+    configUi?: Record<string, ServerPluginConfigUiAction>;
   };
   /**
    * The function to upgrade the configuration from the previous version.

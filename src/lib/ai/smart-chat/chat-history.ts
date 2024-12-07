@@ -12,6 +12,7 @@ import type {
   ChatSession,
   VariableDictionaryInMemory,
 } from "magic-prompt";
+import { nanoid } from "nanoid";
 
 class ChatHistoryStoreInDb implements ChatHistoryStore {
   constructor(private maxAgeHours: number = 48) {
@@ -23,7 +24,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
     useTemplate?: ParsedTemplateBlocks;
     userId: string;
   }): Promise<ChatSession> {
-    const chatId = options?.chatId || "new";
+    const chatId = options?.chatId || nanoid(16);
     log.debug(`Create chat session ${chatId}`);
 
     const session = {
