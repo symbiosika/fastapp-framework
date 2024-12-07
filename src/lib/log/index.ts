@@ -1,6 +1,8 @@
 import fs from "fs/promises";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import path from "path";
+import { appLogs } from "../db/db-schema";
+import { getDb } from "../db/db-connection";
 
 class Logger {
   private logFilePath: string;
@@ -91,6 +93,45 @@ class Logger {
       } else {
         await this.log("debug", message + "");
       }
+    }
+  }
+
+  async logToDB(data: {
+    level?: "debug" | "info" | "warn" | "error";
+    source?: string;
+    category?: string;
+    sessionId?: string;
+    message: string;
+    metadata?: Record<string, any>;
+    version?: number;
+  }) {
+    const level = data.level ?? "info";
+    const source = data.source ?? "default";
+    const category = data.category ?? "default";
+
+    // First, log to console/file as usual
+    await this.log(
+      level,
+      `[${data.source}] [${data.category}] ${data.message}`
+    );
+
+    // Then write to database
+    try {
+      await getDb()
+        .insert(appLogs)
+        .values({
+          level: level,
+          source: source,
+          category: category,
+          sessionId: data.sessionId,
+          message: data.message,
+          metadata: data.metadata ?? {},
+          version: data.version ?? 0,
+        });
+    } catch (error) {
+      console.error("Error writing to database:", error);
+      // Log to file but don't recursively call logToDB
+      await this.writeToFile(`Error writing to database: ${error}`);
     }
   }
 
