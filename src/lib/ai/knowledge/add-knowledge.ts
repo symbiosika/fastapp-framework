@@ -87,8 +87,19 @@ export const extractKnowledgeFromText = async (data: {
   // Generate embeddings for all chunks
   const allEmbeddings: ChunkWithEmbedding[] = await Promise.all(
     chunks.map(async (chunk) => {
-      const embedding = await generateEmbedding(chunk.text);
-      return { ...chunk, embedding };
+      try {
+        const embedding = await generateEmbedding(chunk.text);
+        return { ...chunk, embedding };
+      } catch (e) {
+        log.error(`Error generating embedding for chunk: ${chunk.text}`);
+        log.debug(`Chunk length: ${chunk.text.length}`);
+        throw new Error(
+          "Error generating embedding for Chunk with text-length: " +
+            chunk.text.length +
+            ". " +
+            e
+        );
+      }
     })
   );
   log.debug(`Embeddings generated. Chunks: ${chunks.length}`);
