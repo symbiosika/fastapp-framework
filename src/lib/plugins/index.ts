@@ -28,8 +28,8 @@ import log from "../log";
 import * as v from "valibot";
 
 // In memory cache of available plugins
-const availablePlugins: { [type: string]: ServerPlugin } = {};
-const installedPlugins: {
+export const AVAILABLE_PLUGINS: { [type: string]: ServerPlugin } = {};
+export const INSTALLED_PLUGINS: {
   [name: string]: PluginConfigurationWithSecrets;
 } = {};
 
@@ -39,10 +39,10 @@ const installedPlugins: {
 export const getActivePluginByName = (
   name: string
 ): PluginConfigurationWithSecrets => {
-  if (!installedPlugins[name]) {
+  if (!INSTALLED_PLUGINS[name]) {
     throw new Error(`Plugin ${name} is not installed`);
   }
-  return installedPlugins[name];
+  return INSTALLED_PLUGINS[name];
 };
 
 /**
@@ -50,31 +50,31 @@ export const getActivePluginByName = (
  */
 export const updateInstalledPlugin = async (pluginName: string) => {
   const plugin = await getPluginConfigWithSecrets({ name: pluginName });
-  installedPlugins[pluginName] = plugin;
+  INSTALLED_PLUGINS[pluginName] = plugin;
 };
 
 /**
  * Remove a plugin from the in-memory cache
  */
 export const removeInstalledPlugin = (pluginName: string) => {
-  delete installedPlugins[pluginName];
+  delete INSTALLED_PLUGINS[pluginName];
 };
 
 /**
  * Access the in-memory cache of available plugins safely
  */
 export const getAvailablePluginByType = (type: string): ServerPlugin => {
-  if (!availablePlugins[type]) {
+  if (!AVAILABLE_PLUGINS[type]) {
     throw new Error(`Plugin ${type} is not available`);
   }
-  return availablePlugins[type];
+  return AVAILABLE_PLUGINS[type];
 };
 
 /**
  * Add a plugin to the available plugins. Needs to be done on every startup
  */
 export const registerServerPlugin = (plugin: ServerPlugin) => {
-  availablePlugins[plugin.name] = plugin;
+  AVAILABLE_PLUGINS[plugin.name] = plugin;
 };
 
 const pluginConfigSchemaInDb = v.object({
@@ -337,10 +337,10 @@ export const getPlugin = async (query: {
   }
 
   // check if the plugin type is registered
-  if (!availablePlugins[pluginDbResult[0].pluginType]) {
+  if (!AVAILABLE_PLUGINS[pluginDbResult[0].pluginType]) {
     throw new Error("Plugin type is not registered");
   }
-  const serverPlugin = availablePlugins[pluginDbResult[0].pluginType];
+  const serverPlugin = AVAILABLE_PLUGINS[pluginDbResult[0].pluginType];
 
   try {
     // check basic structure
@@ -436,7 +436,7 @@ export const setPluginConfig = async (
   };
 
   // check if the new config is valid
-  const serverPlugin = availablePlugins[plugin.pluginType] ?? null;
+  const serverPlugin = AVAILABLE_PLUGINS[plugin.pluginType] ?? null;
   if (!serverPlugin) {
     throw new Error("Plugin type is not registered");
   }
@@ -470,7 +470,7 @@ export const setPluginConfig = async (
  * Get all available plugins to return it to the user
  */
 export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
-  return Object.values(availablePlugins).map((plugin) => ({
+  return Object.values(AVAILABLE_PLUGINS).map((plugin) => ({
     name: plugin.name,
     label: plugin.label,
     description: plugin.description,
@@ -519,7 +519,7 @@ export const createPlugin = async (
   await v.safeParseAsync(pluginConfigSchemaFromUser, pluginConfig);
 
   // Check if plugin type is registered
-  const serverPlugin = availablePlugins[pluginConfig.pluginType];
+  const serverPlugin = AVAILABLE_PLUGINS[pluginConfig.pluginType];
   if (!serverPlugin) {
     throw new Error(
       `Plugin type '${pluginConfig.pluginType}' is not registered`
