@@ -2,7 +2,7 @@ import log from "../../log";
 import { openai } from "../standard";
 import { getAllAiFunctionDescriptions } from "./function-calls";
 import * as v from "valibot";
-import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import type { ChatCompletionMessageParam } from "openai/resources";
 import { getAllAiFunctionQaExamples } from "./function-calls";
 
 const systemPrompt = `

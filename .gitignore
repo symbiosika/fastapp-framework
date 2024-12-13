@@ -122,6 +122,7 @@ out
 
 .nuxt
 dist
+lib
 
 # Gatsby files
 

@@ -38,7 +38,7 @@ interface Metadata {
   dateDownloaded: string;
 }
 
-const ZYTE_API_KEY = import.meta.env.ZYTE_API_KEY;
+const ZYTE_API_KEY = process.env.ZYTE_API_KEY;
 
 export async function getArticleFromUrl(url: string) {
   const response = await fetch("https://api.zyte.com/v1/extract", {

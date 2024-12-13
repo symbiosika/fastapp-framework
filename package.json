@@ -1,19 +1,45 @@
 {
-  "name": "fastapp-framework-backend",
-  "module": "index.ts",
-  "type": "module",
-  "version": "0.1.1",
+  "name": "fastapp-framework",
   "description": "FastApp Framework Backend",
-  "main": "dist/index.js",
-  "exports": {
-    ".": "./src/index.ts"
+  "author": "Symbiosika GmbH",
+  "license": "proprietary",
+  "homepage": "https://github.com/symbiosika/fastapp-framework#readme",
+  "version": "0.1.1",
+  "main": "./lib/index.js",
+  "keywords": [
+    "LLM",
+    "GPT",
+    "Promping",
+    "Scripting",
+    "AI",
+    "Knowledge Database"
+  ],
+  "scripts": {
+    "dev": "bun --hot run demo.ts",
+    "dev:inspect": "bun --inspect --hot run demo.ts",
+    "migrate": "drizzle-kit migrate",
+    "push": "drizzle-kit push",
+    "generate": "drizzle-kit generate",
+    "studio": "drizzle-kit studio",
+    "build": "tsc",
+    "clean": "rm -rf ./lib/"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
   },
   "files": [
-    "src",
-    "dist"
+    "lib/**/*"
   ],
-  "author": "",
-  "license": "ISC",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./dbSchema": {
+      "types": "./lib/dbSchema.d.ts",
+      "default": "./lib/dbSchema.js"
+    }
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
@@ -21,9 +47,7 @@
     "@types/pg": "^8.11.10",
     "@types/turndown": "^5.0.5",
     "drizzle-kit": "^0.26.2",
-    "prettier": "^3.3.3"
-  },
-  "peerDependencies": {
+    "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   },
   "dependencies": {
@@ -41,13 +65,5 @@
     "stripe": "^17.1.0",
     "turndown": "^7.2.0",
     "valibot": "^1.0.0-beta.0"
-  },
-  "scripts": {
-    "dev": "bun --hot run demo.ts",
-    "dev:inspect": "bun --inspect --hot run demo.ts",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push",
-    "generate": "drizzle-kit generate",
-    "studio": "drizzle-kit studio"
   }
 }
