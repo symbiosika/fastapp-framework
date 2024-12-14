@@ -41,15 +41,15 @@ export const products = pgBaseTable(
     prodId: text("prod_id").notNull(),
     priceId: text("price_id").notNull(),
   },
-  (products) => ({
-    groupIdx: index("products_group_idx").on(products.group),
-    nameIdx: index("products_name_idx").on(products.name),
-    typeIdx: index("products_type_idx").on(products.type),
-    prodIdPriceIdIdx: unique("products_prod_id_price_id_idx").on(
+  (products) => [
+    index("products_group_idx").on(products.group),
+    index("products_name_idx").on(products.name),
+    index("products_type_idx").on(products.type),
+    unique("products_prod_id_price_id_idx").on(
       products.prodId,
       products.priceId
     ),
-  })
+  ]
 );
 
 export type ProductsSelect = typeof products.$inferSelect;
@@ -84,32 +84,29 @@ export const activeSubscriptions = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    stripeCustomerIdPlanName: unique().on(
+  (table) => [
+    unique("stripeCustomerIdPlanName").on(
       table.stripeCustomerId,
       table.planName
     ),
-    stripeCustomerIdPlanNameIndex: index(
-      "stripe_customer_id_plan_name_index"
-    ).on(table.stripeCustomerId, table.planName),
-    statusIdx: index("active_subscriptions_status_idx").on(table.status),
-    createdAtIdx: index("active_subscriptions_created_at_idx").on(
-      table.createdAt
+    index("stripe_customer_id_plan_name_index").on(
+      table.stripeCustomerId,
+      table.planName
     ),
-    updatedAtIdx: index("active_subscriptions_updated_at_idx").on(
-      table.updatedAt
+    index("active_subscriptions_status_idx").on(table.status),
+    index("active_subscriptions_created_at_idx").on(table.createdAt),
+    index("active_subscriptions_updated_at_idx").on(table.updatedAt),
+    index("active_subscriptions_cancel_at_period_end_idx").on(
+      table.cancelAtPeriodEnd
     ),
-    cancelAtPeriodEndIdx: index(
-      "active_subscriptions_cancel_at_period_end_idx"
-    ).on(table.cancelAtPeriodEnd),
-    currentPeriodStartIdx: index(
-      "active_subscriptions_current_period_start_idx"
-    ).on(table.currentPeriodStart),
-    currentPeriodEndIdx: index(
-      "active_subscriptions_current_period_end_idx"
-    ).on(table.currentPeriodEnd),
-    userIdIdx: index("active_subscriptions_user_id_idx").on(table.userId),
-  })
+    index("active_subscriptions_current_period_start_idx").on(
+      table.currentPeriodStart
+    ),
+    index("active_subscriptions_current_period_end_idx").on(
+      table.currentPeriodEnd
+    ),
+    index("active_subscriptions_user_id_idx").on(table.userId),
+  ]
 );
 
 export type ActiveSubscriptionsSelect = typeof activeSubscriptions.$inferSelect;
@@ -141,15 +138,15 @@ export const purchases = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    createdAtIdx: index("purchases_created_at_idx").on(table.createdAt),
-    updatedAtIdx: index("purchases_updated_at_idx").on(table.updatedAt),
-    userIdIdx: index("purchases_user_id_idx").on(table.userId),
-    statusIdx: index("purchases_status_idx").on(table.status),
-    typeIdx: index("purchases_type_idx").on(table.type),
-    usedIdx: index("purchases_used_idx").on(table.used),
-    productNameIdx: index("purchases_product_name_idx").on(table.productName),
-  })
+  (table) => [
+    index("purchases_created_at_idx").on(table.createdAt),
+    index("purchases_updated_at_idx").on(table.updatedAt),
+    index("purchases_user_id_idx").on(table.userId),
+    index("purchases_status_idx").on(table.status),
+    index("purchases_type_idx").on(table.type),
+    index("purchases_used_idx").on(table.used),
+    index("purchases_product_name_idx").on(table.productName),
+  ]
 );
 
 export type PurchasesSelect = typeof purchases.$inferSelect;

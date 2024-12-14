@@ -14,6 +14,7 @@ import {
   boolean,
   index,
   pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -43,13 +44,13 @@ export const users = pgBaseTable(
     extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
   },
-  (users) => ({
-    emailIdx: index("users_email_idx").on(users.email),
-    uniqueEmail: uniqueIndex("unique_email").on(users.email),
-    createdAtIdx: index("users_created_at_idx").on(users.createdAt),
-    updatedAtIdx: index("users_updated_at_idx").on(users.updatedAt),
-    emailVerifiedIdx: index("users_email_verified_idx").on(users.emailVerified),
-  })
+  (users) => [
+    index("users_email_idx").on(users.email),
+    uniqueIndex("unique_email").on(users.email),
+    index("users_created_at_idx").on(users.createdAt),
+    index("users_updated_at_idx").on(users.updatedAt),
+    index("users_email_verified_idx").on(users.emailVerified),
+  ]
 );
 
 export type UsersSelect = typeof users.$inferSelect;
@@ -64,10 +65,10 @@ export const sessions = pgBaseTable(
       .references(() => users.id, { onDelete: "cascade" }),
     expires: timestamp("expires", { mode: "string" }).notNull(),
   },
-  (sessions) => ({
-    userIdIdx: index("sessions_user_id_idx").on(sessions.userId),
-    expiresIdx: index("sessions_expires_idx").on(sessions.expires),
-  })
+  (sessions) => [
+    index("sessions_user_id_idx").on(sessions.userId),
+    index("sessions_expires_idx").on(sessions.expires),
+  ]
 );
 
 export type SessionsSelect = typeof sessions.$inferSelect;
@@ -89,10 +90,10 @@ export const userGroups = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (userGroups) => ({
-    nameIdx: index("user_groups_name_idx").on(userGroups.name),
-    createdAtIdx: index("user_groups_created_at_idx").on(userGroups.createdAt),
-  })
+  (userGroups) => [
+    index("user_groups_name_idx").on(userGroups.name),
+    index("user_groups_created_at_idx").on(userGroups.createdAt),
+  ]
 );
 
 export type UserGroupsSelect = typeof userGroups.$inferSelect;
@@ -109,11 +110,11 @@ export const userGroupMembers = pgBaseTable(
       .notNull()
       .references(() => userGroups.id, { onDelete: "cascade" }),
   },
-  (userGroupMember) => ({
-    compositePK: primaryKey({
+  (userGroupMember) => [
+    primaryKey({
       columns: [userGroupMember.userId, userGroupMember.userGroupId],
     }),
-  })
+  ]
 );
 
 export type UserGroupMembersSelect = typeof userGroupMembers.$inferSelect;
@@ -135,15 +136,11 @@ export const magicLinkSessions = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (magicLinkSession) => ({
-    uniqueToken: uniqueIndex("unique_token").on(magicLinkSession.token),
-    userIdIdx: index("magic_link_sessions_user_id_idx").on(
-      magicLinkSession.userId
-    ),
-    expiresAtIdx: index("magic_link_sessions_expires_at_idx").on(
-      magicLinkSession.expiresAt
-    ),
-  })
+  (magicLinkSession) => [
+    uniqueIndex("unique_token").on(magicLinkSession.token),
+    index("magic_link_sessions_user_id_idx").on(magicLinkSession.userId),
+    index("magic_link_sessions_expires_at_idx").on(magicLinkSession.expiresAt),
+  ]
 );
 
 export type MagicLinkSessionsSelect = typeof magicLinkSessions.$inferSelect;
@@ -173,14 +170,11 @@ export const pathPermissions = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (permissions) => ({
-    uniqueCategoryName: uniqueIndex("unique_category_name").on(
-      permissions.category,
-      permissions.name
-    ),
-    methodIdx: index("permissions_method_idx").on(permissions.method),
-    typeIdx: index("permissions_type_idx").on(permissions.type),
-  })
+  (permissions) => [
+    unique("unique_category_name").on(permissions.category, permissions.name),
+    index("permissions_method_idx").on(permissions.method),
+    index("permissions_type_idx").on(permissions.type),
+  ]
 );
 
 export type PathPermissionsSelect = typeof pathPermissions.$inferSelect;
@@ -197,17 +191,15 @@ export const groupPermissions = pgBaseTable(
       .notNull()
       .references(() => pathPermissions.id, { onDelete: "cascade" }),
   },
-  (groupPermissions) => ({
-    compositePK: primaryKey({
+  (groupPermissions) => [
+    primaryKey({
       columns: [groupPermissions.groupId, groupPermissions.permissionId],
     }),
-    groupIdIdx: index("group_permissions_group_id_idx").on(
-      groupPermissions.groupId
-    ),
-    permissionIdIdx: index("group_permissions_permission_id_idx").on(
+    index("group_permissions_group_id_idx").on(groupPermissions.groupId),
+    index("group_permissions_permission_id_idx").on(
       groupPermissions.permissionId
     ),
-  })
+  ]
 );
 
 export type GroupPermissionsSelect = typeof groupPermissions.$inferSelect;
@@ -230,9 +222,7 @@ export const teams = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (teams) => ({
-    nameIdx: uniqueIndex("teams_name_idx").on(teams.name),
-  })
+  (teams) => [unique("teams_name_idx").on(teams.name)]
 );
 
 // Team Members Table mit optionaler Rolle
@@ -248,11 +238,11 @@ export const teamMembers = pgBaseTable(
     role: varchar("role", { length: 50 }), // z.B. 'admin', 'member', etc.
     joinedAt: timestamp("joined_at", { mode: "string" }).notNull().defaultNow(),
   },
-  (teamMembers) => ({
-    compositePK: primaryKey({
+  (teamMembers) => [
+    primaryKey({
       columns: [teamMembers.userId, teamMembers.teamId],
     }),
-  })
+  ]
 );
 
 // RELATIONS

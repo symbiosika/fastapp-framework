@@ -37,14 +37,14 @@ export const files = pgBaseTable(
     file: bytea("file").notNull(),
     expiresAt: timestamp("expires_at", { mode: "string" }),
   },
-  (table) => ({
-    idIdx: index("files_id_idx").on(table.id),
-    bucketNameIdx: index("files_bucket_name_idx").on(table.bucket),
-    createdAtIdx: index("files_created_at_idx").on(table.createdAt),
-    updatedAtIdx: index("files_updated_at_idx").on(table.updatedAt),
-    nameIdx: index("files_name_idx").on(table.name),
-    expiresAtIdx: index("files_expires_at_idx").on(table.expiresAt),
-  })
+  (table) => [
+    index("files_id_idx").on(table.id),
+    index("files_bucket_name_idx").on(table.bucket),
+    index("files_created_at_idx").on(table.createdAt),
+    index("files_updated_at_idx").on(table.updatedAt),
+    index("files_name_idx").on(table.name),
+    index("files_expires_at_idx").on(table.expiresAt),
+  ]
 );
 
 export type FilesSelect = typeof files.$inferSelect;

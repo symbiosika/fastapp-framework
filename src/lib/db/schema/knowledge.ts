@@ -10,6 +10,7 @@ import {
   vector,
   index,
   uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -42,12 +43,10 @@ export const knowledgeText = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (knowledgeText) => ({
-    createdAtIdx: index("knowledge_text_created_at_idx").on(
-      knowledgeText.createdAt
-    ),
-    titleIdx: index("knowledge_text_title_idx").on(knowledgeText.title),
-  })
+  (knowledgeText) => [
+    index("knowledge_text_created_at_idx").on(knowledgeText.createdAt),
+    index("knowledge_text_title_idx").on(knowledgeText.title),
+  ]
 );
 
 export type KnowledgeTextSelect = typeof knowledgeText.$inferSelect;
@@ -75,18 +74,12 @@ export const knowledgeEntry = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (knowledgeEntry) => ({
-    nameIdx: uniqueIndex("knowledgeentry_name_idx").on(knowledgeEntry.name),
-    fileSourceTypeIdx: index("knowledge_entry_file_source_type_idx").on(
-      knowledgeEntry.sourceType
-    ),
-    createdAtIdx: index("knowledgeentry_created_at_idx").on(
-      knowledgeEntry.createdAt
-    ),
-    updatedAtIdx: index("knowledgeentry_updated_at_idx").on(
-      knowledgeEntry.updatedAt
-    ),
-  })
+  (knowledgeEntry) => [
+    uniqueIndex("knowledgeentry_name_idx").on(knowledgeEntry.name),
+    index("knowledge_entry_file_source_type_idx").on(knowledgeEntry.sourceType),
+    index("knowledgeentry_created_at_idx").on(knowledgeEntry.createdAt),
+    index("knowledgeentry_updated_at_idx").on(knowledgeEntry.updatedAt),
+  ]
 );
 
 export type KnowledgeEntrySelect = typeof knowledgeEntry.$inferSelect;
@@ -114,15 +107,13 @@ export const knowledgeChunks = pgBaseTable(
       .notNull(),
     textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
   },
-  (knowledgeChunks) => ({
-    knowledgeEntryIdIdx: index("knowledge_chunks_knowledge_entry_id_idx").on(
+  (knowledgeChunks) => [
+    index("knowledge_chunks_knowledge_entry_id_idx").on(
       knowledgeChunks.knowledgeEntryId
     ),
-    createdAtIdx: index("knowledge_chunks_created_at_idx").on(
-      knowledgeChunks.createdAt
-    ),
-    headerIdx: index("knowledge_chunks_header_idx").on(knowledgeChunks.header),
-  })
+    index("knowledge_chunks_created_at_idx").on(knowledgeChunks.createdAt),
+    index("knowledge_chunks_header_idx").on(knowledgeChunks.header),
+  ]
 );
 
 export type KnowledgeChunksSelect = typeof knowledgeChunks.$inferSelect;
@@ -143,13 +134,11 @@ export const fineTuningData = pgBaseTable(
     question: text("question").notNull(),
     answer: text("answer").notNull(),
   },
-  (table) => ({
-    knowledgeEntryIdIdx: index("knowledge_entry_id_idx").on(
-      table.knowledgeEntryId
-    ),
-    nameIdx: index("knowledge_entry_name_idx").on(table.name),
-    categoryIdx: index("knowledge_entry_category_idx").on(table.category),
-  })
+  (table) => [
+    index("knowledge_entry_id_idx").on(table.knowledgeEntryId),
+    index("knowledge_entry_name_idx").on(table.name),
+    index("knowledge_entry_category_idx").on(table.category),
+  ]
 );
 
 export const knowledgeChunksRelations = relations(
@@ -185,16 +174,13 @@ export const knowledgeFilters = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    nameTypeUnique: uniqueIndex("knowledge_filters_name_type_unique").on(
+  (table) => [
+    uniqueIndex("knowledge_filters_name_type_unique").on(
       table.name,
       table.category
     ),
-    categoryNameIdx: index("knowledge_filters_category_name_idx").on(
-      table.category,
-      table.name
-    ),
-  })
+    index("knowledge_filters_category_name_idx").on(table.category, table.name),
+  ]
 );
 
 // Verbindungstabelle zwischen Einträgen und Filtern
@@ -217,18 +203,14 @@ export const knowledgeEntryFilters = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    entryFilterUnique: uniqueIndex("knowledge_entry_filter_unique").on(
+  (table) => [
+    unique("knowledge_entry_filter_unique").on(
       table.knowledgeEntryId,
       table.knowledgeFilterId
     ),
-    entryIdIdx: index("knowledge_entry_filters_entry_id_idx").on(
-      table.knowledgeEntryId
-    ),
-    filterIdIdx: index("knowledge_entry_filters_filter_id_idx").on(
-      table.knowledgeFilterId
-    ),
-  })
+    index("knowledge_entry_filters_entry_id_idx").on(table.knowledgeEntryId),
+    index("knowledge_entry_filters_filter_id_idx").on(table.knowledgeFilterId),
+  ]
 );
 
 // Neue Typen exportieren
@@ -290,15 +272,14 @@ export const knowledgeSource = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    pluginExternalIdIdx: uniqueIndex(
-      "knowledge_source_plugin_external_id_idx"
-    ).on(table.pluginId, table.externalId),
-    knowledgeEntryIdIdx: index("knowledge_source_entry_id_idx").on(
-      table.knowledgeEntryId
+  (table) => [
+    unique("knowledge_source_plugin_external_id_idx").on(
+      table.pluginId,
+      table.externalId
     ),
-  })
-);
+    index("knowledge_source_entry_id_idx").on(table.knowledgeEntryId),
+  ]
+);  
 
 // Erweiterte Relations
 export const knowledgeSourceRelations = relations(

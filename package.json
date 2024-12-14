@@ -46,14 +46,14 @@
     "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.10",
     "@types/turndown": "^5.0.5",
-    "drizzle-kit": "^0.26.2",
+    "drizzle-kit": "^0.30.1",
     "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   },
   "dependencies": {
     "cron": "^3.1.7",
     "csv": "^6.3.10",
-    "drizzle-orm": "^0.35.3",
+    "drizzle-orm": "^0.38.2",
     "hono": "^4.6.5",
     "jsonwebtoken": "^9.0.2",
     "magic-prompt": "0.3.5",

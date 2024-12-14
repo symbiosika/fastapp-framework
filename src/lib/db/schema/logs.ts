@@ -36,13 +36,13 @@ export const appLogs = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    levelIdx: index("app_logs_level_idx").on(table.level),
-    categoryIdx: index("app_logs_category_idx").on(table.category),
-    sourceIdx: index("app_logs_source_idx").on(table.source),
-    createdAtIdx: index("app_logs_created_at_idx").on(table.createdAt),
-    versionIdx: index("app_logs_version_idx").on(table.version),
-  })
+  (table) => [
+    index("app_logs_level_idx").on(table.level),
+    index("app_logs_category_idx").on(table.category),
+    index("app_logs_source_idx").on(table.source),
+    index("app_logs_created_at_idx").on(table.createdAt),
+    index("app_logs_version_idx").on(table.version),
+  ]
 );
 
 export type AppLogsSelect = typeof appLogs.$inferSelect;

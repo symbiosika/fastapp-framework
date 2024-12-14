@@ -20,11 +20,9 @@ export const chatSessions = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (chatSessions) => ({
-    updatedAtIdx: index("chat_sessions_updated_at_idx").on(
-      chatSessions.updatedAt
-    ),
-  })
+  (chatSessions) => [
+    index("chat_sessions_updated_at_idx").on(chatSessions.updatedAt),
+  ]
 );
 
 export type ChatSessionsSelect = typeof chatSessions.$inferSelect;

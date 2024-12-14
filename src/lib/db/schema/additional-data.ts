@@ -32,12 +32,12 @@ export const userSpecificData = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    userKeyIndex: unique().on(table.userId, table.key),
-    keyIndex: index("user_data_type_idx").on(table.key),
-    createdAtIdx: index("user_data_created_at_idx").on(table.createdAt),
-    versionIdx: index("user_data_version_idx").on(table.version),
-  })
+  (table) => [
+    unique().on(table.userId, table.key),
+    index("user_data_type_idx").on(table.key),
+    index("user_data_created_at_idx").on(table.createdAt),
+    index("user_data_version_idx").on(table.version),
+  ]
 );
 
 export type UserSpecificDataSelect = typeof userSpecificData.$inferSelect;
@@ -61,13 +61,13 @@ export const appSpecificData = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    keyNameIndex: unique().on(table.key, table.name),
-    nameIndex: index("app_data_name_idx").on(table.name),
-    keyIndex: index("app_data_key_idx").on(table.key),
-    createdAtIdx: index("app_data_created_at_idx").on(table.createdAt),
-    versionIdx: index("app_data_version_idx").on(table.version),
-  })
+  (table) => [
+    unique().on(table.key, table.name),
+    index("app_data_name_idx").on(table.name),
+    index("app_data_key_idx").on(table.key),
+    index("app_data_created_at_idx").on(table.createdAt),
+    index("app_data_version_idx").on(table.version),
+  ]
 );
 
 export type AppSpecificDataSelect = typeof appSpecificData.$inferSelect;

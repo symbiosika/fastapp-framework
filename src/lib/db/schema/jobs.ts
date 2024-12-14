@@ -39,11 +39,11 @@ export const jobs = pgBaseTable(
       .defaultNow()
       .notNull(),
   },
-  (jobs) => ({
-    createdAtIdx: index("jobs_created_at_idx").on(jobs.createdAt),
-    userIdIdx: index("jobs_user_id_idx").on(jobs.userId),
-    statusIdx: index("jobs_status_idx").on(jobs.status),
-  })
+  (jobs) => [
+    index("jobs_created_at_idx").on(jobs.createdAt),
+    index("jobs_user_id_idx").on(jobs.userId),
+    index("jobs_status_idx").on(jobs.status),
+  ]
 );
 
 export const jobsRelations = relations(jobs, ({ one }) => ({

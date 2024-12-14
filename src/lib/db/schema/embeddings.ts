@@ -29,13 +29,11 @@ export const embeddings = pgBaseTable(
       .notNull(),
     textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
   },
-  (embedding) => ({
-    tableIndex: index("embeddings_source_table_index").on(
-      embedding.sourceTable
-    ),
-    sourceIdIndex: index("embeddings_source_id_index").on(embedding.sourceId),
-    orderIdx: index("embeddings_order_idx").on(embedding.order),
-  })
+  (embedding) => [
+    index("embeddings_source_table_index").on(embedding.sourceTable),
+    index("embeddings_source_id_index").on(embedding.sourceId),
+    index("embeddings_order_idx").on(embedding.order),
+  ]
 );
 
 export type EmbeddingsSelect = typeof embeddings.$inferSelect;

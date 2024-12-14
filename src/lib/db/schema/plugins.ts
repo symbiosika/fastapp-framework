@@ -29,10 +29,10 @@ export const plugins = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (plugins) => ({
-    createdAtIdx: index("plugins_created_at_idx").on(plugins.createdAt),
-    uniqNameIdx: unique("plugins_name_idx").on(plugins.name),
-  })
+  (plugins) => [
+    index("plugins_created_at_idx").on(plugins.createdAt),
+    unique("plugins_name_idx").on(plugins.name),
+  ]
 );
 
 export type PluginsSelect = typeof plugins.$inferSelect;

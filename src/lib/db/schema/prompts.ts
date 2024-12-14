@@ -39,15 +39,16 @@ export const promptTemplates = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (promptTemplates) => ({
-    unq: unique().on(promptTemplates.name, promptTemplates.category),
-    nameIdx: index("prompt_templates_name_idx").on(promptTemplates.name),
-    typeIdx: index("prompt_templates_type_idx").on(promptTemplates.category),
-    userIdIdx: index("prompt_templates_user_id_idx").on(promptTemplates.userId),
-    langCodeIdx: index("prompt_templates_lang_code_idx").on(
-      promptTemplates.langCode
+  (promptTemplates) => [
+    unique("prompt_templates_name_category_idx").on(
+      promptTemplates.name,
+      promptTemplates.category
     ),
-  })
+    index("prompt_templates_name_idx").on(promptTemplates.name),
+    index("prompt_templates_type_idx").on(promptTemplates.category),
+    index("prompt_templates_user_id_idx").on(promptTemplates.userId),
+    index("prompt_templates_lang_code_idx").on(promptTemplates.langCode),
+  ]
 );
 
 export type PromptTemplatesSelect = typeof promptTemplates.$inferSelect;
@@ -75,11 +76,11 @@ export const promptTemplatePlaceholders = pgBaseTable(
     defaultValue: text("default_value"),
     hidden: boolean("hidden").notNull().default(false),
   },
-  (promptTemplatePlaceholders) => ({
-    promptTemplateIdIdx: index("prompt_template_id_idx").on(
+  (promptTemplatePlaceholders) => [
+    index("prompt_template_id_idx").on(
       promptTemplatePlaceholders.promptTemplateId
     ),
-  })
+  ]
 );
 
 export type PromptTemplatePlaceholdersSelect =
@@ -122,14 +123,15 @@ export const promptSnippets = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (promptSnippets) => ({
-    unq: unique().on(promptSnippets.name, promptSnippets.category),
-    nameIdx: index("prompt_snippets_name_idx").on(promptSnippets.name),
-    categoryIdx: index("prompt_snippets_category_idx").on(
+  (promptSnippets) => [
+    unique("prompt_snippets_name_category_idx").on(
+      promptSnippets.name,
       promptSnippets.category
     ),
-    userIdIdx: index("prompt_snippets_user_id_idx").on(promptSnippets.userId),
-  })
+    index("prompt_snippets_name_idx").on(promptSnippets.name),
+    index("prompt_snippets_category_idx").on(promptSnippets.category),
+    index("prompt_snippets_user_id_idx").on(promptSnippets.userId),
+  ]
 );
 
 export type PromptSnippetsSelect = typeof promptSnippets.$inferSelect;

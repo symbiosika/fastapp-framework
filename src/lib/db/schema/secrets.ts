@@ -33,14 +33,14 @@ export const secrets = pgBaseTable(
       .notNull()
       .defaultNow(),
   },
-  (secrets) => ({
-    unq: unique().on(secrets.reference, secrets.name),
-    idx: index("secrets_idx").on(secrets.referenceId),
-    refIdx: index("secrets_ref_idx").on(secrets.reference),
-    refIdIdx: index("secrets_ref_id_idx").on(secrets.referenceId),
-    nameIdx: index("secrets_name_idx").on(secrets.name),
-    typeIdx: index("secrets_type_idx").on(secrets.type),
-  })
+  (secrets) => [
+    unique("secrets_reference_name_idx").on(secrets.reference, secrets.name),
+    index("secrets_idx").on(secrets.referenceId),
+    index("secrets_ref_idx").on(secrets.reference),
+    index("secrets_ref_id_idx").on(secrets.referenceId),
+    index("secrets_name_idx").on(secrets.name),
+    index("secrets_type_idx").on(secrets.type),
+  ]
 );
 
 export type SecretsSelect = typeof secrets.$inferSelect;
