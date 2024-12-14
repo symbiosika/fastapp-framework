@@ -354,6 +354,6 @@ export { checkUserSubscription, registerServerPlugin };
 export type { JobHandlerRegister };
 export * from "./types";
 export { HTTPException } from "hono/http-exception";
-
+export { log };
 export { syncKnowledgeFromPlugin };
 export type { SyncItem };
