@@ -7,14 +7,7 @@
   "version": "0.2.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
-  "keywords": [
-    "LLM",
-    "GPT",
-    "Promping",
-    "Scripting",
-    "AI",
-    "Knowledge Database"
-  ],
+  "keywords": [],
   "scripts": {
     "dev": "bun --hot run demo.ts",
     "dev:inspect": "bun --inspect --hot run demo.ts",
@@ -55,6 +48,14 @@
     "./drizzle-orm": {
       "types": "./lib/drizzle-orm.d.ts",
       "default": "./lib/drizzle-orm.js"
+    },
+    "./smtp": {
+      "types": "./lib/smtp.d.ts",
+      "default": "./lib/smtp.js"
+    },
+    "./auth": {
+      "types": "./lib/auth.d.ts",
+      "default": "./lib/auth.js"
     }
   },
   "devDependencies": {
