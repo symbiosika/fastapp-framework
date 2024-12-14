@@ -6,6 +6,7 @@
   "homepage": "https://github.com/symbiosika/fastapp-framework#readme",
   "version": "0.1.1",
   "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "keywords": [
     "LLM",
     "GPT",
@@ -22,22 +23,37 @@
     "generate": "drizzle-kit generate",
     "studio": "drizzle-kit studio",
     "build": "tsc",
-    "clean": "rm -rf ./lib/"
+    "clean": "rm -rf ./lib/",
+    "release-patch": "npm version patch && git push --follow-tags",
+    "release-minor": "npm version minor && git push --follow-tags",
+    "release-major": "npm version major && git push --follow-tags"
   },
   "engines": {
     "bun": ">=1.0.0"
   },
   "files": [
-    "lib/**/*"
+    "lib/**/*",
+    "static/**/*",
+    "public/**/*"
   ],
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./static": "./static",
+    "./public": "./public",
     "./dbSchema": {
       "types": "./lib/dbSchema.d.ts",
       "default": "./lib/dbSchema.js"
+    },
+    "./drizzle-pg": {
+      "types": "./lib/drizzle-pg.d.ts",
+      "default": "./lib/drizzle-pg.js"
+    },
+    "./drizzle-orm": {
+      "types": "./lib/drizzle-orm.d.ts",
+      "default": "./lib/drizzle-orm.js"
     }
   },
   "devDependencies": {
@@ -50,7 +66,7 @@
     "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   },
-  "dependencies": {
+  "peerDependencies": {
     "cron": "^3.1.7",
     "csv": "^6.3.10",
     "drizzle-orm": "^0.38.2",
