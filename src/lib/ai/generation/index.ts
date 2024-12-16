@@ -344,11 +344,49 @@ export const getPromptTemplateDefinition = async (
 };
 
 /**
+ * Generate a headline from a chat interaction
+ */
+const generateHeadlineFromChat = async (
+  userMessage: string,
+  assistantResponse: string
+) => {
+  const templateStr = `{{#block}}
+  {{#role=assistant}}
+    You are a headline generator. Create a very short, concise headline (max 60 chars) that summarizes 
+    the chat interaction between user and assistant. The headline should be in the same language as 
+    the conversation.
+    
+    User message: {{user_message}}
+    Assistant response: {{assistant_response}}
+  {{/role}}
+
+  {{#role=user}}
+    Generate a headline.
+  {{/role}}
+{{/block}}`;
+
+  const template = await templateChat.getParsedTemplateFromString(templateStr);
+  const r = await templateChat.chat({
+    userMessage: "Generate a headline.",
+    userId: undefined,
+    template,
+    usersVariables: {
+      user_message: userMessage,
+      assistant_response: assistantResponse,
+    },
+  });
+
+  return r.result.message;
+};
+
+/**
  * Use the chat
  */
 export const useTemplateChat = async (
   query: ChatWithTemplateInputWithUserId
 ) => {
+  let result;
+
   if (query.initiateTemplate) {
     const templateDbEntry = await getPromptTemplateDefinition(
       query.initiateTemplate
@@ -365,7 +403,7 @@ export const useTemplateChat = async (
       usersVariables: query.variables,
     });
 
-    return <ChatWithTemplateReturn>{
+    result = <ChatWithTemplateReturn>{
       chatId: r.result.chatId,
       message: r.result.message,
       meta: r.result.meta,
@@ -384,7 +422,7 @@ export const useTemplateChat = async (
       usersVariables: query.variables,
     });
 
-    return <ChatWithTemplateReturn>{
+    result = <ChatWithTemplateReturn>{
       chatId: r.result.chatId,
       message: r.result.message,
       meta: r.result.meta,
@@ -394,6 +432,20 @@ export const useTemplateChat = async (
       },
     };
   }
+
+  // Generate and update headline if we have a user message and response
+  // don't await here. make this in the background
+  if (query.userMessage && result.message) {
+    generateHeadlineFromChat(query.userMessage, result.message.content).then(
+      async (r) => {
+        await chatStoreInDb.set(result.chatId, {
+          name: r.content,
+        });
+      }
+    );
+  }
+
+  return result;
 };
 
 /**

@@ -104,6 +104,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       appendToHistory?: ChatMessage[];
       template?: ParsedTemplateBlocks;
       blockIndex?: number;
+      name?: string;
     }
   ): Promise<VariableDictionaryInMemory> {
     log.debug(`Update chat session ${chatId}`);
@@ -128,6 +129,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       .set({
         messages: set.actualChat || session.actualChat,
         state: newState,
+        name: set.name ?? undefined,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(chatSessions.id, chatId));
