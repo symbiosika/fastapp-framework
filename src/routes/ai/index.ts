@@ -32,6 +32,13 @@ import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
 import { RESPONSES } from "../../lib/responses";
 import { addKnowledgeFromUrl } from "../../lib/ai/knowledge-texts";
 import { chatStoreInDb } from "../../lib/ai/smart-chat/chat-history";
+import {
+  getPromptSnippets,
+  getPromptSnippetById,
+  addPromptSnippet,
+  updatePromptSnippet,
+  deletePromptSnippet,
+} from "../../lib/ai/prompt-snippets";
 
 const FileSourceType = {
   DB: "db",
@@ -499,5 +506,76 @@ export default function defineRoutes(app: FastAppHono) {
     const id = c.req.param("id");
     await chatStoreInDb.drop(id);
     return c.json(RESPONSES.SUCCESS);
+  });
+
+  /**
+   * Get prompt snippets
+   * Optional URL params are:
+   * - name: string[] comma separated
+   * - category: string[] comma separated
+   */
+  app.get("/prompt-snippets/:id?", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const names = parseCommaSeparatedListFromUrlParam(
+        c.req.query("name"),
+        []
+      );
+      const categories = parseCommaSeparatedListFromUrlParam(
+        c.req.query("category"),
+        []
+      );
+
+      if (id) {
+        const snippet = await getPromptSnippetById(id);
+        return c.json(snippet);
+      }
+
+      const snippets = await getPromptSnippets({ names, categories });
+      return c.json(snippets);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Add a new prompt snippet
+   */
+  app.post("/prompt-snippets", async (c) => {
+    try {
+      const body = await c.req.json();
+      const usersId = c.get("usersId");
+      const snippet = await addPromptSnippet({ ...body, userId: usersId });
+      return c.json(snippet);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Update a prompt snippet
+   */
+  app.put("/prompt-snippets/:id", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
+      const snippet = await updatePromptSnippet(id, body);
+      return c.json(snippet);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Delete a prompt snippet
+   */
+  app.delete("/prompt-snippets/:id", async (c) => {
+    try {
+      const id = c.req.param("id");
+      await deletePromptSnippet(id);
+      return c.json(RESPONSES.SUCCESS);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
   });
 }
