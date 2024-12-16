@@ -385,7 +385,7 @@ const generateHeadlineFromChat = async (
 export const useTemplateChat = async (
   query: ChatWithTemplateInputWithUserId
 ) => {
-  let result;
+  let result: ChatWithTemplateReturn;
 
   if (query.initiateTemplate) {
     const templateDbEntry = await getPromptTemplateDefinition(
