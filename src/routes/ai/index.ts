@@ -39,6 +39,11 @@ import {
   updatePromptSnippet,
   deletePromptSnippet,
 } from "../../lib/ai/prompt-snippets";
+import {
+  getFullSourceDocumentsForSimilaritySearch,
+  getNearestEmbeddings,
+} from "../../lib/ai/knowledge/similarity-search";
+import log from "../../lib/log";
 
 const FileSourceType = {
   DB: "db",
@@ -120,6 +125,19 @@ const fineTuningDataValidation = v.object({
 export type FineTuningDataInput = v.InferOutput<
   typeof fineTuningDataValidation
 >;
+
+// Add these validation schemas near the top with other schemas
+const similaritySearchValidation = v.object({
+  searchText: v.string(),
+  n: v.optional(v.number()),
+  addBeforeN: v.optional(v.number()),
+  addAfterN: v.optional(v.number()),
+  filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+  filter: v.optional(v.record(v.string(), v.array(v.string()))),
+  filterName: v.optional(v.array(v.string())),
+  fullDocument: v.optional(v.boolean()),
+});
+type SimilaritySearchInput = v.InferOutput<typeof similaritySearchValidation>;
 
 /**
  * Define the payment routes
@@ -574,6 +592,122 @@ export default function defineRoutes(app: FastAppHono) {
       const id = c.req.param("id");
       await deletePromptSnippet(id);
       return c.json(RESPONSES.SUCCESS);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Search for similar documents (POST)
+   */
+  app.post("/knowledge/similarity-search", async (c) => {
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(similaritySearchValidation, body);
+
+      if (parsedBody.fullDocument) {
+        const r = await getFullSourceDocumentsForSimilaritySearch({
+          searchText: parsedBody.searchText,
+          n: parsedBody.n,
+          filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
+          filter: parsedBody.filter,
+          filterName: parsedBody.filterName,
+        });
+        return c.json(r);
+      }
+      const query = {
+        searchText: parsedBody.searchText,
+        n: parsedBody.n,
+        addBeforeN: parsedBody.addBeforeN,
+        addAfterN: parsedBody.addAfterN,
+        filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
+        filter: parsedBody.filter,
+        filterName: parsedBody.filterName,
+      };
+      log.debug(`POST /knowledge/similarity-search`, query);
+
+      const r = await getNearestEmbeddings(query);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Search for similar documents (GET)
+   * URL params:
+   * - search: string (required)
+   * - n: number
+   * - addBefore: number
+   * - addAfter: number
+   * - filterIds: string[] (comma separated)
+   * - filterName: string[] (comma separated)
+   * - fullDocument: boolean
+   * - filter[category]: string[] (comma separated) - can be multiple filter[xyz] params
+   */
+  app.get("/knowledge/similarity-search", async (c) => {
+    try {
+      const searchText = c.req.query("search");
+      if (!searchText) {
+        throw new Error("Search text is required");
+      }
+      const n = c.req.query("n")
+        ? parseInt(c.req.query("n") ?? "3")
+        : undefined;
+      const addBefore = c.req.query("addBefore")
+        ? parseInt(c.req.query("addBefore") ?? "0")
+        : undefined;
+      const addAfter = c.req.query("addAfter")
+        ? parseInt(c.req.query("addAfter") ?? "0")
+        : undefined;
+      const filterIds = c.req.query("filterIds")
+        ? c.req.query("filterIds")?.split(",")
+        : undefined;
+      const filterName = c.req.query("filterName")
+        ? c.req.query("filterName")?.split(",")
+        : undefined;
+      const fullDocument = c.req.query("fullDocument") === "true";
+
+      // Parse dynamic filters from URL params
+      const filter: Record<string, string[]> = {};
+      for (const [key, value] of Object.entries(c.req.query())) {
+        if (key.startsWith("filter[") && key.endsWith("]")) {
+          const category = key.slice(7, -1); // Remove 'filter[' and ']'
+          filter[category] = value.split(",");
+        }
+      }
+
+      log.debug(`GET /knowledge/similarity-search`, {
+        searchText,
+        n,
+        addBefore,
+        addAfter,
+        filterIds,
+        filter,
+        filterName,
+      });
+
+      if (fullDocument) {
+        const r = await getFullSourceDocumentsForSimilaritySearch({
+          searchText,
+          n,
+          filterKnowledgeEntryIds: filterIds,
+          filter,
+          filterName,
+        });
+        return c.json(r);
+      }
+
+      const r = await getNearestEmbeddings({
+        searchText,
+        n,
+        addBeforeN: addBefore,
+        addAfterN: addAfter,
+        filterKnowledgeEntryIds: filterIds,
+        filter,
+        filterName,
+      });
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
