@@ -438,8 +438,10 @@ export const useTemplateChat = async (
   if (query.userMessage && result.message) {
     generateHeadlineFromChat(query.userMessage, result.message.content).then(
       async (r) => {
+        // if the headline starts and ends with quotes remove them
+        const headline = r.content.replace(/^"|"$/g, "");
         await chatStoreInDb.set(result.chatId, {
-          name: r.content,
+          name: headline,
         });
       }
     );
