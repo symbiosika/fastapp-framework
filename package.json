@@ -4,7 +4,7 @@
   "author": "Symbiosika GmbH",
   "license": "proprietary",
   "homepage": "https://github.com/symbiosika/fastapp-framework#readme",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "keywords": [],
