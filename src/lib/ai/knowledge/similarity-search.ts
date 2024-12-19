@@ -54,9 +54,7 @@ export async function getNearestEmbeddings(q: {
 
   const filters = [];
   if (q.filterKnowledgeEntryIds) {
-    filters.push(
-      sql`${knowledgeEntry.id} IN (${sql.join(q.filterKnowledgeEntryIds)})`
-    );
+    filters.push(inArray(knowledgeEntry.id, q.filterKnowledgeEntryIds));
   }
 
   if (q.filter) {
@@ -137,10 +135,14 @@ export async function getNearestEmbeddings(q: {
             ${knowledgeChunks.id}, 
             ${knowledgeChunks.text},
             ${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
+            ${knowledgeEntry.name} AS "knowledgeEntryName",
             ${knowledgeChunks.order}
         FROM 
 		${knowledgeChunks}
-            WHERE ${knowledgeChunks.knowledgeEntryId} = ${e.knowledgeEntryId}
+        JOIN 
+            ${knowledgeEntry} ON ${knowledgeChunks.knowledgeEntryId} = ${knowledgeEntry.id}
+        WHERE 
+            ${knowledgeChunks.knowledgeEntryId} = ${e.knowledgeEntryId}
             AND ${knowledgeChunks.order} >= ${e.order - q.addBeforeN}
             AND ${knowledgeChunks.order} <= ${e.order + q.addAfterN}
         `);
