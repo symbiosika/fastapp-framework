@@ -1,8 +1,8 @@
 import log from "../../log";
-import { openai } from "../standard";
+import { openaiClient } from "../standard";
 import { getAllAiFunctionDescriptions } from "./function-calls";
 import * as v from "valibot";
-import type { ChatCompletionMessageParam } from "openai/resources";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getAllAiFunctionQaExamples } from "./function-calls";
 
 const systemPrompt = `
@@ -127,7 +127,7 @@ export const classifyFunctionMessage = async (
 
   await log.logAChat("FUNCTION_CLASSIFIER", ...messagesToSend);
 
-  const response = await openai.chat.completions.create({
+  const response = await openaiClient.chat.completions.create({
     model: "gpt-4o-mini-2024-07-18",
     functions: getAllAiFunctionDescriptions(),
     function_call: "none",

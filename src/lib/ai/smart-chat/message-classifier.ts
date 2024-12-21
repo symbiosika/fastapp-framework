@@ -1,5 +1,5 @@
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { FAST_TEXT_MODEL, openai } from "../standard";
+import { FAST_TEXT_MODEL, openaiClient } from "../standard";
 
 const systemPrompt = `
 You are a message classification assistant.
@@ -47,7 +47,7 @@ export const classifyMessage = async (
   // get the last two messages
   const lastTwoMessages = messages.slice(-2);
 
-  const response = await openai.chat.completions.create({
+  const response = await openaiClient.chat.completions.create({
     model: FAST_TEXT_MODEL,
     messages: [
       {

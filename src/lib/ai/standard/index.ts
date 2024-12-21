@@ -16,11 +16,25 @@ All functions should be designed to support different providers in the future!
  */
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 export const VISION_MODEL = "gpt-4-turbo";
-export const TEXT_MODEL = "gpt-4-turbo";
+export const TEXT_MODEL = "mistral-large-latest"; // "gpt-4-turbo";
 export const FAST_TEXT_MODEL = "gpt-3.5-turbo";
 export const TTS_MODEL = "tts-1";
 export const STT_MODEL = "whisper-1";
 export const IMAGE_GENERATION_MODEL = "dall-e-3";
+
+interface Model {
+  name: string;
+  label: string;
+  endpoint: string;
+  provider: string;
+  providerName: string;
+  maxTokens?: number;
+  maxOutputTokens?: number;
+}
+
+interface Provider {
+  [key: string]: Model;
+}
 
 interface MessageContent {
   type: string;
@@ -35,9 +49,221 @@ export interface Message {
   content: MessageContent[] | string;
 }
 
-export const openai = new OpenAIClient({
-  apiKey: process.env.OPENAI_API_KEY,
+interface ProviderToken {
+  [key: string]: string;
+}
+
+/**
+ * All available models
+ * OpenAI: https://platform.openai.com/docs/models
+ * Mistral: https://docs.mistral.ai/getting-started/models/models_overview/
+ */
+const TextModels: Provider = {
+  "openai:gpt-4": {
+    name: "gpt-4",
+    label: "GPT-4",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 8192, // Approximate context limit
+    maxOutputTokens: 8192, // Reasonable output limit within context
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:gpt-4-turbo": {
+    name: "gpt-4-turbo",
+    label: "GPT-4 Turbo",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:gpt-3.5-turbo": {
+    name: "gpt-3.5-turbo",
+    label: "GPT-3.5 Turbo",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 16385,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:gpt-4o": {
+    name: "gpt-4o",
+    label: "GPT-4o",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 128000,
+    maxOutputTokens: 16384,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:gpt-4o-mini": {
+    name: "gpt-4o-mini",
+    label: "GPT-4o Mini",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 128000,
+    maxOutputTokens: 16384,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:o1": {
+    name: "o1",
+    label: "O1",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 200000,
+    maxOutputTokens: 100000,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+  "openai:o1-mini": {
+    name: "o1-mini",
+    label: "O1 Mini",
+    provider: "openai",
+    providerName: "OpenAI",
+    maxTokens: 128000,
+    maxOutputTokens: 65536,
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+
+  "mistral:mistral-large-latest": {
+    name: "mistral-large-latest",
+    label: "Mistral Large",
+    provider: "mistral",
+    providerName: "Mistral",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+  "mistral:mistral-small-latest": {
+    name: "mistral-small-latest",
+    label: "Mistral Small",
+    provider: "mistral",
+    providerName: "Mistral",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+  "mistral:ministral-8b-latest": {
+    name: "ministral-8b-latest",
+    label: "Mistral 8B",
+    provider: "mistral",
+    providerName: "Mistral",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+  "mistral:codestral-latest": {
+    name: "codestral-latest",
+    label: "Mistral Code",
+    provider: "mistral",
+    providerName: "Mistral",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+};
+
+const MultiModalModels: Provider = {
+  "openai:gpt-4o": {
+    name: "gpt-4o",
+    label: "GPT-4o",
+    provider: "openai",
+    providerName: "OpenAI",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+  },
+
+  "mistral:pixtral-large-latest": {
+    name: "pixtral-large-latest",
+    label: "Pixtral Large",
+    provider: "mistral",
+    providerName: "Mistral",
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+};
+
+const TTSModels: Provider = {
+  "openai:tts-1": {
+    name: "tts-1",
+    label: "TTS",
+    provider: "openai",
+    providerName: "OpenAI",
+    endpoint: "https://api.openai.com/v1/audio/speech",
+  },
+};
+
+const STTModels: Provider = {
+  "openai:whisper-1": {
+    name: "whisper-1",
+    label: "Whisper",
+    provider: "openai",
+    providerName: "OpenAI",
+    endpoint: "https://api.openai.com/v1/audio/transcriptions",
+  },
+};
+
+const ImageGenerationModels: Provider = {
+  "openai:dall-e-3": {
+    name: "dall-e-3",
+    label: "Dall-E 3",
+    provider: "openai",
+    providerName: "OpenAI",
+    endpoint: "https://api.openai.com/v1/images/generations",
+  },
+};
+
+const providerTokens: ProviderToken = {
+  openai: process.env.OPENAI_API_KEY ?? "",
+  mistral: process.env.MISTRAL_API_KEY ?? "",
+  llama: process.env.LLAMA_CLOUD_API_KEY ?? "",
+};
+
+export const openaiClient = new OpenAIClient({
+  baseURL: "https://api.openai.com/v1",
+  apiKey: providerTokens.openai,
 });
+
+const mistralCleint = new OpenAIClient({
+  baseURL: "https://api.mistral.ai/v1",
+  apiKey: providerTokens.mistral,
+});
+
+/**
+ * Get all available AI models
+ */
+export const getAllAIModels = async (): Promise<{
+  chat: Provider;
+  multiModal: Provider;
+  tts: Provider;
+  stt: Provider;
+  imageGeneration: Provider;
+}> => {
+  return {
+    chat: TextModels,
+    multiModal: MultiModalModels,
+    tts: TTSModels,
+    stt: STTModels,
+    imageGeneration: ImageGenerationModels,
+  };
+};
+
+/**
+ * Get a providers token
+ */
+export const getProviderToken = (provider: string) => {
+  if (!providerTokens[provider]) {
+    throw new Error(`Provider ${provider} not found`);
+  }
+  return providerTokens[provider];
+};
+
+/**
+ * A helper to get a model by its name in the format of "provider:model"
+ */
+export const getChatModel = (name: string): Model => {
+  const modelInfo = TextModels[name as keyof typeof TextModels];
+  if (!modelInfo) {
+    throw new Error(`Model ${name} not found`);
+  }
+  return modelInfo;
+};
 
 /**
  * Generate an embedding for the given text
@@ -46,7 +272,7 @@ export async function generateEmbedding(
   text: string,
   embeddingModel: string = EMBEDDING_MODEL
 ) {
-  const response = await openai.embeddings.create({
+  const response = await openaiClient.embeddings.create({
     model: embeddingModel,
     input: text,
     encoding_format: "float",
@@ -81,7 +307,7 @@ export async function generateImageDescription(
   model: string = TEXT_MODEL
 ) {
   const base64Image = await encodeImageFromFile(image);
-  const response = await openai.chat.completions.create({
+  const response = await openaiClient.chat.completions.create({
     model,
     messages: [
       {
@@ -107,46 +333,59 @@ export async function generateImageDescription(
 }
 
 /**
- * Custom ChatCompletion function to generate a response for the given prompt.
- * Will respond with a JSON object always.
- */
-export async function chatCompletionAsJson(
-  messages: Message[],
-  model: string = TEXT_MODEL
-): Promise<Message[]> {
-  const completion = await openai.chat.completions.create({
-    messages: messages as any,
-    model,
-    response_format: { type: "json_object" },
-  });
-
-  const response = completion.choices[0].message.content;
-  try {
-    const parsedResponse = JSON.parse(response ?? "");
-    return parsedResponse;
-  } catch (error) {
-    log.error(`Error parsing JSON: ${error}. Response: ${response}`);
-    throw new Error(
-      `Result could not be parsed as JSON. Please check the Logs.`
-    );
-  }
-}
-
-/**
  * ChatCompletion function to generate a response for the given prompt.
  * Will respond with plain Text only.
  */
 export async function chatCompletion(
   messages: Message[],
-  model = TEXT_MODEL
+  options?: {
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    outputType?: "text" | "json";
+  }
 ): Promise<string> {
-  const completion = await openai.chat.completions.create({
-    messages: messages as any,
-    model,
-  });
+  try {
+    const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
+    const token = getProviderToken(model.provider);
+    // API Call
+    const req = {
+      model: model.name,
+      temperature: options?.temperature ?? 1,
+      stream: false,
+      messages: messages,
+      max_tokens: options?.maxTokens ?? null,
+      response_format:
+        options?.outputType === "json"
+          ? { type: "json_object" }
+          : { type: "text" },
+      n: 1,
+      // top_p: 1,
+      // stop: "string",
+      // random_seed: 0,
+      // presence_penalty: 0,
+      // frequency_penalty: 0,
+      safe_prompt: false,
+    };
+    const r = await fetch(model.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(req),
+    });
+    if (r.status !== 200) {
+      throw new Error(`API returned status ${r.status}`);
+    }
+    const completion = await r.json();
 
-  const response = completion.choices[0].message.content ?? "";
-  return response;
+    const newText = completion.choices[0].message.content ?? "";
+    return newText;
+  } catch (error) {
+    log.error(`Error in chatCompletion: ${error}`);
+    throw new Error("Failed to generate text");
+  }
 }
 
 /**
@@ -168,25 +407,57 @@ export async function generateLongText(
     maxRetries?: number;
     model?: string;
     maxTokens?: number;
+    temperature?: number;
   }
 ): Promise<{
   text: string;
   json?: any;
 }> {
   let output = "";
-  let currentMessages = [...messages];
+  let currentMessages = messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
   let retryCount = 0;
   let finished = false;
 
   while (!finished) {
     try {
-      const completion = await openai.chat.completions.create({
-        messages: currentMessages as any,
-        model: options?.model ?? TEXT_MODEL,
+      const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
+      const token = getProviderToken(model.provider);
+      // API Call
+      const req = {
+        model: model.name,
+        temperature: options?.temperature ?? 1,
+        stream: false,
+        messages: currentMessages,
         max_tokens: options?.maxTokens ?? undefined,
         response_format:
-          options?.outputType === "json" ? { type: "json_object" } : undefined,
+          options?.outputType === "json"
+            ? { type: "json_object" }
+            : { type: "text" },
+        n: 1,
+        // top_p: 1,
+        // stop: "string",
+        // random_seed: 0,
+        // presence_penalty: 0,
+        // frequency_penalty: 0,
+        safe_prompt: model.provider === "mistral" ? false : undefined,
+      };
+      // console.log(req);
+      const r = await fetch(model.endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(req),
       });
+      if (r.status !== 200) {
+        throw new Error(`API returned status ${r.status}`);
+      }
+      const completion = await r.json();
+      // console.log("completion", completion.choices[0]);
 
       const newText = completion.choices[0].message.content ?? "";
       output += newText;
@@ -217,6 +488,10 @@ export async function generateLongText(
       retryCount++;
       if (options?.maxRetries && retryCount >= options.maxRetries) {
         throw new Error("Failed to generate text after maximum retries");
+      }
+      if (!options?.maxRetries) {
+        finished = true;
+        throw new Error("Stopped to generate text after 1 try");
       }
     }
   }
@@ -273,7 +548,7 @@ export const speechToText = async (
     createTimestampGranularities.push("word");
   }
 
-  const transcription = await openai.audio.transcriptions.create({
+  const transcription = await openaiClient.audio.transcriptions.create({
     file: fileToUpload,
     model,
     response_format: "verbose_json",
@@ -295,7 +570,7 @@ export const generateImage = async (
   width: number = 1024,
   height: number = 1024
 ) => {
-  const response = await openai.images.generate({
+  const response = await openaiClient.images.generate({
     model,
     prompt: `${prompt} ${negativePrompt ? `. It contains not ${negativePrompt}` : ""}`,
     n: 1,
@@ -321,7 +596,7 @@ export const textToSpeech = async (
   file: File;
   filename: string;
 }> => {
-  const mp3 = await openai.audio.speech.create({
+  const mp3 = await openaiClient.audio.speech.create({
     model: TTS_MODEL,
     voice,
     input: text,

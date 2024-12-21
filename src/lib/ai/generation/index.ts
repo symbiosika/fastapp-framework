@@ -26,11 +26,14 @@ import { chatStoreInDb } from "../smart-chat/chat-history";
  * Wrapper function for generateLongText that matches the LlmWrapper type signature
  */
 export const generateLongTextWrapper: LlmWrapper = async (
-  messages: Message[],
-  maxTokens?: number
+  messages,
+  options
 ) => {
   const result = await generateLongText(messages as any, {
-    maxTokens,
+    maxTokens: options?.maxTokens,
+    model: options?.model,
+    temperature: options?.temperature,
+    outputType: options?.outputType,
   });
   return result.text;
 };
@@ -395,6 +398,7 @@ export const useTemplateChat = async (
       templateDbEntry.template
     );
     const r = await templateChat.chat({
+      llmOptions: query.llmOptions,
       chatId: query.chatId,
       userId: query.userId,
       userMessage: query.userMessage,
@@ -408,6 +412,7 @@ export const useTemplateChat = async (
       message: r.result.message,
       meta: r.result.meta,
       finished: r.result.finished,
+      llmOptions: query.llmOptions,
       render: {
         type: "markdown",
       },
@@ -418,6 +423,7 @@ export const useTemplateChat = async (
       chatId: query.chatId,
       userId: query.userId,
       userMessage: query.userMessage,
+      llmOptions: query.llmOptions,
       trigger: query.trigger,
       usersVariables: query.variables,
     });
@@ -427,6 +433,7 @@ export const useTemplateChat = async (
       message: r.result.message,
       meta: r.result.meta,
       finished: r.result.finished,
+      llmOptions: query.llmOptions,
       render: {
         type: "markdown",
       },

@@ -1,7 +1,7 @@
-import { openai } from "../standard";
+import { openaiClient } from "../standard";
 
 export const isContentAllowed = async (message: string): Promise<boolean> => {
-  const response = await openai.moderations.create({
+  const response = await openaiClient.moderations.create({
     input: message,
   });
 

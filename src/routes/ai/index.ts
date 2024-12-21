@@ -44,6 +44,7 @@ import {
   getNearestEmbeddings,
 } from "../../lib/ai/knowledge/similarity-search";
 import log from "../../lib/log";
+import { getAllAIModels } from "../../lib/ai/standard";
 
 const FileSourceType = {
   DB: "db",
@@ -70,6 +71,13 @@ const chatWithTemplateValidation = v.object({
   userMessage: v.optional(v.string()),
   variables: v.optional(
     v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
+  ),
+  llmOptions: v.optional(
+    v.object({
+      model: v.optional(v.string()),
+      maxTokens: v.optional(v.number()),
+      temperature: v.optional(v.number()),
+    })
   ),
 });
 type ChatWithTemplateInput = v.InferOutput<typeof chatWithTemplateValidation>;
@@ -143,6 +151,14 @@ type SimilaritySearchInput = v.InferOutput<typeof similaritySearchValidation>;
  * Define the payment routes
  */
 export default function defineRoutes(app: FastAppHono) {
+  /**
+   * Get all available models
+   */
+  app.get("/models", async (c) => {
+    const r = await getAllAIModels();
+    return c.json(r);
+  });
+
   /**
    * Get a plain template
    * URL params:
@@ -302,6 +318,7 @@ export default function defineRoutes(app: FastAppHono) {
       const body = await c.req.json();
       const usersId = c.get("usersId");
       const parsedBody = v.parse(chatWithTemplateValidation, body);
+
       const r = await useTemplateChat({ ...parsedBody, userId: usersId });
       return c.json(r);
     } catch (e) {
