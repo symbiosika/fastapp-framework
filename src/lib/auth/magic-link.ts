@@ -73,10 +73,26 @@ export const sendMagicLink = async (
             <h2 style="color: #4a4a4a;">Login to ${_GLOBAL_SERVER_CONFIG.appName}</h2>
             <p>Hello,</p>
             <p>You've requested to log in to your account. Click the button below to securely access your account:</p>
-            <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
               <tr>
-                <td style="background-color: #007bff; border-radius: 5px; padding: 12px 25px;">
-                  <a href="${magicLink}" style="color: #ffffff; text-decoration: none; display: inline-block; font-size: 16px;">Log In Now</a>
+                <td align="center" valign="middle" style="border-radius: 5px; background-color: #007bff;">
+                  <a
+                    href="${magicLink}"
+                    role="button"
+                    style="
+                      display: inline-block;
+                      font-size: 16px;
+                      font-weight: 600;
+                      color: #ffffff;
+                      text-decoration: none;
+                      padding: 12px 25px;
+                      border: 1px solid #007bff;
+                      border-radius: 5px;
+                      background-color: #007bff;
+                    "
+                  >
+                    Log In Now
+                  </a>
                 </td>
               </tr>
             </table>
@@ -104,22 +120,38 @@ export const sendVerificationEmail = async (email: string) => {
   await smtpService.sendMail({
     sender: process.env.SMTP_FROM,
     recipients: [email],
-    subject: "Verify your Email" + _GLOBAL_SERVER_CONFIG.appName,
+    subject: "Verify your Email " + _GLOBAL_SERVER_CONFIG.appName,
     html: `
       <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #4a4a4a;">Verify your Email</h2>
             <p>Hello,</p>
-            <p>You've requested to verify your email. Click the button below to securely access your account:</p>
-            <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+            <p>You've requested to verify your email. Click the button below to securely confirm your email:</p>
+            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
               <tr>
-                <td style="background-color: #007bff; border-radius: 5px; padding: 12px 25px;">
-                  <a href="${magicLink}" style="color: #ffffff; text-decoration: none; display: inline-block; font-size: 16px;">Log In Now</a>
+                <td align="center" valign="middle" style="border-radius: 5px; background-color: #007bff;">
+                  <a
+                    href="${magicLink}"
+                    role="button"
+                    style="
+                      display: inline-block;
+                      font-size: 16px;
+                      font-weight: 600;
+                      color: #ffffff;
+                      text-decoration: none;
+                      padding: 12px 25px;
+                      border: 1px solid #007bff;
+                      border-radius: 5px;
+                      background-color: #007bff;
+                    "
+                  >
+                    Verify Email
+                  </a>
                 </td>
               </tr>
             </table>
-            <p>If you didn't request this login link, you can safely ignore this email.</p>
+            <p>If you didn't request this verification link, you can safely ignore this email.</p>
             <p>This link will expire in 15 minutes for security reasons.</p>
             <p>Best regards,<br>The ${_GLOBAL_SERVER_CONFIG.appName} Team</p>
           </div>
