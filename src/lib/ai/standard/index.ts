@@ -106,7 +106,7 @@ const TextModels: Provider = {
   },
   "openai:o1": {
     name: "o1",
-    label: "O1",
+    label: "GPT o1",
     provider: "openai",
     providerName: "OpenAI",
     maxTokens: 200000,
@@ -115,7 +115,7 @@ const TextModels: Provider = {
   },
   "openai:o1-mini": {
     name: "o1-mini",
-    label: "O1 Mini",
+    label: "GPT o1 Mini",
     provider: "openai",
     providerName: "OpenAI",
     maxTokens: 128000,
