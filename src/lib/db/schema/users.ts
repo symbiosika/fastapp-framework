@@ -22,6 +22,24 @@ import { activeSubscriptions, purchases } from "./payment";
 import { promptSnippets } from "./prompts";
 import { chatSessions } from "./chat";
 
+export const organisations = pgBaseTable(
+  "organisations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (organisations) => [unique("organisations_name_idx").on(organisations.name)]
+);
+
 export const users = pgBaseTable(
   "users",
   {
@@ -43,6 +61,9 @@ export const users = pgBaseTable(
       .defaultNow(),
     extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }),
   },
   (users) => [
     index("users_email_idx").on(users.email),
@@ -89,6 +110,9 @@ export const userGroups = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }),
   },
   (userGroups) => [
     index("user_groups_name_idx").on(userGroups.name),
@@ -156,11 +180,11 @@ export const pathPermissions = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    system: boolean("system").notNull().default(false),
-    category: varchar("category", { length: 255 }).notNull(),
-    name: varchar("name", { length: 255 }).notNull(),
-    description: text("description"),
-    type: permissionTypeEnum("type").notNull().default("regex"),
+    system: boolean("system").notNull().default(false), // if the permission is system-wide
+    category: varchar("category", { length: 255 }).notNull(), // a category for the permission. e.g. "manage-teams"
+    name: varchar("name", { length: 255 }).notNull(), // a unique name for the permission
+    description: text("description"), // optional description for the permission
+    type: permissionTypeEnum("type").notNull().default("regex"), // at the moment only regex is supported
     method: varchar("method", { length: 10 }).notNull(), // GET, POST, DELETE, PUT
     pathExpression: text("path_expression").notNull(), // e.g. "^/api/.*$"
     createdAt: timestamp("created_at", { mode: "string" })
@@ -169,6 +193,9 @@ export const pathPermissions = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }), // optional
   },
   (permissions) => [
     unique("unique_category_name").on(permissions.category, permissions.name),
@@ -221,6 +248,9 @@ export const teams = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
   },
   (teams) => [unique("teams_name_idx").on(teams.name)]
 );
@@ -255,6 +285,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   promptSnippets: many(promptSnippets),
   teamMembers: many(teamMembers),
   chatSessions: many(chatSessions),
+  organisation: one(organisations, {
+    fields: [users.organisationId],
+    references: [organisations.id],
+  }),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -266,14 +300,22 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const pathPermissionsRelations = relations(
   pathPermissions,
-  ({ many }) => ({
+  ({ many, one }) => ({
     groupPermissions: many(groupPermissions),
+    organisation: one(organisations, {
+      fields: [pathPermissions.organisationId],
+      references: [organisations.id],
+    }),
   })
 );
 
-export const userGroupsRelations = relations(userGroups, ({ many }) => ({
+export const userGroupsRelations = relations(userGroups, ({ many, one }) => ({
   userGroupMembers: many(userGroupMembers),
   groupPermissions: many(groupPermissions),
+  organisation: one(organisations, {
+    fields: [userGroups.organisationId],
+    references: [organisations.id],
+  }),
 }));
 
 export const userGroupMembersRelations = relations(
@@ -304,8 +346,12 @@ export const groupPermissionsRelations = relations(
   })
 );
 
-export const teamsRelations = relations(teams, ({ many }) => ({
+export const teamsRelations = relations(teams, ({ many, one }) => ({
   teamMembers: many(teamMembers),
+  organisation: one(organisations, {
+    fields: [teams.organisationId],
+    references: [organisations.id],
+  }),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
