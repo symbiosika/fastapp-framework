@@ -95,9 +95,9 @@ export const sessions = pgBaseTable(
 export type SessionsSelect = typeof sessions.$inferSelect;
 export type SessionsInsert = typeof sessions.$inferInsert;
 
-// User Groups Table
-export const userGroups = pgBaseTable(
-  "user_groups",
+// User Permission Groups Table
+export const userPermissionGroups = pgBaseTable(
+  "user_permission_groups",
   {
     id: uuid("id")
       .primaryKey()
@@ -114,14 +114,18 @@ export const userGroups = pgBaseTable(
       onDelete: "cascade",
     }),
   },
-  (userGroups) => [
-    index("user_groups_name_idx").on(userGroups.name),
-    index("user_groups_created_at_idx").on(userGroups.createdAt),
+  (userPermissionGroups) => [
+    index("user_permission_groups_name_idx").on(userPermissionGroups.name),
+    index("user_permission_groups_created_at_idx").on(
+      userPermissionGroups.createdAt
+    ),
   ]
 );
 
-export type UserGroupsSelect = typeof userGroups.$inferSelect;
-export type UserGroupsInsert = typeof userGroups.$inferInsert;
+export type UserPermissionGroupsSelect =
+  typeof userPermissionGroups.$inferSelect;
+export type UserPermissionGroupsInsert =
+  typeof userPermissionGroups.$inferInsert;
 
 // User Group Members Table
 export const userGroupMembers = pgBaseTable(
@@ -132,7 +136,7 @@ export const userGroupMembers = pgBaseTable(
       .references(() => users.id, { onDelete: "cascade" }),
     userGroupId: uuid("user_groups_id")
       .notNull()
-      .references(() => userGroups.id, { onDelete: "cascade" }),
+      .references(() => userPermissionGroups.id, { onDelete: "cascade" }),
   },
   (userGroupMember) => [
     primaryKey({
@@ -213,7 +217,7 @@ export const groupPermissions = pgBaseTable(
   {
     groupId: uuid("group_id")
       .notNull()
-      .references(() => userGroups.id, { onDelete: "cascade" }),
+      .references(() => userPermissionGroups.id, { onDelete: "cascade" }),
     permissionId: uuid("permission_id")
       .notNull()
       .references(() => pathPermissions.id, { onDelete: "cascade" }),
@@ -309,14 +313,17 @@ export const pathPermissionsRelations = relations(
   })
 );
 
-export const userGroupsRelations = relations(userGroups, ({ many, one }) => ({
-  userGroupMembers: many(userGroupMembers),
-  groupPermissions: many(groupPermissions),
-  organisation: one(organisations, {
-    fields: [userGroups.organisationId],
-    references: [organisations.id],
-  }),
-}));
+export const userPermissionGroupsRelations = relations(
+  userPermissionGroups,
+  ({ many, one }) => ({
+    userGroupMembers: many(userGroupMembers),
+    groupPermissions: many(groupPermissions),
+    organisation: one(organisations, {
+      fields: [userPermissionGroups.organisationId],
+      references: [organisations.id],
+    }),
+  })
+);
 
 export const userGroupMembersRelations = relations(
   userGroupMembers,
@@ -325,9 +332,9 @@ export const userGroupMembersRelations = relations(
       fields: [userGroupMembers.userId],
       references: [users.id],
     }),
-    userGroups: one(userGroups, {
+    userPermissionGroups: one(userPermissionGroups, {
       fields: [userGroupMembers.userGroupId],
-      references: [userGroups.id],
+      references: [userPermissionGroups.id],
     }),
   })
 );
@@ -335,9 +342,9 @@ export const userGroupMembersRelations = relations(
 export const groupPermissionsRelations = relations(
   groupPermissions,
   ({ one }) => ({
-    group: one(userGroups, {
+    group: one(userPermissionGroups, {
       fields: [groupPermissions.groupId],
-      references: [userGroups.id],
+      references: [userPermissionGroups.id],
     }),
     permission: one(pathPermissions, {
       fields: [groupPermissions.permissionId],

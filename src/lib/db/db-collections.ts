@@ -5,7 +5,7 @@ import {
   teamMembers,
   teams,
   userGroupMembers,
-  userGroups,
+  userPermissionGroups,
   users,
   userSpecificData,
 } from "./db-schema";
@@ -49,7 +49,7 @@ export const initializeCollectionPermissions = (
       GET: {
         customWhere(params) {
           return inArray(
-            userGroups.id,
+            userPermissionGroups.id,
             getDb()
               .select({ id: userGroupMembers.userGroupId })
               .from(userGroupMembers)
