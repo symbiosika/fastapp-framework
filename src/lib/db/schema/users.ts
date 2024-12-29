@@ -364,3 +364,42 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
     references: [teams.id],
   }),
 }));
+
+export const organisationInvitationStatusEnum = pgEnum(
+  "organisation_invitation_status",
+  ["pending", "accepted", "declined"]
+);
+
+export const organisationInvitations = pgBaseTable(
+  "organisation_invitations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    email: text("email").notNull(), // cannot be the userId since a user is maybe not registered yet
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 50 }).notNull().default("pending"), // Status der Einladung: pending, accepted, declined
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (organisationInvitations) => [
+    uniqueIndex("unique_invitation").on(
+      organisationInvitations.email,
+      organisationInvitations.organisationId
+    ),
+    index("invitations_status_idx").on(organisationInvitations.status),
+    index("invitations_created_at_idx").on(organisationInvitations.createdAt),
+    index("invitations_email_idx").on(organisationInvitations.email),
+  ]
+);
+
+export type OrganisationInvitationsSelect =
+  typeof organisationInvitations.$inferSelect;
+export type OrganisationInvitationsInsert =
+  typeof organisationInvitations.$inferInsert;
