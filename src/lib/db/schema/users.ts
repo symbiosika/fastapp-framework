@@ -64,6 +64,12 @@ export const users = pgBaseTable(
       .defaultNow(),
     extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
+    lastOrganisationId: uuid("last_organisation_id").references(
+      () => organisations.id,
+      {
+        onDelete: "set null",
+      }
+    ),
   },
   (users) => [
     index("users_email_idx").on(users.email),

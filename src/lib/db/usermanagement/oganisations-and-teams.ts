@@ -1,5 +1,5 @@
 import { getDb } from "../db-connection";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import {
   organisations,
   teams,
@@ -15,6 +15,8 @@ import {
   TeamsInsert,
   UserPermissionGroupsInsert,
   PathPermissionsInsert,
+  users,
+  organisationMembers,
 } from "../schema/users";
 
 // Organisation CRUD
@@ -207,4 +209,102 @@ export const removePermissionFromGroup = async (
         eq(groupPermissions.permissionId, permissionId)
       )
     );
+};
+
+export const getUserOrganisations = async (userId: string) => {
+  return await getDb()
+    .select({
+      organisation: organisations,
+      role: organisationMembers.role,
+    })
+    .from(organisationMembers)
+    .innerJoin(
+      organisations,
+      eq(organisations.id, organisationMembers.organisationId)
+    )
+    .where(eq(organisationMembers.userId, userId));
+};
+
+export const getLastOrganisation = async (userId: string) => {
+  const user = await getDb()
+    .select({
+      lastOrganisationId: users.lastOrganisationId,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (!user[0]?.lastOrganisationId) return null;
+
+  return await getOrganisation(user[0].lastOrganisationId);
+};
+
+export const setLastOrganisation = async (
+  userId: string,
+  organisationId: string
+) => {
+  // Prüfen ob User Mitglied der Organisation ist
+  const membership = await getDb()
+    .select()
+    .from(organisationMembers)
+    .where(
+      and(
+        eq(organisationMembers.userId, userId),
+        eq(organisationMembers.organisationId, organisationId)
+      )
+    );
+
+  if (!membership.length) {
+    throw new Error("User is not a member of this organisation");
+  }
+
+  return await getDb()
+    .update(users)
+    .set({ lastOrganisationId: organisationId })
+    .where(eq(users.id, userId))
+    .returning();
+};
+
+export const getTeamsAndMembersByOrganisation = async (
+  organisationId: string
+) => {
+  return await getDb()
+    .select({
+      team: teams,
+      members: sql<Array<{ userId: string; role: string | null }>>`
+        json_agg(
+          json_build_object(
+            'userId', ${teamMembers.userId},
+            'role', ${teamMembers.role}
+          )
+        )`,
+    })
+    .from(teams)
+    .leftJoin(teamMembers, eq(teams.id, teamMembers.teamId))
+    .where(eq(teams.organisationId, organisationId))
+    .groupBy(teams.id);
+};
+
+export const getPermissionsByOrganisation = async (organisationId: string) => {
+  return await getDb()
+    .select({
+      group: userPermissionGroups,
+      permissions: sql<Array<{ id: string; name: string }>>`
+        json_agg(
+          json_build_object(
+            'id', ${pathPermissions.id},
+            'name', ${pathPermissions.name}
+          )
+        )`,
+    })
+    .from(userPermissionGroups)
+    .leftJoin(
+      groupPermissions,
+      eq(userPermissionGroups.id, groupPermissions.groupId)
+    )
+    .leftJoin(
+      pathPermissions,
+      eq(groupPermissions.permissionId, pathPermissions.id)
+    )
+    .where(eq(userPermissionGroups.organisationId, organisationId))
+    .groupBy(userPermissionGroups.id);
 };

@@ -1,183 +1,355 @@
 # User Management API Endpoints
 
-These endpoints allow you to manage user accounts, including authentication, registration, and profile management.
+These endpoints allow you to manage organizations, teams, permissions, and invitations within the system.
+
+## Organization Management
+
+### Create Organization
+
+Creates a new organization.
+
+```http
+POST /api/v1/usermanagement/organisations
+```
+
+#### Request Body
+
+```json
+{
+  "name": "My Organization",
+  "description": "Organization description"
+}
+```
+
+### Get Organization
+
+Retrieves a specific organization by ID.
+
+```http
+GET /api/v1/usermanagement/organisations/:id
+```
+
+### Update Organization
+
+Updates an existing organization.
+
+```http
+PUT /api/v1/usermanagement/organisations/:id
+```
+
+#### Request Body
+
+```json
+{
+  "name": "Updated Name",
+  "description": "Updated description"
+}
+```
+
+### Delete Organization
+
+Deletes an organization.
+
+```http
+DELETE /api/v1/usermanagement/organisations/:id
+```
+
+## Team Management
+
+### Create Team
+
+Creates a new team within an organization.
+
+```http
+POST /api/v1/usermanagement/teams
+```
+
+#### Request Body
+
+```json
+{
+  "name": "Team Name",
+  "description": "Team description",
+  "organisationId": "org-uuid",
+  "meta": {} // Optional metadata
+}
+```
+
+### Get Teams by Organization
+
+Retrieves all teams and their members for a specific organization.
+
+```http
+GET /api/v1/usermanagement/organisations/:orgId/teams
+```
+
+### Update Team
+
+Updates an existing team.
+
+```http
+PUT /api/v1/usermanagement/teams/:id
+```
+
+#### Request Body
+
+```json
+{
+  "name": "Updated Team Name",
+  "description": "Updated description",
+  "meta": {} // Optional metadata
+}
+```
+
+### Delete Team
+
+Deletes a team.
+
+```http
+DELETE /api/v1/usermanagement/teams/:id
+```
+
+## Team Member Management
+
+### Add Team Member
+
+Adds a user to a team.
+
+```http
+POST /api/v1/usermanagement/teams/:teamId/members
+```
+
+#### Request Body
+
+```json
+{
+  "userId": "user-uuid",
+  "role": "member" // Optional role
+}
+```
+
+### Remove Team Member
+
+Removes a user from a team.
+
+```http
+DELETE /api/v1/usermanagement/teams/:teamId/members/:userId
+```
+
+## Permission Management
+
+### Create Permission Group
+
+Creates a new permission group.
+
+```http
+POST /api/v1/usermanagement/permission-groups
+```
+
+#### Request Body
+
+```json
+{
+  "name": "Group Name",
+  "meta": {}, // Optional metadata
+  "organisationId": "org-uuid"
+}
+```
+
+### Get Permission Group
+
+Retrieves a specific permission group.
+
+```http
+GET /api/v1/usermanagement/permission-groups/:id
+```
+
+### Update Permission Group
+
+Updates an existing permission group.
+
+```http
+PUT /api/v1/usermanagement/permission-groups/:id
+```
+
+#### Request Body
+
+```json
+{
+  "name": "Updated Group Name",
+  "meta": {} // Optional metadata
+}
+```
+
+### Delete Permission Group
+
+Deletes a permission group.
+
+```http
+DELETE /api/v1/usermanagement/permission-groups/:id
+```
+
+## Path Permissions
+
+### Create Path Permission
+
+Creates a new path permission.
+
+```http
+POST /api/v1/usermanagement/path-permissions
+```
+
+#### Request Body
+
+```json
+{
+  "system": false,
+  "category": "manage-teams",
+  "name": "permission-name",
+  "description": "Permission description",
+  "method": "GET",
+  "pathExpression": "^/api/.*$",
+  "organisationId": "org-uuid" // Optional
+}
+```
+
+### Get Path Permission
+
+Retrieves a specific path permission.
+
+```http
+GET /api/v1/usermanagement/path-permissions/:id
+```
+
+### Update Path Permission
+
+Updates an existing path permission.
+
+```http
+PUT /api/v1/usermanagement/path-permissions/:id
+```
+
+### Delete Path Permission
+
+Deletes a path permission.
+
+```http
+DELETE /api/v1/usermanagement/path-permissions/:id
+```
+
+## Permission Assignment
+
+### Assign Permission to Group
+
+Assigns a permission to a permission group.
+
+```http
+POST /api/v1/usermanagement/permission-groups/:groupId/permissions/:permissionId
+```
+
+### Remove Permission from Group
+
+Removes a permission from a permission group.
+
+```http
+DELETE /api/v1/usermanagement/permission-groups/:groupId/permissions/:permissionId
+```
+
+## Organization Invitations
+
+### Create Invitation
+
+Creates a new organization invitation.
+
+```http
+POST /api/v1/usermanagement/invitations
+```
+
+#### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "organisationId": "org-uuid"
+}
+```
+
+### Get All Invitations
+
+Retrieves all organization invitations.
+
+```http
+GET /api/v1/usermanagement/invitations
+```
+
+### Accept Invitation
+
+Accepts an organization invitation.
+
+```http
+POST /api/v1/usermanagement/invitations/:id/accept
+```
+
+Note: Use `id=all` to accept all pending invitations for the authenticated user.
+
+### Decline Invitation
+
+Declines an organization invitation.
+
+```http
+POST /api/v1/usermanagement/invitations/:id/decline
+```
+
+## User Organization Management
+
+### Get User Organizations
+
+Retrieves all organizations for the authenticated user.
+
+```http
+GET /api/v1/usermanagement/my-organisations
+```
+
+### Get Last Organization
+
+Retrieves the last accessed organization for the authenticated user.
+
+```http
+GET /api/v1/usermanagement/last-organisation
+```
+
+### Set Last Organization
+
+Sets the last accessed organization for the authenticated user.
+
+```http
+POST /api/v1/usermanagement/set-last-organisation/:id
+```
+
+### Get Organization Permission Groups
+
+Retrieves all permission groups for a specific organization.
+
+```http
+GET /api/v1/usermanagement/organisations/:orgId/permission-groups
+```
 
 ## Authentication
 
-### Login
+All endpoints require authentication using the `authAndSetUsersInfo` middleware. The user's ID will be available in the context as `usersId`.
 
-Authenticates a user and returns a JWT token.
+## Error Handling
 
-```http
-POST /api/v1/user/login
-```
+All endpoints return appropriate HTTP status codes:
 
-### Request Body
+- 200: Success
+- 404: Resource not found
+- 500: Server error with error message
 
-```json
-{
-  "email": "user@example.com",
-  "password": "your_password",
-  "magicLinkToken": "optional_magic_link_token",
-  "redirectUrl": "optional_redirect_url"
-}
-```
-
-### Parameters
-
-| Parameter        | Type    | Description                                     |
-| ---------------- | ------- | ----------------------------------------------- |
-| `email`          | string  | User's email address                            |
-| `password`       | string  | User's password                                 |
-| `magicLinkToken` | string? | Optional token for magic link authentication    |
-| `redirectUrl`    | string? | Optional URL to redirect after successful login |
-
-## User Profile
-
-### Get Current User
-
-Retrieves the profile of the authenticated user.
-
-```http
-GET /api/v1/user/me
-```
-
-### Response
+Error responses include a message field explaining the error:
 
 ```json
 {
-  "userId": "user-id",
-  "email": "user@example.com",
-  "firstname": "John",
-  "surname": "Doe",
-  "image": "profile-image-url",
-  "meta": {}
+  "message": "Error description"
 }
 ```
-
-### Update Profile
-
-Updates the current user's profile information.
-
-```http
-PUT /api/v1/user/me
-```
-
-### Request Body
-
-```json
-{
-  "firstname": "John",
-  "surname": "Doe",
-  "image": "profile-image-url"
-}
-```
-
-## User Registration
-
-### Register New User
-
-Creates a new user account.
-
-```http
-POST /api/v1/user/register
-```
-
-### Request Body
-
-```json
-{
-  "email": "newuser@example.com",
-  "password": "secure_password",
-  "sendVerificationEmail": true,
-  "meta": {}
-}
-```
-
-### Parameters
-
-| Parameter               | Type    | Description                                           |
-| ----------------------- | ------- | ----------------------------------------------------- |
-| `email`                 | string  | User's email address                                  |
-| `password`              | string  | User's password                                       |
-| `sendVerificationEmail` | boolean | Whether to send verification email (defaults to true) |
-| `meta`                  | object  | Optional metadata for custom verifications            |
-
-## Email Verification
-
-### Send Verification Email
-
-Sends a verification email to the user.
-
-```http
-GET /api/v1/user/send-verification-email?email=user@example.com
-```
-
-### Parameters
-
-| Parameter | Type   | Description             |
-| --------- | ------ | ----------------------- |
-| `email`   | string | Email address to verify |
-
-### Verify Email
-
-Verifies a user's email address using a token.
-
-```http
-GET /api/v1/user/verify-email?token=verification_token
-```
-
-### Parameters
-
-| Parameter | Type   | Description                           |
-| --------- | ------ | ------------------------------------- |
-| `token`   | string | Verification token received via email |
-
-## User Search
-
-### Search Users by Email
-
-Search for a user by their email address.
-
-```http
-GET /api/v1/user/search?email=user@example.com
-```
-
-### Parameters
-
-| Parameter | Type   | Description                 |
-| --------- | ------ | --------------------------- |
-| `email`   | string | Email address to search for |
-
-### Response
-
-```json
-{
-  "id": "user-id",
-  "email": "user@example.com",
-  "firstname": "John",
-  "surname": "Doe"
-}
-```
-
-## Magic Link Authentication
-
-### Request Magic Link
-
-Sends a magic link for passwordless authentication.
-
-```http
-GET /api/v1/user/send-magic-link?email=user@example.com
-```
-
-### Parameters
-
-| Parameter | Type   | Description                         |
-| --------- | ------ | ----------------------------------- |
-| `email`   | string | Email address to send magic link to |
-
-## Notes
-
-- All secured endpoints require a valid JWT token in the `Cookie` header (`jwt=token`)
-- Magic link authentication is available as an alternative to password-based login
-- The API supports custom pre-registration verifications that can be configured server-side
