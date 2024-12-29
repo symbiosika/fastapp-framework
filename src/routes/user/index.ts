@@ -63,6 +63,7 @@ export function defineSecuredUserRoutes(
           surname: users.surname,
           image: users.image,
           meta: users.meta,
+          lastOrganisationId: users.lastOrganisationId,
         })
         .from(users)
         .where(eq(users.id, id));
