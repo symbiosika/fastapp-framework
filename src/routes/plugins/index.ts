@@ -90,7 +90,7 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/installed/organisation/:organisationId",
+    API_BASE_PATH + "/plugins/organisation/:organisationId/installed",
     authAndSetUsersInfo,
     async (c) => {
       try {
@@ -110,7 +110,7 @@ export default function definePluginRoutes(
    * Register a new plugin
    */
   app.post(
-    API_BASE_PATH + "/plugins/installed/organisation/:organisationId",
+    API_BASE_PATH + "/plugins/organisation/:organisationId/installed",
     authAndSetUsersInfo,
     async (c) => {
       const organisationId = c.req.param("organisationId");
@@ -137,7 +137,7 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
+    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
@@ -163,7 +163,7 @@ export default function definePluginRoutes(
    * Update plugin configuration
    */
   app.put(
-    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
+    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
@@ -193,7 +193,7 @@ export default function definePluginRoutes(
    * Delete a plugin configuration
    */
   app.delete(
-    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
+    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");

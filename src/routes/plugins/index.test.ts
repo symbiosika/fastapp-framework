@@ -42,7 +42,7 @@ describe("Plugin API Endpoints", () => {
     registerServerPlugin(mockPlugin);
 
     await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/test-plugin`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed/test-plugin`,
       {
         method: "DELETE",
         headers: {
@@ -76,7 +76,7 @@ describe("Plugin API Endpoints", () => {
       },
     };
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed`,
       {
         method: "POST",
         headers: {
@@ -107,7 +107,7 @@ describe("Plugin API Endpoints", () => {
       },
     };
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed`,
       {
         method: "POST",
         headers: {
@@ -127,7 +127,7 @@ describe("Plugin API Endpoints", () => {
   // Test getting installed plugins
   it("should list installed plugins", async () => {
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed`,
       {
         method: "GET",
         headers: {
@@ -162,7 +162,7 @@ describe("Plugin API Endpoints", () => {
     };
 
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${createdPlugin.id}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed/${createdPlugin.id}`,
       {
         method: "PUT",
         headers: {
@@ -179,7 +179,7 @@ describe("Plugin API Endpoints", () => {
   // Test getting single plugin
   it("should get single plugin by ID", async () => {
     const listResponse = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed`,
       {
         method: "GET",
         headers: {
@@ -190,7 +190,7 @@ describe("Plugin API Endpoints", () => {
     const plugins = await listResponse.json();
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed/${testPlugin.id}`,
       {
         method: "GET",
         headers: {
@@ -205,7 +205,7 @@ describe("Plugin API Endpoints", () => {
   // Test deleting plugin
   it("should delete plugin", async () => {
     const listResponse = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed`,
       {
         method: "GET",
         headers: {
@@ -216,7 +216,7 @@ describe("Plugin API Endpoints", () => {
     const plugins = await listResponse.json();
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed/${testPlugin.id}`,
       {
         method: "DELETE",
         headers: {
@@ -227,7 +227,7 @@ describe("Plugin API Endpoints", () => {
     expect(response.status).toBe(200);
     // Verify deletion
     const verifyResponse = await app.request(
-      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
+      `/api/plugins/organisation/${TEST_ORGANISATION_ID}/installed/${testPlugin.id}`,
       {
         method: "GET",
         headers: {

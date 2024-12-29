@@ -175,12 +175,12 @@ export default function defineRoutes(app: FastAppHono) {
    * - promptCategory: string (optional)
    * - organisationId: string
    */
-  app.get("/templates", async (c) => {
+  app.get("/templates/organisation/:organisationId/:id?", async (c) => {
     try {
-      const promptId = c.req.query("promptId");
+      const promptId = c.req.param("id");
+      const organisationId = c.req.param("organisationId");
       const promptName = c.req.query("promptName");
       const promptCategory = c.req.query("promptCategory");
-      const organisationId = c.req.query("organisationId");
 
       if (!organisationId) {
         throw new HTTPException(400, {
@@ -206,10 +206,19 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Add a new prompt template
    */
-  app.post("/templates", async (c) => {
+  app.post("/templates/organisation/:organisationId", async (c) => {
     try {
       const body = await c.req.json();
-      const r = await addPromptTemplate(body);
+      const organisationId = c.req.param("organisationId");
+
+      if (organisationId !== body.organisationId) {
+        throw new HTTPException(400, {
+          message:
+            'Parameter "organisationId" does not match body.organisationId',
+        });
+      }
+
+      const r = await addPromptTemplate({ ...body, organisationId });
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -219,11 +228,20 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Update a prompt template by ID
    */
-  app.put("/templates/:id", async (c) => {
+  app.put("/templates/organisation/:organisationId/:id", async (c) => {
     try {
       const id = c.req.param("id");
+      const organisationId = c.req.param("organisationId");
       const body = await c.req.json();
-      const r = await updatePromptTemplate({ ...body, id });
+
+      if (organisationId !== body.organisationId) {
+        throw new HTTPException(400, {
+          message:
+            'Parameter "organisationId" does not match body.organisationId',
+        });
+      }
+
+      const r = await updatePromptTemplate({ ...body, id, organisationId });
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -232,10 +250,8 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Delete a prompt template by ID
-   * URL params:
-   * - organisationId: string
    */
-  app.delete("/templates/:id", async (c) => {
+  app.delete("/templates/organisation/:organisationId/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const organisationId = c.req.param("organisationId");
