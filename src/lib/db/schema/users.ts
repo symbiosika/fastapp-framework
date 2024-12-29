@@ -40,6 +40,9 @@ export const organisations = pgBaseTable(
   (organisations) => [unique("organisations_name_idx").on(organisations.name)]
 );
 
+export type OrganisationsSelect = typeof organisations.$inferSelect;
+export type OrganisationsInsert = typeof organisations.$inferInsert;
+
 export const users = pgBaseTable(
   "users",
   {
@@ -61,9 +64,6 @@ export const users = pgBaseTable(
       .defaultNow(),
     extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
-    organisationId: uuid("organisation_id").references(() => organisations.id, {
-      onDelete: "cascade",
-    }),
   },
   (users) => [
     index("users_email_idx").on(users.email),
@@ -259,6 +259,9 @@ export const teams = pgBaseTable(
   (teams) => [unique("teams_name_idx").on(teams.name)]
 );
 
+export type TeamsSelect = typeof teams.$inferSelect;
+export type TeamsInsert = typeof teams.$inferInsert;
+
 // Team Members Table mit optionaler Rolle
 export const teamMembers = pgBaseTable(
   "team_members",
@@ -289,10 +292,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   promptSnippets: many(promptSnippets),
   teamMembers: many(teamMembers),
   chatSessions: many(chatSessions),
-  organisation: one(organisations, {
-    fields: [users.organisationId],
-    references: [organisations.id],
-  }),
+  organisationMembers: many(organisationMembers),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -410,3 +410,44 @@ export type OrganisationInvitationsSelect =
   typeof organisationInvitations.$inferSelect;
 export type OrganisationInvitationsInsert =
   typeof organisationInvitations.$inferInsert;
+
+export const organisationMembers = pgBaseTable(
+  "organisation_members",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    role: varchar("role", { length: 50 }).notNull().default("member"), // z.B. 'owner', 'admin', 'member'
+    joinedAt: timestamp("joined_at", { mode: "string" }).notNull().defaultNow(),
+  },
+  (organisationMembers) => [
+    primaryKey({
+      columns: [organisationMembers.userId, organisationMembers.organisationId],
+    }),
+    index("organisation_members_user_id_idx").on(organisationMembers.userId),
+    index("organisation_members_organisation_id_idx").on(
+      organisationMembers.organisationId
+    ),
+  ]
+);
+
+export type OrganisationMembersSelect = typeof organisationMembers.$inferSelect;
+export type OrganisationMembersInsert = typeof organisationMembers.$inferInsert;
+
+// Neue Beziehungen für organisationMembers
+export const organisationMembersRelations = relations(
+  organisationMembers,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [organisationMembers.userId],
+      references: [users.id],
+    }),
+    organisation: one(organisations, {
+      fields: [organisationMembers.organisationId],
+      references: [organisations.id],
+    }),
+  })
+);
