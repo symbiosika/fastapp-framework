@@ -47,7 +47,7 @@ const storeKnowledgeEntry = async (
   // Handle filters
   const filterPromises = Object.entries(filters).map(
     async ([category, name]) => {
-      const filterId = await upsertFilter(category, name);
+      const filterId = await upsertFilter(category, name, data.organisationId);
       return db.insert(knowledgeEntryFilters).values({
         knowledgeEntryId: entry.id,
         knowledgeFilterId: filterId,
@@ -70,6 +70,7 @@ const storeKnowledgeChunk = async (data: KnowledgeChunksInsert) => {
  * Extract knowledge from a file and store it in the database
  */
 export const extractKnowledgeFromText = async (data: {
+  organisationId: string;
   title: string;
   text: string;
   filters?: Record<string, string>;
@@ -109,6 +110,7 @@ export const extractKnowledgeFromText = async (data: {
   const knowledgeEntry = await storeKnowledgeEntry(
     {
       ...data,
+      organisationId: data.organisationId,
       name: title,
       sourceType: data.sourceType || ("text" as const),
       meta: data.metadata || {},
@@ -141,6 +143,7 @@ export const extractKnowledgeFromText = async (data: {
  * Extract knowledge from a file and store it in the database
  */
 export const extractKnowledgeFromExistingDbEntry = async (data: {
+  organisationId: string;
   sourceType: FileSourceType;
   sourceId?: string;
   sourceFileBucket?: string;
@@ -160,5 +163,6 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     sourceFileBucket: data.sourceFileBucket,
     sourceId: data.sourceId,
     sourceUrl: data.sourceUrl,
+    organisationId: data.organisationId,
   });
 };

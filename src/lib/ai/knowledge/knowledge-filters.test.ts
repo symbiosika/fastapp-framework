@@ -7,17 +7,14 @@ import {
 import { upsertFilter } from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
+import { initTestOrganisation } from "../../../test/init.test";
 
 describe("upsertFilter", () => {
   beforeAll(async () => {
     await createDatabaseClient();
     await waitForDbConnection();
-  });
-
-  afterAll(async () => {
-    // Clean up test data after each test
-    const db = getDb();
-    await db
+    await initTestOrganisation();
+    await getDb()
       .delete(knowledgeFilters)
       .where(
         and(
@@ -27,8 +24,25 @@ describe("upsertFilter", () => {
       );
   });
 
+  // afterAll(async () => {
+  //   // Clean up test data after each test
+  //   // const db = getDb();
+  //   // await db
+  //   //   .delete(knowledgeFilters)
+  //   //   .where(
+  //   //     and(
+  //   //       eq(knowledgeFilters.category, "test-category"),
+  //   //       eq(knowledgeFilters.name, "test-name")
+  //   //     )
+  //   //   );
+  // });
+
   it("should create a new filter if it doesn't exist", async () => {
-    const filterId = await upsertFilter("test-category", "test-name");
+    const filterId = await upsertFilter(
+      "test-category",
+      "test-name",
+      "00000000-1111-1111-1111-000000000000"
+    );
 
     // Verify the filter was created
     const db = getDb();
@@ -50,10 +64,18 @@ describe("upsertFilter", () => {
 
   it("should return existing filter ID if filter already exists", async () => {
     // First insertion
-    const firstId = await upsertFilter("test-category", "test-name");
+    const firstId = await upsertFilter(
+      "test-category",
+      "test-name",
+      "00000000-1111-1111-1111-000000000000"
+    );
 
     // Second insertion with same values
-    const secondId = await upsertFilter("test-category", "test-name");
+    const secondId = await upsertFilter(
+      "test-category",
+      "test-name",
+      "00000000-1111-1111-1111-000000000000"
+    );
 
     // Verify both IDs are the same
     expect(firstId).toBe(secondId);

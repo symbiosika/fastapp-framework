@@ -5,11 +5,13 @@ import {
   waitForDbConnection,
 } from "../db/db-connection";
 import { defineJob, createJob, getJob, startJobQueue } from ".";
+import { initTestOrganisation } from "../../test/init.test";
 
 describe("Job Queue System", () => {
   beforeAll(async () => {
     await createDatabaseClient();
     await waitForDbConnection();
+    await initTestOrganisation();
   });
 
   it("should execute a job and update the database", async () => {
@@ -24,7 +26,11 @@ describe("Job Queue System", () => {
     startJobQueue();
 
     // Create and start the job
-    const job = await createJob("test-job", { test: true });
+    const job = await createJob(
+      "test-job",
+      { test: true },
+      "00000000-1111-1111-1111-000000000000"
+    );
 
     // Wait for job to complete (slightly longer than CHECK_CYCLE_MS)
     await new Promise((resolve) => setTimeout(resolve, 6000));

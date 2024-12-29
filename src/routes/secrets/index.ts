@@ -16,43 +16,54 @@ export default function defineManageSecretsRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
-  app.get(API_BASE_PATH + "/secrets", authAndSetUsersInfo, async (c) => {
-    try {
-      const value = await getSecrets();
-      return c.json(value);
-    } catch (error) {
-      throw new HTTPException(500, {
-        message: "Failed to get secrets",
-      });
+  app.get(
+    API_BASE_PATH + "/secrets/organisation/:organisationId",
+    authAndSetUsersInfo,
+    async (c) => {
+      try {
+        const organisationId = c.req.param("organisationId");
+        const value = await getSecrets(organisationId);
+        return c.json(value);
+      } catch (error) {
+        throw new HTTPException(500, {
+          message: "Failed to get secrets",
+        });
+      }
     }
-  });
+  );
 
   /**
    * Add or update a backend secret
    */
-  app.post(API_BASE_PATH + "/secrets", authAndSetUsersInfo, async (c) => {
-    const body = await c.req.json();
-    try {
-      const parsed = v.parse(setSecretValidation, body);
-      const secret = await setSecret(parsed);
-      return c.json(secret);
-    } catch (error) {
-      throw new HTTPException(400, {
-        message: error + "",
-      });
+  app.post(
+    API_BASE_PATH + "/secrets/organisation/:organisationId",
+    authAndSetUsersInfo,
+    async (c) => {
+      const body = await c.req.json();
+      try {
+        const parsed = v.parse(setSecretValidation, body);
+        const organisationId = c.req.param("organisationId");
+        const secret = await setSecret({ ...parsed, organisationId });
+        return c.json(secret);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
     }
-  });
+  );
 
   /**
    * Delete a secret
    */
   app.delete(
-    API_BASE_PATH + "/secrets/:name",
+    API_BASE_PATH + "/secrets/organisation/:organisationId/:name",
     authAndSetUsersInfo,
     async (c) => {
       const name = c.req.param("name");
+      const organisationId = c.req.param("organisationId");
       try {
-        await deleteSecret(name);
+        await deleteSecret(name, organisationId);
         return c.json({ message: "Secret deleted" });
       } catch (error) {
         throw new HTTPException(500, {

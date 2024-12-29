@@ -12,7 +12,7 @@ import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { pgBaseTable } from ".";
 
-// Tabelle für benutzerspezifische Daten
+// Table for user specific data
 export const userSpecificData = pgBaseTable(
   "user_specific_data",
   {
@@ -43,7 +43,7 @@ export const userSpecificData = pgBaseTable(
 export type UserSpecificDataSelect = typeof userSpecificData.$inferSelect;
 export type UserSpecificDataInsert = typeof userSpecificData.$inferInsert;
 
-// Tabelle für anwendungsspezifische Daten
+// Table for application specific data. This is data that does not belong to a user or a group or an organisation.
 export const appSpecificData = pgBaseTable(
   "app_specific_data",
   {

@@ -6,11 +6,12 @@ import { knowledgeFilters } from "../../db/db-schema";
  */
 export const upsertFilter = async (
   category: string,
-  name: string
+  name: string,
+  organisationId: string
 ): Promise<string> => {
   const [newFilter] = await getDb()
     .insert(knowledgeFilters)
-    .values({ name, category })
+    .values({ name, category, organisationId })
     .onConflictDoUpdate({
       target: [knowledgeFilters.name, knowledgeFilters.category],
       set: {

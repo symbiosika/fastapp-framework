@@ -16,6 +16,7 @@ export function isValidSecretName(name: string) {
 export async function setSecret(data: {
   name: string;
   value: string;
+  organisationId: string;
 }): Promise<SecretsSelect> {
   if (!isValidSecretName(data.name)) {
     throw new Error(
@@ -34,6 +35,7 @@ export async function setSecret(data: {
       label: data.name,
       value: encrypted.value,
       type: encrypted.algorithm,
+      organisationId: data.organisationId,
     })
     .onConflictDoUpdate({
       target: [secrets.reference, secrets.name],
@@ -50,11 +52,20 @@ export async function setSecret(data: {
 /**
  * Get a backend secret by its name
  */
-export async function getSecret(name: string): Promise<string | null> {
+export async function getSecret(
+  name: string,
+  organisationId: string
+): Promise<string | null> {
   const result = await getDb()
     .select()
     .from(secrets)
-    .where(and(eq(secrets.reference, "VARIABLES"), eq(secrets.name, name)))
+    .where(
+      and(
+        eq(secrets.reference, "VARIABLES"),
+        eq(secrets.name, name),
+        eq(secrets.organisationId, organisationId)
+      )
+    )
     .limit(1);
 
   if (result.length === 0) {
@@ -70,22 +81,33 @@ export async function getSecret(name: string): Promise<string | null> {
 /**
  * Delete a backend secret by its name
  */
-export async function deleteSecret(name: string) {
+export async function deleteSecret(name: string, organisationId: string) {
   return await getDb()
     .delete(secrets)
-    .where(and(eq(secrets.reference, "VARIABLES"), eq(secrets.name, name)))
+    .where(
+      and(
+        eq(secrets.reference, "VARIABLES"),
+        eq(secrets.name, name),
+        eq(secrets.organisationId, organisationId)
+      )
+    )
     .returning();
 }
 
 /**
  * Get all backend secrets
  */
-export async function getSecrets() {
+export async function getSecrets(organisationId: string) {
   return await getDb()
     .select({
       id: secrets.id,
       name: secrets.name,
     })
     .from(secrets)
-    .where(eq(secrets.reference, "VARIABLES"));
+    .where(
+      and(
+        eq(secrets.reference, "VARIABLES"),
+        eq(secrets.organisationId, organisationId)
+      )
+    );
 }

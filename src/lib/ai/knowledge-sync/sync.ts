@@ -12,6 +12,7 @@ import type { SyncItem, SyncResult, SyncItemStatus } from "../../types/sync";
  */
 export const syncKnowledgeFromPlugin = async (
   pluginId: string,
+  organisationId: string,
   items: SyncItem[]
 ): Promise<SyncResult> => {
   const db = getDb();
@@ -118,6 +119,7 @@ export const syncKnowledgeFromPlugin = async (
 
     // Create new knowledge entry
     const knowledgeResult = await extractKnowledgeFromText({
+      organisationId: organisationId,
       title: item.title,
       text: item.text,
       metadata: item.meta,
@@ -159,6 +161,7 @@ export const syncKnowledgeFromPlugin = async (
   for (const item of itemsToAdd) {
     // Create new knowledge entry
     const knowledgeResult = await extractKnowledgeFromText({
+      organisationId: organisationId,
       title: item.title,
       text: item.text,
       metadata: item.meta,

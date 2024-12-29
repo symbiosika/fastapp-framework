@@ -12,6 +12,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
+import { organisations } from "./users";
 
 // Secrets
 export const secrets = pgBaseTable(
@@ -22,6 +23,11 @@ export const secrets = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     reference: varchar("reference", { length: 255 }).notNull(),
     referenceId: uuid("reference_id"),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     label: varchar("label", { length: 255 }).notNull(),
     value: text("value").notNull(),

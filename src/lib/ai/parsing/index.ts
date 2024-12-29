@@ -37,6 +37,7 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
  */
 export const parseDocument = async (data: {
   sourceType: FileSourceType;
+  organisationId: string;
   sourceId?: string;
   sourceFileBucket?: string;
   sourceUrl?: string;
@@ -45,8 +46,14 @@ export const parseDocument = async (data: {
   let content: string;
   let title: string;
   if (data.sourceType === "db" && data.sourceId && data.sourceFileBucket) {
-    log.debug(`Get file from DB: ${data.sourceId} ${data.sourceFileBucket}`);
-    const file = await getFileFromDb(data.sourceId, data.sourceFileBucket);
+    log.debug(
+      `Get file from DB: ${data.sourceId} ${data.sourceFileBucket} for organisation ${data.organisationId}`
+    );
+    const file = await getFileFromDb(
+      data.sourceId,
+      data.sourceFileBucket,
+      data.organisationId
+    );
     const { text } = await parseFile(file);
     content = text;
     title = file.name;
@@ -56,11 +63,12 @@ export const parseDocument = async (data: {
     data.sourceFileBucket
   ) {
     log.debug(
-      `Get file from local disc: ${data.sourceId} ${data.sourceFileBucket}`
+      `Get file from local disc: ${data.sourceId} ${data.sourceFileBucket} for organisation ${data.organisationId}`
     );
     const file = await getFileFromLocalDisc(
       data.sourceId,
-      data.sourceFileBucket
+      data.sourceFileBucket,
+      data.organisationId
     );
     const { text } = await parseFile(file);
     content = text;

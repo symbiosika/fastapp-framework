@@ -3,6 +3,7 @@ import { getDb } from "../../db/db-connection";
 import { fineTuningData, knowledgeEntry } from "../../db/db-schema";
 
 type FineTuningDataInput = {
+  organisationId: string;
   data: {
     question: string;
     answer: string;
@@ -66,6 +67,7 @@ export const addFineTuningData = async (input: FineTuningDataInput) => {
       sourceType: "finetuning",
       name: input.name || "Unnamed Fine-tuning Dataset",
       description: `Fine-tuning dataset${input.category ? ` for ${input.category}` : ""}`,
+      organisationId: input.organisationId,
     })
     .returning();
 
@@ -74,6 +76,7 @@ export const addFineTuningData = async (input: FineTuningDataInput) => {
     .insert(fineTuningData)
     .values(
       input.data.map((item) => ({
+        organisationId: input.organisationId,
         knowledgeEntryId: knowledgeEntryResult[0].id,
         name: input.name,
         category: input.category,
@@ -101,6 +104,7 @@ export const updateFineTuningData = async (
     .insert(fineTuningData)
     .values(
       input.data.map((item) => ({
+        organisationId: input.organisationId,
         knowledgeEntryId: id,
         name: input.name,
         category: input.category,

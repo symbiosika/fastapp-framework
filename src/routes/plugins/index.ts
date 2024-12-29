@@ -5,7 +5,7 @@ import * as v from "valibot";
 import {
   setPluginConfig,
   getPlugin,
-  getAllInstalledPlugins,
+  getAllInstalledPluginsByOrganisationId,
   getAllAvailablePlugins,
   createPlugin,
   deletePlugin,
@@ -18,6 +18,7 @@ import { isValidUuid } from "../../lib/helper/uuid";
 
 const pluginConfigSchema = v.object({
   id: v.string(),
+  organisationId: v.string(),
   name: v.string(),
   description: v.string(),
   pluginType: v.string(),
@@ -27,6 +28,7 @@ const pluginConfigSchema = v.object({
 
 const executeEndpoint = async (
   c: Context,
+  organisationId: string,
   pluginName: string,
   endpoint: string,
   method: string,
@@ -34,7 +36,7 @@ const executeEndpoint = async (
   params?: { [k: string]: string }
 ) => {
   // check if the plugin exists and get its type
-  const pluginConfig = getActivePluginByName(pluginName);
+  const pluginConfig = getActivePluginByName(pluginName, organisationId);
   const plugin = getAvailablePluginByType(pluginConfig.pluginType);
 
   // execute the action if it is a valid GET endpoint
@@ -88,11 +90,13 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/installed",
+    API_BASE_PATH + "/plugins/installed/organisation/:organisationId",
     authAndSetUsersInfo,
     async (c) => {
       try {
-        const plugins = await getAllInstalledPlugins();
+        const organisationId = c.req.param("organisationId");
+        const plugins =
+          await getAllInstalledPluginsByOrganisationId(organisationId);
         return c.json(plugins);
       } catch (error) {
         throw new HTTPException(400, {
@@ -106,10 +110,18 @@ export default function definePluginRoutes(
    * Register a new plugin
    */
   app.post(
-    API_BASE_PATH + "/plugins/installed",
+    API_BASE_PATH + "/plugins/installed/organisation/:organisationId",
     authAndSetUsersInfo,
     async (c) => {
+      const organisationId = c.req.param("organisationId");
       const body = await c.req.json();
+
+      if (body.organisationId !== organisationId) {
+        throw new HTTPException(400, {
+          message: "Organisation ID from URL and body does not match",
+        });
+      }
+
       try {
         const newPlugin = await createPlugin(body);
         return c.json(newPlugin);
@@ -125,16 +137,18 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/installed/:idOrName",
+    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       const isUUID = isValidUuid(idOrName);
+      const organisationId = c.req.param("organisationId");
 
       try {
         const plugin = await getPlugin({
           id: isUUID ? idOrName : undefined,
           name: isUUID ? undefined : idOrName,
+          organisationId: organisationId,
         });
         return c.json(plugin);
       } catch (error) {
@@ -149,12 +163,20 @@ export default function definePluginRoutes(
    * Update plugin configuration
    */
   app.put(
-    API_BASE_PATH + "/plugins/installed/:idOrName",
+    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       const isUUID = isValidUuid(idOrName);
+      const organisationId = c.req.param("organisationId");
       const body = await c.req.json();
+
+      if (body.organisationId !== organisationId) {
+        throw new HTTPException(400, {
+          message: "Organisation ID from URL and body does not match",
+        });
+      }
+
       try {
         const parsed = v.parse(pluginConfigSchema, body);
         const updated = await setPluginConfig(parsed);
@@ -171,16 +193,17 @@ export default function definePluginRoutes(
    * Delete a plugin configuration
    */
   app.delete(
-    API_BASE_PATH + "/plugins/installed/:idOrName",
+    API_BASE_PATH + "/plugins/installed/organisation/:organisationId/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       try {
         const isUUID = isValidUuid(idOrName);
-
+        const organisationId = c.req.param("organisationId");
         await deletePlugin({
           id: isUUID ? idOrName : undefined,
           name: isUUID ? undefined : idOrName,
+          organisationId: organisationId,
         });
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
@@ -195,16 +218,20 @@ export default function definePluginRoutes(
    * API Gateway for the plugin endpoints: GET
    */
   app.get(
-    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    API_BASE_PATH +
+      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");
       const endpoint = c.req.param("endpoint");
+      const organisationId = c.req.param("organisationId");
+
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
       return executeEndpoint(
         c,
+        organisationId,
         pluginName,
         endpoint,
         "GET",
@@ -218,17 +245,21 @@ export default function definePluginRoutes(
    * API Gateway for the plugin endpoints: POST
    */
   app.post(
-    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    API_BASE_PATH +
+      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");
       const endpoint = c.req.param("endpoint");
+      const organisationId = c.req.param("organisationId");
+
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
       const body = await c.req.json();
       return executeEndpoint(
         c,
+        organisationId,
         pluginName,
         endpoint,
         "POST",
@@ -242,16 +273,20 @@ export default function definePluginRoutes(
    * API Gateway for the plugin endpoints: DELETE
    */
   app.delete(
-    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    API_BASE_PATH +
+      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const pluginName = c.req.param("pluginName");
       const endpoint = c.req.param("endpoint");
+
+      const organisationId = c.req.param("organisationId");
       const url = new URL(c.req.url);
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
       return executeEndpoint(
         c,
+        organisationId,
         pluginName,
         endpoint,
         "DELETE",
@@ -265,17 +300,21 @@ export default function definePluginRoutes(
    * API Gateway for the plugin endpoints: PUT
    */
   app.put(
-    API_BASE_PATH + "/plugins/gw/:pluginName/:endpoint",
+    API_BASE_PATH +
+      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");
       const endpoint = c.req.param("endpoint");
+      const organisationId = c.req.param("organisationId");
+
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
       const body = await c.req.json();
       return executeEndpoint(
         c,
+        organisationId,
         pluginName,
         endpoint,
         "PUT",

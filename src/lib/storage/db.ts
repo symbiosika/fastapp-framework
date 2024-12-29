@@ -11,7 +11,11 @@ const getIdFromFileName = (fileName: string) => {
   return fileName.split(".")[0] || "";
 };
 
-export const saveFileToDb: SaveFileFunction = async (file, bucket) => {
+export const saveFileToDb: SaveFileFunction = async (
+  file,
+  bucket,
+  organisationId
+) => {
   try {
     // Convert the file to a buffer
     const fileBuffer = Buffer.from(await file.arrayBuffer());
@@ -22,6 +26,7 @@ export const saveFileToDb: SaveFileFunction = async (file, bucket) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       bucket: bucket,
+      organisationId: organisationId,
       name: fileName, // original file name
       fileType: file.type,
       file: fileBuffer,
@@ -45,13 +50,18 @@ export const saveFileToDb: SaveFileFunction = async (file, bucket) => {
       path: `/api/v1/files/db/${bucket}/${e[0].id}${fileExtension !== "" ? `.${fileExtension}` : ""}`,
       id: e[0].id,
       name: e[0].name,
+      organisationId: organisationId,
     };
   } catch (error) {
     throw new Error("Failed to save file to database. " + error);
   }
 };
 
-export const getFileFromDb: GetFileFunction = async (name, bucket) => {
+export const getFileFromDb: GetFileFunction = async (
+  name,
+  bucket,
+  organisationId
+) => {
   try {
     const id = getIdFromFileName(name);
 
@@ -59,7 +69,13 @@ export const getFileFromDb: GetFileFunction = async (name, bucket) => {
     const fileRecord = await getDb()
       .select()
       .from(files)
-      .where(and(eq(files.id, id), eq(files.bucket, bucket)));
+      .where(
+        and(
+          eq(files.id, id),
+          eq(files.bucket, bucket),
+          eq(files.organisationId, organisationId)
+        )
+      );
 
     if (fileRecord.length === 0) {
       throw new Error("File not found");
@@ -73,14 +89,24 @@ export const getFileFromDb: GetFileFunction = async (name, bucket) => {
   }
 };
 
-export const deleteFileFromDB: DeleteFileFunction = async (name, bucket) => {
+export const deleteFileFromDB: DeleteFileFunction = async (
+  name,
+  bucket,
+  organisationId
+) => {
   try {
     const id = name.split("/").pop() || "";
 
     // Delete the file record from the database
     await getDb()
       .delete(files)
-      .where(and(eq(files.id, id), eq(files.bucket, bucket)));
+      .where(
+        and(
+          eq(files.id, id),
+          eq(files.bucket, bucket),
+          eq(files.organisationId, organisationId)
+        )
+      );
   } catch (error) {
     throw new Error("Failed to delete file from database. " + error);
   }

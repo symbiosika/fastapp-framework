@@ -30,7 +30,10 @@ import {
 } from "../../lib/ai/fine-tuning";
 import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
 import { RESPONSES } from "../../lib/responses";
-import { addKnowledgeFromUrl } from "../../lib/ai/knowledge-texts";
+import {
+  addKnowledgeFromUrl,
+  addPlainKnowledgeText,
+} from "../../lib/ai/knowledge-texts";
 import { chatStoreInDb } from "../../lib/ai/smart-chat/chat-history";
 import {
   getPromptSnippets,
@@ -60,6 +63,7 @@ const chatWithTemplateValidation = v.object({
       promptId: v.optional(v.string()),
       promptName: v.optional(v.string()),
       promptCategory: v.optional(v.string()),
+      organisationId: v.optional(v.string()),
     })
   ),
   trigger: v.optional(
@@ -86,6 +90,7 @@ export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
 };
 
 const generateKnowledgeValidation = v.object({
+  organisationId: v.string(),
   sourceType: v.enum(FileSourceType),
   sourceId: v.optional(v.string()),
   sourceFileBucket: v.optional(v.string()),
@@ -110,6 +115,7 @@ const parseDocumentValidation = v.object({
   sourceId: v.optional(v.string()),
   sourceFileBucket: v.optional(v.string()),
   sourceUrl: v.optional(v.string()),
+  organisationId: v.string(),
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
@@ -121,6 +127,7 @@ export type SimpleChatInput = v.InferOutput<typeof simpleChatValidation>;
 
 // Add new validation schema
 const fineTuningDataValidation = v.object({
+  organisationId: v.string(),
   name: v.optional(v.string()),
   category: v.optional(v.string()),
   data: v.array(
@@ -136,6 +143,7 @@ export type FineTuningDataInput = v.InferOutput<
 
 // Add these validation schemas near the top with other schemas
 const similaritySearchValidation = v.object({
+  organisationId: v.string(),
   searchText: v.string(),
   n: v.optional(v.number()),
   addBeforeN: v.optional(v.number()),
@@ -165,15 +173,23 @@ export default function defineRoutes(app: FastAppHono) {
    * - promptId: string (optional)
    * - promptName: string (optional)
    * - promptCategory: string (optional)
+   * - organisationId: string
    */
   app.get("/templates", async (c) => {
     try {
       const promptId = c.req.query("promptId");
       const promptName = c.req.query("promptName");
       const promptCategory = c.req.query("promptCategory");
+      const organisationId = c.req.query("organisationId");
+
+      if (!organisationId) {
+        throw new HTTPException(400, {
+          message: 'Parameter "organisationId" is required',
+        });
+      }
 
       if (!promptId && !promptName && !promptCategory) {
-        const r = await getTemplates();
+        const r = await getTemplates(organisationId);
         return c.json(r);
       }
       const r = await getPlainTemplate({
@@ -216,11 +232,19 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Delete a prompt template by ID
+   * URL params:
+   * - organisationId: string
    */
   app.delete("/templates/:id", async (c) => {
     try {
       const id = c.req.param("id");
-      const r = await deletePromptTemplate(id);
+      const organisationId = c.req.param("organisationId");
+      if (!organisationId) {
+        throw new HTTPException(400, {
+          message: 'Parameter "organisationId" is required',
+        });
+      }
+      const r = await deletePromptTemplate(id, organisationId);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -292,16 +316,23 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Get an object with all placeholders for a prompt template with the default values
+   * URL params:
+   * - promptId: string
+   * - promptName: string
+   * - promptCategory: string
+   * - organisationId: string
    */
   app.get("/templates/placeholders", async (c) => {
     try {
       const promptId = c.req.query("promptId");
       const promptName = c.req.query("promptName");
       const promptCategory = c.req.query("promptCategory");
+      const organisationId = c.req.query("organisationId");
       const r = await getPlaceholdersForPromptTemplate({
         promptId,
         promptName,
         promptCategory,
+        organisationId,
       });
       return c.json(r);
     } catch (e) {
@@ -343,19 +374,20 @@ export default function defineRoutes(app: FastAppHono) {
   });
 
   /**
-   * Add a text knowledge entry from an URL
+   * Add a text knowledge entry from a Text
    */
   app.post("/knowledge-texts/from-text", async (c) => {
     try {
       const body = await c.req.json();
       const text: string = body.text;
+      const organisationId = body.organisationId;
       if (!text || typeof text !== "string") {
         throw new HTTPException(400, {
           message: "Text is required and must be a string",
         });
       }
-      // const r = await addPlainKnowledgeText({ text });
-      // return c.json(r);
+      const r = await addPlainKnowledgeText({ text, organisationId });
+      return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
@@ -368,7 +400,8 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       const body = await c.req.json();
       const url: string = body.url;
-      const r = await addKnowledgeFromUrl(url);
+      const organisationId = body.organisationId;
+      const r = await addKnowledgeFromUrl(url, organisationId);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -426,11 +459,19 @@ export default function defineRoutes(app: FastAppHono) {
 
   /**
    * Delete a knowledge entry by ID
+   * URL params:
+   * - organisationId: string
    */
   app.delete("/knowledge/entries/:id", async (c) => {
     try {
       const id = c.req.param("id");
-      const r = await deleteKnowledgeEntry(id);
+      const organisationId = c.req.param("organisationId");
+      if (!organisationId) {
+        throw new HTTPException(400, {
+          message: 'Parameter "organisationId" is required',
+        });
+      }
+      const r = await deleteKnowledgeEntry(id, organisationId);
       return c.json(RESPONSES.SUCCESS);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -549,8 +590,9 @@ export default function defineRoutes(app: FastAppHono) {
    * - name: string[] comma separated
    * - category: string[] comma separated
    */
-  app.get("/prompt-snippets/:id?", async (c) => {
+  app.get("/prompt-snippets/organisation/:organisationId/:id?", async (c) => {
     try {
+      const organisationId = c.req.param("organisationId");
       const id = c.req.param("id");
       const names = parseCommaSeparatedListFromUrlParam(
         c.req.query("name"),
@@ -562,11 +604,15 @@ export default function defineRoutes(app: FastAppHono) {
       );
 
       if (id) {
-        const snippet = await getPromptSnippetById(id);
+        const snippet = await getPromptSnippetById(id, organisationId);
         return c.json(snippet);
       }
 
-      const snippets = await getPromptSnippets({ names, categories });
+      const snippets = await getPromptSnippets({
+        names,
+        categories,
+        organisationId,
+      });
       return c.json(snippets);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -576,11 +622,16 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Add a new prompt snippet
    */
-  app.post("/prompt-snippets", async (c) => {
+  app.post("/prompt-snippets/organisation/:organisationId", async (c) => {
     try {
       const body = await c.req.json();
       const usersId = c.get("usersId");
-      const snippet = await addPromptSnippet({ ...body, userId: usersId });
+      const organisationId = c.req.param("organisationId");
+      const snippet = await addPromptSnippet({
+        ...body,
+        userId: usersId,
+        organisationId,
+      });
       return c.json(snippet);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -590,11 +641,14 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Update a prompt snippet
    */
-  app.put("/prompt-snippets/:id", async (c) => {
+  app.put("/prompt-snippets/organisation/:organisationId/:id", async (c) => {
     try {
       const id = c.req.param("id");
+      const organisationId = c.req.param("organisationId");
       const body = await c.req.json();
-      const snippet = await updatePromptSnippet(id, body);
+      const snippet = await updatePromptSnippet(id, organisationId, {
+        ...body,
+      });
       return c.json(snippet);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -604,10 +658,11 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Delete a prompt snippet
    */
-  app.delete("/prompt-snippets/:id", async (c) => {
+  app.delete("/prompt-snippets/organisation/:organisationId/:id", async (c) => {
     try {
       const id = c.req.param("id");
-      await deletePromptSnippet(id);
+      const organisationId = c.req.param("organisationId");
+      await deletePromptSnippet(id, organisationId);
       return c.json(RESPONSES.SUCCESS);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -624,6 +679,7 @@ export default function defineRoutes(app: FastAppHono) {
 
       if (parsedBody.fullDocument) {
         const r = await getFullSourceDocumentsForSimilaritySearch({
+          organisationId: parsedBody.organisationId,
           searchText: parsedBody.searchText,
           n: parsedBody.n,
           filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
@@ -633,6 +689,7 @@ export default function defineRoutes(app: FastAppHono) {
         return c.json(r);
       }
       const query = {
+        organisationId: parsedBody.organisationId,
         searchText: parsedBody.searchText,
         n: parsedBody.n,
         addBeforeN: parsedBody.addBeforeN,
@@ -684,6 +741,11 @@ export default function defineRoutes(app: FastAppHono) {
         ? c.req.query("filterName")?.split(",")
         : undefined;
       const fullDocument = c.req.query("fullDocument") === "true";
+      const organisationId = c.req.param("organisationId");
+
+      if (!organisationId) {
+        throw new Error('Parameter "organisationId" is required');
+      }
 
       // Parse dynamic filters from URL params
       const filter: Record<string, string[]> = {};
@@ -702,6 +764,7 @@ export default function defineRoutes(app: FastAppHono) {
         filterIds,
         filter,
         filterName,
+        organisationId,
       });
 
       if (fullDocument) {
@@ -711,11 +774,13 @@ export default function defineRoutes(app: FastAppHono) {
           filterKnowledgeEntryIds: filterIds,
           filter,
           filterName,
+          organisationId,
         });
         return c.json(r);
       }
 
       const r = await getNearestEmbeddings({
+        organisationId,
         searchText,
         n,
         addBeforeN: addBefore,

@@ -31,34 +31,56 @@ import { _GLOBAL_SERVER_CONFIG } from "../..";
 // In memory cache of available plugins
 export const AVAILABLE_PLUGINS: { [type: string]: ServerPlugin } = {};
 export const INSTALLED_PLUGINS: {
-  [name: string]: PluginConfigurationWithSecrets;
+  [organisationId: string]: {
+    [name: string]: PluginConfigurationWithSecrets;
+  };
 } = {};
 
 /**
  * Access the in-memory cache of installed plugins safely
  */
 export const getActivePluginByName = (
-  name: string
+  name: string,
+  organisationId: string
 ): PluginConfigurationWithSecrets => {
-  if (!INSTALLED_PLUGINS[name]) {
-    throw new Error(`Plugin ${name} is not installed`);
+  if (
+    !INSTALLED_PLUGINS[organisationId] ||
+    !INSTALLED_PLUGINS[organisationId][name]
+  ) {
+    throw new Error(
+      `Plugin ${name} is not installed for organisation ${organisationId}`
+    );
   }
-  return INSTALLED_PLUGINS[name];
+  return INSTALLED_PLUGINS[organisationId][name];
 };
 
 /**
  * Update/Insert a plugin configuration to the in-memory cache
  */
-export const updateInstalledPlugin = async (pluginName: string) => {
-  const plugin = await getPluginConfigWithSecrets({ name: pluginName });
-  INSTALLED_PLUGINS[pluginName] = plugin;
+export const updateInstalledPlugin = async (
+  pluginName: string,
+  organisationId: string
+) => {
+  const plugin = await getPluginConfigWithSecrets({
+    name: pluginName,
+    organisationId: organisationId,
+  });
+  if (!INSTALLED_PLUGINS[organisationId]) {
+    INSTALLED_PLUGINS[organisationId] = {};
+  }
+  INSTALLED_PLUGINS[organisationId][pluginName] = plugin;
 };
 
 /**
  * Remove a plugin from the in-memory cache
  */
-export const removeInstalledPlugin = (pluginName: string) => {
-  delete INSTALLED_PLUGINS[pluginName];
+export const removeInstalledPlugin = (
+  pluginName: string,
+  organisationId: string
+) => {
+  if (INSTALLED_PLUGINS[organisationId]) {
+    delete INSTALLED_PLUGINS[organisationId][pluginName];
+  }
 };
 
 /**
@@ -106,6 +128,7 @@ const pluginConfigSchemaInDb = v.object({
 });
 
 const pluginConfigSchemaFromUser = v.object({
+  organisationId: v.string(),
   pluginId: v.string(),
   name: v.string(),
   description: v.string(),
@@ -239,6 +262,7 @@ export const encryptParameters = async (
           value: val.value,
           type: val.algorithm,
           label: key,
+          organisationId: plugin.organisationId,
         })
         .returning();
 
@@ -317,6 +341,7 @@ export function validatePluginConfiguration(
 export const getPlugin = async (query: {
   id?: string;
   name?: string;
+  organisationId: string;
 }): Promise<PluginConfigurationWithoutSecrets> => {
   if (!query.id && !query.name) {
     throw new Error("Either id or name must be provided");
@@ -326,12 +351,22 @@ export const getPlugin = async (query: {
     pluginDbResult = await getDb()
       .select()
       .from(plugins)
-      .where(eq(plugins.id, query.id));
+      .where(
+        and(
+          eq(plugins.id, query.id),
+          eq(plugins.organisationId, query.organisationId)
+        )
+      );
   } else if (query.name) {
     pluginDbResult = await getDb()
       .select()
       .from(plugins)
-      .where(eq(plugins.name, query.name));
+      .where(
+        and(
+          eq(plugins.name, query.name),
+          eq(plugins.organisationId, query.organisationId)
+        )
+      );
   }
   if (!pluginDbResult || pluginDbResult.length < 1) {
     throw new Error("Plugin not found");
@@ -409,6 +444,7 @@ const updatePluginVersion = async (
 export const getPluginConfigWithSecrets = async (query: {
   id?: string;
   name?: string;
+  organisationId: string;
 }): Promise<PluginConfigurationWithSecrets> => {
   const plugin = await getPlugin(query);
   const decrypted = await decryptParameters(plugin);
@@ -428,7 +464,14 @@ export const setPluginConfig = async (
   await v.safeParseAsync(pluginConfigSchemaFromUser, pluginConfig);
   const encryptedParams = await encryptParameters(pluginConfig as any);
 
-  const plugin = await getPlugin({ id: pluginConfig.id });
+  if (!pluginConfig.organisationId) {
+    throw new Error('Key "organisationId" is required');
+  }
+
+  const plugin = await getPlugin({
+    id: pluginConfig.id,
+    organisationId: pluginConfig.organisationId,
+  });
 
   // merge the existing config.meta. overwrite all main keys with the new values
   const mergedMeta = {
@@ -462,7 +505,7 @@ export const setPluginConfig = async (
     .returning();
 
   // Update in-memory cache
-  await updateInstalledPlugin(updated[0].name);
+  await updateInstalledPlugin(updated[0].name, pluginConfig.organisationId);
 
   return updated[0] as PluginConfigurationWithoutSecrets;
 };
@@ -486,7 +529,38 @@ export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
 /**
  * Get all installed plugins with their validated configuration but encrypted secrets
  */
-export const getAllInstalledPlugins = async (): Promise<
+export const getAllInstalledPluginsByOrganisationId = async (
+  organisationId: string
+): Promise<PluginConfigurationWithoutSecretsAndState[]> => {
+  const installed = await getDb()
+    .select()
+    .from(plugins)
+    .where(eq(plugins.organisationId, organisationId));
+  const result: PluginConfigurationWithoutSecretsAndState[] = [];
+
+  for (const plugin of installed) {
+    // get the plugin in validated state
+    try {
+      const p = await getPlugin({ id: plugin.id, organisationId });
+      result.push({
+        ...p,
+        isValid: true,
+        error: null,
+      });
+    } catch (error) {
+      result.push({
+        ...plugin,
+        meta: {},
+        isValid: false,
+        error: error + "",
+      });
+    }
+  }
+  return result;
+};
+
+/** Only internal function to get ALL Plugins from all organisations */
+const getAllInstalledPlugins = async (): Promise<
   PluginConfigurationWithoutSecretsAndState[]
 > => {
   const installed = await getDb().select().from(plugins);
@@ -495,7 +569,10 @@ export const getAllInstalledPlugins = async (): Promise<
   for (const plugin of installed) {
     // get the plugin in validated state
     try {
-      const p = await getPlugin({ id: plugin.id });
+      const p = await getPlugin({
+        id: plugin.id,
+        organisationId: plugin.organisationId,
+      });
       result.push({
         ...p,
         isValid: true,
@@ -534,7 +611,12 @@ export const createPlugin = async (
   const existing = await getDb()
     .select()
     .from(plugins)
-    .where(eq(plugins.name, pluginConfig.name));
+    .where(
+      and(
+        eq(plugins.name, pluginConfig.name),
+        eq(plugins.organisationId, pluginConfig.organisationId)
+      )
+    );
   if (existing.length > 0) {
     throw new Error(`Plugin '${pluginConfig.name}' is already installed`);
   }
@@ -561,6 +643,7 @@ export const createPlugin = async (
       name: pluginConfig.name,
       description: pluginConfig.description,
       pluginType: pluginConfig.pluginType,
+      organisationId: pluginConfig.organisationId,
       version: serverPlugin.version,
       meta: encryptedParams,
       createdAt: new Date().toISOString(),
@@ -569,7 +652,7 @@ export const createPlugin = async (
     .returning();
 
   // Update in-memory cache with the new plugin
-  await updateInstalledPlugin(newPlugin.name);
+  await updateInstalledPlugin(newPlugin.name, pluginConfig.organisationId);
 
   return newPlugin as PluginConfigurationWithoutSecrets;
 };
@@ -580,12 +663,19 @@ export const createPlugin = async (
 export const deletePlugin = async (query: {
   id?: string;
   name?: string;
+  organisationId: string;
 }): Promise<void> => {
   let where;
   if (query.id) {
-    where = eq(plugins.id, query.id);
+    where = and(
+      eq(plugins.id, query.id),
+      eq(plugins.organisationId, query.organisationId)
+    );
   } else if (query.name) {
-    where = eq(plugins.name, query.name);
+    where = and(
+      eq(plugins.name, query.name),
+      eq(plugins.organisationId, query.organisationId)
+    );
   } else {
     throw new Error("Either id or name must be provided");
   }
@@ -603,7 +693,7 @@ export const deletePlugin = async (query: {
     }
   }
   // Remove from in-memory cache
-  removeInstalledPlugin(plugin[0].name);
+  removeInstalledPlugin(plugin[0].name, plugin[0].organisationId);
 
   // Delete the plugin configuration
   await getDb().delete(plugins).where(eq(plugins.id, plugin[0].id));
@@ -614,7 +704,7 @@ export const initializePluginCache = async () => {
   const plugins = await getAllInstalledPlugins();
   for (const plugin of plugins) {
     if (plugin.isValid) {
-      await updateInstalledPlugin(plugin.name);
+      await updateInstalledPlugin(plugin.name, plugin.organisationId);
     }
   }
 };

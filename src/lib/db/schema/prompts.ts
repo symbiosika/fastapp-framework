@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
-import { users } from "./users";
+import { organisations, users } from "./users";
 
 // Table to store LLM Prompt templates
 export const promptTemplates = pgBaseTable(
@@ -29,6 +29,11 @@ export const promptTemplates = pgBaseTable(
     langCode: varchar("lang_code", { length: 2 }),
     // optional user id of the creator
     userId: uuid("user_id").references(() => users.id),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     hidden: boolean("hidden").notNull().default(false),
     needsInitialCall: boolean("needs_initial_call").notNull().default(false),
     // metadata
@@ -116,6 +121,11 @@ export const promptSnippets = pgBaseTable(
     content: text("content").notNull(),
     category: varchar("category", { length: 255 }).notNull().default(""),
     userId: uuid("user_id").references(() => users.id),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),

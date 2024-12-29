@@ -9,7 +9,11 @@ import type {
 const ATTACHMENT_DIR = path.join(process.cwd(), "static/upload");
 console.log("Server´s upload directory: ", ATTACHMENT_DIR);
 
-export const saveFileToLocalDisc: SaveFileFunction = async (file, bucket) => {
+export const saveFileToLocalDisc: SaveFileFunction = async (
+  file,
+  bucket,
+  organisationId
+) => {
   const id = crypto.randomUUID();
   const fileName = file.name;
   const fileExtension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -25,10 +29,15 @@ export const saveFileToLocalDisc: SaveFileFunction = async (file, bucket) => {
   return {
     path: `/api/v1/files/local/${bucket}/${id}.${file.name.split(".").pop()}`,
     id: id,
+    organisationId: organisationId,
   };
 };
 
-export const getFileFromLocalDisc: GetFileFunction = async (name, bucket) => {
+export const getFileFromLocalDisc: GetFileFunction = async (
+  name,
+  bucket,
+  organisationId
+) => {
   // Generate the file path
   const filePath = path.join(ATTACHMENT_DIR, bucket, name);
   // return the file
@@ -42,7 +51,8 @@ export const getFileFromLocalDisc: GetFileFunction = async (name, bucket) => {
 
 export const deleteFileFromLocalDisc: DeleteFileFunction = async (
   name,
-  bucket
+  bucket,
+  organisationId
 ) => {
   // Generate the file path
   const filePath = path.join(ATTACHMENT_DIR, bucket, name);

@@ -8,7 +8,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { users } from "./users";
+import { organisations, users } from "./users";
 import { pgBaseTable } from ".";
 
 export const jobStatusEnum = pgEnum("job_status", [
@@ -20,6 +20,7 @@ export const jobStatusEnum = pgEnum("job_status", [
 
 export type JobStatus = "pending" | "running" | "completed" | "failed";
 
+// Table for jobs. Jobs are long running tasks that are executed by the system.
 export const jobs = pgBaseTable(
   "jobs",
   {
@@ -27,6 +28,11 @@ export const jobs = pgBaseTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     userId: uuid("user_id").references(() => users.id),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     type: text("type").notNull(),
     status: jobStatusEnum("status").notNull().default("pending"),
     metadata: jsonb("metadata"),

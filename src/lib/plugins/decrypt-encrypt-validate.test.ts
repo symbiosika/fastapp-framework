@@ -15,11 +15,13 @@ import type {
   PluginParameterDescription,
 } from "../types/plugins";
 import { eq } from "drizzle-orm";
+import { initTestOrganisation } from "../../test/init.test";
 
 // Setup database connection
 beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
+  await initTestOrganisation();
 });
 
 const delTestItems = async () => {
@@ -37,6 +39,7 @@ const basePluginConfig: PluginConfigurationWithoutSecrets = {
   meta: {},
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  organisationId: "00000000-1111-1111-1111-000000000000",
 };
 
 const demoPluginConfig: PluginConfigurationWithoutSecrets = {

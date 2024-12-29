@@ -205,17 +205,25 @@ export const getKnowledgeEntries = async (query?: {
  */
 export const deleteKnowledgeEntry = async (
   id: string,
+  organisationId: string,
   deleteSource = false
 ) => {
   // also delete the source if requested
   if (deleteSource) {
     const e = await getDb().query.knowledgeEntry.findFirst({
-      where: eq(knowledgeEntry.id, id),
+      where: and(
+        eq(knowledgeEntry.id, id),
+        eq(knowledgeEntry.organisationId, organisationId)
+      ),
     });
     if (e?.sourceType === "db" && e.sourceId && e.sourceFileBucket) {
-      await deleteFileFromDB(e.sourceId, e.sourceFileBucket);
+      await deleteFileFromDB(e.sourceId, e.sourceFileBucket, organisationId);
     } else if (e?.sourceType === "local" && e.sourceId && e.sourceFileBucket) {
-      await deleteFileFromLocalDisc(e.sourceId, e.sourceFileBucket);
+      await deleteFileFromLocalDisc(
+        e.sourceId,
+        e.sourceFileBucket,
+        organisationId
+      );
     } else if (e?.sourceType === "text") {
       await getDb().delete(knowledgeText).where(eq(knowledgeText.id, id));
     }

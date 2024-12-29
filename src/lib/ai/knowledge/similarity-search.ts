@@ -22,6 +22,7 @@ type KnowledgeChunk = {
  * Get the n nearest embeddings to the search text
  */
 export async function getNearestEmbeddings(q: {
+  organisationId: string;
   searchText: string;
   n?: number;
   addBeforeN?: number;
@@ -159,6 +160,7 @@ export async function getNearestEmbeddings(q: {
  * This will search for the nearest chunks and then get the full source documents
  */
 export async function getFullSourceDocumentsForSimilaritySearch(q: {
+  organisationId: string;
   searchText: string;
   n?: number;
   filterKnowledgeEntryIds?: string[];

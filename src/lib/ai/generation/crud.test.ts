@@ -13,14 +13,17 @@ import {
   createDatabaseClient,
   waitForDbConnection,
 } from "../../../lib/db/db-connection";
+import { initTestOrganisation } from "../../../test/init.test";
 
 beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
+  await initTestOrganisation();
 });
 
 describe("Prompt Template CRUD Operations", () => {
   const testTemplate = {
+    organisationId: "00000000-1111-1111-1111-000000000000",
     name: "Test Template",
     category: "test",
     prompt: "This is a test prompt",
@@ -59,7 +62,10 @@ describe("Prompt Template CRUD Operations", () => {
   });
 
   it("should delete a prompt template", async () => {
-    const result = await deletePromptTemplate(createdTemplateId);
+    const result = await deletePromptTemplate(
+      createdTemplateId,
+      testTemplate.organisationId
+    );
     expect(result.success).toBe(true);
 
     // Verify deletion
@@ -70,6 +76,7 @@ describe("Prompt Template CRUD Operations", () => {
 
 describe("Prompt Template Placeholders CRUD Operations", () => {
   const testTemplate = {
+    organisationId: "00000000-1111-1111-1111-000000000000",
     name: "Test Template",
     category: "test",
     prompt: "Test prompt",
@@ -142,6 +149,6 @@ describe("Prompt Template Placeholders CRUD Operations", () => {
 
   // Cleanup: Delete the test template
   it("should cleanup test data", async () => {
-    await deletePromptTemplate(templateId);
+    await deletePromptTemplate(templateId, testTemplate.organisationId);
   });
 });

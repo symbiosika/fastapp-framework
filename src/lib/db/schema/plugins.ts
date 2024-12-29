@@ -9,6 +9,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
+import { organisations } from "./users";
 
 // Plugins
 export const plugins = pgBaseTable(
@@ -17,6 +18,11 @@ export const plugins = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     name: text("name").notNull(),
     description: text("description").notNull(),
     pluginType: text("plugin_type").notNull(),

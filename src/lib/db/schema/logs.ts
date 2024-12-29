@@ -10,6 +10,7 @@ import {
   text,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
+import { organisations } from "./users";
 
 // Enum for the type of file source
 export const logLevelEnum = pgEnum("log_level", [
@@ -29,6 +30,9 @@ export const appLogs = pgBaseTable(
     source: varchar("source", { length: 100 }).notNull(), // Application component or service name
     category: varchar("category", { length: 50 }).notNull(), // e.g., 'security', 'performance', 'user-action'
     sessionId: uuid("session_id"), // Optional a session id. For debugging sessions
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }), // optional, if the log is related to an organisation
     message: text("message").notNull(),
     metadata: jsonb("metadata").default("{}"), // Additional structured data
     version: integer("version").notNull().default(0),

@@ -6,11 +6,13 @@ import {
 } from "../../db/db-connection";
 import { extractKnowledgeFromExistingDbEntry } from "../knowledge/add-knowledge";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
+import { initTestOrganisation } from "../../../test/init.test";
 
 describe("Knowledge Text Flow", () => {
   beforeAll(async () => {
     await createDatabaseClient();
     await waitForDbConnection();
+    await initTestOrganisation();
   });
 
   it("should create knowledge text and extract knowledge with filters", async () => {
@@ -20,11 +22,13 @@ describe("Knowledge Text Flow", () => {
     const knowledgeText = await addPlainKnowledgeText({
       text: testText,
       title: "Test Document",
+      organisationId: "00000000-1111-1111-1111-000000000000",
     });
     expect(knowledgeText.id).toBeDefined();
 
     // 2. Extract knowledge with filters
     const result = await extractKnowledgeFromExistingDbEntry({
+      organisationId: "00000000-1111-1111-1111-000000000000",
       sourceType: "text",
       sourceId: knowledgeText.id,
       filters: {

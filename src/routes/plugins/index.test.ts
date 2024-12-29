@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import definePluginRoutes from ".";
 import type { FastAppHono } from "../../types";
-import { initTests } from "../../test/init.test";
+import { initTests, TEST_ORGANISATION_ID } from "../../test/init.test";
 import { registerServerPlugin } from "../../lib/plugins";
 import type { ServerPlugin } from "../../lib/types/plugins";
 
@@ -37,16 +37,19 @@ describe("Plugin API Endpoints", () => {
   beforeAll(async () => {
     const { token } = await initTests();
     jwt = token;
-    definePluginRoutes(app, "/api/plugins");
+    definePluginRoutes(app, "/api");
     // Register the mock plugin
     registerServerPlugin(mockPlugin);
 
-    await app.request("/api/plugins/installed/test-plugin", {
-      method: "DELETE",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-    });
+    await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/test-plugin`,
+      {
+        method: "DELETE",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+      }
+    );
   });
   // Test getting available plugins
   it("should list available plugins", async () => {
@@ -72,18 +75,22 @@ describe("Plugin API Endpoints", () => {
         // Missing required parameter
       },
     };
-    const response = await app.request("/api/plugins/installed", {
-      method: "POST",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-      body: JSON.stringify(invalidPlugin),
-    });
+    const response = await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      {
+        method: "POST",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+        body: JSON.stringify(invalidPlugin),
+      }
+    );
     expect(response.status).toBe(400);
   });
   // Test successful plugin creation
   it("should create a new plugin", async () => {
     const validPlugin = {
+      organisationId: TEST_ORGANISATION_ID,
       name: "test-plugin",
       description: "Test plugin",
       pluginType: "test-plugin",
@@ -99,13 +106,16 @@ describe("Plugin API Endpoints", () => {
         },
       },
     };
-    const response = await app.request("/api/plugins/installed", {
-      method: "POST",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-      body: JSON.stringify(validPlugin),
-    });
+    const response = await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      {
+        method: "POST",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+        body: JSON.stringify(validPlugin),
+      }
+    );
     expect(response.status).toBe(200);
     const data = await response.json();
     createdPlugin = data;
@@ -116,12 +126,15 @@ describe("Plugin API Endpoints", () => {
   });
   // Test getting installed plugins
   it("should list installed plugins", async () => {
-    const response = await app.request("/api/plugins/installed", {
-      method: "GET",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-    });
+    const response = await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+      }
+    );
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(Array.isArray(data)).toBe(true);
@@ -131,6 +144,7 @@ describe("Plugin API Endpoints", () => {
   it("should update plugin configuration", async () => {
     const updatedConfig = {
       id: createdPlugin.id,
+      organisationId: TEST_ORGANISATION_ID,
       name: "test-plugin",
       description: "Updated description",
       pluginType: "test-plugin",
@@ -148,7 +162,7 @@ describe("Plugin API Endpoints", () => {
     };
 
     const response = await app.request(
-      `/api/plugins/installed/${createdPlugin.id}`,
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${createdPlugin.id}`,
       {
         method: "PUT",
         headers: {
@@ -164,16 +178,19 @@ describe("Plugin API Endpoints", () => {
   });
   // Test getting single plugin
   it("should get single plugin by ID", async () => {
-    const listResponse = await app.request("/api/plugins/installed", {
-      method: "GET",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-    });
+    const listResponse = await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+      }
+    );
     const plugins = await listResponse.json();
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await app.request(
-      `/api/plugins/installed/${testPlugin.id}`,
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
       {
         method: "GET",
         headers: {
@@ -187,16 +204,19 @@ describe("Plugin API Endpoints", () => {
   });
   // Test deleting plugin
   it("should delete plugin", async () => {
-    const listResponse = await app.request("/api/plugins/installed", {
-      method: "GET",
-      headers: {
-        Cookie: `jwt=${jwt}`,
-      },
-    });
+    const listResponse = await app.request(
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+      }
+    );
     const plugins = await listResponse.json();
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await app.request(
-      `/api/plugins/installed/${testPlugin.id}`,
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
       {
         method: "DELETE",
         headers: {
@@ -207,7 +227,7 @@ describe("Plugin API Endpoints", () => {
     expect(response.status).toBe(200);
     // Verify deletion
     const verifyResponse = await app.request(
-      `/api/plugins/installed/${testPlugin.id}`,
+      `/api/plugins/installed/organisation/${TEST_ORGANISATION_ID}/${testPlugin.id}`,
       {
         method: "GET",
         headers: {

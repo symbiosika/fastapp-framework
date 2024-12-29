@@ -6,7 +6,7 @@ import log from "../log";
 const CHECK_CYCLE_MS = 5000;
 
 interface JobHandler {
-  execute: (metadata: any) => Promise<any>;
+  execute: (metadata: any, job: Job) => Promise<any>;
   onError?: (error: Error) => Promise<any>;
 }
 
@@ -50,7 +50,7 @@ async function processJob(job: Job) {
     .where(eq(jobs.id, job.id));
 
   try {
-    const result = await executor.execute(job.metadata);
+    const result = await executor.execute(job.metadata, job);
     log.debug(
       `Job ${job.id} from type ${job.type} completed ${result != null ? "with result" : "without result"}`
     );
@@ -95,10 +95,14 @@ export async function getJob(id: string) {
   return res[0];
 }
 
-export async function createJob(type: string, metadata: any) {
+export async function createJob(
+  type: string,
+  metadata: any,
+  organisationId: string
+) {
   const res = await getDb()
     .insert(jobs)
-    .values({ type, metadata, status: "pending" })
+    .values({ type, metadata, status: "pending", organisationId })
     .returning();
   return res[0];
 }

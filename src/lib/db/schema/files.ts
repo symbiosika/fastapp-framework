@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
+import { organisations } from "./users";
 
 const bytea = customType<{
   data: Buffer;
@@ -30,6 +31,11 @@ export const files = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     bucket: varchar("bucket", { length: 255 }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     fileType: varchar("file_type", { length: 255 }).notNull(),

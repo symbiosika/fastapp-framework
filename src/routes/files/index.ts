@@ -20,6 +20,7 @@ export const FileHandler = {
   async postFile(c: Context, type: "db" | "local") {
     try {
       const bucket = c.req.param("bucket");
+      const organisationId = c.req.param("organisationId");
 
       // check if the header is set to form-data
       const contentType = c.req.header("content-type");
@@ -31,10 +32,10 @@ export const FileHandler = {
       const file = form.get("file") as File;
 
       if (type === "db") {
-        const entry = await saveFileToDb(file, bucket);
+        const entry = await saveFileToDb(file, bucket, organisationId);
         return c.json(entry);
       } else if (type === "local") {
-        const entry = await saveFileToLocalDisc(file, bucket);
+        const entry = await saveFileToLocalDisc(file, bucket, organisationId);
         return c.json(entry);
       }
     } catch (err) {
@@ -49,13 +50,14 @@ export const FileHandler = {
     try {
       const id = c.req.param("id");
       const bucket = c.req.param("bucket");
+      const organisationId = c.req.param("organisationId");
 
       // get the file
       let f: File;
       if (type === "db") {
-        f = await getFileFromDb(id, bucket);
+        f = await getFileFromDb(id, bucket, organisationId);
       } else if (type === "local") {
-        f = await getFileFromLocalDisc(id, bucket);
+        f = await getFileFromLocalDisc(id, bucket, organisationId);
       } else {
         throw new HTTPException(400, { message: "Invalid type" });
       }
@@ -77,12 +79,13 @@ export const FileHandler = {
     try {
       const id = c.req.param("id");
       const bucket = c.req.param("bucket");
+      const organisationId = c.req.param("organisationId");
 
       // delete the file
       if (type === "db") {
-        await deleteFileFromDB(id, bucket);
+        await deleteFileFromDB(id, bucket, organisationId);
       } else if (type === "local") {
-        await deleteFileFromLocalDisc(id, bucket);
+        await deleteFileFromLocalDisc(id, bucket, organisationId);
       }
 
       return new Response(null, { status: 204 });
@@ -100,7 +103,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * Save and serve files that are stored in the database
    */
   app.all(
-    API_BASE_PATH + "/files/:type/:bucket/:id?",
+    API_BASE_PATH + "/files/:type/:organisationId/:bucket/:id?",
     authAndSetUsersInfo,
     async (c: Context) => {
       // check if id is set

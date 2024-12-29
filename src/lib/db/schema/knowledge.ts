@@ -15,6 +15,7 @@ import {
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { plugins } from "./plugins";
+import { organisations } from "./users";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -33,6 +34,9 @@ export const knowledgeText = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id),
     text: text("text").notNull(),
     title: text("title").notNull().default(""),
     meta: jsonb("meta").notNull().default("{}"),
@@ -46,6 +50,9 @@ export const knowledgeText = pgBaseTable(
   (knowledgeText) => [
     index("knowledge_text_created_at_idx").on(knowledgeText.createdAt),
     index("knowledge_text_title_idx").on(knowledgeText.title),
+    index("knowledge_text_organisation_id_idx").on(
+      knowledgeText.organisationId
+    ),
   ]
 );
 
@@ -59,6 +66,9 @@ export const knowledgeEntry = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id),
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceFileBucket: text("source_file_bucket"),
@@ -79,6 +89,9 @@ export const knowledgeEntry = pgBaseTable(
     index("knowledge_entry_file_source_type_idx").on(knowledgeEntry.sourceType),
     index("knowledgeentry_created_at_idx").on(knowledgeEntry.createdAt),
     index("knowledgeentry_updated_at_idx").on(knowledgeEntry.updatedAt),
+    index("knowledgeentry_organisation_id_idx").on(
+      knowledgeEntry.organisationId
+    ),
   ]
 );
 
@@ -126,6 +139,9 @@ export const fineTuningData = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id),
     knowledgeEntryId: uuid("knowledge_entry_id")
       .notNull()
       .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
@@ -138,6 +154,7 @@ export const fineTuningData = pgBaseTable(
     index("knowledge_entry_id_idx").on(table.knowledgeEntryId),
     index("knowledge_entry_name_idx").on(table.name),
     index("knowledge_entry_category_idx").on(table.category),
+    index("knowledge_entry_organisation_id_idx").on(table.organisationId),
   ]
 );
 
@@ -158,13 +175,16 @@ export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
   }),
 }));
 
-// Neue Tabelle für Filter-Definitionen
+// Table for knowledge filters definition
 export const knowledgeFilters = pgBaseTable(
   "knowledge_filters",
   {
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id),
     category: varchar("category", { length: 50 }).notNull(), // z.B. 'department', 'topic', 'level'
     name: varchar("name", { length: 255 }).notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
@@ -183,7 +203,7 @@ export const knowledgeFilters = pgBaseTable(
   ]
 );
 
-// Verbindungstabelle zwischen Einträgen und Filtern
+// Table for knowledge entry filters
 export const knowledgeEntryFilters = pgBaseTable(
   "knowledge_entry_filters",
   {
@@ -244,7 +264,7 @@ export const knowledgeEntryRelations = relations(
   })
 );
 
-// Tabelle für externe Quellen
+// Table for external source syncys
 export const knowledgeSource = pgBaseTable(
   "knowledge_source",
   {
@@ -279,9 +299,8 @@ export const knowledgeSource = pgBaseTable(
     ),
     index("knowledge_source_entry_id_idx").on(table.knowledgeEntryId),
   ]
-);  
+);
 
-// Erweiterte Relations
 export const knowledgeSourceRelations = relations(
   knowledgeSource,
   ({ one }) => ({

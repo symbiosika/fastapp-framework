@@ -6,7 +6,8 @@ import { promptSnippets } from "../../db/schema/prompts";
  * Get all prompt snippets
  * Optionally filtered by name and category
  */
-export const getPromptSnippets = async (query?: {
+export const getPromptSnippets = async (query: {
+  organisationId: string;
   names?: string[];
   categories?: string[];
 }) => {
@@ -27,6 +28,12 @@ export const getPromptSnippets = async (query?: {
     );
   }
 
+  if (where) {
+    where = and(where, eq(promptSnippets.organisationId, query.organisationId));
+  } else {
+    where = eq(promptSnippets.organisationId, query.organisationId);
+  }
+
   return await getDb().query.promptSnippets.findMany({
     where,
   });
@@ -35,9 +42,15 @@ export const getPromptSnippets = async (query?: {
 /**
  * Get one prompt snippet by id
  */
-export const getPromptSnippetById = async (id: string) => {
+export const getPromptSnippetById = async (
+  id: string,
+  organisationId: string
+) => {
   return await getDb().query.promptSnippets.findFirst({
-    where: eq(promptSnippets.id, id),
+    where: and(
+      eq(promptSnippets.id, id),
+      eq(promptSnippets.organisationId, organisationId)
+    ),
   });
 };
 
@@ -47,6 +60,7 @@ export const getPromptSnippetById = async (id: string) => {
 export const addPromptSnippet = async (input: {
   name: string;
   content: string;
+  organisationId: string;
   category?: string;
   userId?: string;
 }) => {
@@ -57,6 +71,7 @@ export const addPromptSnippet = async (input: {
       content: input.content,
       category: input.category || "",
       userId: input.userId,
+      organisationId: input.organisationId,
     })
     .returning();
 
@@ -68,6 +83,7 @@ export const addPromptSnippet = async (input: {
  */
 export const updatePromptSnippet = async (
   id: string,
+  organisationId: string,
   input: {
     name?: string;
     content?: string;
@@ -82,7 +98,12 @@ export const updatePromptSnippet = async (
       category: input.category,
       updatedAt: new Date().toISOString(),
     })
-    .where(eq(promptSnippets.id, id))
+    .where(
+      and(
+        eq(promptSnippets.id, id),
+        eq(promptSnippets.organisationId, organisationId)
+      )
+    )
     .returning();
 
   return result[0];
@@ -91,9 +112,17 @@ export const updatePromptSnippet = async (
 /**
  * Delete a prompt snippet
  */
-export const deletePromptSnippet = async (id: string) => {
+export const deletePromptSnippet = async (
+  id: string,
+  organisationId: string
+) => {
   return await getDb()
     .delete(promptSnippets)
-    .where(eq(promptSnippets.id, id))
+    .where(
+      and(
+        eq(promptSnippets.id, id),
+        eq(promptSnippets.organisationId, organisationId)
+      )
+    )
     .returning();
 };

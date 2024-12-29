@@ -165,8 +165,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const after =
         args.after && typeof args.after === "number" ? args.after : undefined;
       const ids = args.id ? (args.id as string).split(",") : undefined;
+      const organisationId = args.organisationId
+        ? args.organisationId + ""
+        : "";
 
       await log.debug("parse similar_to placeholder", {
+        organisationId,
         searchText: question,
         count,
         ids,
@@ -176,6 +180,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         after,
       });
       const results = await getNearestEmbeddings({
+        organisationId: organisationId,
         searchText: String(question),
         n: count,
         filterKnowledgeEntryIds: ids,
@@ -204,10 +209,14 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const fileSource = (args.source || "db") as FileSourceType;
       const bucket = args.bucket ? args.bucket + "" : "default";
       const id = args.id as string;
+      const organisationId = args.organisationId
+        ? args.organisationId + ""
+        : "";
 
       await log.debug("parse file placeholder", { fileSource, bucket, id });
       const document = await parseDocument({
         sourceType: fileSource,
+        organisationId: organisationId,
         sourceId: id,
         sourceFileBucket: bucket,
       });

@@ -2,7 +2,7 @@ import { getDb } from "../db-connection";
 import { eq, and } from "drizzle-orm";
 import {
   organisationInvitations,
-  OrganisationInvitationsInsert,
+  type OrganisationInvitationsInsert,
   organisationMembers,
   users,
 } from "../schema/users";

@@ -9,14 +9,20 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
+import { organisations } from "./users";
 
-// Table embeddings for products or attachments
+// Table for embeddings for all kinds of data. The source can be defined by the sourceTable and sourceId.
 export const embeddings = pgBaseTable(
   "embeddings",
   {
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .references(() => organisations.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     sourceTable: varchar("source_table", { length: 255 }).notNull(),
     sourceId: uuid("source_id").notNull(),
     order: integer("order_number").notNull().default(0),
