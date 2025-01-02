@@ -180,4 +180,5 @@ dist
 attachments
 
 static/upload/*
-lib/auth.d.ts
+
+lib/*
