@@ -308,3 +308,44 @@ export const getPermissionsByOrganisation = async (organisationId: string) => {
     .where(eq(userPermissionGroups.organisationId, organisationId))
     .groupBy(userPermissionGroups.id);
 };
+
+// Organisation Members Management
+export const addOrganisationMember = async (
+  organisationId: string,
+  userId: string,
+  role?: string
+) => {
+  const result = await getDb()
+    .insert(organisationMembers)
+    .values({
+      organisationId,
+      userId,
+      role,
+    })
+    .returning();
+  return result[0];
+};
+
+export const removeOrganisationMember = async (
+  organisationId: string,
+  userId: string
+) => {
+  await getDb()
+    .delete(organisationMembers)
+    .where(
+      and(
+        eq(organisationMembers.organisationId, organisationId),
+        eq(organisationMembers.userId, userId)
+      )
+    );
+};
+
+export const getOrganisationMembers = async (organisationId: string) => {
+  return await getDb()
+    .select({
+      userId: organisationMembers.userId,
+      role: organisationMembers.role,
+    })
+    .from(organisationMembers)
+    .where(eq(organisationMembers.organisationId, organisationId));
+};

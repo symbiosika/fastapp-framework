@@ -84,6 +84,7 @@ import {
   updateUser,
 } from "./lib/db/usermanagement/user";
 import {
+  addOrganisationMember,
   addTeamMember,
   assignPermissionToGroup,
   createOrganisation,
@@ -96,6 +97,7 @@ import {
   deleteTeam,
   getLastOrganisation,
   getOrganisation,
+  getOrganisationMembers,
   getPathPermission,
   getPermissionGroup,
   getPermissionGroupsByOrganisation,
@@ -103,6 +105,7 @@ import {
   getTeam,
   getTeamsAndMembersByOrganisation,
   getTeamsByOrganisation,
+  removeOrganisationMember,
   removePermissionFromGroup,
   removeTeamMember,
   setLastOrganisation,
@@ -452,4 +455,7 @@ export const userManagement = {
   setLastOrganisation,
   getTeamsAndMembersByOrganisation,
   getPermissionsByOrganisation,
+  addOrganisationMember,
+  removeOrganisationMember,
+  getOrganisationMembers,
 };
