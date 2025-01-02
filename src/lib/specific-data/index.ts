@@ -37,6 +37,9 @@ export const getUserSpecificData = async (id: string, userId: string) => {
     .where(
       and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
     );
+  if (data.length === 0) {
+    throw new Error("User specific data not found");
+  }
   return data[0];
 };
 
@@ -47,6 +50,9 @@ export const getUserSpecificDataByKey = async (userId: string, key: string) => {
     .where(
       and(eq(userSpecificData.userId, userId), eq(userSpecificData.key, key))
     );
+  if (data.length === 0) {
+    throw new Error("User specific data not found");
+  }
   return data[0];
 };
 
@@ -84,6 +90,9 @@ export const getAppSpecificData = async (id: string) => {
     .select()
     .from(appSpecificData)
     .where(eq(appSpecificData.id, id));
+  if (data.length === 0) {
+    throw new Error("App specific data not found");
+  }
   return data[0];
 };
 
@@ -92,6 +101,9 @@ export const getAppSpecificDataByKey = async (key: string, name: string) => {
     .select()
     .from(appSpecificData)
     .where(and(eq(appSpecificData.key, key), eq(appSpecificData.name, name)));
+  if (data.length === 0) {
+    throw new Error("App specific data not found");
+  }
   return data[0];
 };
 
@@ -127,6 +139,9 @@ export const getOrganisationSpecificData = async (id: string) => {
     .select()
     .from(organisationSpecificData)
     .where(eq(organisationSpecificData.id, id));
+  if (data.length === 0) {
+    throw new Error("Organisation specific data not found");
+  }
   return data[0];
 };
 
@@ -145,7 +160,8 @@ export const getOrganisationSpecificDataByFilter = async (
           )
         : eq(organisationSpecificData.category, category)
     );
-  return data[0];
+
+  return data;
 };
 
 export const updateOrganisationSpecificData = async (
@@ -180,6 +196,9 @@ export const getTeamSpecificData = async (id: string) => {
     .select()
     .from(teamSpecificData)
     .where(eq(teamSpecificData.id, id));
+  if (data.length === 0) {
+    throw new Error("Team specific data not found");
+  }
   return data[0];
 };
 
@@ -198,6 +217,9 @@ export const getTeamSpecificDataByKey = async (
         eq(teamSpecificData.key, key)
       )
     );
+  if (data.length === 0) {
+    throw new Error("Team specific data not found");
+  }
   return data[0];
 };
 
@@ -221,7 +243,7 @@ export const getTeamSpecificDataByFilter = async (
             eq(teamSpecificData.category, category)
           )
     );
-  return data[0];
+  return data;
 };
 
 export const updateTeamSpecificData = async (
