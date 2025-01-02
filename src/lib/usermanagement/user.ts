@@ -1,4 +1,4 @@
-import { getDb } from "../db-connection";
+import { getDb } from "../db/db-connection";
 import { eq, and } from "drizzle-orm";
 import {
   users,
@@ -6,8 +6,8 @@ import {
   organisations,
   teamMembers,
   teams,
-} from "../db-schema";
-import type { UsersEntity } from "../../types/shared/db/users";
+} from "../db/schema/users";
+import { UsersEntity } from "../types/shared/db/users";
 
 export const getUser = async (userId: string) => {
   const user = await getDb()

@@ -1,4 +1,4 @@
-import { getDb } from "../db-connection";
+import { getDb } from "../db/db-connection";
 import { eq, and, sql } from "drizzle-orm";
 import {
   organisations,
@@ -17,7 +17,7 @@ import {
   type PathPermissionsInsert,
   users,
   organisationMembers,
-} from "../schema/users";
+} from "../db/schema/users";
 
 // Organisation CRUD
 export const createOrganisation = async (data: OrganisationsInsert) => {

@@ -1,11 +1,11 @@
-import { getDb } from "../db-connection";
 import { eq, and } from "drizzle-orm";
 import {
   organisationInvitations,
   type OrganisationInvitationsInsert,
   organisationMembers,
   users,
-} from "../schema/users";
+} from "../db/schema/users";
+import { getDb } from "../db/db-connection";
 
 // Funktion, um alle Einladungen zu Organisationen abzurufen
 export const getAllOrganisationInvitations = async () => {
