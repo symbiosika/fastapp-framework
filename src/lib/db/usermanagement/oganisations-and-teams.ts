@@ -340,7 +340,12 @@ export const removeOrganisationMember = async (
 
 export const getOrganisationMembers = async (organisationId: string) => {
   return await getDb()
-    .select()
+    .select({
+      usersEmail: users.email,
+      role: organisationMembers.role,
+      joinedAt: organisationMembers.joinedAt,
+    })
     .from(organisationMembers)
+    .leftJoin(users, eq(organisationMembers.userId, users.id))
     .where(eq(organisationMembers.organisationId, organisationId));
 };
