@@ -428,6 +428,13 @@
       "when": 1735810684956,
       "tag": "0060_friendly_robin_chapel",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1735826945322,
+      "tag": "0061_magenta_boom_boom",
+      "breakpoints": true
     }
   ]
 }
