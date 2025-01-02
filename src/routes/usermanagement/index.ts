@@ -28,14 +28,14 @@ import {
   setLastOrganisation,
   getTeamsAndMembersByOrganisation,
   getPermissionGroupsByOrganisation,
-} from "../../lib/db/usermanagement/oganisations-and-teams";
+} from "../../lib/usermanagement/oganisations-and-teams";
 import {
   getAllOrganisationInvitations,
   acceptOrganisationInvitation,
   declineOrganisationInvitation,
   createOrganisationInvitation,
   acceptAllPendingInvitationsForUser,
-} from "../../lib/db/usermanagement/invitations";
+} from "../../lib/usermanagement/invitations";
 
 const BASE_PATH = "/usermanagement";
 

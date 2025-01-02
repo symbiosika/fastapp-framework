@@ -82,7 +82,7 @@ import {
   removeUserFromOrganisation,
   removeUserFromTeam,
   updateUser,
-} from "./lib/db/usermanagement/user";
+} from "./lib/usermanagement/user";
 import {
   addOrganisationMember,
   addTeamMember,
@@ -113,14 +113,14 @@ import {
   updatePathPermission,
   updatePermissionGroup,
   updateTeam,
-} from "./lib/db/usermanagement/oganisations-and-teams";
+} from "./lib/usermanagement/oganisations-and-teams";
 import {
   acceptAllPendingInvitationsForUser,
   acceptOrganisationInvitation,
   createOrganisationInvitation,
   declineOrganisationInvitation,
   getAllOrganisationInvitations,
-} from "./lib/db/usermanagement/invitations";
+} from "./lib/usermanagement/invitations";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
