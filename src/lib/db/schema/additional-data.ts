@@ -73,7 +73,6 @@ export const appSpecificData = pgBaseTable(
 export type AppSpecificDataSelect = typeof appSpecificData.$inferSelect;
 export type AppSpecificDataInsert = typeof appSpecificData.$inferInsert;
 
-// Beziehungen definieren
 export const userSpecificDataRelations = relations(
   userSpecificData,
   ({ one }) => ({
@@ -83,3 +82,35 @@ export const userSpecificDataRelations = relations(
     }),
   })
 );
+
+// Table for organisation specific data
+export const organisationSpecificData = pgBaseTable(
+  "organisation_specific_data",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    category: varchar("category", { length: 100 }).notNull(),
+    name: varchar("name", { length: 100 }).notNull(),
+    version: integer("version").notNull().default(0),
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique().on(table.category, table.name),
+    index("organisation_data_category_idx").on(table.category),
+    index("organisation_data_name_idx").on(table.name),
+    index("organisation_data_created_at_idx").on(table.createdAt),
+    index("organisation_data_version_idx").on(table.version),
+  ]
+);
+
+export type OrganisationSpecificDataSelect =
+  typeof organisationSpecificData.$inferSelect;
+export type OrganisationSpecificDataInsert =
+  typeof organisationSpecificData.$inferInsert;
