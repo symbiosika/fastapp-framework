@@ -134,7 +134,7 @@ import {
   deleteAppSpecificData,
   createOrganisationSpecificData,
   getOrganisationSpecificData,
-  getOrganisationSpecificDataByCategory,
+  getOrganisationSpecificDataByFilter,
   updateOrganisationSpecificData,
   deleteOrganisationSpecificData,
   createTeamSpecificData,
@@ -498,7 +498,7 @@ export const specificDataHandler = {
   // Organisation specific data
   createOrganisationSpecificData,
   getOrganisationSpecificData,
-  getOrganisationSpecificDataByCategory,
+  getOrganisationSpecificDataByFilter,
   updateOrganisationSpecificData,
   deleteOrganisationSpecificData,
   // Team specific data

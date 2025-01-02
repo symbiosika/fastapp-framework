@@ -16,19 +16,27 @@ import {
 } from "../db/schema/additional-data";
 
 // User Specific Data CRUD
-export const createUserSpecificData = async (data: UserSpecificDataInsert) => {
+export const createUserSpecificData = async (
+  userId: string,
+  data: UserSpecificDataInsert
+) => {
   const result = await getDb()
     .insert(userSpecificData)
-    .values(data)
+    .values({
+      ...data,
+      userId,
+    })
     .returning();
   return result[0];
 };
 
-export const getUserSpecificData = async (id: string) => {
+export const getUserSpecificData = async (id: string, userId: string) => {
   const data = await getDb()
     .select()
     .from(userSpecificData)
-    .where(eq(userSpecificData.id, id));
+    .where(
+      and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
+    );
   return data[0];
 };
 
@@ -44,18 +52,25 @@ export const getUserSpecificDataByKey = async (userId: string, key: string) => {
 
 export const updateUserSpecificData = async (
   id: string,
+  userId: string,
   data: Partial<UserSpecificDataSelect>
 ) => {
   const result = await getDb()
     .update(userSpecificData)
     .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(userSpecificData.id, id))
+    .where(
+      and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
+    )
     .returning();
   return result[0];
 };
 
-export const deleteUserSpecificData = async (id: string) => {
-  await getDb().delete(userSpecificData).where(eq(userSpecificData.id, id));
+export const deleteUserSpecificData = async (id: string, userId: string) => {
+  await getDb()
+    .delete(userSpecificData)
+    .where(
+      and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
+    );
 };
 
 // App Specific Data CRUD
@@ -115,18 +130,20 @@ export const getOrganisationSpecificData = async (id: string) => {
   return data[0];
 };
 
-export const getOrganisationSpecificDataByCategory = async (
+export const getOrganisationSpecificDataByFilter = async (
   category: string,
-  name: string
+  name?: string
 ) => {
   const data = await getDb()
     .select()
     .from(organisationSpecificData)
     .where(
-      and(
-        eq(organisationSpecificData.category, category),
-        eq(organisationSpecificData.name, name)
-      )
+      name
+        ? and(
+            eq(organisationSpecificData.category, category),
+            eq(organisationSpecificData.name, name)
+          )
+        : eq(organisationSpecificData.category, category)
     );
   return data[0];
 };
@@ -180,6 +197,29 @@ export const getTeamSpecificDataByKey = async (
         eq(teamSpecificData.category, category),
         eq(teamSpecificData.key, key)
       )
+    );
+  return data[0];
+};
+
+export const getTeamSpecificDataByFilter = async (
+  teamId: string,
+  category: string,
+  key?: string
+) => {
+  const data = await getDb()
+    .select()
+    .from(teamSpecificData)
+    .where(
+      key
+        ? and(
+            eq(teamSpecificData.teamId, teamId),
+            eq(teamSpecificData.category, category),
+            eq(teamSpecificData.key, key)
+          )
+        : and(
+            eq(teamSpecificData.teamId, teamId),
+            eq(teamSpecificData.category, category)
+          )
     );
   return data[0];
 };
