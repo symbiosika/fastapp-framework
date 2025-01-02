@@ -213,10 +213,7 @@ export const removePermissionFromGroup = async (
 
 export const getUserOrganisations = async (userId: string) => {
   return await getDb()
-    .select({
-      organisation: organisations,
-      role: organisationMembers.role,
-    })
+    .select()
     .from(organisationMembers)
     .innerJoin(
       organisations,
@@ -228,6 +225,7 @@ export const getUserOrganisations = async (userId: string) => {
 export const getLastOrganisation = async (userId: string) => {
   const user = await getDb()
     .select({
+      userId: users.id,
       lastOrganisationId: users.lastOrganisationId,
     })
     .from(users)
@@ -342,10 +340,7 @@ export const removeOrganisationMember = async (
 
 export const getOrganisationMembers = async (organisationId: string) => {
   return await getDb()
-    .select({
-      userId: organisationMembers.userId,
-      role: organisationMembers.role,
-    })
+    .select()
     .from(organisationMembers)
     .where(eq(organisationMembers.organisationId, organisationId));
 };
