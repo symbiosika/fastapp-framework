@@ -120,7 +120,7 @@ out
 
 # Nuxt.js build / generate output
 dist
-./lib
+
 
 # Gatsby files
 
