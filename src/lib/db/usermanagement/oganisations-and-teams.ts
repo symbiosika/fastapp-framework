@@ -60,13 +60,6 @@ export const getTeam = async (teamId: string) => {
   return team[0];
 };
 
-export const getTeamsByOrganisation = async (orgId: string) => {
-  return await getDb()
-    .select()
-    .from(teams)
-    .where(eq(teams.organisationId, orgId));
-};
-
 export const updateTeam = async (
   teamId: string,
   data: Partial<TeamsSelect>
@@ -81,6 +74,13 @@ export const updateTeam = async (
 
 export const deleteTeam = async (teamId: string) => {
   await getDb().delete(teams).where(eq(teams.id, teamId));
+};
+
+export const getTeamsByOrganisation = async (orgId: string) => {
+  return await getDb()
+    .select()
+    .from(teams)
+    .where(eq(teams.organisationId, orgId));
 };
 
 // Team Members Management

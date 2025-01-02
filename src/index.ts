@@ -71,6 +71,53 @@ import {
 import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge-sync/sync";
 import type { SyncItem } from "./lib/types/sync";
 import definePluginRoutes from "./routes/plugins";
+import {
+  addUserToOrganisation,
+  addUserToTeam,
+  getUser,
+  getUserByEmail,
+  getUserById,
+  getUserOrganisations,
+  getUserTeams,
+  removeUserFromOrganisation,
+  removeUserFromTeam,
+  updateUser,
+} from "./lib/db/usermanagement/user";
+import {
+  addTeamMember,
+  assignPermissionToGroup,
+  createOrganisation,
+  createPathPermission,
+  createPermissionGroup,
+  createTeam,
+  deleteOrganisation,
+  deletePathPermission,
+  deletePermissionGroup,
+  deleteTeam,
+  getLastOrganisation,
+  getOrganisation,
+  getPathPermission,
+  getPermissionGroup,
+  getPermissionGroupsByOrganisation,
+  getPermissionsByOrganisation,
+  getTeam,
+  getTeamsAndMembersByOrganisation,
+  getTeamsByOrganisation,
+  removePermissionFromGroup,
+  removeTeamMember,
+  setLastOrganisation,
+  updateOrganisation,
+  updatePathPermission,
+  updatePermissionGroup,
+  updateTeam,
+} from "./lib/db/usermanagement/oganisations-and-teams";
+import {
+  acceptAllPendingInvitationsForUser,
+  acceptOrganisationInvitation,
+  createOrganisationInvitation,
+  declineOrganisationInvitation,
+  getAllOrganisationInvitations,
+} from "./lib/db/usermanagement/invitations";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -357,3 +404,52 @@ export { HTTPException } from "hono/http-exception";
 export { log };
 export { syncKnowledgeFromPlugin };
 export type { SyncItem };
+
+export const userManagement = {
+  getUser,
+  getUserById,
+  getUserByEmail,
+  updateUser,
+  addUserToOrganisation,
+  removeUserFromOrganisation,
+  getUserTeams,
+  addUserToTeam,
+  removeUserFromTeam,
+  getUserOrganisations,
+  // organisations
+  createOrganisation,
+  getOrganisation,
+  updateOrganisation,
+  deleteOrganisation,
+  // teams
+  createTeam,
+  getTeam,
+  updateTeam,
+  deleteTeam,
+  getTeamsByOrganisation,
+  addTeamMember,
+  removeTeamMember,
+  // permission groups
+  createPermissionGroup,
+  updatePermissionGroup,
+  deletePermissionGroup,
+  getPermissionGroup,
+  getPermissionGroupsByOrganisation,
+  // path permissions
+  createPathPermission,
+  getPathPermission,
+  updatePathPermission,
+  deletePathPermission,
+  // invitations
+  getAllOrganisationInvitations,
+  acceptOrganisationInvitation,
+  declineOrganisationInvitation,
+  createOrganisationInvitation,
+  acceptAllPendingInvitationsForUser,
+  assignPermissionToGroup,
+  removePermissionFromGroup,
+  getLastOrganisation,
+  setLastOrganisation,
+  getTeamsAndMembersByOrganisation,
+  getPermissionsByOrganisation,
+};
