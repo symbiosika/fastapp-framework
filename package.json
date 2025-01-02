@@ -75,7 +75,7 @@
     "drizzle-orm": "^0.38.2",
     "hono": "^4.6.5",
     "jsonwebtoken": "^9.0.2",
-    "magic-prompt": "0.4.1",
+    "magic-prompt": "^0.4.1",
     "nanoid": "^5.0.7",
     "nodemailer": "^6.9.15",
     "openai": "^4.40.2",
