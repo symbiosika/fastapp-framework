@@ -12,6 +12,7 @@
     // Output
     "declaration": true,
     "outDir": "./lib",
+    "rootDir": "./src",
     "esModuleInterop": true,
 
     // Bundler mode
