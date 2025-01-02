@@ -21,6 +21,7 @@ import { relations } from "drizzle-orm";
 import { activeSubscriptions, purchases } from "./payment";
 import { promptSnippets } from "./prompts";
 import { chatSessions } from "./chat";
+import { teamSpecificData } from "./additional-data";
 
 export const organisations = pgBaseTable(
   "organisations",
@@ -365,6 +366,7 @@ export const teamsRelations = relations(teams, ({ many, one }) => ({
     fields: [teams.organisationId],
     references: [organisations.id],
   }),
+  teamSpecificData: many(teamSpecificData),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({

@@ -9,7 +9,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { users } from "./users";
+import { teams, users } from "./users";
 import { pgBaseTable } from ".";
 
 // Table for user specific data
@@ -114,3 +114,45 @@ export type OrganisationSpecificDataSelect =
   typeof organisationSpecificData.$inferSelect;
 export type OrganisationSpecificDataInsert =
   typeof organisationSpecificData.$inferInsert;
+
+// Table for team specific data
+export const teamSpecificData = pgBaseTable(
+  "team_specific_data",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    category: varchar("category", { length: 100 }).notNull(),
+    key: varchar("key", { length: 50 }).notNull(),
+    version: integer("version").notNull().default(0),
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique().on(table.teamId, table.category, table.key),
+    index("team_data_key_idx").on(table.key),
+    index("team_data_created_at_idx").on(table.createdAt),
+    index("team_data_version_idx").on(table.version),
+  ]
+);
+
+export type TeamSpecificDataSelect = typeof teamSpecificData.$inferSelect;
+export type TeamSpecificDataInsert = typeof teamSpecificData.$inferInsert;
+
+export const teamSpecificDataRelations = relations(
+  teamSpecificData,
+  ({ one }) => ({
+    team: one(teams, {
+      fields: [teamSpecificData.teamId],
+      references: [teams.id],
+    }),
+  })
+);
