@@ -1,5 +1,6 @@
 import {
   jobs,
+  organisations,
   promptSnippets,
   promptTemplates,
   teamMembers,
@@ -45,7 +46,7 @@ export const initializeCollectionPermissions = (
     },
 
     // read-only for the user itself
-    userGroups: {
+    userPermissionGroups: {
       GET: {
         customWhere(params) {
           return inArray(
@@ -60,7 +61,7 @@ export const initializeCollectionPermissions = (
     },
 
     // read-only for the user itself
-    userGroupMembers: {
+    userPermissionGroupMembers: {
       GET: {
         customWhere(params) {
           return eq(userGroupMembers.userId, params.userId);
@@ -161,6 +162,20 @@ export const initializeCollectionPermissions = (
         customWhere(params) {
           return inArray(
             teams.id,
+            getDb()
+              .select({ id: teamMembers.teamId })
+              .from(teamMembers)
+              .where(eq(teamMembers.userId, params.userId))
+          );
+        },
+      },
+    },
+
+    organisations: {
+      GET: {
+        customWhere(params) {
+          return inArray(
+            organisations.id,
             getDb()
               .select({ id: teamMembers.teamId })
               .from(teamMembers)
