@@ -121,6 +121,28 @@ import {
   declineOrganisationInvitation,
   getAllOrganisationInvitations,
 } from "./lib/usermanagement/invitations";
+import {
+  createUserSpecificData,
+  getUserSpecificData,
+  getUserSpecificDataByKey,
+  updateUserSpecificData,
+  deleteUserSpecificData,
+  createAppSpecificData,
+  getAppSpecificData,
+  getAppSpecificDataByKey,
+  updateAppSpecificData,
+  deleteAppSpecificData,
+  createOrganisationSpecificData,
+  getOrganisationSpecificData,
+  getOrganisationSpecificDataByCategory,
+  updateOrganisationSpecificData,
+  deleteOrganisationSpecificData,
+  createTeamSpecificData,
+  getTeamSpecificData,
+  getTeamSpecificDataByKey,
+  updateTeamSpecificData,
+  deleteTeamSpecificData,
+} from "./lib/specific-data";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -458,4 +480,31 @@ export const userManagement = {
   addOrganisationMember,
   removeOrganisationMember,
   getOrganisationMembers,
+};
+
+export const specificDataHandler = {
+  // User specific data
+  createUserSpecificData,
+  getUserSpecificData,
+  getUserSpecificDataByKey,
+  updateUserSpecificData,
+  deleteUserSpecificData,
+  // App specific data
+  createAppSpecificData,
+  getAppSpecificData,
+  getAppSpecificDataByKey,
+  updateAppSpecificData,
+  deleteAppSpecificData,
+  // Organisation specific data
+  createOrganisationSpecificData,
+  getOrganisationSpecificData,
+  getOrganisationSpecificDataByCategory,
+  updateOrganisationSpecificData,
+  deleteOrganisationSpecificData,
+  // Team specific data
+  createTeamSpecificData,
+  getTeamSpecificData,
+  getTeamSpecificDataByKey,
+  updateTeamSpecificData,
+  deleteTeamSpecificData,
 };
