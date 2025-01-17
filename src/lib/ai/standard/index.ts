@@ -220,7 +220,7 @@ export const openaiClient = new OpenAIClient({
   apiKey: providerTokens.openai,
 });
 
-const mistralCleint = new OpenAIClient({
+const mistralClient = new OpenAIClient({
   baseURL: "https://api.mistral.ai/v1",
   apiKey: providerTokens.mistral,
 });
@@ -444,7 +444,7 @@ export async function generateLongText(
         // frequency_penalty: 0,
         safe_prompt: model.provider === "mistral" ? false : undefined,
       };
-      // console.log(req);
+      // console.log("POST", model.endpoint, req);
       const r = await fetch(model.endpoint, {
         method: "POST",
         headers: {
@@ -457,7 +457,7 @@ export async function generateLongText(
         throw new Error(`API returned status ${r.status}`);
       }
       const completion = await r.json();
-      // console.log("completion", completion.choices[0]);
+      // console.log("completion", completion);
 
       const newText = completion.choices[0].message.content ?? "";
       output += newText;

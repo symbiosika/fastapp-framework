@@ -27,8 +27,11 @@ import { chatStoreInDb } from "../smart-chat/chat-history";
  */
 export const generateLongTextWrapper: LlmWrapper = async (
   messages,
+  logger,
   options
 ) => {
+  // console.log("generateLongTextWrapper logger", logger);
+  // console.log("generateLongTextWrapper options", options);
   const result = await generateLongText(messages as any, {
     maxTokens: options?.maxTokens,
     model: options?.model,
