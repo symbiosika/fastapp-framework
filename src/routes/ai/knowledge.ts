@@ -18,6 +18,12 @@ import {
   getNearestEmbeddings,
 } from "../../lib/ai/knowledge/similarity-search";
 import log from "../../lib/log";
+import {
+  createKnowledgeText,
+  readKnowledgeText,
+  updateKnowledgeText,
+  deleteKnowledgeText,
+} from "../../lib/ai/knowledge/knowledge-texts";
 
 const FileSourceType = {
   DB: "db",
@@ -81,49 +87,36 @@ const addFromUrlValidation = v.object({
 });
 type AddFromUrlInput = v.InferOutput<typeof addFromUrlValidation>;
 
+const createKnowledgeTextValidation = v.object({
+  organisationId: v.string(),
+  text: v.string(),
+  title: v.optional(v.string()),
+  meta: v.optional(
+    v.record(
+      v.string(),
+      v.union([v.string(), v.number(), v.boolean(), v.undefined()])
+    )
+  ),
+});
+type CreateKnowledgeTextInput = v.InferOutput<
+  typeof createKnowledgeTextValidation
+>;
+
+const updateKnowledgeTextValidation = v.object({
+  text: v.optional(v.string()),
+  title: v.optional(v.string()),
+  meta: v.optional(
+    v.record(
+      v.string(),
+      v.union([v.string(), v.number(), v.boolean(), v.undefined()])
+    )
+  ),
+});
+type UpdateKnowledgeTextInput = v.InferOutput<
+  typeof updateKnowledgeTextValidation
+>;
+
 export default function defineRoutes(app: FastAppHono) {
-  /**
-   * Parse a document
-   */
-  app.post("/knowledge-texts/parse-document", async (c) => {
-    try {
-      const body = await c.req.json();
-      const parsedBody = v.parse(parseDocumentValidation, body);
-      const r = await parseDocument(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
-    }
-  });
-
-  /**
-   * Add a text knowledge entry from a Text
-   */
-  app.post("/knowledge-texts/from-text", async (c) => {
-    try {
-      const body = await c.req.json();
-      const parsedBody = v.parse(addFromTextValidation, body);
-      const r = await addPlainKnowledgeText(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
-    }
-  });
-
-  /**
-   * Add a text knowledge entry from an URL
-   */
-  app.post("/knowledge-texts/from-url", async (c) => {
-    try {
-      const body = await c.req.json();
-      const parsedBody = v.parse(addFromUrlValidation, body);
-      const r = await addKnowledgeFromUrl(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
-    }
-  });
-
   /**
    * Call the knowledge extraction from a document to generate embeddings in the database
    * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
@@ -315,6 +308,109 @@ export default function defineRoutes(app: FastAppHono) {
         filterName,
       });
       return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Parse a document
+   */
+  app.post("/knowledge-texts/parse-document", async (c) => {
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(parseDocumentValidation, body);
+      const r = await parseDocument(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Add a text knowledge entry from a Text
+   */
+  app.post("/knowledge-texts/from-text", async (c) => {
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(addFromTextValidation, body);
+      const r = await addPlainKnowledgeText(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Add a text knowledge entry from an URL
+   */
+  app.post("/knowledge-texts/from-url", async (c) => {
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(addFromUrlValidation, body);
+      const r = await addKnowledgeFromUrl(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Create a new knowledge text entry
+   */
+  app.post("/knowledge-texts", async (c) => {
+    try {
+      const body = await c.req.json();
+      const parsedBody = v.parse(createKnowledgeTextValidation, body);
+      const r = await createKnowledgeText(parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Read knowledge text entries
+   */
+  app.get("/knowledge-texts", async (c) => {
+    try {
+      const id = c.req.query("id");
+      const limit = c.req.query("limit")
+        ? parseInt(c.req.query("limit") ?? "10")
+        : undefined;
+      const page = c.req.query("page")
+        ? parseInt(c.req.query("page") ?? "1")
+        : undefined;
+      const r = await readKnowledgeText({ id, limit, page });
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Update a knowledge text entry
+   */
+  app.put("/knowledge-texts/:id", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
+      const parsedBody = v.parse(updateKnowledgeTextValidation, body);
+      const r = await updateKnowledgeText(id, parsedBody);
+      return c.json(r);
+    } catch (e) {
+      throw new HTTPException(400, { message: e + "" });
+    }
+  });
+
+  /**
+   * Delete a knowledge text entry
+   */
+  app.delete("/knowledge-texts/:id", async (c) => {
+    try {
+      const id = c.req.param("id");
+      const r = await deleteKnowledgeText(id);
+      return c.json(RESPONSES.SUCCESS);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
     }
