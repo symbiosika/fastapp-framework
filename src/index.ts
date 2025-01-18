@@ -17,7 +17,10 @@ import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { serveStatic } from "hono/bun";
 import { defineFilesRoutes } from "./routes/files";
 import paymentRoutes from "./routes/payment";
-import aiRoutes from "./routes/ai";
+import aiTemplatesRoutes from "./routes/ai/templates";
+import aiFineTuningRoutes from "./routes/ai/fine-tuning";
+import aiKnowledgeRoutes from "./routes/ai/knowledge";
+import aiChatRoutes from "./routes/ai/chat";
 import type { ServerConfig, FastAppHonoContextVariables } from "./types";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import type { DatabaseSchema } from "./lib/db/db-schema";
@@ -311,7 +314,10 @@ export const defineServer = (config: ServerConfig) => {
    */
   const aiApp = new Hono();
   aiApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
-  aiRoutes(aiApp as any);
+  aiFineTuningRoutes(aiApp as any);
+  aiKnowledgeRoutes(aiApp as any);
+  aiChatRoutes(aiApp as any);
+  aiTemplatesRoutes(aiApp as any);
   app.route(_GLOBAL_SERVER_CONFIG.basePath + "/ai", aiApp);
 
   /**

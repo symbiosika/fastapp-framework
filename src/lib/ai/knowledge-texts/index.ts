@@ -6,11 +6,11 @@ import { getMarkdownFromUrl } from "../parsing/url";
 /**
  * Add knowledge from an URL
  */
-export const addKnowledgeFromUrl = async (
-  url: string,
-  organisationId: string
-) => {
-  const markdown = await getMarkdownFromUrl(url);
+export const addKnowledgeFromUrl = async (data: {
+  url: string;
+  organisationId: string;
+}) => {
+  const markdown = await getMarkdownFromUrl(data.url);
   log.debug(`Markdown: ${markdown.slice(0, 100)}`);
 
   // insert in DB as text knowledge entry
@@ -18,8 +18,8 @@ export const addKnowledgeFromUrl = async (
     .insert(knowledgeText)
     .values({
       text: markdown,
-      title: url,
-      organisationId: organisationId,
+      title: data.url,
+      organisationId: data.organisationId,
     })
     .returning({
       id: knowledgeText.id,
