@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { chatSessions } from "../../db/schema/chat";
 import { getDb } from "../../db/db-connection";
 import log from "../../log";
@@ -251,11 +251,13 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
           eq(chatSessions.userId, userId),
           gte(chatSessions.updatedAt, startFrom)
         )
-      );
+      )
+      .orderBy(desc(chatSessions.updatedAt));
     return result.map((r) => ({
       chatId: r.id,
       name: r.name,
       history: r.messages as ChatMessage[],
+      updatedAt: r.updatedAt,
     }));
   }
 
