@@ -55,6 +55,23 @@ export const getPromptSnippetById = async (
 };
 
 /**
+ * Get a prompt snippet by name, category and organisationId
+ */
+export const getPromptSnippetByTitle = async (data: {
+  name: string;
+  category: string;
+  organisationId: string;
+}) => {
+  return await getDb().query.promptSnippets.findFirst({
+    where: and(
+      eq(promptSnippets.name, data.name),
+      eq(promptSnippets.category, data.category),
+      eq(promptSnippets.organisationId, data.organisationId)
+    ),
+  });
+};
+
+/**
  * Add a new prompt snippet
  */
 export const addPromptSnippet = async (input: {

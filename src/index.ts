@@ -148,7 +148,16 @@ import {
   readKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
+  getKnowledgeTextByTitle,
 } from "./lib/ai/knowledge/knowledge-texts";
+import {
+  addPromptSnippet,
+  getPromptSnippets,
+  getPromptSnippetById,
+  updatePromptSnippet,
+  deletePromptSnippet,
+  getPromptSnippetByTitle,
+} from "./lib/ai/prompt-snippets";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -414,12 +423,20 @@ export const aiService = {
   readKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
+  getKnowledgeTextByTitle,
   // fine-tuning
   getFineTuningEntryById,
   getFineTuningEntries,
   addFineTuningData,
   updateFineTuningData,
   deleteFineTuningData,
+  // prompt snippets
+  addPromptSnippet,
+  getPromptSnippets,
+  getPromptSnippetById,
+  updatePromptSnippet,
+  deletePromptSnippet,
+  getPromptSnippetByTitle,
 };
 
 export const urlQueryParser = {

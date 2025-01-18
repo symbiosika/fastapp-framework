@@ -47,6 +47,28 @@ export const readKnowledgeText = async (data: {
 };
 
 /**
+ * Get a knowledgeText entry by name, category and organisationId
+ */
+export const getKnowledgeTextByTitle = async (data: {
+  title: string;
+  organisationId: string;
+}) => {
+  const result = await getDb()
+    .select()
+    .from(knowledgeText)
+    .where(
+      and(
+        eq(knowledgeText.title, data.title),
+        eq(knowledgeText.organisationId, data.organisationId)
+      )
+    );
+  if (result.length === 0) {
+    throw new Error("Knowledge text not found");
+  }
+  return result[0];
+};
+
+/**
  * Update a knowledgeText entry by ID
  */
 export const updateKnowledgeText = async (

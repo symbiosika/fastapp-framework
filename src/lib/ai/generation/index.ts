@@ -18,9 +18,11 @@ import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 import { getMarkdownFromUrl } from "../parsing/url";
-import type { ChatWithTemplateInputWithUserId } from "../../../routes/ai";
 import type { ChatWithTemplateReturn } from "../../../types";
 import { chatStoreInDb } from "../smart-chat/chat-history";
+import { ChatWithTemplateInputWithUserId } from "../../../routes/ai/chat";
+import { getPromptSnippetByTitle } from "../prompt-snippets";
+import { getKnowledgeTextByTitle } from "../knowledge/knowledge-texts";
 
 /**
  * Wrapper function for generateLongText that matches the LlmWrapper type signature
@@ -243,6 +245,27 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       await log.debug("parse url placeholder", { url });
       const markdown = await getMarkdownFromUrl(url);
       return { content: markdown };
+    },
+  },
+  {
+    name: "prompt_snippet",
+    replacerFunction: async (match: string, args: PlaceholderArgumentDict) => {
+      const snippet = await getPromptSnippetByTitle({
+        name: args.name + "",
+        category: args.category + "",
+        organisationId: args.organisationId + "",
+      });
+      return { content: snippet?.content ?? "" };
+    },
+  },
+  {
+    name: "knowledge_text",
+    replacerFunction: async (match: string, args: PlaceholderArgumentDict) => {
+      const text = await getKnowledgeTextByTitle({
+        title: args.title + "",
+        organisationId: args.organisationId + "",
+      });
+      return { content: text?.text ?? "" };
     },
   },
 ];
