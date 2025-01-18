@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
 import { knowledgeText } from "../../db/schema/knowledge";
 import log from "../../log";
@@ -24,6 +24,7 @@ export const createKnowledgeText = async (data: {
  */
 export const readKnowledgeText = async (data: {
   id?: string;
+  organisationId: string;
   limit?: number;
   page?: number;
 }) => {
@@ -31,6 +32,7 @@ export const readKnowledgeText = async (data: {
     .select()
     .from(knowledgeText)
     .orderBy(asc(knowledgeText.createdAt));
+  query.where(eq(knowledgeText.organisationId, data.organisationId));
 
   if (data.id) {
     query.where(eq(knowledgeText.id, data.id));
@@ -66,10 +68,18 @@ export const updateKnowledgeText = async (
 /**
  * Delete a knowledgeText entry by ID
  */
-export const deleteKnowledgeText = async (id: string) => {
+export const deleteKnowledgeText = async (
+  id: string,
+  organisationId: string
+) => {
   const e = await getDb()
     .delete(knowledgeText)
-    .where(eq(knowledgeText.id, id))
+    .where(
+      and(
+        eq(knowledgeText.id, id),
+        eq(knowledgeText.organisationId, organisationId)
+      )
+    )
     .returning();
   return { success: true };
 };

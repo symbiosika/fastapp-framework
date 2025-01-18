@@ -39,7 +39,10 @@ describe("Knowledge Texts Test", () => {
     };
 
     const createdText = await createKnowledgeText(newText);
-    const readText = await readKnowledgeText({ id: createdText.id });
+    const readText = await readKnowledgeText({
+      id: createdText.id,
+      organisationId: createdText.organisationId,
+    });
 
     expect(readText.length).toBe(1);
     expect(readText[0].text).toBe(newText.text);
@@ -71,11 +74,17 @@ describe("Knowledge Texts Test", () => {
     };
 
     const createdText = await createKnowledgeText(newText);
-    const deletedText = await deleteKnowledgeText(createdText.id);
+    const deletedText = await deleteKnowledgeText(
+      createdText.id,
+      createdText.organisationId
+    );
 
     expect(deletedText.success).toBe(true);
 
-    const readText = await readKnowledgeText({ id: createdText.id });
+    const readText = await readKnowledgeText({
+      id: createdText.id,
+      organisationId: createdText.organisationId,
+    });
     expect(readText.length).toBe(0);
   });
 });
