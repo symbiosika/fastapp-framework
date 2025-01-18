@@ -35,15 +35,12 @@ export const readKnowledgeText = async (data: {
   if (data.id) {
     query.where(eq(knowledgeText.id, data.id));
   }
-
   if (data.limit) {
     query.limit(data.limit);
   }
-
   if (data.page && data.limit) {
     query.offset((data.page - 1) * data.limit);
   }
-
   return await query;
 };
 
@@ -74,5 +71,5 @@ export const deleteKnowledgeText = async (id: string) => {
     .delete(knowledgeText)
     .where(eq(knowledgeText.id, id))
     .returning();
-  return e[0];
+  return { success: true };
 };

@@ -10,10 +10,6 @@ import {
 } from "../../lib/ai/knowledge/get-knowledge";
 import { RESPONSES } from "../../lib/responses";
 import {
-  addKnowledgeFromUrl,
-  addPlainKnowledgeText,
-} from "../../lib/ai/knowledge-texts";
-import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "../../lib/ai/knowledge/similarity-search";
@@ -24,6 +20,7 @@ import {
   updateKnowledgeText,
   deleteKnowledgeText,
 } from "../../lib/ai/knowledge/knowledge-texts";
+import { addKnowledgeTextFromUrl } from "../../lib/ai/knowledge-texts";
 
 const FileSourceType = {
   DB: "db",
@@ -334,7 +331,7 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       const body = await c.req.json();
       const parsedBody = v.parse(addFromTextValidation, body);
-      const r = await addPlainKnowledgeText(parsedBody);
+      const r = await createKnowledgeText(parsedBody);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });
@@ -348,7 +345,7 @@ export default function defineRoutes(app: FastAppHono) {
     try {
       const body = await c.req.json();
       const parsedBody = v.parse(addFromUrlValidation, body);
-      const r = await addKnowledgeFromUrl(parsedBody);
+      const r = await addKnowledgeTextFromUrl(parsedBody);
       return c.json(r);
     } catch (e) {
       throw new HTTPException(400, { message: e + "" });

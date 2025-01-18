@@ -67,10 +67,7 @@ import defineManageSecretsRoutes from "./routes/secrets";
 import scheduler from "./lib/cron";
 import { initializePluginCache, registerServerPlugin } from "./lib/plugins";
 import type { ServerPlugin } from "./lib/types/plugins";
-import {
-  addKnowledgeFromUrl,
-  addPlainKnowledgeText,
-} from "./lib/ai/knowledge-texts";
+import { addKnowledgeTextFromUrl } from "./lib/ai/knowledge-texts";
 import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge-sync/sync";
 import type { SyncItem } from "./lib/types/sync";
 import definePluginRoutes from "./routes/plugins";
@@ -146,6 +143,12 @@ import {
   updateTeamSpecificData,
   deleteTeamSpecificData,
 } from "./lib/specific-data";
+import {
+  createKnowledgeText,
+  readKnowledgeText,
+  updateKnowledgeText,
+  deleteKnowledgeText,
+} from "./lib/ai/knowledge/knowledge-texts";
 
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",
@@ -403,10 +406,14 @@ export const aiService = {
   parseDocument,
   extractKnowledgeFromExistingDbEntry,
   getKnowledgeEntries,
-  addKnowledgeFromUrl,
-  addPlainKnowledgeText,
+  addKnowledgeTextFromUrl,
   getNearestEmbeddings,
   getFullSourceDocumentsForSimilaritySearch,
+  // knowledge texts
+  createKnowledgeText,
+  readKnowledgeText,
+  updateKnowledgeText,
+  deleteKnowledgeText,
   // fine-tuning
   getFineTuningEntryById,
   getFineTuningEntries,

@@ -224,8 +224,10 @@ export const deleteKnowledgeEntry = async (
         e.sourceFileBucket,
         organisationId
       );
-    } else if (e?.sourceType === "text") {
-      await getDb().delete(knowledgeText).where(eq(knowledgeText.id, id));
+    } else if (e?.sourceType === "text" && e.sourceId) {
+      await getDb()
+        .delete(knowledgeText)
+        .where(eq(knowledgeText.id, e.sourceId));
     }
   }
   await getDb().delete(knowledgeEntry).where(eq(knowledgeEntry.id, id));

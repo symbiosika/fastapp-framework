@@ -6,7 +6,7 @@ import { getMarkdownFromUrl } from "../parsing/url";
 /**
  * Add knowledge from an URL
  */
-export const addKnowledgeFromUrl = async (data: {
+export const addKnowledgeTextFromUrl = async (data: {
   url: string;
   organisationId: string;
 }) => {
@@ -27,21 +27,5 @@ export const addKnowledgeFromUrl = async (data: {
       createdAt: knowledgeText.createdAt,
     });
 
-  return e[0];
-};
-
-/**
- * Add plain knowledge text to the database
- */
-export const addPlainKnowledgeText = async (data: {
-  text: string;
-  title?: string;
-  meta?: Record<string, string | number | boolean | undefined>;
-  organisationId: string;
-}) => {
-  const e = await getDb()
-    .insert(knowledgeText)
-    .values({ ...data })
-    .returning();
   return e[0];
 };
