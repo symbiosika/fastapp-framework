@@ -21,7 +21,7 @@ import { getMarkdownFromUrl } from "../parsing/url";
 import type { ChatWithTemplateReturn } from "../../../types";
 import { chatStoreInDb } from "../smart-chat/chat-history";
 import { ChatWithTemplateInputWithUserId } from "../../../routes/ai/chat";
-import { getPromptSnippetByTitle } from "../prompt-snippets";
+import { getPromptSnippetByNameAndCategory } from "../prompt-snippets";
 import { getKnowledgeTextByTitle } from "../knowledge/knowledge-texts";
 
 /**
@@ -122,7 +122,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       };
 
       await log.debug("parse knowledgebase placeholder", query);
-      const knowledgebase = await getPlainKnowledge(query);
+      const knowledgebase = await getPlainKnowledge(query).catch((e) => {
+        log.error("Error getting plain knowledge", e);
+        return [];
+      });
 
       if (knowledgebase.length === 0) {
         await log.debug("no knowledgebase entries found", query);
@@ -193,6 +196,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         filterName: names,
         addBeforeN: before,
         addAfterN: after,
+      }).catch((e) => {
+        log.error("Error getting nearest embeddings", e);
+        return [];
       });
 
       return { content: results.map((r) => r.text).join("\n") };
@@ -224,9 +230,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         organisationId: organisationId,
         sourceId: id,
         sourceFileBucket: bucket,
+      }).catch((e) => {
+        log.error("Error parsing document", e);
+        return null;
       });
 
-      return { content: document.content };
+      return { content: document?.content ?? "" };
     },
   },
   {
@@ -243,18 +252,26 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
       const url = args.url + "";
       await log.debug("parse url placeholder", { url });
-      const markdown = await getMarkdownFromUrl(url);
+      const markdown = await getMarkdownFromUrl(url).catch((e) => {
+        log.error("Error getting markdown from url", e);
+        return "";
+      });
       return { content: markdown };
     },
   },
   {
     name: "prompt_snippet",
     replacerFunction: async (match: string, args: PlaceholderArgumentDict) => {
-      const snippet = await getPromptSnippetByTitle({
+      console.log("parse prompt_snippet placeholder", args);
+      const snippet = await getPromptSnippetByNameAndCategory({
         name: args.name + "",
         category: args.category + "",
         organisationId: args.organisationId + "",
+      }).catch((e) => {
+        log.error("Error getting prompt snippet", e);
+        return null;
       });
+      console.log("snippet", snippet);
       return { content: snippet?.content ?? "" };
     },
   },
@@ -264,6 +281,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const text = await getKnowledgeTextByTitle({
         title: args.title + "",
         organisationId: args.organisationId + "",
+      }).catch((e) => {
+        log.error("Error getting knowledge text", e);
+        return null;
       });
       return { content: text?.text ?? "" };
     },
