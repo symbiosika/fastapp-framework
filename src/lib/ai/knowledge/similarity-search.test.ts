@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { addPlainKnowledgeText } from "../knowledge-texts";
 import {
   createDatabaseClient,
   waitForDbConnection,
@@ -7,6 +6,7 @@ import {
 import { getNearestEmbeddings } from "./similarity-search";
 import { extractKnowledgeFromExistingDbEntry } from "./add-knowledge";
 import { initTestOrganisation } from "../../../test/init.test";
+import { createKnowledgeText } from "./knowledge-texts";
 
 const testTexts = [
   {
@@ -62,7 +62,7 @@ describe("Similarity Search Test", () => {
     // 1. Add all test texts to the database and extract knowledge
     const addedTexts = await Promise.all(
       testTexts.map((text) =>
-        addPlainKnowledgeText({
+        createKnowledgeText({
           text: text.text,
           title: text.title,
           organisationId: "00000000-1111-1111-1111-000000000000",

@@ -73,7 +73,7 @@ describe("Knowledge Texts Test", () => {
     const createdText = await createKnowledgeText(newText);
     const deletedText = await deleteKnowledgeText(createdText.id);
 
-    expect(deletedText.id).toBe(createdText.id);
+    expect(deletedText.success).toBe(true);
 
     const readText = await readKnowledgeText({ id: createdText.id });
     expect(readText.length).toBe(0);
