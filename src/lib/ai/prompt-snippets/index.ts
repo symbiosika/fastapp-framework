@@ -57,7 +57,7 @@ export const getPromptSnippetById = async (
 /**
  * Get a prompt snippet by name, category and organisationId
  */
-export const getPromptSnippetByTitle = async (data: {
+export const getPromptSnippetByNameAndCategory = async (data: {
   name: string;
   category: string;
   organisationId: string;

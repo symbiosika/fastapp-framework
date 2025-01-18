@@ -156,7 +156,7 @@ import {
   getPromptSnippetById,
   updatePromptSnippet,
   deletePromptSnippet,
-  getPromptSnippetByTitle,
+  getPromptSnippetByNameAndCategory,
 } from "./lib/ai/prompt-snippets";
 
 export const _GLOBAL_SERVER_CONFIG = {
@@ -436,7 +436,7 @@ export const aiService = {
   getPromptSnippetById,
   updatePromptSnippet,
   deletePromptSnippet,
-  getPromptSnippetByTitle,
+  getPromptSnippetByNameAndCategory,
 };
 
 export const urlQueryParser = {
