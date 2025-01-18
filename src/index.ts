@@ -461,6 +461,7 @@ export { syncKnowledgeFromPlugin };
 export type { SyncItem };
 
 export const userManagement = {
+  // users
   getUser,
   getUserById,
   getUserByEmail,
