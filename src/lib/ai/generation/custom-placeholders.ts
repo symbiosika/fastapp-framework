@@ -213,9 +213,14 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       } else if (ids.length === 1) {
         id = ids[0];
       } else {
-        id = ids[ixValue];
+        id = ids[ixValue] ?? undefined;
         incrementIndexValue(variables, indexName);
         log.debug("read file index", ixValue);
+      }
+
+      if (!id) {
+        log.debug("no more files to read");
+        return { content: "", skipThisBlock: true };
       }
 
       await log.debug("parse file placeholder", { fileSource, bucket, id });
@@ -328,6 +333,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
 
       const ixName = "ix_" + varName;
       const ixValue = getIndexValue(variables, ixName);
+      log.debug("iterate_array", { ixName, ixValue });
 
       // get value from array
       if (ixValue >= variables[varName].length) {

@@ -11,6 +11,7 @@ import type {
   VariableTypeInMemory,
   ChatSession,
   VariableDictionaryInMemory,
+  ChatSessionWithTemplate,
 } from "magic-prompt";
 import { nanoid } from "nanoid";
 
@@ -105,14 +106,15 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       template?: ParsedTemplateBlocks;
       blockIndex?: number;
       name?: string;
-    }
+    },
+    session?: ChatSessionWithTemplate
   ): Promise<VariableDictionaryInMemory> {
     log.debug(`Update chat session ${chatId}`);
 
-    const session = await this.get(chatId);
-    if (!session) throw new Error(`Chat session ${chatId} not found`);
+    const currentSession = session || (await this.get(chatId));
+    if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
 
-    const newState = { ...session.state };
+    const newState = { ...currentSession.state };
     if (set.template) {
       newState.useTemplate = {
         def: set.template,
@@ -127,12 +129,16 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
     await getDb()
       .update(chatSessions)
       .set({
-        messages: set.actualChat || session.actualChat,
+        messages: set.actualChat || currentSession.actualChat,
         state: newState,
         name: set.name ?? undefined,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(chatSessions.id, chatId));
+
+    if (session) {
+      session.state.variables = newState.variables;
+    }
 
     return newState.variables;
   }
@@ -140,14 +146,15 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
   async setVariable(
     chatId: string,
     key: string,
-    value: VariableType
+    value: VariableType,
+    session?: ChatSessionWithTemplate
   ): Promise<VariableDictionaryInMemory> {
     log.debug(`Update variable ${key} in chat session ${chatId}`);
 
-    const session = await this.get(chatId);
-    if (!session) throw new Error(`Chat session ${chatId} not found`);
+    const currentSession = session || (await this.get(chatId));
+    if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
 
-    const newState = { ...session.state };
+    const newState = { ...currentSession.state };
     newState.variables[key] = value;
 
     await getDb()
@@ -158,19 +165,24 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       })
       .where(eq(chatSessions.id, chatId));
 
+    if (session) {
+      session.state.variables = newState.variables;
+    }
+
     return newState.variables;
   }
 
   async mergeVariables(
     chatId: string,
-    variables: VariableDictionary
+    variables: VariableDictionary,
+    session?: ChatSessionWithTemplate
   ): Promise<VariableDictionaryInMemory> {
     log.debug(`Merge variables in chat session ${chatId}`);
 
-    const session = await this.get(chatId);
-    if (!session) throw new Error(`Chat session ${chatId} not found`);
+    const currentSession = session || (await this.get(chatId));
+    if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
 
-    const newState = { ...session.state };
+    const newState = { ...currentSession.state };
     newState.variables = { ...newState.variables, ...variables };
 
     await getDb()
@@ -180,6 +192,10 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         updatedAt: new Date().toISOString(),
       })
       .where(eq(chatSessions.id, chatId));
+
+    if (session) {
+      session.state.variables = newState.variables;
+    }
 
     return newState.variables;
   }
@@ -198,14 +214,15 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
   async appendToMemory(
     chatId: string,
     memoryKey: string,
-    value: VariableType
+    value: VariableType,
+    session?: ChatSessionWithTemplate
   ): Promise<VariableDictionaryInMemory> {
     log.debug(`Append to memory ${memoryKey} in chat session ${chatId}`);
 
-    const session = await this.get(chatId);
-    if (!session) throw new Error(`Chat session ${chatId} not found`);
+    const currentSession = session || (await this.get(chatId));
+    if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
 
-    const newState = { ...session.state };
+    const newState = { ...currentSession.state };
     const currentMemory = newState.variables[memoryKey];
 
     if (Array.isArray(currentMemory)) {
@@ -224,6 +241,10 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         updatedAt: new Date().toISOString(),
       })
       .where(eq(chatSessions.id, chatId));
+
+    if (session) {
+      session.state.variables = newState.variables;
+    }
 
     return newState.variables;
   }
