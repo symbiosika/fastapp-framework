@@ -86,7 +86,7 @@ class Logger {
     }
   }
 
-  async debug(...messages: (string | object | undefined)[]) {
+  async debug(...messages: (string | object | undefined | number)[]) {
     for (const message of messages) {
       if (typeof message === "object") {
         await this.log("debug", JSON.stringify(message));

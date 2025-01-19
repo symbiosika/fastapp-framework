@@ -21,6 +21,11 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
     return { text: markdown };
   }
 
+  // TXT file
+  if (file.type.startsWith("text/plain")) {
+    return { text: await file.text() };
+  }
+
   // Image
   else if (file.type.startsWith("image")) {
     // the the image describe by ai
