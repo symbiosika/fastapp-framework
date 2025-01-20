@@ -206,11 +206,11 @@ export const useTemplateChat = async (
     const template = await templateChat.getParsedTemplateFromString(
       templateDbEntry.template
     );
-    const r = await templateChat.chat({
-      llmOptions: query.llmOptions,
+    const r = await templateChat.chat({      
       chatId: query.chatId,
       userId: query.userId,
       userMessage: query.userMessage,
+      llmOptions: query.llmOptions,
       trigger: query.trigger,
       template,
       usersVariables: query.variables,

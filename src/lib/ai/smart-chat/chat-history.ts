@@ -126,10 +126,18 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       newState.useTemplate.blockIndex = set.blockIndex;
     }
 
+    // Append messages to the current chat history if appendToHistory is provided
+    const updatedMessages = set.appendToHistory
+      ? [...currentSession.actualChat, ...set.appendToHistory]
+      : set.actualChat || currentSession.actualChat;
+    if (session) {
+      session.actualChat = updatedMessages;
+    }
+
     await getDb()
       .update(chatSessions)
       .set({
-        messages: set.actualChat || currentSession.actualChat,
+        messages: updatedMessages,
         state: newState,
         name: set.name ?? undefined,
         updatedAt: new Date().toISOString(),
