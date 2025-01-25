@@ -1,17 +1,10 @@
-import type { FastAppHono } from "../../types";
+import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import { useTemplateChat } from "../../lib/ai/generation";
-import { RESPONSES } from "../../lib/responses";
-import { chatStoreInDb } from "../../lib/ai/smart-chat/chat-history";
-import { getAllAIModels } from "../../lib/ai/standard";
-
-const FileSourceType = {
-  DB: "db",
-  LOCAL: "local",
-  URL: "url",
-  TEXT: "text",
-} as const;
+import { useTemplateChat } from "../../../../lib/ai/generation";
+import { RESPONSES } from "../../../../lib/responses";
+import { chatStoreInDb } from "../../../../lib/ai/smart-chat/chat-history";
+import { getAllAIModels } from "../../../../lib/ai/standard";
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
@@ -56,7 +49,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get all available models
    */
-  app.get("/models", async (c) => {
+  app.get("/organisation/:organisationId/ai/models", async (c) => {
     const r = await getAllAIModels();
     return c.json(r);
   });
@@ -65,7 +58,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Main CHAT Route. Can handle simple and complex chats.
    * Chat with a Prompt Template
    */
-  app.post("/chat-with-template", async (c) => {
+  app.post("/organisation/:organisationId/ai/chat-with-template", async (c) => {
     try {
       const body = await c.req.json();
       const usersId = c.get("usersId");
@@ -83,7 +76,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Chat History for the current user
    */
-  app.get("/chat/history", async (c) => {
+  app.get("/organisation/:organisationId/ai/chat/history", async (c) => {
     const usersId = c.get("usersId");
     const startFrom = c.req.query("startFrom") ?? "2000-01-01";
     const r = await chatStoreInDb.getHistoryByUserId(usersId, startFrom);
@@ -93,7 +86,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Chat History for one chat session
    */
-  app.get("/chat/history/:id", async (c) => {
+  app.get("/organisation/:organisationId/ai/chat/history/:id", async (c) => {
     const id = c.req.param("id");
     const r = await chatStoreInDb.get(id);
     if (!r) {
@@ -109,7 +102,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Drop a chat session by ID
    */
-  app.delete("/chat/history/:id", async (c) => {
+  app.delete("/organisation/:organisationId/ai/chat/history/:id", async (c) => {
     const id = c.req.param("id");
     await chatStoreInDb.drop(id);
     return c.json(RESPONSES.SUCCESS);

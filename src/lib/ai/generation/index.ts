@@ -12,7 +12,7 @@ import log from "../../../lib/log";
 
 import type { ChatWithTemplateReturn } from "../../../types";
 import { chatStoreInDb } from "../smart-chat/chat-history";
-import type { ChatWithTemplateInputWithUserId } from "../../../routes/ai/chat";
+import type { ChatWithTemplateInputWithUserId } from "../../../routes/organisation/[organisationId]/ai/chat";
 import { customAppPlaceholders } from "./custom-placeholders";
 
 /**
@@ -206,7 +206,7 @@ export const useTemplateChat = async (
     const template = await templateChat.getParsedTemplateFromString(
       templateDbEntry.template
     );
-    const r = await templateChat.chat({      
+    const r = await templateChat.chat({
       chatId: query.chatId,
       userId: query.userId,
       userMessage: query.userMessage,

@@ -26,15 +26,15 @@ import {
   registerPostRegisterAction,
   registerPreRegisterCustomVerification,
 } from "./routes/user";
-import { defineFilesRoutes } from "./routes/files";
+import { defineFilesRoutes } from "./routes/organisation/[organisationId]/files";
 import paymentRoutes from "./routes/payment";
-import aiTemplatesRoutes from "./routes/ai/templates";
-import aiFineTuningRoutes from "./routes/ai/fine-tuning";
-import aiKnowledgeRoutes from "./routes/ai/knowledge";
-import aiChatRoutes from "./routes/ai/chat";
+import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templates";
+import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
+import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
+import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
 import { defineCollectionRoutes } from "./routes/collections";
-import defineManageSecretsRoutes from "./routes/secrets";
-import definePluginRoutes from "./routes/plugins";
+import defineManageSecretsRoutes from "./routes/organisation/[organisationId]/secrets";
+import definePluginRoutes from "./routes/organisation/[organisationId]/plugins";
 import definePingRoute from "./routes/ping";
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
@@ -55,6 +55,7 @@ import urlService from "./url-service";
 import pluginService from "./plugin-service";
 import paymentService from "./payment-service";
 import usermanagementService from "./usermanagement-service";
+import filesService from "./files-service";
 
 /**
  * MAIN FUNCTION
@@ -290,3 +291,4 @@ export { urlService };
 export { pluginService };
 export { paymentService };
 export { usermanagementService };
+export { filesService };

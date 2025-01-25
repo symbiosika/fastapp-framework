@@ -1,6 +1,6 @@
-import { HTTPException } from "../..";
-import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
-import type { FastAppHono } from "../../types";
+import { HTTPException } from "../../../../types";
+import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import {
   setPluginConfig,
@@ -11,10 +11,10 @@ import {
   deletePlugin,
   getActivePluginByName,
   getAvailablePluginByType,
-} from "../../lib/plugins";
-import { RESPONSES } from "../../lib/responses";
+} from "../../../../lib/plugins";
+import { RESPONSES } from "../../../../lib/responses";
 import type { Context } from "hono";
-import { isValidUuid } from "../../lib/helper/uuid";
+import { isValidUuid } from "../../../../lib/helper/uuid";
 
 const pluginConfigSchema = v.object({
   id: v.string(),
@@ -72,7 +72,7 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/available",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/available",
     authAndSetUsersInfo,
     async (c) => {
       try {
@@ -90,7 +90,7 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/organisation/:organisationId/installed",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
     async (c) => {
       try {
@@ -110,7 +110,7 @@ export default function definePluginRoutes(
    * Register a new plugin
    */
   app.post(
-    API_BASE_PATH + "/plugins/organisation/:organisationId/installed",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
     async (c) => {
       const organisationId = c.req.param("organisationId");
@@ -137,7 +137,7 @@ export default function definePluginRoutes(
    * Get plugin configuration
    */
   app.get(
-    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
@@ -163,7 +163,7 @@ export default function definePluginRoutes(
    * Update plugin configuration
    */
   app.put(
-    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
@@ -193,7 +193,7 @@ export default function definePluginRoutes(
    * Delete a plugin configuration
    */
   app.delete(
-    API_BASE_PATH + "/plugins/organisation/:organisationId/installed/:idOrName",
+    API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     async (c) => {
       const idOrName = c.req.param("idOrName");
@@ -219,7 +219,7 @@ export default function definePluginRoutes(
    */
   app.get(
     API_BASE_PATH +
-      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
+      "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);
@@ -246,7 +246,7 @@ export default function definePluginRoutes(
    */
   app.post(
     API_BASE_PATH +
-      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
+      "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);
@@ -274,7 +274,7 @@ export default function definePluginRoutes(
    */
   app.delete(
     API_BASE_PATH +
-      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
+      "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const pluginName = c.req.param("pluginName");
@@ -301,7 +301,7 @@ export default function definePluginRoutes(
    */
   app.put(
     API_BASE_PATH +
-      "/plugins/organisation/:organisationId/gw/:pluginName/:endpoint",
+      "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     async (c) => {
       const url = new URL(c.req.url);

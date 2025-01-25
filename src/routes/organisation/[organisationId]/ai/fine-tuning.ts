@@ -1,4 +1,4 @@
-import type { FastAppHono } from "../../types";
+import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import {
@@ -7,9 +7,9 @@ import {
   getFineTuningEntries,
   getFineTuningEntryById,
   updateFineTuningData,
-} from "../../lib/ai/fine-tuning";
-import { parseCommaSeparatedListFromUrlParam } from "../../lib/url";
-import { RESPONSES } from "../../lib/responses";
+} from "../../../../lib/ai/fine-tuning";
+import { parseCommaSeparatedListFromUrlParam } from "../../../../lib/url";
+import { RESPONSES } from "../../../../lib/responses";
 
 // Add new validation schema
 const fineTuningDataValidation = v.object({
@@ -34,7 +34,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - name: string[] comma separated
    * - category: string[] comma separated
    */
-  app.get("/fine-tuning/:id?", async (c) => {
+  app.get("/organisation/:organisationId/ai/fine-tuning/:id?", async (c) => {
     try {
       const id = c.req.param("id");
       const names = parseCommaSeparatedListFromUrlParam(
@@ -60,7 +60,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Add new fine-tuning data
    */
-  app.post("/fine-tuning", async (c) => {
+  app.post("/organisation/:organisationId/ai/fine-tuning", async (c) => {
     try {
       const body = await c.req.json();
       const parsedBody = v.parse(fineTuningDataValidation, body);
@@ -74,7 +74,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Update fine-tuning data
    */
-  app.put("/fine-tuning/:id", async (c) => {
+  app.put("/organisation/:organisationId/ai/fine-tuning/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const body = await c.req.json();
@@ -89,7 +89,7 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Delete fine-tuning data
    */
-  app.delete("/fine-tuning/:id", async (c) => {
+  app.delete("/organisation/:organisationId/ai/fine-tuning/:id", async (c) => {
     try {
       const id = c.req.param("id");
       await deleteFineTuningData(id);

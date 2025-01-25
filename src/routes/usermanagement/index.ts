@@ -7,28 +7,32 @@ import {
   getOrganisation,
   updateOrganisation,
   deleteOrganisation,
-  createTeam,
-  getTeamsByOrganisation,
-  updateTeam,
-  deleteTeam,
-  addTeamMember,
-  removeTeamMember,
-  createPermissionGroup,
-  getPermissionGroup,
-  updatePermissionGroup,
-  deletePermissionGroup,
-  createPathPermission,
-  getPathPermission,
-  updatePathPermission,
-  deletePathPermission,
-  assignPermissionToGroup,
-  removePermissionFromGroup,
   getUserOrganisations,
   getLastOrganisation,
   setLastOrganisation,
   getTeamsAndMembersByOrganisation,
+} from "../../lib/usermanagement/oganisations";
+import {
+  createTeam,
+  getTeam,
+  updateTeam,
+  deleteTeam,
+  addTeamMember,
+  removeTeamMember,
+} from "../../lib/usermanagement/teams";
+import {
+  createPermissionGroup,
+  getPermissionGroup,
+  updatePermissionGroup,
+  deletePermissionGroup,
   getPermissionGroupsByOrganisation,
-} from "../../lib/usermanagement/oganisations-and-teams";
+  createPathPermission,
+  getPathPermission,
+  updatePathPermission,
+  assignPermissionToGroup,
+  deletePathPermission,
+  removePermissionFromGroup,
+} from "../../lib/usermanagement/permissions";
 import {
   getAllOrganisationInvitations,
   acceptOrganisationInvitation,
@@ -146,6 +150,15 @@ export function defineUserManagementRoutes(
           message: "Error getting teams: " + err,
         });
       }
+    }
+  );
+
+  app.get(
+    API_BASE_PATH + BASE_PATH + "/teams/:id",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      const team = await getTeam(c.req.param("id"));
+      return c.json(team);
     }
   );
 

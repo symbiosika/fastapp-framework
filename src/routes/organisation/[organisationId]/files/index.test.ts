@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import { defineFilesRoutes } from ".";
-import type { FastAppHono } from "../../types";
-import { initTests, TEST_ORGANISATION_ID } from "../../test/init.test";
+import type { FastAppHono } from "../../../../types";
+import { initTests, TEST_ORGANISATION_ID } from "../../../../test/init.test";
 
 describe("Files API Endpoints", () => {
   const app: FastAppHono = new Hono();
@@ -27,7 +27,7 @@ describe("Files API Endpoints", () => {
 
     // Test DB upload
     const dbResponse = await app.request(
-      "/api/files/db/" + TEST_ORGANISATION_ID + "/" + testBucket,
+      "/api/organisation/" + TEST_ORGANISATION_ID + "/files/db/" + testBucket,
       {
         method: "POST",
         body: formData,
@@ -43,7 +43,10 @@ describe("Files API Endpoints", () => {
 
     // Test local upload
     const localResponse = await app.request(
-      "/api/files/local/" + TEST_ORGANISATION_ID + "/" + testBucket,
+      "/api/organisation/" +
+        TEST_ORGANISATION_ID +
+        "/files/local/" +
+        testBucket,
       {
         method: "POST",
         body: formData,
@@ -62,7 +65,7 @@ describe("Files API Endpoints", () => {
   it("should retrieve uploaded files", async () => {
     // Test DB retrieval
     const dbResponse = await app.request(
-      `/api/files/db/${TEST_ORGANISATION_ID}/${testBucket}/${dbFileId}`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/db/${testBucket}/${dbFileId}`,
       {
         method: "GET",
         headers: {
@@ -76,7 +79,7 @@ describe("Files API Endpoints", () => {
 
     // Test local retrieval
     const localResponse = await app.request(
-      `/api/files/local/${TEST_ORGANISATION_ID}/${testBucket}/${localFileId}.txt`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/local/${testBucket}/${localFileId}.txt`,
       {
         method: "GET",
         headers: {
@@ -93,7 +96,7 @@ describe("Files API Endpoints", () => {
   it("should delete uploaded files", async () => {
     // Test DB deletion
     const dbResponse = await app.request(
-      `/api/files/db/${TEST_ORGANISATION_ID}/${testBucket}/${dbFileId}`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/db/${testBucket}/${dbFileId}`,
       {
         method: "DELETE",
         headers: {
@@ -105,7 +108,7 @@ describe("Files API Endpoints", () => {
 
     // Test local deletion
     const localResponse = await app.request(
-      `/api/files/local/${TEST_ORGANISATION_ID}/${testBucket}/${localFileId}.txt`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/local/${testBucket}/${localFileId}.txt`,
       {
         method: "DELETE",
         headers: {
@@ -117,7 +120,7 @@ describe("Files API Endpoints", () => {
 
     // Verify files are deleted by trying to retrieve them
     const dbGetResponse = await app.request(
-      `/api/files/db/${TEST_ORGANISATION_ID}/${testBucket}/${dbFileId}`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/db/${testBucket}/${dbFileId}`,
       {
         method: "GET",
         headers: {
@@ -128,7 +131,7 @@ describe("Files API Endpoints", () => {
     expect(dbGetResponse.status).toBe(400);
 
     const localGetResponse = await app.request(
-      `/api/files/local/${TEST_ORGANISATION_ID}/${testBucket}/${localFileId}.txt`,
+      `/api/organisation/${TEST_ORGANISATION_ID}/files/local/${testBucket}/${localFileId}.txt`,
       {
         method: "GET",
         headers: {
@@ -143,7 +146,10 @@ describe("Files API Endpoints", () => {
   it("should handle invalid requests", async () => {
     // Test invalid storage type
     const invalidTypeResponse = await app.request(
-      "/api/files/invalid/" + TEST_ORGANISATION_ID + "/" + testBucket,
+      "/api/organisation/" +
+        TEST_ORGANISATION_ID +
+        "/files/invalid/" +
+        testBucket,
       {
         method: "POST",
         body: new FormData(),
@@ -156,7 +162,7 @@ describe("Files API Endpoints", () => {
 
     // Test invalid content type
     const invalidContentResponse = await app.request(
-      "/api/files/db/" + TEST_ORGANISATION_ID + "/" + testBucket,
+      "/api/organisation/" + TEST_ORGANISATION_ID + "/files/db/" + testBucket,
       {
         method: "POST",
         body: "invalid",

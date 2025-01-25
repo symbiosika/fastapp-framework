@@ -1,7 +1,7 @@
-import { HTTPException } from "../..";
-import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
-import { deleteSecret, getSecrets, setSecret } from "../../lib/crypt";
-import type { FastAppHono } from "../../types";
+import { HTTPException } from "../../../../types";
+import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import { deleteSecret, getSecrets, setSecret } from "../../../../lib/crypt";
+import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 
 const setSecretValidation = v.object({
@@ -17,7 +17,7 @@ export default function defineManageSecretsRoutes(
   API_BASE_PATH: string
 ) {
   app.get(
-    API_BASE_PATH + "/secrets/organisation/:organisationId",
+    API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
     async (c) => {
       try {
@@ -36,7 +36,7 @@ export default function defineManageSecretsRoutes(
    * Add or update a backend secret
    */
   app.post(
-    API_BASE_PATH + "/secrets/organisation/:organisationId",
+    API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
     async (c) => {
       const body = await c.req.json();
@@ -57,7 +57,7 @@ export default function defineManageSecretsRoutes(
    * Delete a secret
    */
   app.delete(
-    API_BASE_PATH + "/secrets/organisation/:organisationId/:name",
+    API_BASE_PATH + "/organisation/:organisationId/secrets/:name",
     authAndSetUsersInfo,
     async (c) => {
       const name = c.req.param("name");

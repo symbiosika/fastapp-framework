@@ -1,3 +1,7 @@
+/**
+ * CRUD operations for organisations and teams
+ */
+
 import { getDb } from "../db/db-connection";
 import { eq, and, sql } from "drizzle-orm";
 import {
@@ -8,23 +12,22 @@ import {
   pathPermissions,
   groupPermissions,
   type OrganisationsSelect,
-  type TeamsSelect,
-  type UserPermissionGroupsSelect,
-  type PathPermissionsSelect,
   type OrganisationsInsert,
-  type TeamsInsert,
-  type UserPermissionGroupsInsert,
-  type PathPermissionsInsert,
   users,
   organisationMembers,
 } from "../db/schema/users";
 
-// Organisation CRUD
+/**
+ * Create an organisation
+ */
 export const createOrganisation = async (data: OrganisationsInsert) => {
   const result = await getDb().insert(organisations).values(data).returning();
   return result[0];
 };
 
+/**
+ * Get an organisation by its ID
+ */
 export const getOrganisation = async (orgId: string) => {
   const org = await getDb()
     .select()
@@ -33,6 +36,9 @@ export const getOrganisation = async (orgId: string) => {
   return org[0];
 };
 
+/**
+ * Update an organisation
+ */
 export const updateOrganisation = async (
   orgId: string,
   data: Partial<OrganisationsSelect>
@@ -45,172 +51,16 @@ export const updateOrganisation = async (
   return result[0];
 };
 
+/**
+ * Delete an organisation
+ */
 export const deleteOrganisation = async (orgId: string) => {
   await getDb().delete(organisations).where(eq(organisations.id, orgId));
 };
 
-// Team CRUD
-export const createTeam = async (data: TeamsInsert) => {
-  const result = await getDb().insert(teams).values(data).returning();
-  return result[0];
-};
-
-export const getTeam = async (teamId: string) => {
-  const team = await getDb().select().from(teams).where(eq(teams.id, teamId));
-  return team[0];
-};
-
-export const updateTeam = async (
-  teamId: string,
-  data: Partial<TeamsSelect>
-) => {
-  const result = await getDb()
-    .update(teams)
-    .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(teams.id, teamId))
-    .returning();
-  return result[0];
-};
-
-export const deleteTeam = async (teamId: string) => {
-  await getDb().delete(teams).where(eq(teams.id, teamId));
-};
-
-export const getTeamsByOrganisation = async (orgId: string) => {
-  return await getDb()
-    .select()
-    .from(teams)
-    .where(eq(teams.organisationId, orgId));
-};
-
-// Team Members Management
-export const addTeamMember = async (
-  teamId: string,
-  userId: string,
-  role?: string
-) => {
-  const result = await getDb()
-    .insert(teamMembers)
-    .values({
-      teamId,
-      userId,
-      role,
-    })
-    .returning();
-  return result[0];
-};
-
-export const removeTeamMember = async (teamId: string, userId: string) => {
-  await getDb()
-    .delete(teamMembers)
-    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
-};
-
-// Permission Groups CRUD
-export const createPermissionGroup = async (
-  data: UserPermissionGroupsInsert
-) => {
-  const result = await getDb()
-    .insert(userPermissionGroups)
-    .values(data)
-    .returning();
-  return result[0];
-};
-
-export const getPermissionGroup = async (groupId: string) => {
-  const group = await getDb()
-    .select()
-    .from(userPermissionGroups)
-    .where(eq(userPermissionGroups.id, groupId));
-  return group[0];
-};
-
-export const getPermissionGroupsByOrganisation = async (orgId: string) => {
-  return await getDb()
-    .select()
-    .from(userPermissionGroups)
-    .where(eq(userPermissionGroups.organisationId, orgId));
-};
-
-export const updatePermissionGroup = async (
-  groupId: string,
-  data: Partial<UserPermissionGroupsSelect>
-) => {
-  const result = await getDb()
-    .update(userPermissionGroups)
-    .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(userPermissionGroups.id, groupId))
-    .returning();
-  return result[0];
-};
-
-export const deletePermissionGroup = async (groupId: string) => {
-  await getDb()
-    .delete(userPermissionGroups)
-    .where(eq(userPermissionGroups.id, groupId));
-};
-
-// Path Permissions CRUD
-export const createPathPermission = async (data: PathPermissionsInsert) => {
-  const result = await getDb().insert(pathPermissions).values(data).returning();
-  return result[0];
-};
-
-export const getPathPermission = async (permissionId: string) => {
-  const permission = await getDb()
-    .select()
-    .from(pathPermissions)
-    .where(eq(pathPermissions.id, permissionId));
-  return permission[0];
-};
-
-export const updatePathPermission = async (
-  permissionId: string,
-  data: Partial<PathPermissionsSelect>
-) => {
-  const result = await getDb()
-    .update(pathPermissions)
-    .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(pathPermissions.id, permissionId))
-    .returning();
-  return result[0];
-};
-
-export const deletePathPermission = async (permissionId: string) => {
-  await getDb()
-    .delete(pathPermissions)
-    .where(eq(pathPermissions.id, permissionId));
-};
-
-// Permission Group Assignment
-export const assignPermissionToGroup = async (
-  groupId: string,
-  permissionId: string
-) => {
-  const result = await getDb()
-    .insert(groupPermissions)
-    .values({
-      groupId,
-      permissionId,
-    })
-    .returning();
-  return result[0];
-};
-
-export const removePermissionFromGroup = async (
-  groupId: string,
-  permissionId: string
-) => {
-  await getDb()
-    .delete(groupPermissions)
-    .where(
-      and(
-        eq(groupPermissions.groupId, groupId),
-        eq(groupPermissions.permissionId, permissionId)
-      )
-    );
-};
-
+/**
+ * Get all organisations of a user
+ */
 export const getUserOrganisations = async (userId: string) => {
   return await getDb()
     .select()
@@ -222,6 +72,9 @@ export const getUserOrganisations = async (userId: string) => {
     .where(eq(organisationMembers.userId, userId));
 };
 
+/**
+ * Get the last organisation of a user
+ */
 export const getLastOrganisation = async (userId: string) => {
   const user = await getDb()
     .select({
@@ -236,11 +89,14 @@ export const getLastOrganisation = async (userId: string) => {
   return await getOrganisation(user[0].lastOrganisationId);
 };
 
+/**
+ * Set the last organisation of a user
+ */
 export const setLastOrganisation = async (
   userId: string,
   organisationId: string
 ) => {
-  // Prüfen ob User Mitglied der Organisation ist
+  // Check if user is a member of the organisation
   const membership = await getDb()
     .select()
     .from(organisationMembers)
@@ -307,7 +163,9 @@ export const getPermissionsByOrganisation = async (organisationId: string) => {
     .groupBy(userPermissionGroups.id);
 };
 
-// Organisation Members Management
+/**
+ * Add a user to an organisation
+ */
 export const addOrganisationMember = async (
   organisationId: string,
   userId: string,
@@ -324,6 +182,9 @@ export const addOrganisationMember = async (
   return result[0];
 };
 
+/**
+ * Remove a user from an organisation
+ */
 export const removeOrganisationMember = async (
   organisationId: string,
   userId: string
@@ -338,6 +199,9 @@ export const removeOrganisationMember = async (
     );
 };
 
+/**
+ * Get all members of an organisation
+ */
 export const getOrganisationMembers = async (organisationId: string) => {
   return await getDb()
     .select({

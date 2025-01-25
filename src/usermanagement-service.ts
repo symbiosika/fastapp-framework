@@ -16,35 +16,17 @@ import {
 } from "./lib/usermanagement/user";
 import {
   addOrganisationMember,
-  addTeamMember,
-  assignPermissionToGroup,
   createOrganisation,
-  createPathPermission,
-  createPermissionGroup,
-  createTeam,
   deleteOrganisation,
-  deletePathPermission,
-  deletePermissionGroup,
-  deleteTeam,
   getLastOrganisation,
   getOrganisation,
   getOrganisationMembers,
-  getPathPermission,
-  getPermissionGroup,
-  getPermissionGroupsByOrganisation,
   getPermissionsByOrganisation,
-  getTeam,
   getTeamsAndMembersByOrganisation,
-  getTeamsByOrganisation,
   removeOrganisationMember,
-  removePermissionFromGroup,
-  removeTeamMember,
   setLastOrganisation,
   updateOrganisation,
-  updatePathPermission,
-  updatePermissionGroup,
-  updateTeam,
-} from "./lib/usermanagement/oganisations-and-teams";
+} from "./lib/usermanagement/oganisations";
 import {
   acceptAllPendingInvitationsForUser,
   acceptOrganisationInvitation,
@@ -52,6 +34,28 @@ import {
   declineOrganisationInvitation,
   getAllOrganisationInvitations,
 } from "./lib/usermanagement/invitations";
+import {
+  createTeam,
+  getTeam,
+  updateTeam,
+  deleteTeam,
+  getTeamsByOrganisation,
+  addTeamMember,
+  removeTeamMember,
+} from "./lib/usermanagement/teams";
+import {
+  createPermissionGroup,
+  getPermissionGroup,
+  updatePermissionGroup,
+  deletePermissionGroup,
+  getPermissionGroupsByOrganisation,
+  createPathPermission,
+  getPathPermission,
+  updatePathPermission,
+  deletePathPermission,
+  assignPermissionToGroup,
+  removePermissionFromGroup,
+} from "./lib/usermanagement/permissions";
 
 export default {
   // users

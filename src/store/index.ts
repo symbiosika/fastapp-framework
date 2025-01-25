@@ -2,6 +2,7 @@ import type { ServerConfig } from "../types";
 
 /**
  * The global server config object
+ * REMINDER: Never store user data inside a global variable
  */
 export const _GLOBAL_SERVER_CONFIG = {
   appName: "App",

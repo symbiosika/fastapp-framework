@@ -1,3 +1,8 @@
+/**
+ * This file contains the functions for managing organisation invitations
+ * Invitations are used to invite users to an organisation
+ */
+
 import { eq, and } from "drizzle-orm";
 import {
   organisationInvitations,
@@ -7,12 +12,16 @@ import {
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
 
-// Funktion, um alle Einladungen zu Organisationen abzurufen
+/**
+ * Get all organisation invitations
+ */
 export const getAllOrganisationInvitations = async () => {
   return await getDb().select().from(organisationInvitations);
 };
 
-// Funktion, um eine "pending" Einladung zu akzeptieren
+/**
+ * Accept an invitation with its ID and for one user
+ */
 export const acceptOrganisationInvitation = async (
   invitationId: string,
   userId: string
@@ -51,7 +60,9 @@ export const acceptOrganisationInvitation = async (
   });
 };
 
-// Funktion, um alle "pending" Einladungen einer UserId zu akzeptieren
+/**
+ * Accept all pending invitations for a user independent of a specific invitation
+ */
 export const acceptAllPendingInvitationsForUser = async (userId: string) => {
   const userRes = await getDb()
     .select()
@@ -89,7 +100,9 @@ export const acceptAllPendingInvitationsForUser = async (userId: string) => {
   });
 };
 
-// Funktion, um eine Einladung abzulehnen
+/**
+ * Decline an invitation
+ */
 export const declineOrganisationInvitation = async (invitationId: string) => {
   await getDb()
     .update(organisationInvitations)

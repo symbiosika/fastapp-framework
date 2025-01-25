@@ -4,14 +4,14 @@ import {
   deleteFileFromDB,
   saveFileToDb,
   getFileFromDb,
-} from "../../lib/storage/db";
+} from "../../../../lib/storage/db";
 import {
   deleteFileFromLocalDisc,
   getFileFromLocalDisc,
   saveFileToLocalDisc,
-} from "../../lib/storage/local";
-import type { FastAppHono } from "../../types";
-import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
+} from "../../../../lib/storage/local";
+import type { FastAppHono } from "../../../../types";
+import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
 
 /**
  * Upload a file to the database
@@ -103,7 +103,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * Save and serve files that are stored in the database
    */
   app.all(
-    API_BASE_PATH + "/files/:type/:organisationId/:bucket/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/files/:type/:bucket/:id?",
     authAndSetUsersInfo,
     async (c: Context) => {
       // check if id is set
