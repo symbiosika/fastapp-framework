@@ -8,7 +8,18 @@ import {
   type PathPermissionsSelect,
   type UserPermissionGroupsInsert,
   type PathPermissionsInsert,
+  userGroupMembers,
 } from "../db/schema/users";
+
+/**
+ * Interface for simplified permission creation
+ */
+export interface SimplePathPermission {
+  name: string;
+  description?: string;
+  method: string;
+  pathExpression: string;
+}
 
 /**
  * Create a permission group
@@ -145,4 +156,64 @@ export const removePermissionFromGroup = async (
         eq(groupPermissions.permissionId, permissionId)
       )
     );
+};
+
+/**
+ * Create a permission group with associated permissions and optional users
+ */
+export const createPermissionGroupWithPermissions = async ({
+  groupName,
+  organisationId,
+  permissions,
+  userIds = [],
+}: {
+  groupName: string;
+  organisationId: string;
+  permissions: SimplePathPermission[];
+  userIds?: string[];
+}) => {
+  // Create the permission group
+  const group = await createPermissionGroup({
+    name: groupName,
+    organisationId,
+  });
+
+  // Create path permissions and assign them to the group
+  const createdPermissions = await Promise.all(
+    permissions.map(async (perm) => {
+      const pathPerm = await createPathPermission({
+        system: false,
+        category: groupName,
+        name: perm.name,
+        description: perm.description,
+        type: "regex",
+        method: perm.method,
+        pathExpression: perm.pathExpression,
+        organisationId,
+      });
+
+      await assignPermissionToGroup(group.id, pathPerm.id);
+      return pathPerm;
+    })
+  );
+
+  // Add users to the group if provided
+  const userGroupAssignments = await Promise.all(
+    userIds.map(async (userId) => {
+      const result = await getDb()
+        .insert(userGroupMembers)
+        .values({
+          userId,
+          userGroupId: group.id,
+        })
+        .returning();
+      return result[0];
+    })
+  );
+
+  return {
+    group,
+    permissions: createdPermissions,
+    userAssignments: userGroupAssignments,
+  };
 };

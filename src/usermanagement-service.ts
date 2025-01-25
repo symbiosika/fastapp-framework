@@ -56,6 +56,7 @@ import {
   deletePathPermission,
   assignPermissionToGroup,
   removePermissionFromGroup,
+  createPermissionGroupWithPermissions,
 } from "./lib/usermanagement/permissions";
 
 export default {
@@ -95,6 +96,8 @@ export default {
   getPathPermission,
   updatePathPermission,
   deletePathPermission,
+  // helper
+  createPermissionGroupWithPermissions,
   // invitations
   getAllOrganisationInvitations,
   acceptOrganisationInvitation,
