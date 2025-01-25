@@ -3,7 +3,7 @@ import type { StripeDetailedItem } from "../../types/shared/payment";
 import { getDb } from "../../db/db-connection";
 import { products } from "../../db/db-schema";
 import { and, eq } from "drizzle-orm";
-import { _GLOBAL_SERVER_CONFIG } from "../../../index";
+import { _GLOBAL_SERVER_CONFIG } from "../../../store";
 import log from "../../log";
 
 /**

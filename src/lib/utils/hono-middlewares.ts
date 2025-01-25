@@ -1,8 +1,8 @@
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import jwtlib from "jsonwebtoken";
-import { _GLOBAL_SERVER_CONFIG } from "./index";
-import { hasPermission } from "./lib/auth/permissions";
+import { _GLOBAL_SERVER_CONFIG } from "../../store";
+import { hasPermission } from "../auth/permissions";
 
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
 
@@ -10,37 +10,7 @@ const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY || "";
 // https://github.com/honojs/hono/issues/672
 
 /**
- * Validate all environment variables
- */
-export const validateAllEnvVariables = (
-  customEnvVariablesToCheckOnStartup: string[] = []
-) => {
-  const requiredEnvVars = [
-    "POSTGRES_HOST",
-    "POSTGRES_PORT",
-    "POSTGRES_USER",
-    "POSTGRES_PASSWORD",
-    "POSTGRES_DB",
-    "OPENAI_API_KEY",
-    "LLAMA_CLOUD_API_KEY",
-    "AUTH_SECRET",
-    "SECRETS_AES_KEY",
-    "SECRETS_AES_IV",
-    "JWT_PUBLIC_KEY",
-  ];
-  const missingEnvVars = requiredEnvVars
-    .concat(customEnvVariablesToCheckOnStartup)
-    .filter((envVar) => !process.env[envVar]);
-  if (missingEnvVars.length > 0) {
-    console.error("Missing environment variables:", missingEnvVars);
-    process.exit(1);
-  } else {
-    console.log("All environment variables are set");
-  }
-};
-
-/**
- * JWT validation
+ * Helper function to get the JWT token from the request
  */
 const getTokenFromJwt = (token: string) => {
   return jwtlib.verify(token, JWT_PUBLIC_KEY, {
@@ -50,7 +20,7 @@ const getTokenFromJwt = (token: string) => {
 };
 
 /**
- * Add the user to context
+ * HONO Middleware to add the user to the context
  */
 export function addUserToContext(
   c: Context<any, any, {}>,
@@ -62,7 +32,7 @@ export function addUserToContext(
 }
 
 /**
- * Check if the user has permission for the given path and method
+ * HONO Middleware to check if the user has permission for the given path and method
  */
 export async function checkUserPermission(c: Context, next: Function) {
   const userId = c.get("usersId");
@@ -76,9 +46,9 @@ export async function checkUserPermission(c: Context, next: Function) {
 }
 
 /**
- * Token validation
+ * HONO Middleware to check the JWT token
  */
-const checkToken = (c: Context) => {
+export const checkToken = (c: Context) => {
   let token = "";
 
   const authHeader = c.req.header("Authorization");
@@ -96,8 +66,7 @@ const checkToken = (c: Context) => {
 };
 
 /**
- * Middleware for JWT authentication
- * Will set the usersEmail, usersId and usersRoles in the context
+ * HONO Middleware to set the usersEmail, usersId and usersRoles in the context
  */
 export const authAndSetUsersInfo = async (c: Context, next: Function) => {
   try {
@@ -114,8 +83,7 @@ export const authAndSetUsersInfo = async (c: Context, next: Function) => {
 };
 
 /**
- * Middletware for JWT authentication
- * Will only check the JWT cookie and red
+ * HONO Middleware to check the JWT token and redirect to login if not valid
  */
 export const authOrRedirectToLogin = async (c: Context, next: Function) => {
   try {
@@ -127,8 +95,8 @@ export const authOrRedirectToLogin = async (c: Context, next: Function) => {
 };
 
 /**
- * Middleware for JWT authentication
- * Will check the JWT cookie and redirect to login if not valid
+ * HONO Middleware to check the JWT token and redirect to login if not valid
+ * and set the usersEmail, usersId and usersRoles in the context
  */
 export const authAndSetUsersInfoOrRedirectToLogin = async (
   c: Context,

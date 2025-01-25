@@ -5,6 +5,11 @@ import type { PermissionDefinitionPerTable } from "./lib/types/permission-checke
 import type { JobHandlerRegister } from "./lib/jobs";
 import type { GenericFormEntry } from "./lib/ai/smart-chat/shared-types";
 import type { Task } from "./lib/cron";
+import type { SyncItem } from "./lib/types/sync";
+
+export type { SyncItem };
+export type { JobHandlerRegister };
+export { HTTPException } from "hono/http-exception";
 
 export type FastAppHonoContextVariables = {
   usersId: string;
@@ -45,6 +50,9 @@ export interface ServerConfig {
 
   // stripe
   useStripe?: boolean;
+
+  // logging in console (hono logger)
+  useConsoleLogger?: boolean;
 }
 
 export interface DBStandardData {

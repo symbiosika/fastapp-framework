@@ -1,5 +1,5 @@
 import { HTTPException } from "../..";
-import { authAndSetUsersInfo } from "../../helper";
+import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import type { FastAppHono } from "../../types";
 import * as v from "valibot";
 import {

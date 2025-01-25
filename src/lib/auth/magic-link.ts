@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import { smtpService } from "../email";
 import type { UsersEntity } from "../types/shared/db/users";
 import { generateJwt } from ".";
-import { _GLOBAL_SERVER_CONFIG } from "../../index";
+import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
 const EXPIRE_TIME = 15 * 60 * 1000; // 15 minutes
 

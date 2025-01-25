@@ -9,7 +9,7 @@ import {
   verifyEmail,
   verifyMagicLink,
 } from "./magic-link";
-import { _GLOBAL_SERVER_CONFIG } from "../..";
+import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 

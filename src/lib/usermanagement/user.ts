@@ -7,7 +7,7 @@ import {
   teamMembers,
   teams,
 } from "../db/schema/users";
-import { UsersEntity } from "../types/shared/db/users";
+import type { UsersEntity } from "../types/shared/db/users";
 
 export const getUser = async (userId: string) => {
   const user = await getDb()

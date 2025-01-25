@@ -1,6 +1,6 @@
-/*
-Get and set configurations for server plugins
-*/
+/**
+ * Get and set configurations for server plugins
+ */
 
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
@@ -26,7 +26,6 @@ import type {
 } from "../types/plugins";
 import log from "../log";
 import * as v from "valibot";
-import { _GLOBAL_SERVER_CONFIG } from "../..";
 
 // In memory cache of available plugins
 export const AVAILABLE_PLUGINS: { [type: string]: ServerPlugin } = {};

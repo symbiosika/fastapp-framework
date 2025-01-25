@@ -1,4 +1,6 @@
-import { validateAllEnvVariables } from "./helper";
+/**
+ * A small lib to import standard data into the database
+ */
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import {
   createDatabaseClient,
@@ -6,6 +8,7 @@ import {
 } from "./lib/db/db-connection";
 import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { insertStandardDataEntry } from "./lib/db/standard-data";
+import { validateAllEnvVariables } from "./lib/utils/env-validate";
 import type { DBStandardData, ServerConfig } from "./types";
 
 export const importAllStandardData = async (

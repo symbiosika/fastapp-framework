@@ -10,8 +10,8 @@ import type { Context } from "hono";
 import { getDb } from "../../lib/db/db-connection";
 import { LocalAuth } from "../../lib/auth";
 import log from "../../lib/log";
-import { authAndSetUsersInfo } from "../../helper";
-import { _GLOBAL_SERVER_CONFIG } from "../../index";
+import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
+import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
 const BASE_PATH = "/user";
 

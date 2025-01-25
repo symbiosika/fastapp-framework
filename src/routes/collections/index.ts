@@ -1,7 +1,7 @@
 import type { FastAppHono } from "../../types";
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
-import { authAndSetUsersInfo } from "../../helper";
+import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { getCollection, postCollection } from "./[name]";
 import {
   deleteCollectionById,

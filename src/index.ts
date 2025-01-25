@@ -1,202 +1,74 @@
+// Hono
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/bun";
 import {
-  authAndSetUsersInfo,
   authAndSetUsersInfoOrRedirectToLogin,
   authOrRedirectToLogin,
-  checkUserPermission,
-  validateAllEnvVariables,
-} from "./helper";
+} from "./lib/utils/hono-middlewares";
+// DB
 import {
   createDatabaseClient,
-  getDb,
   waitForDbConnection,
 } from "./lib/db/db-connection";
 import { initializeFullDbSchema } from "./lib/db/db-schema";
-import { serveStatic } from "hono/bun";
-import { defineFilesRoutes } from "./routes/files";
-import paymentRoutes from "./routes/payment";
-import aiTemplatesRoutes from "./routes/ai/templates";
-import aiFineTuningRoutes from "./routes/ai/fine-tuning";
-import aiKnowledgeRoutes from "./routes/ai/knowledge";
-import aiChatRoutes from "./routes/ai/chat";
-import type { ServerConfig, FastAppHonoContextVariables } from "./types";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
-import type { DatabaseSchema } from "./lib/db/db-schema";
+// Types
+import type { ServerConfig, FastAppHonoContextVariables } from "./types";
+// Utils
 import log from "./lib/log";
-import { checkUserSubscription } from "./routes/payment";
+import { validateAllEnvVariables } from "./lib/utils/env-validate";
+// Routes
 import {
   definePublicUserRoutes,
   defineSecuredUserRoutes,
   registerPostRegisterAction,
   registerPreRegisterCustomVerification,
 } from "./routes/user";
+import { defineFilesRoutes } from "./routes/files";
+import paymentRoutes from "./routes/payment";
+import aiTemplatesRoutes from "./routes/ai/templates";
+import aiFineTuningRoutes from "./routes/ai/fine-tuning";
+import aiKnowledgeRoutes from "./routes/ai/knowledge";
+import aiChatRoutes from "./routes/ai/chat";
 import { defineCollectionRoutes } from "./routes/collections";
-import { defineJob, startJobQueue, type JobHandlerRegister } from "./lib/jobs";
-import {
-  addPromptTemplate,
-  deletePromptTemplate,
-  deletePromptTemplatePlaceholder,
-  getPlaceholdersForPromptTemplate,
-  getPlainPlaceholdersForPromptTemplate,
-  updatePromptTemplate,
-  updatePromptTemplatePlaceholder,
-} from "./lib/ai/generation/crud";
-import { useTemplateChat } from "./lib/ai/generation";
-import { parseDocument } from "./lib/ai/parsing";
-import { extractKnowledgeFromExistingDbEntry } from "./lib/ai/knowledge/add-knowledge";
-import { getKnowledgeEntries } from "./lib/ai/knowledge/get-knowledge";
-import {
-  addFineTuningData,
-  deleteFineTuningData,
-  getFineTuningEntries,
-  getFineTuningEntryById,
-  updateFineTuningData,
-} from "./lib/ai/fine-tuning";
-import {
-  parseCommaSeparatedListFromUrlParam,
-  parseNumberFromUrlParam,
-} from "./lib/url";
-import {
-  getFullSourceDocumentsForSimilaritySearch,
-  getNearestEmbeddings,
-} from "./lib/ai/knowledge/similarity-search";
-import { deleteSecret, getSecret, setSecret } from "./lib/crypt";
 import defineManageSecretsRoutes from "./routes/secrets";
-import scheduler from "./lib/cron";
-import { initializePluginCache, registerServerPlugin } from "./lib/plugins";
-import type { ServerPlugin } from "./lib/types/plugins";
-import { addKnowledgeTextFromUrl } from "./lib/ai/knowledge-texts";
-import { syncKnowledgeFromPlugin } from "./lib/ai/knowledge-sync/sync";
-import type { SyncItem } from "./lib/types/sync";
 import definePluginRoutes from "./routes/plugins";
-import {
-  addUserToOrganisation,
-  addUserToTeam,
-  getUser,
-  getUserByEmail,
-  getUserById,
-  getUserOrganisations,
-  getUserTeams,
-  removeUserFromOrganisation,
-  removeUserFromTeam,
-  updateUser,
-} from "./lib/usermanagement/user";
-import {
-  addOrganisationMember,
-  addTeamMember,
-  assignPermissionToGroup,
-  createOrganisation,
-  createPathPermission,
-  createPermissionGroup,
-  createTeam,
-  deleteOrganisation,
-  deletePathPermission,
-  deletePermissionGroup,
-  deleteTeam,
-  getLastOrganisation,
-  getOrganisation,
-  getOrganisationMembers,
-  getPathPermission,
-  getPermissionGroup,
-  getPermissionGroupsByOrganisation,
-  getPermissionsByOrganisation,
-  getTeam,
-  getTeamsAndMembersByOrganisation,
-  getTeamsByOrganisation,
-  removeOrganisationMember,
-  removePermissionFromGroup,
-  removeTeamMember,
-  setLastOrganisation,
-  updateOrganisation,
-  updatePathPermission,
-  updatePermissionGroup,
-  updateTeam,
-} from "./lib/usermanagement/oganisations-and-teams";
-import {
-  acceptAllPendingInvitationsForUser,
-  acceptOrganisationInvitation,
-  createOrganisationInvitation,
-  declineOrganisationInvitation,
-  getAllOrganisationInvitations,
-} from "./lib/usermanagement/invitations";
-import {
-  createUserSpecificData,
-  getUserSpecificData,
-  getUserSpecificDataByKey,
-  updateUserSpecificData,
-  deleteUserSpecificData,
-  createAppSpecificData,
-  getAppSpecificData,
-  getAppSpecificDataByKey,
-  updateAppSpecificData,
-  deleteAppSpecificData,
-  createOrganisationSpecificData,
-  getOrganisationSpecificData,
-  getOrganisationSpecificDataByFilter,
-  updateOrganisationSpecificData,
-  deleteOrganisationSpecificData,
-  createTeamSpecificData,
-  getTeamSpecificData,
-  getTeamSpecificDataByKey,
-  updateTeamSpecificData,
-  deleteTeamSpecificData,
-} from "./lib/specific-data";
-import {
-  createKnowledgeText,
-  readKnowledgeText,
-  updateKnowledgeText,
-  deleteKnowledgeText,
-  getKnowledgeTextByTitle,
-} from "./lib/ai/knowledge/knowledge-texts";
-import {
-  addPromptSnippet,
-  getPromptSnippets,
-  getPromptSnippetById,
-  updatePromptSnippet,
-  deletePromptSnippet,
-  getPromptSnippetByNameAndCategory,
-} from "./lib/ai/prompt-snippets";
+import definePingRoute from "./routes/ping";
+// Jobs
+import { defineJob, startJobQueue } from "./lib/jobs";
+import scheduler from "./lib/cron";
+// Plugins
+import { initializePluginCache } from "./lib/plugins";
+// Store
+import { _GLOBAL_SERVER_CONFIG, setGlobalServerConfig } from "./store";
 
-export const _GLOBAL_SERVER_CONFIG = {
-  appName: "App",
-  port: 3000,
-  basePath: "/api/v1/",
-  baseUrl: "http://localhost:3000",
-  allowedOrigins: <string[]>[],
-  authType: <"local" | "auth0">"local",
-  jwtExpiresAfter: 60 * 60 * 24 * 30, // 30 days
-  useStripe: false,
-};
+/**
+ * services
+ */
+import aiService from "./ai-service";
+import specificDataService from "./specific-data-service";
+import { smtpService } from "./lib/email";
+import secretsService from "./secrets-service";
+import urlService from "./url-service";
+import pluginService from "./plugin-service";
+import paymentService from "./payment-service";
+import usermanagementService from "./usermanagement-service";
 
-const setGlobalServerConfig = (config: ServerConfig) => {
-  _GLOBAL_SERVER_CONFIG.port = config.port ?? 3000;
-  _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
-  _GLOBAL_SERVER_CONFIG.baseUrl =
-    config.baseUrl ?? process.env.BASE_URL ?? "http://localhost:3000";
-
-  if (_GLOBAL_SERVER_CONFIG.basePath.endsWith("/")) {
-    _GLOBAL_SERVER_CONFIG.basePath = _GLOBAL_SERVER_CONFIG.basePath.slice(
-      0,
-      -1
-    );
-  }
-
-  const _ORIGINS_FROM_ENV = process.env.ALLOWED_ORIGINS;
-  _GLOBAL_SERVER_CONFIG.allowedOrigins = _ORIGINS_FROM_ENV
-    ? _ORIGINS_FROM_ENV.split(",")
-    : [];
-
-  _GLOBAL_SERVER_CONFIG.authType = config.authType ?? "local";
-
-  if (config.jwtExpiresAfter) {
-    _GLOBAL_SERVER_CONFIG.jwtExpiresAfter = config.jwtExpiresAfter;
-  }
-
-  _GLOBAL_SERVER_CONFIG.useStripe = config.useStripe ?? false;
-};
-
+/**
+ * MAIN FUNCTION
+ * Define the server and start it
+ *
+ * Will take a configuration from the App
+ * and merge the config with the default values
+ * and validate the .ENV variables
+ * and create the database client
+ * and register the cron jobs
+ * and initialize the caches
+ * and start the job queue
+ * start the server
+ */
 export const defineServer = (config: ServerConfig) => {
   setGlobalServerConfig(config);
   console.log("Global server config:", JSON.stringify(_GLOBAL_SERVER_CONFIG));
@@ -214,7 +86,7 @@ export const defineServer = (config: ServerConfig) => {
   createDatabaseClient(config.customDbSchema);
 
   /**
-   * Register custom cron jobs
+   * Register all custom cron jobs
    */
   if (config.customCronJobs) {
     config.customCronJobs.forEach((cronJob) => {
@@ -223,13 +95,16 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   /**
-   * Init main Hono app
+   * Init the main Hono app
    */
   const app = new Hono<{ Variables: FastAppHonoContextVariables }>();
-  app.use(logger());
+  if (config.useConsoleLogger) {
+    app.use(logger());
+  }
 
   /**
    * Register custom pre-register verifications
+   * These are used to verify something about the user before registering
    */
   if (config.customPreRegisterCustomVerifications) {
     config.customPreRegisterCustomVerifications.forEach((verification) => {
@@ -239,6 +114,7 @@ export const defineServer = (config: ServerConfig) => {
 
   /**
    * Register custom post-register actions
+   * These are used to perform actions after the user has registered
    */
   if (config.customPostRegisterActions) {
     config.customPostRegisterActions.forEach((action) => {
@@ -247,7 +123,7 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   /**
-   * Middleware for CORS
+   * Adds CORS Middleware
    */
   console.log("Allowed origins:", _GLOBAL_SERVER_CONFIG.allowedOrigins);
   app.use(
@@ -258,56 +134,44 @@ export const defineServer = (config: ServerConfig) => {
   );
 
   /**
-   * A Ping endpoint
+   * Adds a ping endpoint to have a simple health check
+   * and check if the server has external internet access
    */
-  app.get(
-    _GLOBAL_SERVER_CONFIG.basePath + "/ping",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    async (c) => {
-      let canConnectToInternet = false;
-      try {
-        const response = await fetch("https://www.github.com");
-        canConnectToInternet = response.ok;
-      } catch (error) {
-        canConnectToInternet = false;
-      }
-
-      return c.json({
-        online: true,
-        canConnectToInternet,
-      });
-    }
-  );
+  definePingRoute(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add user routes
+   * Adds user routes for profile, register, login, logout, etc.
    */
   definePublicUserRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
   defineSecuredUserRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add collection routes
+   * Adds collection routes
+   * will give simple CRUD endpoints for defined collections
    */
   defineCollectionRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add files routes
+   * Adds files routes
+   * will give simple CRUD endpoints to store and retrieve files from DB or S3
    */
   defineFilesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add routes to manage internal secrets
+   * Adds routes to manage secrets
+   * Secrets are used to store sensitive information like API keys, etc.
    */
   defineManageSecretsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add routes to manage plugins
+   * Adds routes to manage plugins
+   * Plugins are used to extend the functionality of the server
+   * Plugins can sync data from external sources or provide new endpoints
    */
   definePluginRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
-   * Add payment routes
+   * Adds payment routes if needed
    */
   if (_GLOBAL_SERVER_CONFIG.useStripe) {
     const paymentApp = new Hono();
@@ -322,7 +186,11 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   /**
-   * Add all AI routes
+   * Adds all AI specific routes
+   * - prompt templates
+   * - fine-tuning
+   * - knowledge
+   * - chat
    */
   const aiApp = new Hono();
   aiApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
@@ -333,7 +201,9 @@ export const defineServer = (config: ServerConfig) => {
   app.route(_GLOBAL_SERVER_CONFIG.basePath + "/ai", aiApp);
 
   /**
-   * Add custom routes from customHonoApps
+   * Adds custom routes from customHonoApps
+   * These are used to add custom routes to the server
+   * These are defined in the App config
    */
   if (config.customHonoApps) {
     config.customHonoApps.forEach(({ baseRoute, app: customApp }) => {
@@ -346,8 +216,9 @@ export const defineServer = (config: ServerConfig) => {
   }
 
   /**
-   * Serve all files from ./static/
-   * can be images, html, css, js, etc.
+   * Adds static private data routes
+   * folder ./static/
+   * will be served only to authenticated users
    */
   const staticPrivateDataPath = config.staticPrivateDataPath ?? "./static";
   log.debug(`Static private data path:", ${staticPrivateDataPath}`);
@@ -361,8 +232,9 @@ export const defineServer = (config: ServerConfig) => {
   );
 
   /**
-   * Serve all files from ./public/
-   * can be images, html, css, js, etc.
+   * Adds static public data routes
+   * folder ./public/
+   * will be served to all users without authentication
    */
   const staticPublicDataPath = config.staticPublicDataPath ?? "./public";
   log.debug(`Static public data path: ${staticPublicDataPath}`);
@@ -376,166 +248,45 @@ export const defineServer = (config: ServerConfig) => {
 
   /**
    * Start job queue if needed
+   * These are used to perform background tasks
    */
   if (config.jobHandlers && config.jobHandlers.length > 0) {
     log.debug("Starting job queue...");
-    startJobQueue();
     config.jobHandlers.forEach((jobHandler) => {
       log.debug(`Registering job handler: ${jobHandler.type}`);
       defineJob(jobHandler.type, jobHandler.handler);
     });
+    startJobQueue();
   }
 
   /**
-   * Initialize caches after DB is connected
+   * Initialize internal caches after DB is connected
    */
   waitForDbConnection().then(() => {
     initializePluginCache();
   });
 
   return {
-    idleTimeout: 120,
+    idleTimeout: 255,
     port: config.port ?? 3000,
     fetch: app.fetch,
   };
 };
 
-export const aiService = {
-  // prompt templates
-  addPromptTemplate,
-  updatePromptTemplate,
-  deletePromptTemplate,
-  getPlainPlaceholdersForPromptTemplate,
-  updatePromptTemplatePlaceholder,
-  deletePromptTemplatePlaceholder,
-  getPlaceholdersForPromptTemplate,
-  // chat
-  useTemplateChat,
-  // knowledge
-  parseDocument,
-  extractKnowledgeFromExistingDbEntry,
-  getKnowledgeEntries,
-  addKnowledgeTextFromUrl,
-  getNearestEmbeddings,
-  getFullSourceDocumentsForSimilaritySearch,
-  // knowledge texts
-  createKnowledgeText,
-  readKnowledgeText,
-  updateKnowledgeText,
-  deleteKnowledgeText,
-  getKnowledgeTextByTitle,
-  // fine-tuning
-  getFineTuningEntryById,
-  getFineTuningEntries,
-  addFineTuningData,
-  updateFineTuningData,
-  deleteFineTuningData,
-  // prompt snippets
-  addPromptSnippet,
-  getPromptSnippets,
-  getPromptSnippetById,
-  updatePromptSnippet,
-  deletePromptSnippet,
-  getPromptSnippetByNameAndCategory,
-};
-
-export const urlQueryParser = {
-  parseNumberFromUrlParam,
-  parseCommaSeparatedListFromUrlParam,
-};
-
-export const secretHandler = {
-  setSecret,
-  getSecret,
-  deleteSecret,
-};
-
-export { getDb };
-export type { DatabaseSchema, ServerPlugin };
-export { checkUserSubscription, registerServerPlugin };
-export type { JobHandlerRegister };
+/**
+ * Export all needed types for the customer App
+ */
 export * from "./types";
-export { HTTPException } from "hono/http-exception";
+
+/**
+ * Export all services for the customer App
+ */
 export { log };
-export { syncKnowledgeFromPlugin };
-export type { SyncItem };
-
-export const userManagement = {
-  // users
-  getUser,
-  getUserById,
-  getUserByEmail,
-  updateUser,
-  addUserToOrganisation,
-  removeUserFromOrganisation,
-  getUserTeams,
-  addUserToTeam,
-  removeUserFromTeam,
-  getUserOrganisations,
-  // organisations
-  createOrganisation,
-  getOrganisation,
-  updateOrganisation,
-  deleteOrganisation,
-  // teams
-  createTeam,
-  getTeam,
-  updateTeam,
-  deleteTeam,
-  getTeamsByOrganisation,
-  addTeamMember,
-  removeTeamMember,
-  // permission groups
-  createPermissionGroup,
-  updatePermissionGroup,
-  deletePermissionGroup,
-  getPermissionGroup,
-  getPermissionGroupsByOrganisation,
-  // path permissions
-  createPathPermission,
-  getPathPermission,
-  updatePathPermission,
-  deletePathPermission,
-  // invitations
-  getAllOrganisationInvitations,
-  acceptOrganisationInvitation,
-  declineOrganisationInvitation,
-  createOrganisationInvitation,
-  acceptAllPendingInvitationsForUser,
-  assignPermissionToGroup,
-  removePermissionFromGroup,
-  getLastOrganisation,
-  setLastOrganisation,
-  getTeamsAndMembersByOrganisation,
-  getPermissionsByOrganisation,
-  addOrganisationMember,
-  removeOrganisationMember,
-  getOrganisationMembers,
-};
-
-export const specificDataHandler = {
-  // User specific data
-  createUserSpecificData,
-  getUserSpecificData,
-  getUserSpecificDataByKey,
-  updateUserSpecificData,
-  deleteUserSpecificData,
-  // App specific data
-  createAppSpecificData,
-  getAppSpecificData,
-  getAppSpecificDataByKey,
-  updateAppSpecificData,
-  deleteAppSpecificData,
-  // Organisation specific data
-  createOrganisationSpecificData,
-  getOrganisationSpecificData,
-  getOrganisationSpecificDataByFilter,
-  updateOrganisationSpecificData,
-  deleteOrganisationSpecificData,
-  // Team specific data
-  createTeamSpecificData,
-  getTeamSpecificData,
-  getTeamSpecificDataByKey,
-  updateTeamSpecificData,
-  deleteTeamSpecificData,
-};
+export { aiService };
+export { smtpService };
+export { specificDataService };
+export { secretsService };
+export { urlService };
+export { pluginService };
+export { paymentService };
+export { usermanagementService };

@@ -11,7 +11,7 @@ import {
   saveFileToLocalDisc,
 } from "../../lib/storage/local";
 import type { FastAppHono } from "../../types";
-import { authAndSetUsersInfo } from "../../helper";
+import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 
 /**
  * Upload a file to the database

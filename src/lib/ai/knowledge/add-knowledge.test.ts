@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { addPlainKnowledgeText } from "../knowledge-texts";
 import {
   createDatabaseClient,
   waitForDbConnection,
@@ -7,6 +6,7 @@ import {
 import { extractKnowledgeFromExistingDbEntry } from "../knowledge/add-knowledge";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import { initTestOrganisation } from "../../../test/init.test";
+import { createKnowledgeText } from "./knowledge-texts";
 
 describe("Knowledge Text Flow", () => {
   beforeAll(async () => {
@@ -19,7 +19,7 @@ describe("Knowledge Text Flow", () => {
     // 1. Add plain text to knowledge_text table
     const testText =
       "This is a test document for knowledge extraction testing.";
-    const knowledgeText = await addPlainKnowledgeText({
+    const knowledgeText = await createKnowledgeText({
       text: testText,
       title: "Test Document",
       organisationId: "00000000-1111-1111-1111-000000000000",

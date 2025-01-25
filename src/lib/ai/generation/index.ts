@@ -12,7 +12,7 @@ import log from "../../../lib/log";
 
 import type { ChatWithTemplateReturn } from "../../../types";
 import { chatStoreInDb } from "../smart-chat/chat-history";
-import { ChatWithTemplateInputWithUserId } from "../../../routes/ai/chat";
+import type { ChatWithTemplateInputWithUserId } from "../../../routes/ai/chat";
 import { customAppPlaceholders } from "./custom-placeholders";
 
 /**
