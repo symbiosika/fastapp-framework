@@ -18,6 +18,8 @@ import {
   deleteTeam,
   addTeamMember,
   removeTeamMember,
+  updateTeamMemberRole,
+  checkTeamMemberRole,
 } from "../../../../lib/usermanagement/teams";
 
 const BASE_PATH = "/usermanagement";
@@ -136,17 +138,44 @@ export function defineUserManagementRoutes(
   );
 
   /**
+   * Change the role of a member
+   */
+  app.put(
+    API_BASE_PATH +
+      BASE_PATH +
+      "/organisation/:organisationId/teams/:teamId/members/:destinationUserId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c: Context) => {
+      const userId = c.get("usersId");
+      const { role } = await c.req.json();
+      await checkTeamMemberRole(c.req.param("teamId"), userId, "admin");
+      const member = await updateTeamMemberRole(
+        c.req.param("teamId"),
+        c.req.param("destinationUserId"),
+        role
+      );
+      return c.json(member);
+    }
+  );
+
+  /**
    * Remove a member from a team
    */
   app.delete(
     API_BASE_PATH +
       BASE_PATH +
-      "/organisation/:organisationId/teams/:teamId/members/:userId",
+      "/organisation/:organisationId/teams/:teamId/members/:usedestinationUserIdrId",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
       try {
-        await removeTeamMember(c.req.param("teamId"), c.req.param("userId"));
+        const userId = c.get("usersId");
+        await checkTeamMemberRole(c.req.param("teamId"), userId, "admin");
+        await removeTeamMember(
+          c.req.param("teamId"),
+          c.req.param("destinationUserId")
+        );
         return c.json({ success: true });
       } catch (err) {
         throw new HTTPException(500, {

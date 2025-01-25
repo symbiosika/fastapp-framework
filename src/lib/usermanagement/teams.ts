@@ -87,7 +87,7 @@ export const dropUserFromTeam = async (userId: string, teamId: string) => {
 export const addTeamMember = async (
   teamId: string,
   userId: string,
-  role?: string
+  role?: "admin" | "member"
 ) => {
   const result = await getDb()
     .insert(teamMembers)
@@ -100,11 +100,58 @@ export const addTeamMember = async (
   return result[0];
 };
 
+export const checkTeamMemberRole = async (
+  teamId: string,
+  userId: string,
+  roleToCheck: "admin" | "member"
+) => {
+  const member = await getDb()
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
+
+  if (member.length === 0 || member[0].role !== roleToCheck) {
+    throw new Error("You are not allowed to remove team members");
+  }
+  return true;
+};
+
 /**
  * Remove a team member from a team
  */
-export const removeTeamMember = async (teamId: string, userId: string) => {
+export const removeTeamMember = async (
+  teamId: string,
+  destinationUserId: string
+) => {
+  // do the actual removal
   await getDb()
     .delete(teamMembers)
-    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
+    .where(
+      and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, destinationUserId)
+      )
+    );
+};
+
+/**
+ * Update the role of a team member
+ */
+export const updateTeamMemberRole = async (
+  teamId: string,
+  destinationUserId: string,
+  role: "admin" | "member"
+) => {
+  // do the actual update
+  const result = await getDb()
+    .update(teamMembers)
+    .set({ role })
+    .where(
+      and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, destinationUserId)
+      )
+    )
+    .returning();
+  return result[0];
 };

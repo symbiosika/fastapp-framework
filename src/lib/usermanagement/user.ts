@@ -104,7 +104,7 @@ export const getUserTeams = async (userId: string) => {
 export const addUserToTeam = async (
   userId: string,
   teamId: string,
-  role: string = "member"
+  role: "admin" | "member" = "member"
 ) => {
   await getDb().insert(teamMembers).values({
     userId,

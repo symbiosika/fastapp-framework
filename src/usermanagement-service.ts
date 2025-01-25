@@ -42,6 +42,7 @@ import {
   getTeamsByOrganisation,
   addTeamMember,
   removeTeamMember,
+  updateTeamMemberRole,
 } from "./lib/usermanagement/teams";
 import {
   createPermissionGroup,
@@ -82,6 +83,7 @@ export default {
   getTeamsByOrganisation,
   addTeamMember,
   removeTeamMember,
+  updateTeamMemberRole,
   // permission groups
   createPermissionGroup,
   updatePermissionGroup,

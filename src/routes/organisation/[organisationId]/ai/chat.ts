@@ -46,6 +46,7 @@ const chatWithTemplateValidation = v.object({
 type ChatWithTemplateInput = v.InferOutput<typeof chatWithTemplateValidation>;
 export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
   userId: string | undefined;
+  meta: { organisationId: string };
 };
 
 const simpleChatValidation = v.object({
@@ -81,8 +82,13 @@ export default function defineRoutes(app: FastAppHono) {
         const body = await c.req.json();
         const usersId = c.get("usersId");
         const parsedBody = v.parse(chatWithTemplateValidation, body);
+        const organisationId = c.req.param("organisationId");
 
-        const r = await useTemplateChat({ ...parsedBody, userId: usersId });
+        const r = await useTemplateChat({
+          ...parsedBody,
+          userId: usersId,
+          meta: { organisationId },
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, {

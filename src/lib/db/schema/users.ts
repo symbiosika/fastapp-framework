@@ -269,7 +269,11 @@ export const teams = pgBaseTable(
 export type TeamsSelect = typeof teams.$inferSelect;
 export type TeamsInsert = typeof teams.$inferInsert;
 
-// Team Members Table mit optionaler Rolle
+// Table team_members
+export const teamMemberRoleEnum = pgEnum("team_member_role", [
+  "admin",
+  "member",
+]);
 export const teamMembers = pgBaseTable(
   "team_members",
   {
@@ -279,7 +283,7 @@ export const teamMembers = pgBaseTable(
     teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    role: varchar("role", { length: 50 }), // z.B. 'admin', 'member', etc.
+    role: teamMemberRoleEnum("role").notNull().default("member"),
     joinedAt: timestamp("joined_at", { mode: "string" }).notNull().defaultNow(),
   },
   (teamMembers) => [
@@ -289,8 +293,10 @@ export const teamMembers = pgBaseTable(
   ]
 );
 
-// RELATIONS
+export type TeamMembersSelect = typeof teamMembers.$inferSelect;
+export type TeamMembersInsert = typeof teamMembers.$inferInsert;
 
+// RELATIONS
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   userGroupMembers: many(userGroupMembers),
