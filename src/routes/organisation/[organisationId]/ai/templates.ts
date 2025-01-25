@@ -1,3 +1,8 @@
+/**
+ * Routes to manage the prompt templates for each organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import {
   addPromptTemplate,
   addPromptTemplatePlaceholder,
@@ -21,6 +26,10 @@ import {
   updatePromptSnippet,
   deletePromptSnippet,
 } from "../../../../lib/ai/prompt-snippets";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 
 export default function defineRoutes(app: FastAppHono) {
   /**
@@ -31,103 +40,125 @@ export default function defineRoutes(app: FastAppHono) {
    * - promptCategory: string (optional)
    * - organisationId: string
    */
-  app.get("/organisation/:organisationId/ai/templates/:id?", async (c) => {
-    try {
-      const promptId = c.req.param("id");
-      const organisationId = c.req.param("organisationId");
-      const promptName = c.req.query("promptName");
-      const promptCategory = c.req.query("promptCategory");
+  app.get(
+    "/organisation/:organisationId/ai/templates/:id?",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const promptId = c.req.param("id");
+        const organisationId = c.req.param("organisationId");
+        const promptName = c.req.query("promptName");
+        const promptCategory = c.req.query("promptCategory");
 
-      if (!organisationId) {
-        throw new HTTPException(400, {
-          message: 'Parameter "organisationId" is required',
+        if (!organisationId) {
+          throw new HTTPException(400, {
+            message: 'Parameter "organisationId" is required',
+          });
+        }
+
+        if (!promptId && !promptName && !promptCategory) {
+          const r = await getTemplates(organisationId);
+          return c.json(r);
+        }
+        const r = await getPlainTemplate({
+          promptId,
+          promptName,
+          promptCategory,
         });
-      }
-
-      if (!promptId && !promptName && !promptCategory) {
-        const r = await getTemplates(organisationId);
         return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-      const r = await getPlainTemplate({
-        promptId,
-        promptName,
-        promptCategory,
-      });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Add a new prompt template
    */
-  app.post("/organisation/:organisationId/ai/templates", async (c) => {
-    try {
-      const body = await c.req.json();
-      const organisationId = c.req.param("organisationId");
+  app.post(
+    "/organisation/:organisationId/ai/templates",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const organisationId = c.req.param("organisationId");
 
-      if (organisationId !== body.organisationId) {
-        throw new HTTPException(400, {
-          message:
-            'Parameter "organisationId" does not match body.organisationId',
-        });
+        if (organisationId !== body.organisationId) {
+          throw new HTTPException(400, {
+            message:
+              'Parameter "organisationId" does not match body.organisationId',
+          });
+        }
+
+        const r = await addPromptTemplate({ ...body, organisationId });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-
-      const r = await addPromptTemplate({ ...body, organisationId });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Update a prompt template by ID
    */
-  app.put("/organisation/:organisationId/ai/templates/:id", async (c) => {
-    try {
-      const id = c.req.param("id");
-      const organisationId = c.req.param("organisationId");
-      const body = await c.req.json();
+  app.put(
+    "/organisation/:organisationId/ai/templates/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.param("id");
+        const organisationId = c.req.param("organisationId");
+        const body = await c.req.json();
 
-      if (organisationId !== body.organisationId) {
-        throw new HTTPException(400, {
-          message:
-            'Parameter "organisationId" does not match body.organisationId',
-        });
+        if (organisationId !== body.organisationId) {
+          throw new HTTPException(400, {
+            message:
+              'Parameter "organisationId" does not match body.organisationId',
+          });
+        }
+
+        const r = await updatePromptTemplate({ ...body, id, organisationId });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-
-      const r = await updatePromptTemplate({ ...body, id, organisationId });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Delete a prompt template by ID
    */
-  app.delete("/organisation/:organisationId/ai/templates/:id", async (c) => {
-    try {
-      const id = c.req.param("id");
-      const organisationId = c.req.param("organisationId");
-      if (!organisationId) {
-        throw new HTTPException(400, {
-          message: 'Parameter "organisationId" is required',
-        });
+  app.delete(
+    "/organisation/:organisationId/ai/templates/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.param("id");
+        const organisationId = c.req.param("organisationId");
+        if (!organisationId) {
+          throw new HTTPException(400, {
+            message: 'Parameter "organisationId" is required',
+          });
+        }
+        const r = await deletePromptTemplate(id, organisationId);
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-      const r = await deletePromptTemplate(id, organisationId);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Get all placeholders for a prompt template by ID
    */
   app.get(
     "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const id = c.req.param("promptTemplateId");
@@ -144,6 +175,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post(
     "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const promptTemplateId = c.req.param("promptTemplateId");
@@ -164,6 +197,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.put(
     "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const promptTemplateId = c.req.param("promptTemplateId");
@@ -186,6 +221,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.delete(
     "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const promptTemplateId = c.req.param("promptTemplateId");
@@ -208,6 +245,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.get(
     "/organisation/:organisationId/ai/templates/placeholders",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const promptId = c.req.query("promptId");
@@ -235,6 +274,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.get(
     "/organisation/:organisationId/ai/prompt-snippets/:id?",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const organisationId = c.req.param("organisationId");
@@ -268,44 +309,56 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Add a new prompt snippet
    */
-  app.post("/organisation/:organisationId/ai/prompt-snippets", async (c) => {
-    try {
-      const body = await c.req.json();
-      const usersId = c.get("usersId");
-      const organisationId = c.req.param("organisationId");
-      const snippet = await addPromptSnippet({
-        ...body,
-        userId: usersId,
-        organisationId,
-      });
-      return c.json(snippet);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
+  app.post(
+    "/organisation/:organisationId/ai/prompt-snippets",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const snippet = await addPromptSnippet({
+          ...body,
+          userId: usersId,
+          organisationId,
+        });
+        return c.json(snippet);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
-  });
+  );
 
   /**
    * Update a prompt snippet
    */
-  app.put("/organisation/:organisationId/ai/prompt-snippets/:id", async (c) => {
-    try {
-      const id = c.req.param("id");
-      const organisationId = c.req.param("organisationId");
-      const body = await c.req.json();
-      const snippet = await updatePromptSnippet(id, organisationId, {
-        ...body,
-      });
-      return c.json(snippet);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
+  app.put(
+    "/organisation/:organisationId/ai/prompt-snippets/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.param("id");
+        const organisationId = c.req.param("organisationId");
+        const body = await c.req.json();
+        const snippet = await updatePromptSnippet(id, organisationId, {
+          ...body,
+        });
+        return c.json(snippet);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
-  });
+  );
 
   /**
    * Delete a prompt snippet
    */
   app.delete(
     "/organisation/:organisationId/ai/prompt-snippets/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const id = c.req.param("id");

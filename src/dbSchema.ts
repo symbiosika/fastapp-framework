@@ -1,5 +1,5 @@
 /**
- * A lib for the db schema
+ * Exposed db schema for the customer app
  */
 
 import { pgTableCreator } from "drizzle-orm/pg-core";

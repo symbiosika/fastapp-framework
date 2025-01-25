@@ -173,7 +173,10 @@ export async function getFullSourceDocumentsForSimilaritySearch(q: {
   // get the full source documents
   const fullSourceDocuments = await Promise.all(
     nearestChunks.map((chunk) =>
-      getFullSourceDocumentsForKnowledgeEntry(chunk.knowledgeEntryId)
+      getFullSourceDocumentsForKnowledgeEntry(
+        chunk.knowledgeEntryId,
+        q.organisationId
+      )
     )
   );
 

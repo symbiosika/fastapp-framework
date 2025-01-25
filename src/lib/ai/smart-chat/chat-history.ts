@@ -20,10 +20,11 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
     setInterval(() => this.cleanup(), 1000 * 60 * 60);
   }
 
-  async create(options?: {
+  async create(options: {
     chatId?: string;
     useTemplate?: ParsedTemplateBlocks;
     userId: string;
+    meta: { organisationId: string };
   }): Promise<ChatSession> {
     const chatId = options?.chatId || nanoid(16);
     log.debug(`Create chat session ${chatId}`);
@@ -56,6 +57,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         id: chatId,
         name: `Chat ${chatId}`,
         userId: options?.userId,
+        organisationId: options?.meta.organisationId,
         messages: session.actualChat,
         state: session.state,
         createdAt: session.createdAt.toISOString(),
@@ -268,7 +270,8 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
 
   async getHistoryByUserId(
     userId: string,
-    startFrom: string
+    startFrom: string,
+    meta: { organisationId: string }
   ): Promise<{ chatId: string; name: string; history: ChatMessage[] }[]> {
     log.debug(`Get chat history for user ${userId}`);
 
@@ -278,6 +281,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       .where(
         and(
           eq(chatSessions.userId, userId),
+          eq(chatSessions.organisationId, meta.organisationId),
           gte(chatSessions.updatedAt, startFrom)
         )
       )

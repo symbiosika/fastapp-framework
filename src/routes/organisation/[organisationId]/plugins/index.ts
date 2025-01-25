@@ -1,5 +1,13 @@
+/**
+ * Routes to manage the plugins of an organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import { HTTPException } from "../../../../types";
-import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import {
@@ -74,6 +82,7 @@ export default function definePluginRoutes(
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/plugins/available",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const plugins = await getAllAvailablePlugins();
@@ -92,6 +101,7 @@ export default function definePluginRoutes(
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const organisationId = c.req.param("organisationId");
@@ -112,6 +122,7 @@ export default function definePluginRoutes(
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const organisationId = c.req.param("organisationId");
       const body = await c.req.json();
@@ -139,6 +150,7 @@ export default function definePluginRoutes(
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       const isUUID = isValidUuid(idOrName);
@@ -165,6 +177,7 @@ export default function definePluginRoutes(
   app.put(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       const isUUID = isValidUuid(idOrName);
@@ -195,6 +208,7 @@ export default function definePluginRoutes(
   app.delete(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const idOrName = c.req.param("idOrName");
       try {
@@ -221,6 +235,7 @@ export default function definePluginRoutes(
     API_BASE_PATH +
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");
@@ -248,6 +263,7 @@ export default function definePluginRoutes(
     API_BASE_PATH +
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");
@@ -276,6 +292,7 @@ export default function definePluginRoutes(
     API_BASE_PATH +
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const pluginName = c.req.param("pluginName");
       const endpoint = c.req.param("endpoint");
@@ -303,6 +320,7 @@ export default function definePluginRoutes(
     API_BASE_PATH +
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const url = new URL(c.req.url);
       const pluginName = c.req.param("pluginName");

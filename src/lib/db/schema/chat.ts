@@ -1,7 +1,7 @@
 import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { sql } from "drizzle-orm";
-import { users } from "./users";
+import { organisations, users } from "./users";
 
 export const chatSessions = pgBaseTable(
   "chat_sessions",
@@ -11,6 +11,9 @@ export const chatSessions = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     name: text("name").notNull(),
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }),
     messages: jsonb("messages").notNull(),
     state: jsonb("state").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })

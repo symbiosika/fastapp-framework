@@ -1,5 +1,5 @@
 /**
- * A lib for all user management related functions
+ * Exposed user management service for the customer app
  */
 
 import {

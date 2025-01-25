@@ -164,9 +164,10 @@ export const getPlainKnowledge = async (
  * with pagination
  * without the chunks
  */
-export const getKnowledgeEntries = async (query?: {
-  limit: number;
-  page: number;
+export const getKnowledgeEntries = async (query: {
+  limit?: number;
+  page?: number;
+  organisationId: string;
 }): Promise<
   (KnowledgeEntrySelect & {
     filters: {
@@ -180,7 +181,8 @@ export const getKnowledgeEntries = async (query?: {
 > => {
   return await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
-    offset: query?.page ? query.page * query.limit : undefined,
+    offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
+    where: eq(knowledgeEntry.organisationId, query.organisationId),
     orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
     with: {
       filters: {
@@ -236,9 +238,15 @@ export const deleteKnowledgeEntry = async (
 /**
  * Get the full plain source text/documents for a knowledge entry id
  */
-export const getFullSourceDocumentsForKnowledgeEntry = async (id: string) => {
+export const getFullSourceDocumentsForKnowledgeEntry = async (
+  id: string,
+  organisationId: string
+) => {
   const entry = await getDb().query.knowledgeEntry.findFirst({
-    where: eq(knowledgeEntry.id, id),
+    where: and(
+      eq(knowledgeEntry.id, id),
+      eq(knowledgeEntry.organisationId, organisationId)
+    ),
   });
   const chunks = await getDb().query.knowledgeChunks.findMany({
     where: eq(knowledgeChunks.knowledgeEntryId, id),

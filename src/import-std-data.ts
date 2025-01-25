@@ -1,6 +1,7 @@
 /**
- * A small lib to import standard data into the database
+ * Exposed lib to import standard data into the database
  */
+
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 import {
   createDatabaseClient,

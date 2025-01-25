@@ -1,5 +1,5 @@
 /**
- * Simple lib to handle url parsing
+ * Exposed url service for the customer app
  */
 
 import {

@@ -1,5 +1,13 @@
+/**
+ * Routes to manage the secrets of an organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import { HTTPException } from "../../../../types";
-import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 import { deleteSecret, getSecrets, setSecret } from "../../../../lib/crypt";
 import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
@@ -19,6 +27,7 @@ export default function defineManageSecretsRoutes(
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const organisationId = c.req.param("organisationId");
@@ -38,6 +47,7 @@ export default function defineManageSecretsRoutes(
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const body = await c.req.json();
       try {
@@ -59,6 +69,7 @@ export default function defineManageSecretsRoutes(
   app.delete(
     API_BASE_PATH + "/organisation/:organisationId/secrets/:name",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       const name = c.req.param("name");
       const organisationId = c.req.param("organisationId");

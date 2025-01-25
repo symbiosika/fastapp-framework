@@ -9,7 +9,7 @@ These endpoints allow you to manage organizations, teams, permissions, and invit
 Creates a new organization.
 
 ```http
-POST /api/v1/usermanagement/organisations
+POST /api/v1/organisations
 ```
 
 #### Request Body
@@ -26,7 +26,7 @@ POST /api/v1/usermanagement/organisations
 Retrieves a specific organization by ID.
 
 ```http
-GET /api/v1/usermanagement/organisations/:id
+GET /api/v1/organisations/:organisationId
 ```
 
 ### Update Organization
@@ -34,7 +34,7 @@ GET /api/v1/usermanagement/organisations/:id
 Updates an existing organization.
 
 ```http
-PUT /api/v1/usermanagement/organisations/:id
+PUT /api/v1/organisations/:organisationId
 ```
 
 #### Request Body
@@ -51,7 +51,7 @@ PUT /api/v1/usermanagement/organisations/:id
 Deletes an organization.
 
 ```http
-DELETE /api/v1/usermanagement/organisations/:id
+DELETE /api/v1/organisations/:organisationId
 ```
 
 ## Team Management
@@ -61,7 +61,7 @@ DELETE /api/v1/usermanagement/organisations/:id
 Creates a new team within an organization.
 
 ```http
-POST /api/v1/usermanagement/teams
+POST /api/v1//organisations/:organisationId/teams
 ```
 
 #### Request Body
@@ -80,7 +80,7 @@ POST /api/v1/usermanagement/teams
 Retrieves all teams and their members for a specific organization.
 
 ```http
-GET /api/v1/usermanagement/organisations/:orgId/teams
+GET /api/v1/organisations/:organisationId/teams
 ```
 
 ### Update Team
@@ -88,7 +88,7 @@ GET /api/v1/usermanagement/organisations/:orgId/teams
 Updates an existing team.
 
 ```http
-PUT /api/v1/usermanagement/teams/:id
+PUT /api/v1/organisations/:organisationId/teams/:teamId
 ```
 
 #### Request Body
@@ -106,7 +106,7 @@ PUT /api/v1/usermanagement/teams/:id
 Deletes a team.
 
 ```http
-DELETE /api/v1/usermanagement/teams/:id
+DELETE /api/v1/organisations/:organisationId/teams/:teamId
 ```
 
 ## Team Member Management
@@ -116,7 +116,7 @@ DELETE /api/v1/usermanagement/teams/:id
 Adds a user to a team.
 
 ```http
-POST /api/v1/usermanagement/teams/:teamId/members
+POST /api/v1/organisations/:organisationId/teams/:teamId/members
 ```
 
 #### Request Body
@@ -133,7 +133,7 @@ POST /api/v1/usermanagement/teams/:teamId/members
 Removes a user from a team.
 
 ```http
-DELETE /api/v1/usermanagement/teams/:teamId/members/:userId
+DELETE /api/v1/organisations/:organisationId/teams/:teamId/members/:userId
 ```
 
 ## Permission Management
@@ -143,7 +143,7 @@ DELETE /api/v1/usermanagement/teams/:teamId/members/:userId
 Creates a new permission group.
 
 ```http
-POST /api/v1/usermanagement/permission-groups
+POST /api/v1/organisations/:organisationId/permission-groups
 ```
 
 #### Request Body
@@ -161,7 +161,7 @@ POST /api/v1/usermanagement/permission-groups
 Retrieves a specific permission group.
 
 ```http
-GET /api/v1/usermanagement/permission-groups/:id
+GET /api/v1/organisations/:organisationId/permission-groups/:permissionGroupId
 ```
 
 ### Update Permission Group
@@ -169,7 +169,7 @@ GET /api/v1/usermanagement/permission-groups/:id
 Updates an existing permission group.
 
 ```http
-PUT /api/v1/usermanagement/permission-groups/:id
+PUT /api/v1/organisations/:organisationId/permission-groups/:permissionGroupId
 ```
 
 #### Request Body
@@ -186,7 +186,7 @@ PUT /api/v1/usermanagement/permission-groups/:id
 Deletes a permission group.
 
 ```http
-DELETE /api/v1/usermanagement/permission-groups/:id
+DELETE /api/v1/organisations/:organisationId/permission-groups/:permissionGroupId
 ```
 
 ## Path Permissions
@@ -196,7 +196,7 @@ DELETE /api/v1/usermanagement/permission-groups/:id
 Creates a new path permission.
 
 ```http
-POST /api/v1/usermanagement/path-permissions
+POST /api/v1/organisations/:organisationId/path-permissions
 ```
 
 #### Request Body
@@ -218,7 +218,7 @@ POST /api/v1/usermanagement/path-permissions
 Retrieves a specific path permission.
 
 ```http
-GET /api/v1/usermanagement/path-permissions/:id
+GET /api/v1/organisations/:organisationId/path-permissions/:pathPermissionId
 ```
 
 ### Update Path Permission
@@ -226,7 +226,7 @@ GET /api/v1/usermanagement/path-permissions/:id
 Updates an existing path permission.
 
 ```http
-PUT /api/v1/usermanagement/path-permissions/:id
+PUT /api/v1/organisations/:organisationId/path-permissions/:pathPermissionId
 ```
 
 ### Delete Path Permission
@@ -234,7 +234,7 @@ PUT /api/v1/usermanagement/path-permissions/:id
 Deletes a path permission.
 
 ```http
-DELETE /api/v1/usermanagement/path-permissions/:id
+DELETE /api/v1/organisations/:organisationId/path-permissions/:pathPermissionId
 ```
 
 ## Permission Assignment
@@ -244,7 +244,7 @@ DELETE /api/v1/usermanagement/path-permissions/:id
 Assigns a permission to a permission group.
 
 ```http
-POST /api/v1/usermanagement/permission-groups/:groupId/permissions/:permissionId
+POST /api/v1/organisations/:organisationId/permission-groups/:permissionGroupId/permissions/:permissionId
 ```
 
 ### Remove Permission from Group
@@ -252,7 +252,7 @@ POST /api/v1/usermanagement/permission-groups/:groupId/permissions/:permissionId
 Removes a permission from a permission group.
 
 ```http
-DELETE /api/v1/usermanagement/permission-groups/:groupId/permissions/:permissionId
+DELETE /api/v1/organisations/:organisationId/permission-groups/:permissionGroupId/permissions/:permissionId
 ```
 
 ## Organization Invitations
@@ -262,7 +262,7 @@ DELETE /api/v1/usermanagement/permission-groups/:groupId/permissions/:permission
 Creates a new organization invitation.
 
 ```http
-POST /api/v1/usermanagement/invitations
+POST /api/v1/organisations/:organisationId/invitations
 ```
 
 #### Request Body
@@ -279,7 +279,7 @@ POST /api/v1/usermanagement/invitations
 Retrieves all organization invitations.
 
 ```http
-GET /api/v1/usermanagement/invitations
+GET /api/v1/organisations/:organisationId/invitations
 ```
 
 ### Accept Invitation
@@ -287,7 +287,7 @@ GET /api/v1/usermanagement/invitations
 Accepts an organization invitation.
 
 ```http
-POST /api/v1/usermanagement/invitations/:id/accept
+POST /api/v1/organisations/:organisationId/invitations/:id/accept
 ```
 
 Note: Use `id=all` to accept all pending invitations for the authenticated user.
@@ -297,7 +297,7 @@ Note: Use `id=all` to accept all pending invitations for the authenticated user.
 Declines an organization invitation.
 
 ```http
-POST /api/v1/usermanagement/invitations/:id/decline
+POST /api/v1/organisations/:organisationId/invitations/:id/decline
 ```
 
 ## User Organization Management
@@ -307,7 +307,7 @@ POST /api/v1/usermanagement/invitations/:id/decline
 Retrieves all organizations for the authenticated user.
 
 ```http
-GET /api/v1/usermanagement/my-organisations
+GET /api/v1/user/my-organisations
 ```
 
 ### Get Last Organization
@@ -315,7 +315,7 @@ GET /api/v1/usermanagement/my-organisations
 Retrieves the last accessed organization for the authenticated user.
 
 ```http
-GET /api/v1/usermanagement/last-organisation
+GET /api/v1/user/last-organisation
 ```
 
 ### Set Last Organization
@@ -323,7 +323,7 @@ GET /api/v1/usermanagement/last-organisation
 Sets the last accessed organization for the authenticated user.
 
 ```http
-POST /api/v1/usermanagement/set-last-organisation/:id
+POST /api/v1/user/set-last-organisation/:id
 ```
 
 ### Get Organization Permission Groups
@@ -331,7 +331,7 @@ POST /api/v1/usermanagement/set-last-organisation/:id
 Retrieves all permission groups for a specific organization.
 
 ```http
-GET /api/v1/usermanagement/organisations/:orgId/permission-groups
+GET /api/v1/organisations/:organisationId/permission-groups
 ```
 
 ## Authentication

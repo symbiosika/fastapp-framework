@@ -1,3 +1,8 @@
+/**
+ * Routes to CHAT with the AI models
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -5,6 +10,10 @@ import { useTemplateChat } from "../../../../lib/ai/generation";
 import { RESPONSES } from "../../../../lib/responses";
 import { chatStoreInDb } from "../../../../lib/ai/smart-chat/chat-history";
 import { getAllAIModels } from "../../../../lib/ai/standard";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
@@ -49,62 +58,94 @@ export default function defineRoutes(app: FastAppHono) {
   /**
    * Get all available models
    */
-  app.get("/organisation/:organisationId/ai/models", async (c) => {
-    const r = await getAllAIModels();
-    return c.json(r);
-  });
+  app.get(
+    "/organisation/:organisationId/ai/models",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const r = await getAllAIModels();
+      return c.json(r);
+    }
+  );
 
   /**
    * Main CHAT Route. Can handle simple and complex chats.
    * Chat with a Prompt Template
    */
-  app.post("/organisation/:organisationId/ai/chat-with-template", async (c) => {
-    try {
-      const body = await c.req.json();
-      const usersId = c.get("usersId");
-      const parsedBody = v.parse(chatWithTemplateValidation, body);
+  app.post(
+    "/organisation/:organisationId/ai/chat-with-template",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const parsedBody = v.parse(chatWithTemplateValidation, body);
 
-      const r = await useTemplateChat({ ...parsedBody, userId: usersId });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, {
-        message: e + "",
-      });
+        const r = await useTemplateChat({ ...parsedBody, userId: usersId });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
     }
-  });
+  );
 
   /**
    * Chat History for the current user
    */
-  app.get("/organisation/:organisationId/ai/chat/history", async (c) => {
-    const usersId = c.get("usersId");
-    const startFrom = c.req.query("startFrom") ?? "2000-01-01";
-    const r = await chatStoreInDb.getHistoryByUserId(usersId, startFrom);
-    return c.json(r);
-  });
+  app.get(
+    "/organisation/:organisationId/ai/chat/history",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const usersId = c.get("usersId");
+      const organisationId = c.req.param("organisationId");
+      const startFrom = c.req.query("startFrom") ?? "2000-01-01";
+      const r = await chatStoreInDb.getHistoryByUserId(usersId, startFrom, {
+        organisationId,
+      });
+      return c.json(r);
+    }
+  );
 
   /**
    * Chat History for one chat session
    */
-  app.get("/organisation/:organisationId/ai/chat/history/:id", async (c) => {
-    const id = c.req.param("id");
-    const r = await chatStoreInDb.get(id);
-    if (!r) {
-      throw new HTTPException(404, { message: `Chat session ${id} not found` });
+  app.get(
+    "/organisation/:organisationId/ai/chat/history/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const id = c.req.param("id");
+      // const organisationId = c.req.param("organisationId");
+      const r = await chatStoreInDb.get(id);
+      if (!r) {
+        throw new HTTPException(404, {
+          message: `Chat session ${id} not found`,
+        });
+      }
+      return c.json({
+        chatId: id,
+        name: r.name,
+        history: r.fullHistory,
+      });
     }
-    return c.json({
-      chatId: id,
-      name: r.name,
-      history: r.fullHistory,
-    });
-  });
+  );
 
   /**
    * Drop a chat session by ID
    */
-  app.delete("/organisation/:organisationId/ai/chat/history/:id", async (c) => {
-    const id = c.req.param("id");
-    await chatStoreInDb.drop(id);
-    return c.json(RESPONSES.SUCCESS);
-  });
+  app.delete(
+    "/organisation/:organisationId/ai/chat/history/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const id = c.req.param("id");
+      // const organisationId = c.req.param("organisationId");
+      await chatStoreInDb.drop(id);
+      return c.json(RESPONSES.SUCCESS);
+    }
+  );
 }

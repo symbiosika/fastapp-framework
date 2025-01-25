@@ -1,3 +1,7 @@
+/**
+ * Exposed types for the customer app
+ */
+
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";
 import Logger from "./lib/log";

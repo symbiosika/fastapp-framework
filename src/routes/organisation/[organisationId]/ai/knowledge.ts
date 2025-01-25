@@ -1,3 +1,8 @@
+/**
+ * Routes to manage the knowledge entries for each organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -21,6 +26,11 @@ import {
   deleteKnowledgeText,
 } from "../../../../lib/ai/knowledge/knowledge-texts";
 import { addKnowledgeTextFromUrl } from "../../../../lib/ai/knowledge-texts";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
+import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
 
 const FileSourceType = {
   DB: "db",
@@ -121,10 +131,14 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post(
     "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const body = await c.req.json();
         const parsedBody = v.parse(generateKnowledgeValidation, body);
+        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+
         const r = await extractKnowledgeFromExistingDbEntry(parsedBody);
         return c.json(r);
       } catch (e) {
@@ -141,29 +155,41 @@ export default function defineRoutes(app: FastAppHono) {
    * - limit: number
    * - page: number
    */
-  app.get("/organisation/:organisationId/ai/knowledge/entries", async (c) => {
-    try {
-      const organisationId = c.req.param("organisationId");
-      const limitStr = c.req.query("limit");
-      const pageStr = c.req.query("page");
-      const limit = parseInt(limitStr ?? "100");
-      const page = parseInt(pageStr ?? "0");
-      const r = await getKnowledgeEntries({ limit, page });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
+  app.get(
+    "/organisation/:organisationId/ai/knowledge/entries",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const organisationId = c.req.param("organisationId");
+        const limitStr = c.req.query("limit");
+        const pageStr = c.req.query("page");
+        const limit = parseInt(limitStr ?? "100");
+        const page = parseInt(pageStr ?? "0");
+
+        const r = await getKnowledgeEntries({ limit, page, organisationId });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
-  });
+  );
 
   /**
    * Get a full source document for a knowledge entry by ID
    */
   app.get(
     "/organisation/:organisationId/ai/knowledge/entries/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const id = c.req.param("id");
-        const r = await getFullSourceDocumentsForKnowledgeEntry(id);
+        const organisationId = c.req.param("organisationId");
+        const r = await getFullSourceDocumentsForKnowledgeEntry(
+          id,
+          organisationId
+        );
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -178,15 +204,12 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.delete(
     "/organisation/:organisationId/ai/knowledge/entries/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
-        if (!organisationId) {
-          throw new HTTPException(400, {
-            message: 'Parameter "organisationId" is required',
-          });
-        }
         const r = await deleteKnowledgeEntry(id, organisationId);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
@@ -200,10 +223,13 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post(
     "/organisation/:organisationId/ai/knowledge/similarity-search",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const body = await c.req.json();
         const parsedBody = v.parse(similaritySearchValidation, body);
+        validateOrganisationId(parsedBody, c.req.param("organisationId"));
 
         if (parsedBody.fullDocument) {
           const r = await getFullSourceDocumentsForSimilaritySearch({
@@ -250,6 +276,8 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.get(
     "/organisation/:organisationId/ai/knowledge/similarity-search",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const searchText = c.req.query("search");
@@ -333,10 +361,14 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post(
     "/organisation/:organisationId/ai/knowledge/parse-document",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const body = await c.req.json();
         const parsedBody = v.parse(parseDocumentValidation, body);
+        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+
         const r = await parseDocument(parsedBody);
         return c.json(r);
       } catch (e) {
@@ -351,10 +383,14 @@ export default function defineRoutes(app: FastAppHono) {
    */
   app.post(
     "/organisation/:organisationId/ai/knowledge/from-text",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const body = await c.req.json();
         const parsedBody = v.parse(addFromTextValidation, body);
+        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+
         const r = await createKnowledgeText(parsedBody);
         return c.json(r);
       } catch (e) {
@@ -367,90 +403,106 @@ export default function defineRoutes(app: FastAppHono) {
    * Add a text knowledge entry from an URL
    * This will parse the URL to markdown and then create a knowledge-text entry
    */
-  app.post("/organisation/:organisationId/ai/knowledge/from-url", async (c) => {
-    try {
-      const body = await c.req.json();
-      const parsedBody = v.parse(addFromUrlValidation, body);
-      const r = await addKnowledgeTextFromUrl(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
+  app.post(
+    "/organisation/:organisationId/ai/knowledge/from-url",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const parsedBody = v.parse(addFromUrlValidation, body);
+        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+
+        const r = await addKnowledgeTextFromUrl(parsedBody);
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
-  });
+  );
 
   /**
    * Create a new knowledge text entry
    */
-  app.post("/organisation/:organisationId/ai/knowledge/texts", async (c) => {
-    try {
-      const body = await c.req.json();
-      const organisationId = c.req.param("organisationId");
-      const parsedBody = v.parse(createKnowledgeTextValidation, body);
-      if (parsedBody.organisationId !== organisationId) {
-        throw new HTTPException(400, {
-          message:
-            'Parameter "organisationId" in body does not match URL parameter',
-        });
+  app.post(
+    "/organisation/:organisationId/ai/knowledge/texts",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const organisationId = c.req.param("organisationId");
+        const parsedBody = v.parse(createKnowledgeTextValidation, body);
+        validateOrganisationId(parsedBody, organisationId);
+
+        const r = await createKnowledgeText(parsedBody);
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-      const r = await createKnowledgeText(parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Read knowledge text entries
    */
-  app.get("/organisation/:organisationId/ai/knowledge/texts", async (c) => {
-    try {
-      const id = c.req.query("id");
-      const organisationId = c.req.param("organisationId");
-      const limit = c.req.query("limit")
-        ? parseInt(c.req.query("limit") ?? "10")
-        : undefined;
-      const page = c.req.query("page")
-        ? parseInt(c.req.query("page") ?? "1")
-        : undefined;
-      const r = await readKnowledgeText({ id, limit, page, organisationId });
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
+  app.get(
+    "/organisation/:organisationId/ai/knowledge/texts",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.query("id");
+        const organisationId = c.req.param("organisationId");
+        const limit = c.req.query("limit")
+          ? parseInt(c.req.query("limit") ?? "10")
+          : undefined;
+        const page = c.req.query("page")
+          ? parseInt(c.req.query("page") ?? "1")
+          : undefined;
+        const r = await readKnowledgeText({ id, limit, page, organisationId });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
-  });
+  );
 
   /**
    * Update a knowledge text entry
    */
-  app.put("/organisation/:organisationId/ai/knowledge/texts/:id", async (c) => {
-    try {
-      const id = c.req.param("id");
-      const organisationId = c.req.param("organisationId");
-      const body = await c.req.json();
-      const parsedBody = v.parse(updateKnowledgeTextValidation, body);
-      if (parsedBody.organisationId !== organisationId) {
-        throw new HTTPException(400, {
-          message:
-            'Parameter "organisationId" in body does not match URL parameter',
-        });
+  app.put(
+    "/organisation/:organisationId/ai/knowledge/texts/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.param("id");
+        const organisationId = c.req.param("organisationId");
+        const body = await c.req.json();
+        const parsedBody = v.parse(updateKnowledgeTextValidation, body);
+        validateOrganisationId(parsedBody, organisationId);
+
+        const r = await updateKnowledgeText(id, parsedBody);
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-      const r = await updateKnowledgeText(id, parsedBody);
-      return c.json(r);
-    } catch (e) {
-      throw new HTTPException(400, { message: e + "" });
     }
-  });
+  );
 
   /**
    * Delete a knowledge text entry
    */
   app.delete(
     "/organisation/:organisationId/ai/knowledge/texts/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
     async (c) => {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
-        const r = await deleteKnowledgeText(id, organisationId);
+        await deleteKnowledgeText(id, organisationId);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });

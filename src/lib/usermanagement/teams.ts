@@ -62,6 +62,26 @@ export const getTeamsByOrganisation = async (orgId: string) => {
 };
 
 /**
+ * Get all team for a specific user
+ */
+export const getTeamsByUser = async (userId: string) => {
+  return await getDb()
+    .select()
+    .from(teams)
+    .innerJoin(teamMembers, eq(teamMembers.teamId, teams.id))
+    .where(eq(teamMembers.userId, userId));
+};
+
+/**
+ * Drop the membership of a user from a team
+ */
+export const dropUserFromTeam = async (userId: string, teamId: string) => {
+  await getDb()
+    .delete(teamMembers)
+    .where(and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId)));
+};
+
+/**
  * Add a team member to a team
  */
 export const addTeamMember = async (

@@ -1,3 +1,7 @@
+/**
+ * Exposed file service for the customer app
+ */
+
 import {
   saveFileToTemporaryStorage,
   removeTemporaryFile,

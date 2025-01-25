@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
-import { defineSecuredUserRoutes, definePublicUserRoutes } from ".";
+import { definePublicUserRoutes } from "./public";
+import { defineSecuredUserRoutes } from "./protected";
 import type { FastAppHono } from "../../types";
 import { initTests } from "../../test/init.test";
 

@@ -1,5 +1,5 @@
 /**
- * A lib for all specific data related functions
+ * Exposed specific data service for the customer app
  */
 
 import {

@@ -1,7 +1,15 @@
+/**
+ * Routes to manage the teams of an organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import type { FastAppHono } from "../../../../types";
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
-import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 import { getTeamsAndMembersByOrganisation } from "../../../../lib/usermanagement/oganisations";
 import {
   createTeam,
@@ -18,13 +26,13 @@ export function defineUserManagementRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
-  // ---
-  // Team routes
-  // ---
-
+  /**
+   * Create a new team
+   */
   app.post(
     API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       try {
         const data = await c.req.json();
@@ -38,9 +46,13 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Get all teams of an organisation
+   */
   app.get(
     API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       try {
         const teams = await getTeamsAndMembersByOrganisation(
@@ -55,18 +67,26 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Get a team by id
+   */
   app.get(
     API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       const team = await getTeam(c.req.param("id"));
       return c.json(team);
     }
   );
 
+  /**
+   * Update a team
+   */
   app.put(
     API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       try {
         const data = await c.req.json();
@@ -80,24 +100,28 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Delete a team
+   */
   app.delete(
     API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       await deleteTeam(c.req.param("id"));
       return c.json({ success: true });
     }
   );
 
-  // ---
-  // Team member management
-  // ---
-
+  /**
+   * Add a member to a team
+   */
   app.post(
     API_BASE_PATH +
       BASE_PATH +
       "/organisation/:organisationId/teams/:teamId/members",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       try {
         const { userId, role } = await c.req.json();
@@ -111,11 +135,15 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Remove a member from a team
+   */
   app.delete(
     API_BASE_PATH +
       BASE_PATH +
       "/organisation/:organisationId/teams/:teamId/members/:userId",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       try {
         await removeTeamMember(c.req.param("teamId"), c.req.param("userId"));

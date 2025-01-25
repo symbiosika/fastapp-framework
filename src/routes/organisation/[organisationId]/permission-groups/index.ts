@@ -1,3 +1,9 @@
+/**
+ * Routes to manage the permission groups of an organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ * These routes are NOT used by the frontend in normal applications!
+ */
+
 import type { FastAppHono } from "../../../../types";
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
@@ -22,10 +28,9 @@ export function defineUserManagementRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
-  // ---
-  // Permission management routes
-  // ---
-
+  /**
+   * Create a new permission group
+   */
   app.post(
     API_BASE_PATH +
       BASE_PATH +
@@ -44,6 +49,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Get all permission groups of an organisation
+   */
   app.get(
     API_BASE_PATH +
       BASE_PATH +
@@ -63,6 +71,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Get a single permission group
+   */
   app.get(
     API_BASE_PATH +
       BASE_PATH +
@@ -74,6 +85,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Update a permission group
+   */
   app.put(
     API_BASE_PATH +
       BASE_PATH +
@@ -92,6 +106,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Delete a permission group
+   */
   app.delete(
     API_BASE_PATH +
       BASE_PATH +
@@ -103,6 +120,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Assign a permission to a permission group
+   */
   app.post(
     API_BASE_PATH +
       BASE_PATH +
@@ -123,6 +143,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Remove a permission from a permission group
+   */
   app.delete(
     API_BASE_PATH +
       BASE_PATH +
@@ -143,6 +166,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Create a new path permission
+   */
   app.post(
     API_BASE_PATH +
       BASE_PATH +
@@ -161,6 +187,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Get a single path permission
+   */
   app.get(
     API_BASE_PATH +
       BASE_PATH +
@@ -172,6 +201,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Update a path permission
+   */
   app.put(
     API_BASE_PATH +
       BASE_PATH +
@@ -184,6 +216,9 @@ export function defineUserManagementRoutes(
     }
   );
 
+  /**
+   * Delete a path permission
+   */
   app.delete(
     API_BASE_PATH +
       BASE_PATH +

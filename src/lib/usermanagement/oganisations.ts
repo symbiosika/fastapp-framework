@@ -73,6 +73,23 @@ export const getUserOrganisations = async (userId: string) => {
 };
 
 /**
+ * Drop the membership of a user from an organisation
+ */
+export const dropUserFromOrganisation = async (
+  userId: string,
+  organisationId: string
+) => {
+  await getDb()
+    .delete(organisationMembers)
+    .where(
+      and(
+        eq(organisationMembers.userId, userId),
+        eq(organisationMembers.organisationId, organisationId)
+      )
+    );
+};
+
+/**
  * Get the last organisation of a user
  */
 export const getLastOrganisation = async (userId: string) => {

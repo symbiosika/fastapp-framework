@@ -1,3 +1,7 @@
+/**
+ * All exposed AI functions to use in the customer app
+ */
+
 import {
   addPromptTemplate,
   deletePromptTemplate,

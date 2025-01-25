@@ -1,3 +1,8 @@
+/**
+ * Routes to manage the files of an organisation
+ * These routes are protected by JWT and CheckPermission middleware
+ */
+
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import {
@@ -11,7 +16,10 @@ import {
   saveFileToLocalDisc,
 } from "../../../../lib/storage/local";
 import type { FastAppHono } from "../../../../types";
-import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../../../lib/utils/hono-middlewares";
 
 /**
  * Upload a file to the database
@@ -105,6 +113,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
   app.all(
     API_BASE_PATH + "/organisation/:organisationId/files/:type/:bucket/:id?",
     authAndSetUsersInfo,
+    checkUserPermission,
     async (c: Context) => {
       // check if id is set
       const id = c.req.param("id");

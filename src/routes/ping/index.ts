@@ -1,7 +1,11 @@
-import {
-  authAndSetUsersInfo,
-  checkUserPermission,
-} from "../../lib/utils/hono-middlewares";
+/**
+ * Public route to check if the server is online
+ */
+
+// import {
+//   authAndSetUsersInfo,
+//   checkUserPermission,
+// } from "../../lib/utils/hono-middlewares";
 import type { FastAppHono } from "../../types";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
@@ -12,23 +16,18 @@ export default function definePingRoute(app: FastAppHono, basePath: string) {
   /**
    * Ping and internet check endpoint
    */
-  app.get(
-    basePath + "/ping",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    async (c) => {
-      let canConnectToInternet = false;
-      try {
-        const response = await fetch("https://www.github.com");
-        canConnectToInternet = response.ok;
-      } catch (error) {
-        canConnectToInternet = false;
-      }
-
-      return c.json({
-        online: true,
-        canConnectToInternet,
-      });
+  app.get(basePath + "/ping", async (c) => {
+    let canConnectToInternet = false;
+    try {
+      const response = await fetch("https://www.github.com");
+      canConnectToInternet = response.ok;
+    } catch (error) {
+      canConnectToInternet = false;
     }
-  );
+
+    return c.json({
+      online: true,
+      canConnectToInternet,
+    });
+  });
 }

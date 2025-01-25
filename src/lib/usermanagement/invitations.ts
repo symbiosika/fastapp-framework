@@ -15,8 +15,20 @@ import { getDb } from "../db/db-connection";
 /**
  * Get all organisation invitations
  */
-export const getAllOrganisationInvitations = async () => {
-  return await getDb().select().from(organisationInvitations);
+export const getAllOrganisationInvitations = async (organisationId: string) => {
+  return await getDb()
+    .select()
+    .from(organisationInvitations)
+    .where(eq(organisationInvitations.organisationId, organisationId));
+};
+
+/**
+ * Drop an invitation by its ID
+ */
+export const dropOrganisationInvitation = async (invitationId: string) => {
+  await getDb()
+    .delete(organisationInvitations)
+    .where(eq(organisationInvitations.id, invitationId));
 };
 
 /**
@@ -24,12 +36,18 @@ export const getAllOrganisationInvitations = async () => {
  */
 export const acceptOrganisationInvitation = async (
   invitationId: string,
-  userId: string
+  userId: string,
+  organisationId: string
 ) => {
   const invitations = await getDb()
     .select()
     .from(organisationInvitations)
-    .where(eq(organisationInvitations.id, invitationId));
+    .where(
+      and(
+        eq(organisationInvitations.id, invitationId),
+        eq(organisationInvitations.organisationId, organisationId)
+      )
+    );
   const invitation = invitations[0] || undefined;
 
   if (!invitation || invitation.status !== "pending") {
@@ -63,7 +81,10 @@ export const acceptOrganisationInvitation = async (
 /**
  * Accept all pending invitations for a user independent of a specific invitation
  */
-export const acceptAllPendingInvitationsForUser = async (userId: string) => {
+export const acceptAllPendingInvitationsForUser = async (
+  userId: string,
+  organisationId: string
+) => {
   const userRes = await getDb()
     .select()
     .from(users)
@@ -80,9 +101,14 @@ export const acceptAllPendingInvitationsForUser = async (userId: string) => {
     .where(
       and(
         eq(organisationInvitations.email, user.email),
-        eq(organisationInvitations.status, "pending")
+        eq(organisationInvitations.status, "pending"),
+        eq(organisationInvitations.organisationId, organisationId)
       )
     );
+
+  if (pendingInvitations.length === 0) {
+    throw new Error("No pending invitations found");
+  }
 
   await getDb().transaction(async (trx) => {
     for (const invitation of pendingInvitations) {
@@ -101,7 +127,7 @@ export const acceptAllPendingInvitationsForUser = async (userId: string) => {
 };
 
 /**
- * Decline an invitation
+ * Decline an invitation by its ID
  */
 export const declineOrganisationInvitation = async (invitationId: string) => {
   await getDb()
@@ -110,7 +136,37 @@ export const declineOrganisationInvitation = async (invitationId: string) => {
     .where(eq(organisationInvitations.id, invitationId));
 };
 
-// Funktion, um eine Einladung zu erstellen
+/**
+ * Decline all pending invitations for a user independent of a specific invitation
+ */
+export const declineAllPendingInvitationsForUser = async (
+  userId: string,
+  organisationId: string
+) => {
+  const userRes = await getDb()
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+  const user = userRes[0] || undefined;
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await getDb()
+    .update(organisationInvitations)
+    .set({ status: "declined" })
+    .where(
+      and(
+        eq(organisationInvitations.email, user.email),
+        eq(organisationInvitations.organisationId, organisationId)
+      )
+    );
+};
+
+/**
+ * Create a new invitation in the database
+ */
 export const createOrganisationInvitation = async (
   data: OrganisationInvitationsInsert
 ) => {

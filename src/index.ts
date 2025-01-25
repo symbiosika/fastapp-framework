@@ -22,10 +22,10 @@ import { validateAllEnvVariables } from "./lib/utils/env-validate";
 // Routes
 import {
   definePublicUserRoutes,
-  defineSecuredUserRoutes,
   registerPostRegisterAction,
   registerPreRegisterCustomVerification,
-} from "./routes/user";
+} from "./routes/user/public";
+import { defineSecuredUserRoutes } from "./routes/user/protected";
 import { defineFilesRoutes } from "./routes/organisation/[organisationId]/files";
 import paymentRoutes from "./routes/payment";
 import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templates";
@@ -150,7 +150,8 @@ export const defineServer = (config: ServerConfig) => {
    * Adds collection routes
    * will give simple CRUD endpoints for defined collections
    */
-  defineCollectionRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  // dropping this for now!
+  // defineCollectionRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Adds files routes
@@ -193,13 +194,10 @@ export const defineServer = (config: ServerConfig) => {
    * - knowledge
    * - chat
    */
-  const aiApp = new Hono();
-  aiApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
-  aiFineTuningRoutes(aiApp as any);
-  aiKnowledgeRoutes(aiApp as any);
-  aiChatRoutes(aiApp as any);
-  aiTemplatesRoutes(aiApp as any);
-  app.route(_GLOBAL_SERVER_CONFIG.basePath + "/ai", aiApp);
+  aiFineTuningRoutes(app);
+  aiKnowledgeRoutes(app);
+  aiChatRoutes(app);
+  aiTemplatesRoutes(app);
 
   /**
    * Adds custom routes from customHonoApps
