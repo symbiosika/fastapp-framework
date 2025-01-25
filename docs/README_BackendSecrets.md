@@ -7,7 +7,7 @@ These endpoints allow you to manage backend secrets (like API keys, tokens, or o
 Retrieves all stored secrets.
 
 ```http
-GET /api/v1/secrets
+GET /api/v1/organisation/:organisationId/secrets
 ```
 
 ### Response
@@ -24,7 +24,7 @@ GET /api/v1/secrets
 Adds a new secret or updates an existing one.
 
 ```http
-POST /api/secrets
+POST /api/v1/organisation/:organisationId/secrets
 ```
 
 ### Request Body

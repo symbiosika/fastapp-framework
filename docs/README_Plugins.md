@@ -7,7 +7,7 @@ These endpoints allow you to manage server plugins, including listing available 
 Retrieves all plugins that are available for installation.
 
 ```http
-GET /api/v1/plugins/available
+GET /api/v1/organisation/:organisationId/plugins/available
 ```
 
 ### Response
@@ -35,7 +35,7 @@ GET /api/v1/plugins/available
 Retrieves all installed plugins with their configurations.
 
 ```http
-GET /api/v1/plugins/installed
+GET /api/v1/organisation/:organisationId/plugins/installed
 ```
 
 ### Response
@@ -64,7 +64,7 @@ GET /api/v1/plugins/installed
 Retrieves a specific plugin by its ID or name.
 
 ```http
-GET /api/v1/plugins/installed/:idOrName
+GET /api/v1/organisation/:organisationId/plugins/installed/:idOrName
 ```
 
 ### Parameters
@@ -94,7 +94,7 @@ GET /api/v1/plugins/installed/:idOrName
 Registers a new plugin in the system.
 
 ```http
-POST /api/v1/plugins/installed
+POST /api/v1/organisation/:organisationId/plugins/installed
 ```
 
 ### Request Body
@@ -127,7 +127,7 @@ POST /api/v1/plugins/installed
 Updates the configuration of an existing plugin.
 
 ```http
-PUT /api/v1/plugins/installed/:id
+PUT /api/v1/organisation/:organisationId/plugins/installed/:id
 ```
 
 ### Parameters
@@ -161,7 +161,7 @@ PUT /api/v1/plugins/installed/:id
 Removes a plugin from the system.
 
 ```http
-DELETE /api/v1/plugins/installed/:id
+DELETE /api/v1/organisation/:organisationId/plugins/installed/:id
 ```
 
 ### Parameters

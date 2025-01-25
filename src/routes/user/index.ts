@@ -12,6 +12,11 @@ import { LocalAuth } from "../../lib/auth";
 import log from "../../lib/log";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
+import { getUserOrganisations } from "../../lib/usermanagement/oganisations";
+import {
+  getLastOrganisation,
+  setLastOrganisation,
+} from "../../lib/usermanagement/oganisations";
 
 const BASE_PATH = "/user";
 
@@ -94,6 +99,70 @@ export function defineSecuredUserRoutes(
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error updating user: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Get the user's organisations
+   */
+  app.get(
+    API_BASE_PATH +
+      BASE_PATH +
+      "/organisation/:organisationId/my-organisations",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const userId = c.get("usersId");
+        const orgs = await getUserOrganisations(userId);
+        return c.json(orgs);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting user organisations: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Get the user's last organisation
+   */
+  app.get(
+    API_BASE_PATH +
+      BASE_PATH +
+      "/organisation/:organisationId/last-organisation",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const userId = c.get("usersId");
+        const org = await getLastOrganisation(userId);
+        return c.json(org);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting last organisation: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Set the user's last organisation
+   */
+  app.post(
+    API_BASE_PATH +
+      BASE_PATH +
+      "/organisation/:organisationId/set-last-organisation/:id",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const userId = c.get("usersId");
+        const orgId = c.req.param("id");
+        const result = await setLastOrganisation(userId, orgId);
+        return c.json(result);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error setting last organisation: " + err,
         });
       }
     }

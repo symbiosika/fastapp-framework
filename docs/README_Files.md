@@ -8,7 +8,7 @@ The type depends on your application and is defined in the .env file.
 Uploads a file to either database or local storage.
 
 ```http
-POST /api/v1/files/{storage_type}/{bucket}
+POST /api/v1/organisation/:organisationId/files/{storage_type}/{bucket}
 ```
 
 ### Parameters
@@ -35,7 +35,7 @@ Must be `multipart/form-data` with a file field named "file".
 Retrieves a file from storage.
 
 ```http
-GET /api/v1/files/{storage_type}/{bucket}/{file_id}
+GET /api/v1/organisation/:organisationId/files/{storage_type}/{bucket}/{file_id}
 ```
 
 ### Parameters
@@ -55,7 +55,7 @@ Returns the file content with `application/octet-stream` content type.
 Deletes a file from storage.
 
 ```http
-DELETE /api/v1/files/{storage_type}/{bucket}/{file_id}
+DELETE /api/v1/organisation/:organisationId/files/{storage_type}/{bucket}/{file_id}
 ```
 
 ### Parameters
