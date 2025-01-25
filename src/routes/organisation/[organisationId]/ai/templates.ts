@@ -31,7 +31,7 @@ import {
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
 
-export default function defineRoutes(app: FastAppHono) {
+export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get a plain template
    * URL params:
@@ -41,7 +41,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - organisationId: string
    */
   app.get(
-    "/organisation/:organisationId/ai/templates/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id?",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -77,7 +77,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Add a new prompt template
    */
   app.post(
-    "/organisation/:organisationId/ai/templates",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -104,7 +104,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Update a prompt template by ID
    */
   app.put(
-    "/organisation/:organisationId/ai/templates/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -132,7 +132,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete a prompt template by ID
    */
   app.delete(
-    "/organisation/:organisationId/ai/templates/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -156,7 +156,8 @@ export default function defineRoutes(app: FastAppHono) {
    * Get all placeholders for a prompt template by ID
    */
   app.get(
-    "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -174,7 +175,8 @@ export default function defineRoutes(app: FastAppHono) {
    * Add a new placeholder to a prompt template
    */
   app.post(
-    "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -196,7 +198,8 @@ export default function defineRoutes(app: FastAppHono) {
    * Update a prompt-template placeholder by ID
    */
   app.put(
-    "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -220,7 +223,8 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete a placeholder for a prompt template by ID
    */
   app.delete(
-    "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -244,7 +248,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - organisationId: string
    */
   app.get(
-    "/organisation/:organisationId/ai/templates/placeholders",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -273,7 +277,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - category: string[] comma separated
    */
   app.get(
-    "/organisation/:organisationId/ai/prompt-snippets/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id?",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -310,7 +314,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Add a new prompt snippet
    */
   app.post(
-    "/organisation/:organisationId/ai/prompt-snippets",
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -334,7 +338,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Update a prompt snippet
    */
   app.put(
-    "/organisation/:organisationId/ai/prompt-snippets/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -356,7 +360,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete a prompt snippet
    */
   app.delete(
-    "/organisation/:organisationId/ai/prompt-snippets/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {

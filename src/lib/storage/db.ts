@@ -47,7 +47,7 @@ export const saveFileToDb: SaveFileFunction = async (
       throw new Error("no row created");
     }
     return {
-      path: `/api/v1/files/db/${bucket}/${e[0].id}${fileExtension !== "" ? `.${fileExtension}` : ""}`,
+      path: `/api/v1/organisation/${organisationId}/files/db/${bucket}/${e[0].id}${fileExtension !== "" ? `.${fileExtension}` : ""}`,
       id: e[0].id,
       name: e[0].name,
       organisationId: organisationId,

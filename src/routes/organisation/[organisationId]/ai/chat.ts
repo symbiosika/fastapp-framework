@@ -55,12 +55,12 @@ const simpleChatValidation = v.object({
 });
 export type SimpleChatInput = v.InferOutput<typeof simpleChatValidation>;
 
-export default function defineRoutes(app: FastAppHono) {
+export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get all available models
    */
   app.get(
-    "/organisation/:organisationId/ai/models",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -74,7 +74,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Chat with a Prompt Template
    */
   app.post(
-    "/organisation/:organisationId/ai/chat-with-template",
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat-with-template",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -102,7 +102,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Chat History for the current user
    */
   app.get(
-    "/organisation/:organisationId/ai/chat/history",
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/history",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -120,7 +120,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Chat History for one chat session
    */
   app.get(
-    "/organisation/:organisationId/ai/chat/history/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/history/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -144,7 +144,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Drop a chat session by ID
    */
   app.delete(
-    "/organisation/:organisationId/ai/chat/history/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/history/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {

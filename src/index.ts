@@ -56,6 +56,7 @@ import pluginService from "./plugin-service";
 import paymentService from "./payment-service";
 import usermanagementService from "./usermanagement-service";
 import filesService from "./files-service";
+import middlewareService from "./middleware-service";
 
 /**
  * MAIN FUNCTION
@@ -194,10 +195,10 @@ export const defineServer = (config: ServerConfig) => {
    * - knowledge
    * - chat
    */
-  aiFineTuningRoutes(app);
-  aiKnowledgeRoutes(app);
-  aiChatRoutes(app);
-  aiTemplatesRoutes(app);
+  aiFineTuningRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  aiKnowledgeRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Adds custom routes from customHonoApps
@@ -265,6 +266,14 @@ export const defineServer = (config: ServerConfig) => {
     initializePluginCache();
   });
 
+  // Log all registered endpoints
+  console.log("\n🛣️  Registered Routes:");
+  app.routes.forEach((route) => {
+    const method = route.method;
+    console.log(`${method.toUpperCase().padEnd(6)} ${route.path}`);
+  });
+  console.log(); // Empty line for better readability
+
   return {
     idleTimeout: 255,
     port: config.port ?? 3000,
@@ -290,3 +299,4 @@ export { pluginService };
 export { paymentService };
 export { usermanagementService };
 export { filesService };
+export { middlewareService };

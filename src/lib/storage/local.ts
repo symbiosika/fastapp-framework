@@ -27,7 +27,7 @@ export const saveFileToLocalDisc: SaveFileFunction = async (
   await fs.mkdir(path.join(ATTACHMENT_DIR, bucket), { recursive: true });
   await fs.writeFile(filePath, fileBuffer);
   return {
-    path: `/api/v1/files/local/${bucket}/${id}.${file.name.split(".").pop()}`,
+    path: `/api/v1/organisation/${organisationId}/files/local/${bucket}/${id}.${file.name.split(".").pop()}`,
     id: id,
     organisationId: organisationId,
   };

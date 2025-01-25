@@ -37,7 +37,7 @@ export type FineTuningDataInput = v.InferOutput<
   typeof fineTuningDataValidation
 >;
 
-export default function defineRoutes(app: FastAppHono) {
+export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get fine-tuning data with nested knowledge entry
    * Optional URL params are:
@@ -45,7 +45,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - category: string[] comma separated
    */
   app.get(
-    "/organisation/:organisationId/ai/fine-tuning/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/ai/fine-tuning/:id?",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -76,7 +76,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Add new fine-tuning data
    */
   app.post(
-    "/organisation/:organisationId/ai/fine-tuning",
+    API_BASE_PATH + "/organisation/:organisationId/ai/fine-tuning",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -95,7 +95,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Update fine-tuning data
    */
   app.put(
-    "/organisation/:organisationId/ai/fine-tuning/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/fine-tuning/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -115,7 +115,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete fine-tuning data
    */
   app.delete(
-    "/organisation/:organisationId/ai/fine-tuning/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/fine-tuning/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {

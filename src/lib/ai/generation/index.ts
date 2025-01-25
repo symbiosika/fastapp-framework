@@ -214,6 +214,9 @@ export const useTemplateChat = async (
       trigger: query.trigger,
       template,
       usersVariables: query.variables,
+      meta: {
+        organisationId: query.meta.organisationId,
+      },
     });
 
     result = <ChatWithTemplateReturn>{
@@ -235,6 +238,9 @@ export const useTemplateChat = async (
       llmOptions: query.llmOptions,
       trigger: query.trigger,
       usersVariables: query.variables,
+      meta: {
+        organisationId: query.meta.organisationId,
+      },
     });
 
     result = <ChatWithTemplateReturn>{

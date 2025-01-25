@@ -124,13 +124,14 @@ type UpdateKnowledgeTextInput = v.InferOutput<
   typeof updateKnowledgeTextValidation
 >;
 
-export default function defineRoutes(app: FastAppHono) {
+export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Call the knowledge extraction from a document to generate embeddings in the database
    * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -156,7 +157,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - page: number
    */
   app.get(
-    "/organisation/:organisationId/ai/knowledge/entries",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -179,7 +180,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Get a full source document for a knowledge entry by ID
    */
   app.get(
-    "/organisation/:organisationId/ai/knowledge/entries/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -203,7 +204,7 @@ export default function defineRoutes(app: FastAppHono) {
    * - organisationId: string
    */
   app.delete(
-    "/organisation/:organisationId/ai/knowledge/entries/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -222,7 +223,8 @@ export default function defineRoutes(app: FastAppHono) {
    * Search for similar documents (POST)
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/similarity-search",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -275,7 +277,8 @@ export default function defineRoutes(app: FastAppHono) {
    * - filter[category]: string[] (comma separated) - can be multiple filter[xyz] params
    */
   app.get(
-    "/organisation/:organisationId/ai/knowledge/similarity-search",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -360,7 +363,7 @@ export default function defineRoutes(app: FastAppHono) {
    * That means it will be splitted, embeddings will be created, store as knowledge-entry
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/parse-document",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/parse-document",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -382,7 +385,7 @@ export default function defineRoutes(app: FastAppHono) {
    * This will create a knowledge-text entry
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/from-text",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-text",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -404,7 +407,7 @@ export default function defineRoutes(app: FastAppHono) {
    * This will parse the URL to markdown and then create a knowledge-text entry
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/from-url",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-url",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -425,7 +428,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Create a new knowledge text entry
    */
   app.post(
-    "/organisation/:organisationId/ai/knowledge/texts",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -447,7 +450,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Read knowledge text entries
    */
   app.get(
-    "/organisation/:organisationId/ai/knowledge/texts",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -472,7 +475,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Update a knowledge text entry
    */
   app.put(
-    "/organisation/:organisationId/ai/knowledge/texts/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -495,7 +498,7 @@ export default function defineRoutes(app: FastAppHono) {
    * Delete a knowledge text entry
    */
   app.delete(
-    "/organisation/:organisationId/ai/knowledge/texts/:id",
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
