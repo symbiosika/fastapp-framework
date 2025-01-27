@@ -17,6 +17,8 @@ import { getDb } from "../../lib/db/db-connection";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import {
+  addOrganisationMember,
+  createOrganisation,
   dropUserFromOrganisation,
   getUserOrganisations,
 } from "../../lib/usermanagement/oganisations";
@@ -28,6 +30,7 @@ import {
   dropUserFromTeam,
   getTeamsByUser,
 } from "../../lib/usermanagement/teams";
+import * as v from "valibot";
 
 /**
  * Pre-register custom verification
@@ -52,6 +55,10 @@ export const registerPostRegisterAction = (
 ) => {
   postRegisterActions.push(action);
 };
+
+const setupValidation = v.object({
+  organisationName: v.pipe(v.string(), v.minLength(3), v.maxLength(255)),
+});
 
 /**
  * Define the payment routes
@@ -108,6 +115,39 @@ export function defineSecuredUserRoutes(
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error updating user: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * A "setup" route that will give the use the possibility to setup the first organisation
+   * if the user has no organisation yet.
+   */
+  app.post(
+    API_BASE_PATH + "/user/setup",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const userId = c.get("usersId");
+        // check if user has an organisation
+        const orgs = await getUserOrganisations(userId);
+        if (orgs.length > 0) {
+          return c.json({ state: "already-setup" });
+        }
+        const body = await c.req.json();
+        const parsed = v.parse(setupValidation, body);
+
+        const org = await createOrganisation({
+          name: parsed.organisationName,
+        });
+        await addOrganisationMember(org.id, userId, "admin");
+        await setLastOrganisation(userId, org.id);
+
+        return c.json(org);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error creating organisation: " + err,
         });
       }
     }

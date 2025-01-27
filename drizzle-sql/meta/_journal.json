@@ -449,6 +449,13 @@
       "when": 1737816875371,
       "tag": "0063_fixed_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1737970701175,
+      "tag": "0064_sticky_red_shift",
+      "breakpoints": true
     }
   ]
 }

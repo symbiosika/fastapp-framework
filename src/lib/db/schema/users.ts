@@ -425,6 +425,12 @@ export type OrganisationInvitationsSelect =
 export type OrganisationInvitationsInsert =
   typeof organisationInvitations.$inferInsert;
 
+export const organisationMemberRoleEnum = pgEnum("organisation_member_role", [
+  "owner",
+  "admin",
+  "member",
+]);
+
 export const organisationMembers = pgBaseTable(
   "organisation_members",
   {
@@ -434,7 +440,7 @@ export const organisationMembers = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id, { onDelete: "cascade" }),
-    role: varchar("role", { length: 50 }).notNull().default("member"), // z.B. 'owner', 'admin', 'member'
+    role: organisationMemberRoleEnum("role").notNull().default("member"),
     joinedAt: timestamp("joined_at", { mode: "string" }).notNull().defaultNow(),
   },
   (organisationMembers) => [

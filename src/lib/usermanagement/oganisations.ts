@@ -63,7 +63,11 @@ export const deleteOrganisation = async (orgId: string) => {
  */
 export const getUserOrganisations = async (userId: string) => {
   return await getDb()
-    .select()
+    .select({
+      id: organisations.id,
+      name: organisations.name,
+      role: organisationMembers.role,
+    })
     .from(organisationMembers)
     .innerJoin(
       organisations,
@@ -79,6 +83,19 @@ export const dropUserFromOrganisation = async (
   userId: string,
   organisationId: string
 ) => {
+  // check if the organisation has at least one owner
+  const owners = await getDb()
+    .select()
+    .from(organisationMembers)
+    .where(
+      and(
+        eq(organisationMembers.organisationId, organisationId),
+        eq(organisationMembers.role, "owner")
+      )
+    );
+  if (owners.length === 1) {
+    throw new Error("Organisation must have at least one owner");
+  }
   await getDb()
     .delete(organisationMembers)
     .where(
@@ -186,7 +203,7 @@ export const getPermissionsByOrganisation = async (organisationId: string) => {
 export const addOrganisationMember = async (
   organisationId: string,
   userId: string,
-  role?: string
+  role?: "owner" | "admin" | "member"
 ) => {
   const result = await getDb()
     .insert(organisationMembers)
