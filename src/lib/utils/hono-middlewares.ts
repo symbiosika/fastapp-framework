@@ -91,7 +91,7 @@ export const authOrRedirectToLogin = async (c: Context, next: Function) => {
   try {
     checkToken(c);
   } catch (error) {
-    return c.redirect("/login.html");
+    return c.redirect("/#/login");
   }
   await next();
 };
@@ -110,10 +110,10 @@ export const authAndSetUsersInfoOrRedirectToLogin = async (
     if (typeof decodedAndVerifiedToken === "object") {
       addUserToContext(c, decodedAndVerifiedToken);
     } else {
-      return c.redirect("/login.html");
+      return c.redirect("/#/login");
     }
   } catch (err) {
-    return c.redirect("/login.html");
+    return c.redirect("/#/login");
   }
   await next();
 };
