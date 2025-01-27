@@ -181,8 +181,14 @@ export function defineSecuredUserRoutes(
     async (c: Context) => {
       const userId = c.get("usersId");
       const organisationId = c.req.param("organisationId");
-      await dropUserFromOrganisation(userId, organisationId);
-      return c.json({ success: true });
+      try {
+        await dropUserFromOrganisation(userId, organisationId);
+        return c.json({ success: true });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error dropping user from organisation: " + err,
+        });
+      }
     }
   );
 

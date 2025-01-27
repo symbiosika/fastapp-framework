@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db/db-connection";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, ne } from "drizzle-orm";
 import {
   organisations,
   teams,
@@ -83,17 +83,18 @@ export const dropUserFromOrganisation = async (
   userId: string,
   organisationId: string
 ) => {
-  // check if the organisation has at least one owner
+  // check if the organisation has at least one owner that is NOT the user
   const owners = await getDb()
     .select()
     .from(organisationMembers)
     .where(
       and(
         eq(organisationMembers.organisationId, organisationId),
-        eq(organisationMembers.role, "owner")
+        eq(organisationMembers.role, "owner"),
+        ne(organisationMembers.userId, userId)
       )
     );
-  if (owners.length === 1) {
+  if (owners.length < 1) {
     throw new Error("Organisation must have at least one owner");
   }
   await getDb()
