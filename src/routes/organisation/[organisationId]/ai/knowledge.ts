@@ -46,6 +46,8 @@ const generateKnowledgeValidation = v.object({
   sourceFileBucket: v.optional(v.string()),
   sourceUrl: v.optional(v.string()),
   filters: v.optional(v.record(v.string(), v.string())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -155,7 +157,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * URL params:
    * - limit: number
    * - page: number
+   * - teamId: string
+   * - userId: string
    */
+
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries",
     authAndSetUsersInfo,
@@ -163,12 +168,22 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const organisationId = c.req.param("organisationId");
+        const usersId = c.get("usersId");
+        // Url params
         const limitStr = c.req.query("limit");
         const pageStr = c.req.query("page");
+        const teamId = c.req.query("teamId");
+        const userId = c.req.query("userId");
         const limit = parseInt(limitStr ?? "100");
         const page = parseInt(pageStr ?? "0");
 
-        const r = await getKnowledgeEntries({ limit, page, organisationId });
+        const r = await getKnowledgeEntries({
+          limit,
+          page,
+          organisationId,
+          userId,
+          teamId,
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
