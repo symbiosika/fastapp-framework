@@ -125,7 +125,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       };
     }
 
-    if (set.blockIndex !== undefined && newState.useTemplate) {
+    if (set.blockIndex != null && newState.useTemplate) {
       newState.useTemplate.blockIndex = set.blockIndex;
     }
 

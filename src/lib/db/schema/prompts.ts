@@ -93,12 +93,47 @@ export type PromptTemplatePlaceholdersSelect =
 export type PromptTemplatePlaceholdersInsert =
   typeof promptTemplatePlaceholders.$inferInsert;
 
+// Table for placeholder examples/suggestions
+export const promptTemplatePlaceholderExamples = pgBaseTable(
+  "prompt_template_placeholder_examples",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    placeholderId: uuid("placeholder_id")
+      .notNull()
+      .references(() => promptTemplatePlaceholders.id, { onDelete: "cascade" }),
+    value: text("value").notNull(),
+  },
+  (table) => [
+    index("placeholder_examples_placeholder_id_idx").on(table.placeholderId),
+  ]
+);
+
+export type PromptTemplatePlaceholderExamplesSelect =
+  typeof promptTemplatePlaceholderExamples.$inferSelect;
+export type PromptTemplatePlaceholderExamplesInsert =
+  typeof promptTemplatePlaceholderExamples.$inferInsert;
+
+// Update the relations
 export const promptTemplatePlaceholdersRelations = relations(
   promptTemplatePlaceholders,
-  ({ one }) => ({
+  ({ one, many }) => ({
     promptTemplate: one(promptTemplates, {
       fields: [promptTemplatePlaceholders.promptTemplateId],
       references: [promptTemplates.id],
+    }),
+    examples: many(promptTemplatePlaceholderExamples),
+  })
+);
+
+// Add relation for suggestions table
+export const promptTemplatePlaceholderExamplesRelations = relations(
+  promptTemplatePlaceholderExamples,
+  ({ one }) => ({
+    placeholder: one(promptTemplatePlaceholders, {
+      fields: [promptTemplatePlaceholderExamples.placeholderId],
+      references: [promptTemplatePlaceholders.id],
     }),
   })
 );

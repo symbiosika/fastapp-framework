@@ -30,9 +30,47 @@ import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
+import * as v from "valibot";
+
+// Validation for template
+const addPromptTemplateSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  organisationId: v.string(),
+  template: v.string(),
+  label: v.pipe(v.string(), v.minLength(1)),
+  description: v.pipe(v.string(), v.minLength(0)),
+  hidden: v.boolean(),
+  createdAt: v.optional(v.string()),
+  updatedAt: v.optional(v.string()),
+  userId: v.nullable(v.optional(v.string())),
+  category: v.optional(v.string()),
+  langCode: v.nullable(v.optional(v.string())),
+  needsInitialCall: v.boolean(),
+});
+
+// validation for template placeholders
+const addPromptTemplatePlaceholderSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  label: v.pipe(v.string(), v.minLength(1)),
+  description: v.pipe(v.string(), v.minLength(0)),
+  hidden: v.boolean(),
+  promptTemplateId: v.string(),
+  type: v.picklist(["image", "text"] as const),
+  requiredByUser: v.boolean(),
+  defaultValue: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  suggestions: v.optional(v.array(v.string())),
+});
+
+const updatePromptTemplatePlaceholderSchema = v.intersect([
+  addPromptTemplateSchema,
+  v.object({
+    id: v.string(),
+  }),
+]);
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
+
    * Get a plain template
    * URL params:
    * - promptId: string (optional)
@@ -84,15 +122,16 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const body = await c.req.json();
         const organisationId = c.req.param("organisationId");
+        const validatedBody = v.parse(addPromptTemplateSchema, body);
 
-        if (organisationId !== body.organisationId) {
+        if (organisationId !== validatedBody.organisationId) {
           throw new HTTPException(400, {
             message:
               'Parameter "organisationId" does not match body.organisationId',
           });
         }
 
-        const r = await addPromptTemplate({ ...body, organisationId });
+        const r = await addPromptTemplate({ ...validatedBody, organisationId });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -112,15 +151,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
         const body = await c.req.json();
+        const validatedBody = v.parse(
+          updatePromptTemplatePlaceholderSchema,
+          body
+        );
 
-        if (organisationId !== body.organisationId) {
+        if (organisationId !== validatedBody.organisationId) {
           throw new HTTPException(400, {
             message:
               'Parameter "organisationId" does not match body.organisationId',
           });
         }
 
-        const r = await updatePromptTemplate({ ...body, id, organisationId });
+        const r = await updatePromptTemplate(validatedBody);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -183,10 +226,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const promptTemplateId = c.req.param("promptTemplateId");
         const body = await c.req.json();
+        const validatedBody = v.parse(addPromptTemplatePlaceholderSchema, body);
         const r = await addPromptTemplatePlaceholder({
-          ...body,
+          ...validatedBody,
           promptTemplateId,
         });
+
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
