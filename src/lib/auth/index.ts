@@ -125,6 +125,37 @@ const checkAndCreateSession = async (email: string, password: string) => {
   return { token, expiresAt };
 };
 
+const setNewPassword = async (userId: string, newPassword: string) => {
+  const hash = await saltAndHashPassword(newPassword);
+
+  const updatedUser = await getDb()
+    .update(users)
+    .set({ password: hash })
+    .where(eq(users.id, userId))
+    .returning();
+
+  if (updatedUser.length === 0) {
+    throw "User not found";
+  }
+
+  return updatedUser[0];
+};
+
+const changePassword = async (
+  email: string,
+  oldPassword: string,
+  newPassword: string
+) => {
+  try {
+    // Verify old password first
+    const user = await getUserFromDb(email, oldPassword);
+    // If verification successful, set new password
+    return await setNewPassword(user.id, newPassword);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const LocalAuth = {
   async authorize(email: string, password: string) {
     return await getUserFromDb(email, password);
@@ -156,5 +187,17 @@ export const LocalAuth = {
 
   async verifyEmail(token: string) {
     return await verifyEmail(token);
+  },
+
+  async setNewPassword(userId: string, newPassword: string) {
+    return await setNewPassword(userId, newPassword);
+  },
+
+  async changePassword(
+    email: string,
+    oldPassword: string,
+    newPassword: string
+  ) {
+    return await changePassword(email, oldPassword, newPassword);
   },
 };

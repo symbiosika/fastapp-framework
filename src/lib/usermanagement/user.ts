@@ -64,7 +64,7 @@ export const getUserOrganisations = async (userId: string) => {
 export const addUserToOrganisation = async (
   userId: string,
   organisationId: string,
-  role: string = "member"
+  role: "admin" | "member" | "owner" = "member"
 ) => {
   await getDb().insert(organisationMembers).values({
     userId,

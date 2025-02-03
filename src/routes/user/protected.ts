@@ -31,6 +31,7 @@ import {
   getTeamsByUser,
 } from "../../lib/usermanagement/teams";
 import * as v from "valibot";
+import { LocalAuth } from "../../lib/auth";
 
 /**
  * Pre-register custom verification
@@ -150,6 +151,21 @@ export function defineSecuredUserRoutes(
           message: "Error creating organisation: " + err,
         });
       }
+    }
+  );
+
+  /**
+   * Change the own password
+   */
+  app.put(
+    API_BASE_PATH + "/user/me/password",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      const userId = c.get("usersId");
+      const usersEmail = c.get("usersEmail");
+      const { oldPassword, newPassword } = await c.req.json();
+      await LocalAuth.changePassword(usersEmail, oldPassword, newPassword);
+      return c.json({ success: true });
     }
   );
 
