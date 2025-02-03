@@ -62,6 +62,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         state: session.state,
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.lastUsedAt.toISOString(),
+        deleteAt: null,
       });
 
     return session;
