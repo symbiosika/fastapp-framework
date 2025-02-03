@@ -14,7 +14,16 @@ import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
+import { queryChatSessions } from "../../../../lib/chat";
+import {
+  createChatSessionGroup,
+  getChatSessionGroupsByUser,
+  updateChatSessionGroup,
+  deleteChatSessionGroup,
+  addUserToChatSessionGroup,
+} from "../../../../lib/chat/index";
 
+// Validation schemas for chat with template
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
   initiateTemplate: v.optional(
@@ -49,11 +58,23 @@ export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
   meta: { organisationId: string };
 };
 
+// Validation schemas for simple chat
 const simpleChatValidation = v.object({
   chatId: v.optional(v.string()),
   userMessage: v.string(),
 });
 export type SimpleChatInput = v.InferOutput<typeof simpleChatValidation>;
+
+// Validation schemas for chat groups
+const createChatGroupValidation = v.object({
+  name: v.string(),
+  meta: v.optional(v.record(v.string(), v.any())),
+});
+
+const updateChatGroupValidation = v.object({
+  name: v.optional(v.string()),
+  meta: v.optional(v.record(v.string(), v.any())),
+});
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -152,6 +173,139 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       // const organisationId = c.req.param("organisationId");
       await chatStoreInDb.drop(id);
       return c.json(RESPONSES.SUCCESS);
+    }
+  );
+
+  /**
+   * Chat History for a chat-session-group
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/history/group/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const id = c.req.param("id");
+      const organisationId = c.req.param("organisationId");
+      const usersId = c.get("usersId");
+      const r = await queryChatSessions(organisationId, usersId, {
+        chatSessionGroupId: id,
+      });
+      return c.json(r);
+    }
+  );
+
+  /**
+   * Create a new Chat Group and assign the creating user to it.
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+
+        const parsedBody = v.parse(createChatGroupValidation, body);
+
+        // Create the chat group
+        const chatGroup = await createChatSessionGroup({
+          name: parsedBody.name,
+          meta: parsedBody.meta,
+          organisationId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        // Assign the creating user to the chat group
+        await addUserToChatSessionGroup(chatGroup.id, usersId);
+
+        return c.json(chatGroup);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all Chat Groups the current user is a member of.
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const usersId = c.get("usersId");
+      const organisationId = c.req.param("organisationId");
+      const chatGroups = await getChatSessionGroupsByUser(
+        organisationId,
+        usersId
+      );
+      return c.json(chatGroups);
+    }
+  );
+
+  /**
+   * Update a Chat Group. Only members can update.
+   */
+  app.put(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups/:groupId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const groupId = c.req.param("groupId");
+
+        const parsedBody = v.parse(updateChatGroupValidation, body);
+
+        const updatedGroup = await updateChatSessionGroup(
+          groupId,
+          organisationId,
+          parsedBody,
+          usersId
+        );
+
+        if (!updatedGroup) {
+          throw new HTTPException(404, {
+            message: "Chat group not found or access denied.",
+          });
+        }
+
+        return c.json(updatedGroup);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Delete a Chat Group. Only members can delete.
+   */
+  app.delete(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups/:groupId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const usersId = c.get("usersId");
+      const organisationId = c.req.param("organisationId");
+      const groupId = c.req.param("groupId");
+
+      try {
+        await deleteChatSessionGroup(groupId, organisationId, usersId);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
     }
   );
 }

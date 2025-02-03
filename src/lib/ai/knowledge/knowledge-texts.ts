@@ -1,17 +1,11 @@
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
-import { knowledgeText } from "../../db/schema/knowledge";
-import log from "../../log";
+import { knowledgeText, KnowledgeTextInsert } from "../../db/schema/knowledge";
 
 /**
  * Create a new knowledgeText entry
  */
-export const createKnowledgeText = async (data: {
-  text: string;
-  title?: string;
-  meta?: Record<string, string | number | boolean | undefined>;
-  organisationId: string;
-}) => {
+export const createKnowledgeText = async (data: KnowledgeTextInsert) => {
   const e = await getDb()
     .insert(knowledgeText)
     .values({ ...data })
@@ -22,26 +16,35 @@ export const createKnowledgeText = async (data: {
 /**
  * Read all knowledgeText entries or a specific entry by ID
  */
-export const readKnowledgeText = async (data: {
+export const readKnowledgeText = async (filters: {
   id?: string;
   organisationId: string;
+  teamId?: string;
+  userId?: string;
   limit?: number;
   page?: number;
 }) => {
   const query = getDb()
     .select()
     .from(knowledgeText)
-    .orderBy(asc(knowledgeText.createdAt));
-  query.where(eq(knowledgeText.organisationId, data.organisationId));
+    .orderBy(asc(knowledgeText.createdAt))
+    .where(eq(knowledgeText.organisationId, filters.organisationId))
+    .$dynamic();
 
-  if (data.id) {
-    query.where(eq(knowledgeText.id, data.id));
+  if (filters.id) {
+    query.where(eq(knowledgeText.id, filters.id));
   }
-  if (data.limit) {
-    query.limit(data.limit);
+  if (filters.teamId) {
+    query.where(eq(knowledgeText.teamId, filters.teamId));
   }
-  if (data.page && data.limit) {
-    query.offset((data.page - 1) * data.limit);
+  if (filters.userId) {
+    query.where(eq(knowledgeText.userId, filters.userId));
+  }
+  if (filters.limit) {
+    query.limit(filters.limit);
+  }
+  if (filters.page && filters.limit) {
+    query.offset((filters.page - 1) * filters.limit);
   }
   return await query;
 };
@@ -49,7 +52,7 @@ export const readKnowledgeText = async (data: {
 /**
  * Get a knowledgeText entry by name, category and organisationId
  */
-export const getKnowledgeTextByTitle = async (data: {
+export const getKnowledgeTextByTitle = async (filters: {
   title: string;
   organisationId: string;
 }) => {
@@ -58,8 +61,8 @@ export const getKnowledgeTextByTitle = async (data: {
     .from(knowledgeText)
     .where(
       and(
-        eq(knowledgeText.title, data.title),
-        eq(knowledgeText.organisationId, data.organisationId)
+        eq(knowledgeText.title, filters.title),
+        eq(knowledgeText.organisationId, filters.organisationId)
       )
     );
   if (result.length === 0) {
@@ -73,17 +76,14 @@ export const getKnowledgeTextByTitle = async (data: {
  */
 export const updateKnowledgeText = async (
   id: string,
-  data: {
-    text?: string;
-    title?: string;
-    meta?: Record<string, string | number | boolean | undefined>;
-  }
+  data: Partial<KnowledgeTextInsert>
 ) => {
   const e = await getDb()
     .update(knowledgeText)
     .set({ ...data })
     .where(eq(knowledgeText.id, id))
     .returning();
+
   return e[0];
 };
 

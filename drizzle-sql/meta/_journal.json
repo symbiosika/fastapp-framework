@@ -463,6 +463,13 @@
       "when": 1738601265612,
       "tag": "0065_blushing_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1738603186050,
+      "tag": "0066_spooky_wrecking_crew",
+      "breakpoints": true
     }
   ]
 }

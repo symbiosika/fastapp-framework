@@ -39,7 +39,7 @@ export type ChatSessionsSelect = typeof chatSessions.$inferSelect;
 export type ChatSessionsInsert = typeof chatSessions.$inferInsert;
 export type ChatSessionsUpdate = Partial<ChatSessionsInsert>;
 
-// Table to organize chat sessions into groups
+// Table to organize chat sessions into simple groups
 export const chatSessionGroups = pgBaseTable(
   "chat_session_groups",
   {

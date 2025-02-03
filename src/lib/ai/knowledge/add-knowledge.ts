@@ -79,6 +79,8 @@ export const extractKnowledgeFromText = async (data: {
   sourceFileBucket?: string;
   sourceId?: string;
   sourceUrl?: string;
+  userId?: string;
+  teamId?: string;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -114,6 +116,8 @@ export const extractKnowledgeFromText = async (data: {
       name: title,
       sourceType: data.sourceType || ("text" as const),
       meta: data.metadata || {},
+      userId: data.userId,
+      teamId: data.teamId,
     },
     data.filters || {}
   );
@@ -150,6 +154,8 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   sourceUrl?: string;
   filters?: Record<string, string>;
   metadata?: Record<string, string | number | boolean | undefined>;
+  userId?: string;
+  teamId?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, title } = await parseDocument(data);
@@ -164,5 +170,7 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     sourceId: data.sourceId,
     sourceUrl: data.sourceUrl,
     organisationId: data.organisationId,
+    userId: data.userId,
+    teamId: data.teamId,
   });
 };

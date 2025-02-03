@@ -181,17 +181,71 @@ export async function getChatSessionGroup(
 }
 
 /**
+ * Get all chat session groups that the user is a member of.
+ */
+export async function getChatSessionGroupsByUser(
+  organisationId: string,
+  userId: string
+): Promise<ChatSessionGroupsSelect[]> {
+  const db = getDb();
+  const groups = await db
+    .select()
+    .from(chatSessionGroups)
+    .where(
+      and(
+        eq(chatSessionGroups.organisationId, organisationId),
+        exists(
+          db
+            .select()
+            .from(chatSessionGroupAssignments)
+            .where(
+              and(
+                eq(
+                  chatSessionGroupAssignments.chatSessionGroupId,
+                  chatSessionGroups.id
+                ),
+                eq(chatSessionGroupAssignments.userId, userId)
+              )
+            )
+        )
+      )
+    )
+    .orderBy(desc(chatSessionGroups.createdAt));
+
+  return groups;
+}
+
+/**
  * Update an existing chat session group by ID and organization ID.
+ * Only allows update if the user is a member of the group.
  */
 export async function updateChatSessionGroup(
   id: string,
   organisationId: string,
-  data: ChatSessionGroupsUpdate
+  data: ChatSessionGroupsUpdate,
+  userId: string
 ): Promise<ChatSessionGroupsSelect | null> {
   const db = getDb();
+
+  // Check if the user is a member of the group
+  const isMember = await db
+    .select()
+    .from(chatSessionGroupAssignments)
+    .where(
+      and(
+        eq(chatSessionGroupAssignments.chatSessionGroupId, id),
+        eq(chatSessionGroupAssignments.userId, userId)
+      )
+    )
+    .limit(1);
+
+  if (isMember.length === 0) {
+    return null; // User is not a member
+  }
+
   const result = await db
     .update(chatSessionGroups)
-    .set(data)
+    .set({ ...data, updatedAt: new Date().toISOString() })
     .where(
       and(
         eq(chatSessionGroups.id, id),
@@ -199,17 +253,37 @@ export async function updateChatSessionGroup(
       )
     )
     .returning();
+
   return result.length > 0 ? result[0] : null;
 }
 
 /**
  * Delete a chat session group by ID and organization ID.
+ * Only allows deletion if the user is a member of the group.
  */
 export async function deleteChatSessionGroup(
   id: string,
-  organisationId: string
+  organisationId: string,
+  userId: string
 ): Promise<void> {
   const db = getDb();
+
+  // Check if the user is a member of the group
+  const isMember = await db
+    .select()
+    .from(chatSessionGroupAssignments)
+    .where(
+      and(
+        eq(chatSessionGroupAssignments.chatSessionGroupId, id),
+        eq(chatSessionGroupAssignments.userId, userId)
+      )
+    )
+    .limit(1);
+
+  if (isMember.length === 0) {
+    throw new Error("User is not a member of the chat group.");
+  }
+
   await db
     .delete(chatSessionGroups)
     .where(

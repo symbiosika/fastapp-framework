@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, eq, inArray, SQL, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, SQL, sql } from "drizzle-orm";
 import {
   knowledgeChunks,
   knowledgeEntry,
@@ -168,6 +168,8 @@ export const getKnowledgeEntries = async (query: {
   limit?: number;
   page?: number;
   organisationId: string;
+  userId?: string;
+  teamId?: string;
 }): Promise<
   (KnowledgeEntrySelect & {
     filters: {
@@ -179,11 +181,30 @@ export const getKnowledgeEntries = async (query: {
     }[];
   })[]
 > => {
+  // const q = getDb()
+  //   .select()
+  //   .from(knowledgeEntry)
+  //   .where(eq(knowledgeEntry.organisationId, query.organisationId))
+  //   .orderBy(desc(knowledgeEntry.createdAt))
+  //   .limit(query.limit ?? 100)
+  //   .$dynamic();
+
+  // if (query.page && query.limit) {
+  //   q.offset(query.page * query.limit);
+  // }
+  // if (query.userId) {
+  //   q.where(eq(knowledgeEntry.userId, query.userId));
+  // }
+  // if (query.teamId) {
+  //   q.where(eq(knowledgeEntry.teamId, query.teamId));
+  // }
+
   return await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
     where: eq(knowledgeEntry.organisationId, query.organisationId),
     orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
+
     with: {
       filters: {
         columns: {

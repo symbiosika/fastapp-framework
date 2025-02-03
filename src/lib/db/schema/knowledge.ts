@@ -15,7 +15,7 @@ import {
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { plugins } from "./plugins";
-import { organisations } from "./users";
+import { organisations, teams, users } from "./users";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -37,6 +37,12 @@ export const knowledgeText = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id),
+    // optional team id to organize knowledge entries into teams.
+    // security feature to limit access to knowledge entries
+    teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
+    // optional user id to assign knowledge entries to a user.
+    // security feature to limit access to knowledge entries
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
     title: text("title").notNull().default(""),
     meta: jsonb("meta").notNull().default("{}"),
@@ -53,6 +59,8 @@ export const knowledgeText = pgBaseTable(
     index("knowledge_text_organisation_id_idx").on(
       knowledgeText.organisationId
     ),
+    index("knowledge_text_team_id_idx").on(knowledgeText.teamId),
+    index("knowledge_text_user_id_idx").on(knowledgeText.userId),
   ]
 );
 
@@ -69,6 +77,12 @@ export const knowledgeEntry = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id),
+    // optional team id to organize knowledge entries into teams.
+    // security feature to limit access to knowledge entries
+    teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
+    // optional user id to assign knowledge entries to a user.
+    // security feature to limit access to knowledge entries
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceFileBucket: text("source_file_bucket"),
@@ -92,6 +106,8 @@ export const knowledgeEntry = pgBaseTable(
     index("knowledgeentry_organisation_id_idx").on(
       knowledgeEntry.organisationId
     ),
+    index("knowledge_entry_team_id_idx").on(knowledgeEntry.teamId),
+    index("knowledge_entry_user_id_idx").on(knowledgeEntry.userId),
   ]
 );
 
@@ -142,6 +158,12 @@ export const fineTuningData = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id),
+    // optional team id to organize knowledge entries into teams.
+    // security feature to limit access to knowledge entries
+    teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
+    // optional user id to assign knowledge entries to a user.
+    // security feature to limit access to knowledge entries
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     knowledgeEntryId: uuid("knowledge_entry_id")
       .notNull()
       .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
@@ -151,31 +173,19 @@ export const fineTuningData = pgBaseTable(
     answer: text("answer").notNull(),
   },
   (table) => [
-    index("knowledge_entry_id_idx").on(table.knowledgeEntryId),
-    index("knowledge_entry_name_idx").on(table.name),
-    index("knowledge_entry_category_idx").on(table.category),
-    index("knowledge_entry_organisation_id_idx").on(table.organisationId),
+    index("knowledge_fine_tuning_entry_id_idx").on(table.knowledgeEntryId),
+    index("knowledge_fine_tuning_entry_name_idx").on(table.name),
+    index("knowledge_fine_tuning_entry_category_idx").on(table.category),
+    index("knowledge_fine_tuning_entry_organisation_id_idx").on(
+      table.organisationId
+    ),
+    index("knowledge_fine_tuning_entry_team_id_idx").on(table.teamId),
+    index("knowledge_fine_tuning_entry_user_id_idx").on(table.userId),
   ]
 );
 
-export const knowledgeChunksRelations = relations(
-  knowledgeChunks,
-  ({ one }) => ({
-    knowledgeEntry: one(knowledgeEntry, {
-      fields: [knowledgeChunks.knowledgeEntryId],
-      references: [knowledgeEntry.id],
-    }),
-  })
-);
-
-export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
-  knowledgeEntry: one(knowledgeEntry, {
-    fields: [fineTuningData.knowledgeEntryId],
-    references: [knowledgeEntry.id],
-  }),
-}));
-
 // Table for knowledge filters definition
+// This table is used to define the filters for knowledge entries
 export const knowledgeFilters = pgBaseTable(
   "knowledge_filters",
   {
@@ -203,7 +213,8 @@ export const knowledgeFilters = pgBaseTable(
   ]
 );
 
-// Table for knowledge entry filters
+// Knowledge entry filters
+// This table is used to assign knowledge filters to knowledge entries
 export const knowledgeEntryFilters = pgBaseTable(
   "knowledge_entry_filters",
   {
@@ -233,7 +244,6 @@ export const knowledgeEntryFilters = pgBaseTable(
   ]
 );
 
-// Neue Typen exportieren
 export type KnowledgeFiltersSelect = typeof knowledgeFilters.$inferSelect;
 export type KnowledgeFiltersInsert = typeof knowledgeFilters.$inferInsert;
 export type KnowledgeEntryFiltersSelect =
@@ -241,30 +251,9 @@ export type KnowledgeEntryFiltersSelect =
 export type KnowledgeEntryFiltersInsert =
   typeof knowledgeEntryFilters.$inferInsert;
 
-// Neue Relationen definieren
-export const knowledgeEntryFiltersRelations = relations(
-  knowledgeEntryFilters,
-  ({ one }) => ({
-    knowledgeEntry: one(knowledgeEntry, {
-      fields: [knowledgeEntryFilters.knowledgeEntryId],
-      references: [knowledgeEntry.id],
-    }),
-    filter: one(knowledgeFilters, {
-      fields: [knowledgeEntryFilters.knowledgeFilterId],
-      references: [knowledgeFilters.id],
-    }),
-  })
-);
-
-export const knowledgeEntryRelations = relations(
-  knowledgeEntry,
-  ({ many }) => ({
-    knowledgeChunks: many(knowledgeChunks),
-    filters: many(knowledgeEntryFilters),
-  })
-);
-
-// Table for external source syncys
+// Table for external source syncs
+// This table is used to sync knowledge entries from external sources
+// and to keep track of the last synced and changed data
 export const knowledgeSource = pgBaseTable(
   "knowledge_source",
   {
@@ -301,6 +290,8 @@ export const knowledgeSource = pgBaseTable(
   ]
 );
 
+// Relations
+
 export const knowledgeSourceRelations = relations(
   knowledgeSource,
   ({ one }) => ({
@@ -314,3 +305,42 @@ export const knowledgeSourceRelations = relations(
     }),
   })
 );
+
+export const knowledgeEntryFiltersRelations = relations(
+  knowledgeEntryFilters,
+  ({ one }) => ({
+    knowledgeEntry: one(knowledgeEntry, {
+      fields: [knowledgeEntryFilters.knowledgeEntryId],
+      references: [knowledgeEntry.id],
+    }),
+    filter: one(knowledgeFilters, {
+      fields: [knowledgeEntryFilters.knowledgeFilterId],
+      references: [knowledgeFilters.id],
+    }),
+  })
+);
+
+export const knowledgeEntryRelations = relations(
+  knowledgeEntry,
+  ({ many }) => ({
+    knowledgeChunks: many(knowledgeChunks),
+    filters: many(knowledgeEntryFilters),
+  })
+);
+
+export const knowledgeChunksRelations = relations(
+  knowledgeChunks,
+  ({ one }) => ({
+    knowledgeEntry: one(knowledgeEntry, {
+      fields: [knowledgeChunks.knowledgeEntryId],
+      references: [knowledgeEntry.id],
+    }),
+  })
+);
+
+export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
+  knowledgeEntry: one(knowledgeEntry, {
+    fields: [fineTuningData.knowledgeEntryId],
+    references: [knowledgeEntry.id],
+  }),
+}));
