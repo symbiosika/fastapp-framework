@@ -101,6 +101,9 @@ const createKnowledgeTextValidation = v.object({
   organisationId: v.string(),
   text: v.string(),
   title: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  teamId: v.optional(v.string()),
   meta: v.optional(
     v.record(
       v.string(),
@@ -134,7 +137,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.post(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+    "/organisation/:organisationId/ai/knowledge/extract-knowledge",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -245,7 +248,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.post(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/similarity-search",
+    "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -301,7 +304,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.get(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/similarity-search",
+    "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -463,7 +466,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const parsedBody = v.parse(createKnowledgeTextValidation, body);
         validateOrganisationId(parsedBody, organisationId);
 
-        const r = await createKnowledgeText(parsedBody);
+        const r = await createKnowledgeText({
+          ...parsedBody,
+          workspaceId: parsedBody.workspaceId,
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -482,13 +488,24 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const id = c.req.query("id");
         const organisationId = c.req.param("organisationId");
+        const userId = c.get("usersId");
+        const teamId = c.req.query("teamId");
+        const workspaceId = c.req.query("workspaceId");
         const limit = c.req.query("limit")
           ? parseInt(c.req.query("limit") ?? "10")
           : undefined;
         const page = c.req.query("page")
           ? parseInt(c.req.query("page") ?? "1")
           : undefined;
-        const r = await readKnowledgeText({ id, limit, page, organisationId });
+        const r = await readKnowledgeText({
+          id,
+          limit,
+          page,
+          organisationId,
+          userId,
+          teamId,
+          workspaceId
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -507,11 +524,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
+        const userId = c.get("usersId");
+        const teamId = c.req.query("teamId");
+        const workspaceId = c.req.query("workspaceId");
         const body = await c.req.json();
         const parsedBody = v.parse(updateKnowledgeTextValidation, body);
         validateOrganisationId(parsedBody, organisationId);
 
-        const r = await updateKnowledgeText(id, parsedBody);
+        const r = await updateKnowledgeText(id, parsedBody, {
+          organisationId,
+          userId,
+          teamId,
+          workspaceId
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -530,7 +555,16 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
-        await deleteKnowledgeText(id, organisationId);
+        const userId = c.get("usersId");
+        const teamId = c.req.query("teamId");
+        const workspaceId = c.req.query("workspaceId");
+
+        await deleteKnowledgeText(id, {
+          organisationId,
+          userId,
+          teamId,
+          workspaceId
+        });
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
