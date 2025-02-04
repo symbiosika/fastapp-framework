@@ -24,7 +24,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
     chatId?: string;
     useTemplate?: ParsedTemplateBlocks;
     userId: string;
-    meta: { organisationId: string };
+    meta: { organisationId: string; chatSessionGroupId?: string };
   }): Promise<ChatSession> {
     const chatId = options?.chatId || nanoid(16);
     log.debug(`Create chat session ${chatId}`);
@@ -39,16 +39,16 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
       lastUsedAt: new Date(),
       state: options?.useTemplate
         ? {
-            useTemplate: {
-              def: options.useTemplate,
-              blockIndex: 0,
-            },
-            variables: {},
-          }
-        : {
-            useTemplate: undefined,
-            variables: {},
+          useTemplate: {
+            def: options.useTemplate,
+            blockIndex: 0,
           },
+          variables: {},
+        }
+        : {
+          useTemplate: undefined,
+          variables: {},
+        },
     } as ChatSession;
 
     await getDb()
@@ -63,6 +63,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.lastUsedAt.toISOString(),
         deleteAt: null,
+        chatSessionGroupId: options.meta.chatSessionGroupId,
       });
 
     return session;

@@ -2,7 +2,7 @@ import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations, sql } from "drizzle-orm";
 import { organisations, teams, users } from "./users";
-import { workspaceChatGroups, workspaceChatSessions } from "./workspaces";
+import { workspaceChatGroups, workspaceChatSessions, workspaces } from "./workspaces";
 
 // Table to store chat sessions
 export const chatSessions = pgBaseTable(
@@ -56,6 +56,8 @@ export const chatSessionGroups = pgBaseTable(
       .notNull(),
     // optional team id to organize chats into teams
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
+    // optional workspace id to organize chats into workspaces
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { mode: "string" }).notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
   },
@@ -64,6 +66,7 @@ export const chatSessionGroups = pgBaseTable(
       chatSessionGroups.organisationId
     ),
     index("chat_session_groups_team_id_idx").on(chatSessionGroups.teamId),
+    index("chat_session_groups_workspace_id_idx").on(chatSessionGroups.workspaceId),
   ]
 );
 
@@ -115,7 +118,10 @@ export const chatSessionGroupRelations = relations(
       references: [teams.id],
     }),
     chats: many(chatSessions),
-    workspaceChatGroups: many(workspaceChatGroups),
+    workspace: one(workspaces, {
+      fields: [chatSessionGroups.workspaceId],
+      references: [workspaces.id],
+    }),
     assignments: many(chatSessionGroupAssignments),
   })
 );

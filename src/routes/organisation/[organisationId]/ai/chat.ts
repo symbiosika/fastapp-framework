@@ -26,6 +26,7 @@ import {
 // Validation schemas for chat with template
 const chatWithTemplateValidation = v.object({
   chatId: v.optional(v.string()),
+  chatSessionGroupId: v.optional(v.string()),
   initiateTemplate: v.optional(
     v.object({
       promptId: v.optional(v.string()),
@@ -55,7 +56,7 @@ const chatWithTemplateValidation = v.object({
 type ChatWithTemplateInput = v.InferOutput<typeof chatWithTemplateValidation>;
 export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
   userId: string | undefined;
-  meta: { organisationId: string; userId: string };
+  meta: { organisationId: string; userId: string; chatSessionGroupId?: string };
 };
 
 // Validation schemas for simple chat
@@ -105,12 +106,27 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const parsedBody = v.parse(chatWithTemplateValidation, body);
         const organisationId = c.req.param("organisationId");
 
+        if (parsedBody.chatSessionGroupId) {
+          const groups = await getChatSessionGroupsByUser(organisationId, usersId);
+          const isMember = groups.some(g => g.id === parsedBody.chatSessionGroupId);
+          if (!isMember) {
+            throw new HTTPException(403, {
+              message: "User is not a member of the specified chat group",
+            });
+          }
+        }
+
         const r = await useTemplateChat({
           ...parsedBody,
           userId: usersId,
-          meta: { organisationId, userId: usersId },
+          meta: {
+            organisationId,
+            userId: usersId,
+            chatSessionGroupId: parsedBody.chatSessionGroupId
+          },
         });
         return c.json(r);
+
       } catch (e) {
         throw new HTTPException(400, {
           message: e + "",

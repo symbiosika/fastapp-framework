@@ -217,6 +217,7 @@ export const useTemplateChat = async (
       meta: {
         organisationId: query.meta.organisationId,
         userId: query.meta.userId,
+        ...(query.meta.chatSessionGroupId ? { chatSessionGroupId: query.meta.chatSessionGroupId } : {}),
       },
     });
 

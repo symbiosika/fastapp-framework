@@ -22,6 +22,20 @@ export async function createChatSession(
   data: ChatSessionsInsert
 ): Promise<ChatSessionsSelect> {
   const db = getDb();
+
+  // If chatSessionGroupId is provided in meta, verify the group exists
+  if (data.chatSessionGroupId) {
+    const group = await db
+      .select()
+      .from(chatSessionGroups)
+      .where(eq(chatSessionGroups.id, data.chatSessionGroupId))
+      .limit(1);
+
+    if (group.length === 0) {
+      throw new Error("Chat session group not found");
+    }
+  }
+
   const result = await db.insert(chatSessions).values(data).returning();
   return result[0];
 }
