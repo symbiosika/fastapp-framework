@@ -60,7 +60,12 @@ describe("Knowledge Texts Test", () => {
     const updatedText = await updateKnowledgeText(createdText.id, {
       text: "Updated text",
       title: "Updated title",
-    });
+      organisationId: createdText.organisationId,
+    },
+      {
+        organisationId: createdText.organisationId,
+      }
+    );
 
     expect(updatedText.text).toBe("Updated text");
     expect(updatedText.title).toBe("Updated title");
@@ -76,7 +81,9 @@ describe("Knowledge Texts Test", () => {
     const createdText = await createKnowledgeText(newText);
     const deletedText = await deleteKnowledgeText(
       createdText.id,
-      createdText.organisationId
+      {
+        organisationId: createdText.organisationId,
+      }
     );
 
     expect(deletedText.success).toBe(true);
