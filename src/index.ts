@@ -57,6 +57,7 @@ import paymentService from "./payment-service";
 import usermanagementService from "./usermanagement-service";
 import filesService from "./files-service";
 import middlewareService from "./middleware-service";
+import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
 
 /**
  * MAIN FUNCTION
@@ -199,6 +200,13 @@ export const defineServer = (config: ServerConfig) => {
   aiKnowledgeRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
   aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
   aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
+   * Adds workspace routes
+   * - workspaces
+   * - workspace relations
+   */
+  defineWorkspaceRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Adds custom routes from customHonoApps

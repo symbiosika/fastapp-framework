@@ -2,6 +2,7 @@ import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations, sql } from "drizzle-orm";
 import { organisations, teams, users } from "./users";
+import { workspaceChatSessions } from "./workspaces";
 
 // Table to store chat sessions
 export const chatSessions = pgBaseTable(
@@ -104,7 +105,7 @@ export type ChatSessionGroupAssignmentsUpdate =
 // Relations
 export const chatSessionGroupRelations = relations(
   chatSessionGroups,
-  ({ one }) => ({
+  ({ one, many }) => ({
     organisation: one(organisations, {
       fields: [chatSessionGroups.organisationId],
       references: [organisations.id],
@@ -113,6 +114,8 @@ export const chatSessionGroupRelations = relations(
       fields: [chatSessionGroups.teamId],
       references: [teams.id],
     }),
+    chats: many(chatSessions),
+    workspaces: many(workspaceChatSessions),
   })
 );
 
@@ -130,9 +133,13 @@ export const chatSessionGroupAssignmentRelations = relations(
   })
 );
 
-export const chatSessionRelations = relations(chatSessions, ({ one }) => ({
-  organisation: one(organisations, {
-    fields: [chatSessions.organisationId],
-    references: [organisations.id],
-  }),
-}));
+export const chatSessionRelations = relations(
+  chatSessions,
+  ({ one, many }) => ({
+    organisation: one(organisations, {
+      fields: [chatSessions.organisationId],
+      references: [organisations.id],
+    }),
+    workspaces: many(workspaceChatSessions),
+  })
+);

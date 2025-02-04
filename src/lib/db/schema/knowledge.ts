@@ -16,6 +16,10 @@ import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { plugins } from "./plugins";
 import { organisations, teams, users } from "./users";
+import {
+  workspaceKnowledgeEntries,
+  workspaceKnowledgeTexts,
+} from "./workspaces";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -325,6 +329,7 @@ export const knowledgeEntryRelations = relations(
   ({ many }) => ({
     knowledgeChunks: many(knowledgeChunks),
     filters: many(knowledgeEntryFilters),
+    workspaces: many(workspaceKnowledgeEntries),
   })
 );
 
@@ -343,4 +348,8 @@ export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
     fields: [fineTuningData.knowledgeEntryId],
     references: [knowledgeEntry.id],
   }),
+}));
+
+export const knowledgeTextRelations = relations(knowledgeText, ({ many }) => ({
+  workspaces: many(workspaceKnowledgeTexts),
 }));

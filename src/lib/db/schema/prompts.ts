@@ -12,6 +12,7 @@ import {
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { organisations, users } from "./users";
+import { workspacePromptTemplates } from "./workspaces";
 
 // Table to store LLM Prompt templates
 export const promptTemplates = pgBaseTable(
@@ -142,6 +143,7 @@ export const promptTemplatesRelations = relations(
   promptTemplates,
   ({ many }) => ({
     promptTemplatePlaceholders: many(promptTemplatePlaceholders),
+    workspaces: many(workspacePromptTemplates),
   })
 );
 
