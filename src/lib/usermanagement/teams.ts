@@ -64,12 +64,14 @@ export const getTeamsByOrganisation = async (orgId: string) => {
 /**
  * Get all team for a specific user
  */
-export const getTeamsByUser = async (userId: string) => {
+export const getTeamsByUser = async (userId: string, orgId: string) => {
   return await getDb()
     .select()
     .from(teams)
     .innerJoin(teamMembers, eq(teamMembers.teamId, teams.id))
-    .where(eq(teamMembers.userId, userId));
+    .where(
+      and(eq(teamMembers.userId, userId), eq(teams.organisationId, orgId))
+    );
 };
 
 /**

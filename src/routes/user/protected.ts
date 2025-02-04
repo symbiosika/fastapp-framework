@@ -79,7 +79,7 @@ export function defineSecuredUserRoutes(
       const id = c.get("usersId");
       const user = await getDb()
         .select({
-          userId: users.id,
+          id: users.id,
           email: users.email,
           firstname: users.firstname,
           surname: users.surname,
@@ -212,11 +212,12 @@ export function defineSecuredUserRoutes(
    * Get the user's teams
    */
   app.get(
-    API_BASE_PATH + "/user/teams",
+    API_BASE_PATH + "/user/organisation/:organisationId/teams",
     authAndSetUsersInfo,
     async (c: Context) => {
       const userId = c.get("usersId");
-      const teams = await getTeamsByUser(userId);
+      const organisationId = c.req.param("organisationId");
+      const teams = await getTeamsByUser(userId, organisationId);
       return c.json(teams);
     }
   );
@@ -225,7 +226,8 @@ export function defineSecuredUserRoutes(
    * Drop the membership of a user from a team
    */
   app.delete(
-    API_BASE_PATH + "/user/team/:teamId/membership",
+    API_BASE_PATH +
+      "/user/organisation/:organisationId/teams/:teamId/membership",
     authAndSetUsersInfo,
     async (c: Context) => {
       const userId = c.get("usersId");
