@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, eq, inArray, SQL, sql, or } from "drizzle-orm";
+import { and, eq, inArray, SQL, sql, or, isNull } from "drizzle-orm";
 import {
   knowledgeChunks,
   knowledgeEntry,
@@ -84,21 +84,24 @@ const getKnowledgeWithChunksWithConditions = async (
  * will take the knowledge id and the userid
  */
 const validateKnowledgeAccess = async (knowledgeId: string, userId: string) => {
-  // Get all teams the user is a member of
   const userTeams = await getUserTeamIds(userId);
   const usersWorkspaces = await getUserWorkspaceIds(userId, userTeams);
 
-  // Check all possible access paths
   const knowledge = await getDb().query.knowledgeEntry.findFirst({
     where: and(
       eq(knowledgeEntry.id, knowledgeId),
       or(
-        // Direct user access
         eq(knowledgeEntry.userId, userId),
-        // Team access
-        inArray(knowledgeEntry.teamId, userTeams),
-        // Workspace access through user
-        inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+        // Include NULL teamId and entries with user's teams
+        or(
+          isNull(knowledgeEntry.teamId),
+          inArray(knowledgeEntry.teamId, userTeams)
+        ),
+        // Include NULL workspaceId and entries with user's workspaces
+        or(
+          isNull(knowledgeEntry.workspaceId),
+          inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+        )
       )
     ),
   });
@@ -155,21 +158,20 @@ const getUserWorkspaceIds = async (
 const getKnowledge = async (
   query: KnowledgeQuery
 ): Promise<KnowledgeEntryWithChunks[]> => {
-  // Get all teams the user is a member of
-  const userTeams = await getDb().query.teamMembers.findMany({
-    where: eq(teamMembers.userId, query.userId),
-    columns: {
-      teamId: true,
-    },
-  });
-  const teamIds = userTeams.map((t) => t.teamId);
-  const usersWorkspaces = await getUserWorkspaceIds(query.userId, teamIds);
+  const userTeams = await getUserTeamIds(query.userId);
+  const usersWorkspaces = await getUserWorkspaceIds(query.userId, userTeams);
 
-  // Build access control conditions
+  // Updated access conditions to include NULL values
   const accessConditions = [
     eq(knowledgeEntry.userId, query.userId),
-    inArray(knowledgeEntry.teamId, teamIds),
-    inArray(knowledgeEntry.workspaceId, usersWorkspaces),
+    or(
+      isNull(knowledgeEntry.teamId),
+      inArray(knowledgeEntry.teamId, userTeams)
+    ),
+    or(
+      isNull(knowledgeEntry.workspaceId),
+      inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+    ),
   ];
 
   // Query based on direct ID(s)
@@ -284,19 +286,20 @@ export const getKnowledgeEntries = async (query: {
     }[];
   })[]
 > => {
-  // Get all teams the user is a member of
   const userTeams = await getUserTeamIds(query.userId);
   const usersWorkspaces = await getUserWorkspaceIds(query.userId, userTeams);
 
-  // Build conditions for access control
+  // Updated access conditions to include NULL values
   const accessConditions = [
-    // Direct user access
     eq(knowledgeEntry.userId, query.userId),
-    // Team access
-    inArray(knowledgeEntry.teamId, userTeams),
-    // Workspace access through user
-    inArray(knowledgeEntry.workspaceId, usersWorkspaces),
-    // Workspace access through team
+    or(
+      isNull(knowledgeEntry.teamId),
+      inArray(knowledgeEntry.teamId, userTeams)
+    ),
+    or(
+      isNull(knowledgeEntry.workspaceId),
+      inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+    ),
   ];
 
   // Add optional filters if provided
