@@ -19,7 +19,14 @@ import { organisations, teams, users } from "./users";
 import {
   workspaceKnowledgeEntries,
   workspaceKnowledgeTexts,
+  workspaces,
 } from "./workspaces";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
+import * as v from "valibot";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -47,6 +54,11 @@ export const knowledgeText = pgBaseTable(
     // optional user id to assign knowledge entries to a user.
     // security feature to limit access to knowledge entries
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    // optional workspace id to assign knowledge entries to a workspace.
+    // security feature to limit access to knowledge entries
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
     text: text("text").notNull(),
     title: text("title").notNull().default(""),
     meta: jsonb("meta").notNull().default("{}"),
@@ -65,13 +77,19 @@ export const knowledgeText = pgBaseTable(
     ),
     index("knowledge_text_team_id_idx").on(knowledgeText.teamId),
     index("knowledge_text_user_id_idx").on(knowledgeText.userId),
+    index("knowledge_text_workspace_id_idx").on(knowledgeText.workspaceId),
   ]
 );
 
 export type KnowledgeTextSelect = typeof knowledgeText.$inferSelect;
 export type KnowledgeTextInsert = typeof knowledgeText.$inferInsert;
 
+export const knowledgeTextSchema = createSelectSchema(knowledgeText);
+export const knowledgeTextInsertSchema = createInsertSchema(knowledgeText);
+export const knowledgeTextUpdateSchema = createUpdateSchema(knowledgeText);
+
 // Main table for all knowledge entries
+
 export const knowledgeEntry = pgBaseTable(
   "knowledge_entry",
   {
@@ -87,6 +105,11 @@ export const knowledgeEntry = pgBaseTable(
     // optional user id to assign knowledge entries to a user.
     // security feature to limit access to knowledge entries
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    // optional workspace id to assign knowledge entries to a workspace.
+    // security feature to limit access to knowledge entries
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceFileBucket: text("source_file_bucket"),
@@ -112,13 +135,19 @@ export const knowledgeEntry = pgBaseTable(
     ),
     index("knowledge_entry_team_id_idx").on(knowledgeEntry.teamId),
     index("knowledge_entry_user_id_idx").on(knowledgeEntry.userId),
+    index("knowledge_entry_workspace_id_idx").on(knowledgeEntry.workspaceId),
   ]
 );
 
 export type KnowledgeEntrySelect = typeof knowledgeEntry.$inferSelect;
 export type KnowledgeEntryInsert = typeof knowledgeEntry.$inferInsert;
 
+export const knowledgeEntrySchema = createSelectSchema(knowledgeEntry);
+export const knowledgeEntryInsertSchema = createInsertSchema(knowledgeEntry);
+export const knowledgeEntryUpdateSchema = createUpdateSchema(knowledgeEntry);
+
 // Table to save the raw text chunks for each knowledge entry
+
 export const knowledgeChunks = pgBaseTable(
   "knowledge_chunks",
   {
@@ -152,6 +181,10 @@ export const knowledgeChunks = pgBaseTable(
 export type KnowledgeChunksSelect = typeof knowledgeChunks.$inferSelect;
 export type KnowledgeChunksInsert = typeof knowledgeChunks.$inferInsert;
 
+export const knowledgeChunksSchema = createSelectSchema(knowledgeChunks);
+export const knowledgeChunksInsertSchema = createInsertSchema(knowledgeChunks);
+export const knowledgeChunksUpdateSchema = createUpdateSchema(knowledgeChunks);
+
 // Table for fine tuning data
 export const fineTuningData = pgBaseTable(
   "knowledge_fine_tuning_data",
@@ -168,6 +201,11 @@ export const fineTuningData = pgBaseTable(
     // optional user id to assign knowledge entries to a user.
     // security feature to limit access to knowledge entries
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    // optional workspace id to assign knowledge entries to a workspace.
+    // security feature to limit access to knowledge entries
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
     knowledgeEntryId: uuid("knowledge_entry_id")
       .notNull()
       .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
@@ -185,11 +223,20 @@ export const fineTuningData = pgBaseTable(
     ),
     index("knowledge_fine_tuning_entry_team_id_idx").on(table.teamId),
     index("knowledge_fine_tuning_entry_user_id_idx").on(table.userId),
+    index("knowledge_fine_tuning_entry_workspace_id_idx").on(table.workspaceId),
   ]
 );
 
+export type FineTuningDataSelect = typeof fineTuningData.$inferSelect;
+export type FineTuningDataInsert = typeof fineTuningData.$inferInsert;
+
+export const fineTuningDataSchema = createSelectSchema(fineTuningData);
+export const fineTuningDataInsertSchema = createInsertSchema(fineTuningData);
+export const fineTuningDataUpdateSchema = createUpdateSchema(fineTuningData);
+
 // Table for knowledge filters definition
 // This table is used to define the filters for knowledge entries
+
 export const knowledgeFilters = pgBaseTable(
   "knowledge_filters",
   {
@@ -217,8 +264,18 @@ export const knowledgeFilters = pgBaseTable(
   ]
 );
 
+export type KnowledgeFiltersSelect = typeof knowledgeFilters.$inferSelect;
+export type KnowledgeFiltersInsert = typeof knowledgeFilters.$inferInsert;
+
+export const knowledgeFiltersSchema = createSelectSchema(knowledgeFilters);
+export const knowledgeFiltersInsertSchema =
+  createInsertSchema(knowledgeFilters);
+export const knowledgeFiltersUpdateSchema =
+  createUpdateSchema(knowledgeFilters);
+
 // Knowledge entry filters
 // This table is used to assign knowledge filters to knowledge entries
+
 export const knowledgeEntryFilters = pgBaseTable(
   "knowledge_entry_filters",
   {
@@ -248,12 +305,20 @@ export const knowledgeEntryFilters = pgBaseTable(
   ]
 );
 
-export type KnowledgeFiltersSelect = typeof knowledgeFilters.$inferSelect;
-export type KnowledgeFiltersInsert = typeof knowledgeFilters.$inferInsert;
 export type KnowledgeEntryFiltersSelect =
   typeof knowledgeEntryFilters.$inferSelect;
 export type KnowledgeEntryFiltersInsert =
   typeof knowledgeEntryFilters.$inferInsert;
+
+export const knowledgeEntryFiltersSchema = createSelectSchema(
+  knowledgeEntryFilters
+);
+export const knowledgeEntryFiltersInsertSchema = createInsertSchema(
+  knowledgeEntryFilters
+);
+export const knowledgeEntryFiltersUpdateSchema = createUpdateSchema(
+  knowledgeEntryFilters
+);
 
 // Table for external source syncs
 // This table is used to sync knowledge entries from external sources
@@ -294,8 +359,14 @@ export const knowledgeSource = pgBaseTable(
   ]
 );
 
-// Relations
+export type KnowledgeSourceSelect = typeof knowledgeSource.$inferSelect;
+export type KnowledgeSourceInsert = typeof knowledgeSource.$inferInsert;
 
+export const knowledgeSourceSchema = createSelectSchema(knowledgeSource);
+export const knowledgeSourceInsertSchema = createInsertSchema(knowledgeSource);
+export const knowledgeSourceUpdateSchema = createUpdateSchema(knowledgeSource);
+
+// Relations
 export const knowledgeSourceRelations = relations(
   knowledgeSource,
   ({ one }) => ({
@@ -326,10 +397,26 @@ export const knowledgeEntryFiltersRelations = relations(
 
 export const knowledgeEntryRelations = relations(
   knowledgeEntry,
-  ({ many }) => ({
+  ({ many, one }) => ({
     knowledgeChunks: many(knowledgeChunks),
     filters: many(knowledgeEntryFilters),
     workspaces: many(workspaceKnowledgeEntries),
+    organisation: one(organisations, {
+      fields: [knowledgeEntry.organisationId],
+      references: [organisations.id],
+    }),
+    team: one(teams, {
+      fields: [knowledgeEntry.teamId],
+      references: [teams.id],
+    }),
+    user: one(users, {
+      fields: [knowledgeEntry.userId],
+      references: [users.id],
+    }),
+    workspace: one(workspaces, {
+      fields: [knowledgeEntry.workspaceId],
+      references: [workspaces.id],
+    }),
   })
 );
 
@@ -348,8 +435,43 @@ export const fineTuningDataRelations = relations(fineTuningData, ({ one }) => ({
     fields: [fineTuningData.knowledgeEntryId],
     references: [knowledgeEntry.id],
   }),
+  organisation: one(organisations, {
+    fields: [fineTuningData.organisationId],
+    references: [organisations.id],
+  }),
+  team: one(teams, {
+    fields: [fineTuningData.teamId],
+    references: [teams.id],
+  }),
+  user: one(users, {
+    fields: [fineTuningData.userId],
+    references: [users.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [fineTuningData.workspaceId],
+    references: [workspaces.id],
+  }),
 }));
 
-export const knowledgeTextRelations = relations(knowledgeText, ({ many }) => ({
-  workspaces: many(workspaceKnowledgeTexts),
-}));
+export const knowledgeTextRelations = relations(
+  knowledgeText,
+  ({ many, one }) => ({
+    workspaces: many(workspaceKnowledgeTexts),
+    organisation: one(organisations, {
+      fields: [knowledgeText.organisationId],
+      references: [organisations.id],
+    }),
+    team: one(teams, {
+      fields: [knowledgeText.teamId],
+      references: [teams.id],
+    }),
+    user: one(users, {
+      fields: [knowledgeText.userId],
+      references: [users.id],
+    }),
+    workspace: one(workspaces, {
+      fields: [knowledgeText.workspaceId],
+      references: [workspaces.id],
+    }),
+  })
+);

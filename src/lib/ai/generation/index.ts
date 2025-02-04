@@ -216,6 +216,7 @@ export const useTemplateChat = async (
       usersVariables: query.variables,
       meta: {
         organisationId: query.meta.organisationId,
+        userId: query.meta.userId,
       },
     });
 
@@ -240,6 +241,7 @@ export const useTemplateChat = async (
       usersVariables: query.variables,
       meta: {
         organisationId: query.meta.organisationId,
+        userId: query.meta.userId,
       },
     });
 

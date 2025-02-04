@@ -55,7 +55,7 @@ const chatWithTemplateValidation = v.object({
 type ChatWithTemplateInput = v.InferOutput<typeof chatWithTemplateValidation>;
 export type ChatWithTemplateInputWithUserId = ChatWithTemplateInput & {
   userId: string | undefined;
-  meta: { organisationId: string };
+  meta: { organisationId: string; userId: string };
 };
 
 // Validation schemas for simple chat
@@ -108,7 +108,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const r = await useTemplateChat({
           ...parsedBody,
           userId: usersId,
-          meta: { organisationId },
+          meta: { organisationId, userId: usersId },
         });
         return c.json(r);
       } catch (e) {
@@ -261,7 +261,6 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const usersId = c.get("usersId");
         const organisationId = c.req.param("organisationId");
         const groupId = c.req.param("groupId");
-
         const parsedBody = v.parse(updateChatGroupValidation, body);
 
         const updatedGroup = await updateChatSessionGroup(

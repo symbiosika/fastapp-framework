@@ -2,7 +2,7 @@ import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations, sql } from "drizzle-orm";
 import { organisations, teams, users } from "./users";
-import { workspaceChatSessions } from "./workspaces";
+import { workspaceChatGroups, workspaceChatSessions } from "./workspaces";
 
 // Table to store chat sessions
 export const chatSessions = pgBaseTable(
@@ -115,7 +115,8 @@ export const chatSessionGroupRelations = relations(
       references: [teams.id],
     }),
     chats: many(chatSessions),
-    workspaces: many(workspaceChatSessions),
+    workspaceChatGroups: many(workspaceChatGroups),
+    assignments: many(chatSessionGroupAssignments),
   })
 );
 
@@ -140,6 +141,14 @@ export const chatSessionRelations = relations(
       fields: [chatSessions.organisationId],
       references: [organisations.id],
     }),
-    workspaces: many(workspaceChatSessions),
+    user: one(users, {
+      fields: [chatSessions.userId],
+      references: [users.id],
+    }),
+    chatSessionGroup: one(chatSessionGroups, {
+      fields: [chatSessions.chatSessionGroupId],
+      references: [chatSessionGroups.id],
+    }),
+    workspaceChatSessions: many(workspaceChatSessions),
   })
 );

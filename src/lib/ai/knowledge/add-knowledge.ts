@@ -81,6 +81,7 @@ export const extractKnowledgeFromText = async (data: {
   sourceUrl?: string;
   userId?: string;
   teamId?: string;
+  workspaceId?: string;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -118,6 +119,7 @@ export const extractKnowledgeFromText = async (data: {
       meta: data.metadata || {},
       userId: data.userId,
       teamId: data.teamId,
+      workspaceId: data.workspaceId,
     },
     data.filters || {}
   );
@@ -156,6 +158,7 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   metadata?: Record<string, string | number | boolean | undefined>;
   userId?: string;
   teamId?: string;
+  workspaceId?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, title } = await parseDocument(data);
@@ -172,5 +175,6 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     organisationId: data.organisationId,
     userId: data.userId,
     teamId: data.teamId,
+    workspaceId: data.workspaceId,
   });
 };

@@ -1,6 +1,9 @@
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
-import { knowledgeText, KnowledgeTextInsert } from "../../db/schema/knowledge";
+import {
+  knowledgeText,
+  type KnowledgeTextInsert,
+} from "../../db/schema/knowledge";
 
 /**
  * Create a new knowledgeText entry

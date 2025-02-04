@@ -166,6 +166,7 @@ export async function getFullSourceDocumentsForSimilaritySearch(q: {
   filterKnowledgeEntryIds?: string[];
   filter?: Record<string, string[]>;
   filterName?: string[];
+  userId: string;
 }) {
   // search for the nearest chunks
   const nearestChunks = await getNearestEmbeddings(q);
@@ -175,7 +176,8 @@ export async function getFullSourceDocumentsForSimilaritySearch(q: {
     nearestChunks.map((chunk) =>
       getFullSourceDocumentsForKnowledgeEntry(
         chunk.knowledgeEntryId,
-        q.organisationId
+        q.organisationId,
+        q.userId
       )
     )
   );

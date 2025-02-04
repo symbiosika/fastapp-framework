@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, desc, eq, inArray, SQL, sql } from "drizzle-orm";
+import { and, eq, inArray, SQL, sql, or } from "drizzle-orm";
 import {
   knowledgeChunks,
   knowledgeEntry,
@@ -11,6 +11,8 @@ import {
 import log from "../../../lib/log";
 import { deleteFileFromDB } from "../../storage/db";
 import { deleteFileFromLocalDisc } from "../../storage/local";
+import { workspaceChatGroups, workspaces } from "../../db/schema/workspaces";
+import { teamMembers } from "../../db/schema/users";
 
 type KnowledgeQuery = {
   id?: string[];
@@ -18,6 +20,9 @@ type KnowledgeQuery = {
   chunkCount?: number;
   chunkOffset?: number;
   filters?: Record<string, string[]>;
+  userId: string;
+  teamId?: string;
+  workspaceId?: string;
 };
 
 type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
@@ -30,6 +35,9 @@ type PlainKnowledgetEntry = {
   chunkId: string;
 };
 
+/**
+ * Helper function to get a knowledge entry with its chunks
+ */
 const getKnowledgeWithChunks = async (
   id: string,
   chunkOffset?: number,
@@ -47,6 +55,10 @@ const getKnowledgeWithChunks = async (
   return { ...e[0], knowledgeChunks: chunks };
 };
 
+/**
+ * Helper function to get a knowledge entry with its chunks
+ * with conditions
+ */
 const getKnowledgeWithChunksWithConditions = async (
   where: SQL<unknown> | undefined
 ) => {
@@ -68,30 +80,123 @@ const getKnowledgeWithChunksWithConditions = async (
 };
 
 /**
- * Get knowledge by an id, name(s) or filters from DB
+ * Helper to validate if a user can access a knowledge entry
+ * will take the knowledge id and the userid
+ */
+const validateKnowledgeAccess = async (knowledgeId: string, userId: string) => {
+  // Get all teams the user is a member of
+  const userTeams = await getUserTeamIds(userId);
+  const usersWorkspaces = await getUserWorkspaceIds(userId, userTeams);
+
+  // Check all possible access paths
+  const knowledge = await getDb().query.knowledgeEntry.findFirst({
+    where: and(
+      eq(knowledgeEntry.id, knowledgeId),
+      or(
+        // Direct user access
+        eq(knowledgeEntry.userId, userId),
+        // Team access
+        inArray(knowledgeEntry.teamId, userTeams),
+        // Workspace access through user
+        inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+      )
+    ),
+  });
+
+  return !!knowledge;
+};
+
+/**
+ * Helper function to get all team IDs a user is a member of
+ */
+const getUserTeamIds = async (userId: string): Promise<string[]> => {
+  const userTeams = await getDb().query.teamMembers.findMany({
+    where: eq(teamMembers.userId, userId),
+    columns: {
+      teamId: true,
+    },
+  });
+  return userTeams.map((t) => t.teamId);
+};
+
+/**
+ * Helper function to get all workspace IDs a user has access to
+ * This includes:
+ * - Workspaces directly assigned to the user
+ * - Workspaces assigned to teams the user is a member of
+ */
+const getUserWorkspaceIds = async (
+  userId: string,
+  teamIds?: string[]
+): Promise<string[]> => {
+  // Get all teams the user is a member of
+  if (!teamIds) {
+    teamIds = await getUserTeamIds(userId);
+  }
+  // Get workspaces where:
+  // - user is directly assigned OR
+  // - workspace is assigned to one of user's teams
+  const workspaceEntries = await getDb().query.workspaces.findMany({
+    where: or(
+      eq(workspaces.userId, userId),
+      inArray(workspaces.teamId, teamIds)
+    ),
+    columns: {
+      id: true,
+    },
+  });
+  return workspaceEntries.map((w) => w.id);
+};
+
+/**
+ * Helper to get knowledge by an id, name(s) or filters from DB
  * Will return the knowledge as an array with the original IDs.
  */
-export const getKnowledge = async (
+const getKnowledge = async (
   query: KnowledgeQuery
 ): Promise<KnowledgeEntryWithChunks[]> => {
+  // Get all teams the user is a member of
+  const userTeams = await getDb().query.teamMembers.findMany({
+    where: eq(teamMembers.userId, query.userId),
+    columns: {
+      teamId: true,
+    },
+  });
+  const teamIds = userTeams.map((t) => t.teamId);
+  const usersWorkspaces = await getUserWorkspaceIds(query.userId, teamIds);
+
+  // Build access control conditions
+  const accessConditions = [
+    eq(knowledgeEntry.userId, query.userId),
+    inArray(knowledgeEntry.teamId, teamIds),
+    inArray(knowledgeEntry.workspaceId, usersWorkspaces),
+  ];
+
   // Query based on direct ID(s)
   if (query.id) {
     await log.debug(`Getting knowledge by ids: ${query.id}`);
-
     const entries = await Promise.all(
-      query.id.map((id) =>
-        getKnowledgeWithChunks(id, query.chunkOffset, query.chunkCount)
-      )
+      query.id.map(async (id) => {
+        const hasAccess = await validateKnowledgeAccess(id, query.userId);
+        if (!hasAccess) {
+          throw new Error(
+            `User does not have permission to access knowledge entry ${id}`
+          );
+        }
+        return getKnowledgeWithChunks(id, query.chunkOffset, query.chunkCount);
+      })
     );
     return entries;
   }
 
   // Query based on names or categories from fine-tuning data
-  const conditions = [];
+  const conditions = [or(...accessConditions)]; // Add access control as first condition
+
   if (query.names?.length) {
-    await log.debug(`Getting knowledge filteredby names: ${query.names}`);
+    await log.debug(`Getting knowledge filtered by names: ${query.names}`);
     conditions.push(inArray(knowledgeEntry.name, query.names));
   }
+
   if (query.filters) {
     await log.debug(
       `Getting knowledge filtered by: ${JSON.stringify(query.filters)}`
@@ -118,7 +223,8 @@ export const getKnowledge = async (
     }
   }
 
-  if (conditions.length === 0) {
+  if (conditions.length === 1) {
+    // Only access conditions present
     await log.debug(
       "No conditions to filter knowledge base are provided. At least one filter must be provided."
     );
@@ -127,12 +233,7 @@ export const getKnowledge = async (
     );
   }
 
-  let where;
-  if (conditions.length > 1) {
-    where = conditions[0];
-  } else {
-    where = and(...conditions);
-  }
+  const where = and(...conditions);
 
   const entriesWithChunks = await getKnowledgeWithChunksWithConditions(where);
   await log.debug(`Return ${entriesWithChunks.length} knowledge entries`);
@@ -140,7 +241,8 @@ export const getKnowledge = async (
 };
 
 /**
- * Get the full knowledge entry with all chunks
+ * Get the full knowledge entry with all chunks.
+ * This is used for RAG prompting to get knowledge as plain text.
  */
 export const getPlainKnowledge = async (
   query: KnowledgeQuery
@@ -160,16 +262,17 @@ export const getPlainKnowledge = async (
 };
 
 /**
- * Get the knowledgebase entries from DB
+ * Get all (filtered) knowledgebase entries from DB for a user
  * with pagination
- * without the chunks
+ * without the chunks/texts. only the list of knowledge entries
  */
 export const getKnowledgeEntries = async (query: {
   limit?: number;
   page?: number;
   organisationId: string;
-  userId?: string;
+  userId: string;
   teamId?: string;
+  workspaceId?: string;
 }): Promise<
   (KnowledgeEntrySelect & {
     filters: {
@@ -181,30 +284,39 @@ export const getKnowledgeEntries = async (query: {
     }[];
   })[]
 > => {
-  // const q = getDb()
-  //   .select()
-  //   .from(knowledgeEntry)
-  //   .where(eq(knowledgeEntry.organisationId, query.organisationId))
-  //   .orderBy(desc(knowledgeEntry.createdAt))
-  //   .limit(query.limit ?? 100)
-  //   .$dynamic();
+  // Get all teams the user is a member of
+  const userTeams = await getUserTeamIds(query.userId);
+  const usersWorkspaces = await getUserWorkspaceIds(query.userId, userTeams);
 
-  // if (query.page && query.limit) {
-  //   q.offset(query.page * query.limit);
-  // }
-  // if (query.userId) {
-  //   q.where(eq(knowledgeEntry.userId, query.userId));
-  // }
-  // if (query.teamId) {
-  //   q.where(eq(knowledgeEntry.teamId, query.teamId));
-  // }
+  // Build conditions for access control
+  const accessConditions = [
+    // Direct user access
+    eq(knowledgeEntry.userId, query.userId),
+    // Team access
+    inArray(knowledgeEntry.teamId, userTeams),
+    // Workspace access through user
+    inArray(knowledgeEntry.workspaceId, usersWorkspaces),
+    // Workspace access through team
+  ];
+
+  // Add optional filters if provided
+  const filterConditions = [];
+  if (query.teamId) {
+    filterConditions.push(eq(knowledgeEntry.teamId, query.teamId));
+  }
+  if (query.workspaceId) {
+    filterConditions.push(eq(knowledgeEntry.workspaceId, query.workspaceId));
+  }
 
   return await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
-    where: eq(knowledgeEntry.organisationId, query.organisationId),
+    where: and(
+      eq(knowledgeEntry.organisationId, query.organisationId),
+      or(...accessConditions),
+      ...filterConditions
+    ),
     orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
-
     with: {
       filters: {
         columns: {
@@ -225,12 +337,22 @@ export const getKnowledgeEntries = async (query: {
 
 /**
  * Delete a knowledge entry by ID
+ * will check if the user has permission to delete the knowledge entry
  */
 export const deleteKnowledgeEntry = async (
   id: string,
   organisationId: string,
+  userId: string,
   deleteSource = false
 ) => {
+  // check the user permissions
+  const canDelete = await validateKnowledgeAccess(id, userId);
+  if (!canDelete) {
+    throw new Error(
+      "User does not have permission to delete this knowledge entry"
+    );
+  }
+
   // also delete the source if requested
   if (deleteSource) {
     const e = await getDb().query.knowledgeEntry.findFirst({
@@ -261,8 +383,17 @@ export const deleteKnowledgeEntry = async (
  */
 export const getFullSourceDocumentsForKnowledgeEntry = async (
   id: string,
-  organisationId: string
+  organisationId: string,
+  userId: string
 ) => {
+  // Check user permissions first
+  const hasAccess = await validateKnowledgeAccess(id, userId);
+  if (!hasAccess) {
+    throw new Error(
+      "User does not have permission to access this knowledge entry"
+    );
+  }
+
   const entry = await getDb().query.knowledgeEntry.findFirst({
     where: and(
       eq(knowledgeEntry.id, id),

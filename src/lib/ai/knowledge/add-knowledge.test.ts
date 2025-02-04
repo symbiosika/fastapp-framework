@@ -43,6 +43,7 @@ describe("Knowledge Text Flow", () => {
       filters: {
         "test-case": ["test-1"],
       },
+      userId: "00000000-1111-1111-1111-000000000000",
     });
     expect(foundKnowledge).toBeDefined();
     expect(foundKnowledge.length).toBeGreaterThan(0);

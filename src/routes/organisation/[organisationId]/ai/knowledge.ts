@@ -48,6 +48,7 @@ const generateKnowledgeValidation = v.object({
   filters: v.optional(v.record(v.string(), v.string())),
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -173,7 +174,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const limitStr = c.req.query("limit");
         const pageStr = c.req.query("page");
         const teamId = c.req.query("teamId");
-        const userId = c.req.query("userId");
+        const workspaceId = c.req.query("workspaceId");
         const limit = parseInt(limitStr ?? "100");
         const page = parseInt(pageStr ?? "0");
 
@@ -181,8 +182,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           limit,
           page,
           organisationId,
-          userId,
+          userId: usersId,
           teamId,
+          workspaceId,
         });
         return c.json(r);
       } catch (e) {
@@ -202,10 +204,13 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
+        const usersId = c.get("usersId");
         const r = await getFullSourceDocumentsForKnowledgeEntry(
           id,
-          organisationId
+          organisationId,
+          usersId
         );
+
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -226,7 +231,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const id = c.req.param("id");
         const organisationId = c.req.param("organisationId");
-        const r = await deleteKnowledgeEntry(id, organisationId);
+        const usersId = c.get("usersId");
+        await deleteKnowledgeEntry(id, organisationId, usersId);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -244,6 +250,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     checkUserPermission,
     async (c) => {
       try {
+        const userId = c.get("usersId");
         const body = await c.req.json();
         const parsedBody = v.parse(similaritySearchValidation, body);
         validateOrganisationId(parsedBody, c.req.param("organisationId"));
@@ -256,6 +263,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
             filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
             filter: parsedBody.filter,
             filterName: parsedBody.filterName,
+            userId,
           });
           return c.json(r);
         }
@@ -299,6 +307,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const searchText = c.req.query("search");
+        const userId = c.get("usersId");
         if (!searchText) {
           throw new Error("Search text is required");
         }
@@ -352,6 +361,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
             filter,
             filterName,
             organisationId,
+            userId,
           });
           return c.json(r);
         }

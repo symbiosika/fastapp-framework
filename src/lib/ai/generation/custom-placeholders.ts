@@ -1,4 +1,5 @@
 import {
+  UserChatMeta,
   type PlaceholderArgumentDict,
   type PlaceholderParser,
   type VariableDictionaryInMemory,
@@ -50,7 +51,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ) => {
       if (!args.variable) {
         throw new Error(
@@ -70,7 +72,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -94,13 +97,16 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         }
       });
 
+      const userId = meta.userId;
       const query = {
         id: args.id ? [args.id as string] : undefined,
         filters,
         chunkCount,
         chunkOffset,
+        userId: userId + "",
       };
 
+      await log.debug("parse knowledgebase for userid", userId + "");
       await log.debug("parse knowledgebase placeholder", query);
       const knowledgebase = await getPlainKnowledge(query).catch((e) => {
         log.error("Error getting plain knowledge", e);
@@ -124,7 +130,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -189,7 +196,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -241,7 +249,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     name: "url",
     replacerFunction: async (
       match: string,
-      args: PlaceholderArgumentDict
+      args: PlaceholderArgumentDict,
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -260,7 +270,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
   },
   {
     name: "prompt_snippet",
-    replacerFunction: async (match: string, args: PlaceholderArgumentDict) => {
+    replacerFunction: async (
+      match: string,
+      args: PlaceholderArgumentDict,
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
+    ) => {
       console.log("parse prompt_snippet placeholder", args);
       const snippet = await getPromptSnippetByNameAndCategory({
         name: args.name + "",
@@ -276,7 +291,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
   },
   {
     name: "knowledge_text",
-    replacerFunction: async (match: string, args: PlaceholderArgumentDict) => {
+    replacerFunction: async (
+      match: string,
+      args: PlaceholderArgumentDict,
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
+    ) => {
       const text = await getKnowledgeTextByTitle({
         title: args.title + "",
         organisationId: args.organisationId + "",
@@ -292,7 +312,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ) => {
       if (!args.variable) {
         throw new Error(
@@ -312,7 +333,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory
+      variables: VariableDictionaryInMemory,
+      meta: UserChatMeta
     ) => {
       // get name of the array variable
       if (!args.name) {
