@@ -21,6 +21,8 @@ import {
   updateChatSessionGroup,
   deleteChatSessionGroup,
   addUserToChatSessionGroup,
+  addUsersToChatSessionGroup,
+  removeUsersFromChatSessionGroup,
 } from "../../../../lib/chat/index";
 
 // Validation schemas for chat with template
@@ -77,6 +79,15 @@ const updateChatGroupValidation = v.object({
   meta: v.optional(v.record(v.string(), v.any())),
 });
 
+// Add these validation schemas near the top with other schemas
+const addUsersToGroupValidation = v.object({
+  userIds: v.array(v.string()),
+});
+
+const removeUsersFromGroupValidation = v.object({
+  userIds: v.array(v.string()),
+});
+
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get all available models
@@ -107,8 +118,13 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const organisationId = c.req.param("organisationId");
 
         if (parsedBody.chatSessionGroupId) {
-          const groups = await getChatSessionGroupsByUser(organisationId, usersId);
-          const isMember = groups.some(g => g.id === parsedBody.chatSessionGroupId);
+          const groups = await getChatSessionGroupsByUser(
+            organisationId,
+            usersId
+          );
+          const isMember = groups.some(
+            (g) => g.id === parsedBody.chatSessionGroupId
+          );
           if (!isMember) {
             throw new HTTPException(403, {
               message: "User is not a member of the specified chat group",
@@ -122,11 +138,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           meta: {
             organisationId,
             userId: usersId,
-            chatSessionGroupId: parsedBody.chatSessionGroupId
+            chatSessionGroupId: parsedBody.chatSessionGroupId,
           },
         });
         return c.json(r);
-
       } catch (e) {
         throw new HTTPException(400, {
           message: e + "",
@@ -315,6 +330,87 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
 
       try {
         await deleteChatSessionGroup(groupId, organisationId, usersId);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Add users to a Chat Group. Only members can add other users.
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/chat-groups/:groupId/users",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const groupId = c.req.param("groupId");
+
+        const parsedBody = v.parse(addUsersToGroupValidation, body);
+
+        // Verify the current user is a member of the group
+        const groups = await getChatSessionGroupsByUser(
+          organisationId,
+          usersId
+        );
+        const isMember = groups.some((g) => g.id === groupId);
+        if (!isMember) {
+          throw new HTTPException(403, {
+            message: "Only group members can add users",
+          });
+        }
+
+        const result = await addUsersToChatSessionGroup(
+          groupId,
+          parsedBody.userIds
+        );
+        return c.json(result);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Remove users from a Chat Group. Only members can remove other users.
+   */
+  app.delete(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/chat-groups/:groupId/users",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const groupId = c.req.param("groupId");
+
+        const parsedBody = v.parse(removeUsersFromGroupValidation, body);
+
+        // Verify the current user is a member of the group
+        const groups = await getChatSessionGroupsByUser(
+          organisationId,
+          usersId
+        );
+        const isMember = groups.some((g) => g.id === groupId);
+        if (!isMember) {
+          throw new HTTPException(403, {
+            message: "Only group members can remove users",
+          });
+        }
+
+        await removeUsersFromChatSessionGroup(groupId, parsedBody.userIds);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, {
