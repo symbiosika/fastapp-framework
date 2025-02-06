@@ -56,6 +56,10 @@
     "./auth": {
       "types": "./lib/auth.d.ts",
       "default": "./lib/auth.js"
+    },
+    "./api-types": {
+      "types": "./lib/api-types.d.ts",
+      "default": "./lib/api-types.js"
     }
   },
   "devDependencies": {
