@@ -10,7 +10,6 @@ import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
-import { getTeamsAndMembersByOrganisation } from "../../../../lib/usermanagement/oganisations";
 import {
   createTeam,
   getTeam,
@@ -20,11 +19,13 @@ import {
   removeTeamMember,
   updateTeamMemberRole,
   checkTeamMemberRole,
+  getTeamsByUser,
+  getTeamMembers,
 } from "../../../../lib/usermanagement/teams";
 
-const BASE_PATH = "/usermanagement";
+const BASE_PATH = ""; // "/usermanagement";
 
-export function defineUserManagementRoutes(
+export default function defineTeamRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
@@ -39,6 +40,8 @@ export function defineUserManagementRoutes(
       try {
         const data = await c.req.json();
         const team = await createTeam(data);
+        // assign the user to the team
+        await addTeamMember(team.id, c.get("usersId"), "admin");
         return c.json(team);
       } catch (err) {
         throw new HTTPException(500, {
@@ -57,7 +60,8 @@ export function defineUserManagementRoutes(
     checkUserPermission,
     async (c: Context) => {
       try {
-        const teams = await getTeamsAndMembersByOrganisation(
+        const teams = await getTeamsByUser(
+          c.get("usersId"),
           c.req.param("organisationId")
         );
         return c.json(teams);
@@ -112,6 +116,24 @@ export function defineUserManagementRoutes(
     async (c: Context) => {
       await deleteTeam(c.req.param("id"));
       return c.json({ success: true });
+    }
+  );
+
+  /**
+   * Get all members of a team
+   */
+  app.get(
+    API_BASE_PATH +
+      BASE_PATH +
+      "/organisation/:organisationId/teams/:id/members",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c: Context) => {
+      const userId = c.get("usersId");
+      const organisationId = c.req.param("organisationId");
+      const id = c.req.param("id");
+      const members = await getTeamMembers(userId, organisationId, id);
+      return c.json(members);
     }
   );
 

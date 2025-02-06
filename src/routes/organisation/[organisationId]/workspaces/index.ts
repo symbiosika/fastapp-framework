@@ -22,7 +22,6 @@ import {
   WorkspaceRelationsSchema,
   workspacesInsertSchema,
   workspacesUpdateSchema,
-  type WorkspaceRelations,
 } from "../../../../lib/db/schema/workspaces";
 import * as v from "valibot";
 import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
@@ -34,7 +33,9 @@ export default function defineWorkspaceRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
-  // Get all workspaces for user
+  /**
+   * Get all workspaces for user
+   */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/workspaces",
     authAndSetUsersInfo,
@@ -52,7 +53,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Get single workspace by ID
+  /**
+   * Get single workspace by ID
+   */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
@@ -71,7 +74,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Create new workspace in a specific organisation
+  /**
+   * Create new workspace in a specific organisation
+   */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/workspaces",
     authAndSetUsersInfo,
@@ -94,7 +99,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Update a workspace in a specific organisation
+  /**
+   * Update a workspace in a specific organisation
+   */
   app.put(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
@@ -118,7 +125,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Delete a workspace
+  /**
+   * Delete a workspace
+   */
   app.delete(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
@@ -137,7 +146,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Add relations to a workspace
+  /**
+   * Add relations to a workspace
+   */
   app.post(
     API_BASE_PATH +
       "/organisation/:organisationId/workspaces/:workspaceId/relations",
@@ -160,7 +171,9 @@ export default function defineWorkspaceRoutes(
     }
   );
 
-  // Remove relations from a workspace
+  /**
+   * Remove relations from a workspace
+   */
   app.delete(
     API_BASE_PATH +
       "/organisation/:organisationId/workspaces/:workspaceId/relations",

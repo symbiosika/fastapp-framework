@@ -11,15 +11,25 @@ import {
   users,
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
+import { getUserById } from "./user";
 
 /**
  * Get all organisation invitations
  */
-export const getAllOrganisationInvitations = async (organisationId: string) => {
+export const getAllOrganisationInvitations = async (
+  userId: string,
+  organisationId: string
+) => {
+  const user = await getUserById(userId);
   return await getDb()
     .select()
     .from(organisationInvitations)
-    .where(eq(organisationInvitations.organisationId, organisationId));
+    .where(
+      and(
+        eq(organisationInvitations.organisationId, organisationId),
+        eq(organisationInvitations.email, user.email)
+      )
+    );
 };
 
 /**

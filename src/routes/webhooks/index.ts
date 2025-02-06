@@ -20,7 +20,9 @@ export default function defineWebhookRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
-  // Create a new webhook
+  /**
+   * Create a new webhook
+   */
   app.post(
     API_BASE_PATH + "/webhooks",
 
@@ -46,9 +48,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Get all webhooks for the user
+  /**
+   * Get all webhooks for the user
+   */
   app.get(
     API_BASE_PATH + "/webhooks",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {
@@ -71,9 +76,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Get a specific webhook by ID
+  /**
+   * Get a specific webhook by ID
+   */
   app.get(
     API_BASE_PATH + "/webhooks/:id",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {
@@ -95,9 +103,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Update a webhook
+  /**
+   * Update a webhook
+   */
   app.put(
     API_BASE_PATH + "/webhooks/:id",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {
@@ -119,9 +130,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Delete a webhook
+  /**
+   * Delete a webhook
+   */
   app.delete(
     API_BASE_PATH + "/webhooks/:id",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {
@@ -138,7 +152,10 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Register webhook (specifically for n8n integration)
+  /**
+   * Register webhook (specifically for n8n integration)
+   */
+
   app.post(
     API_BASE_PATH + "/webhooks/register/n8n",
     authAndSetUsersInfo,
@@ -182,9 +199,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Add webhook check endpoint
+  /**
+   * Add webhook check endpoint
+   */
   app.post(
     API_BASE_PATH + "/webhooks/check",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {
@@ -206,9 +226,12 @@ export default function defineWebhookRoutes(
     }
   );
 
-  // Trigger a webhook
+  /**
+   * Trigger a webhook
+   */
   app.post(
     API_BASE_PATH + "/webhooks/:id/trigger",
+
     authAndSetUsersInfo,
     async (c: Context) => {
       try {

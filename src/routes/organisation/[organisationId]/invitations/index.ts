@@ -27,7 +27,7 @@ const invitationSchema = v.object({
   role: v.string(),
 });
 
-export function defineUserManagementRoutes(
+export default function defineUserManagementRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
@@ -67,8 +67,12 @@ export function defineUserManagementRoutes(
     checkUserPermission,
     async (c: Context) => {
       try {
+        const userId = c.get("usersId");
         const organisationId = c.req.param("organisationId");
-        const invitations = await getAllOrganisationInvitations(organisationId);
+        const invitations = await getAllOrganisationInvitations(
+          userId,
+          organisationId
+        );
         return c.json(invitations);
       } catch (err) {
         throw new HTTPException(500, {

@@ -11,6 +11,7 @@ import {
   teamMembers,
   type TeamsSelect,
   type TeamsInsert,
+  users,
 } from "../db/schema/users";
 
 /**
@@ -66,12 +67,36 @@ export const getTeamsByOrganisation = async (orgId: string) => {
  */
 export const getTeamsByUser = async (userId: string, orgId: string) => {
   return await getDb()
-    .select()
+    .select({
+      id: teams.id,
+      name: teams.name,
+      role: teamMembers.role,
+    })
     .from(teams)
     .innerJoin(teamMembers, eq(teamMembers.teamId, teams.id))
     .where(
       and(eq(teamMembers.userId, userId), eq(teams.organisationId, orgId))
     );
+};
+
+/**
+ * Get all members of a team
+ */
+export const getTeamMembers = async (
+  userId: string,
+  orgId: string,
+  teamId: string
+) => {
+  return await getDb()
+    .select({
+      teamId: teamMembers.teamId,
+      userId: teamMembers.userId,
+      userEmail: users.email,
+      role: teamMembers.role,
+    })
+    .from(teamMembers)
+    .leftJoin(users, eq(teamMembers.userId, users.id))
+    .where(eq(teamMembers.teamId, teamId));
 };
 
 /**

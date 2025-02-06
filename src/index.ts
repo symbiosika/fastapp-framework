@@ -32,12 +32,19 @@ import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templat
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
+import defineOrganisationRoutes from "./routes/organisation";
+import defineTeamRoutes from "./routes/organisation/[organisationId]/teams";
+import definePermissionGroupRoutes from "./routes/organisation/[organisationId]/permission-groups";
+import defineInvitationRoutes from "./routes/organisation/[organisationId]/invitations";
 // import { defineCollectionRoutes } from "./routes/collections";
 import defineManageSecretsRoutes from "./routes/organisation/[organisationId]/secrets";
 import definePluginRoutes from "./routes/organisation/[organisationId]/plugins";
 import definePingRoute from "./routes/ping";
+import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
+import defineWebhookRoutes from "./routes/webhooks";
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
+
 import scheduler from "./lib/cron";
 // Plugins
 import { initializePluginCache } from "./lib/plugins";
@@ -59,8 +66,6 @@ import paymentService from "./payment-service";
 import usermanagementService from "./usermanagement-service";
 import filesService from "./files-service";
 import middlewareService from "./middleware-service";
-import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
-import defineWebhookRoutes from "./routes/webhooks";
 
 /**
  * MAIN FUNCTION
@@ -154,7 +159,16 @@ export const defineServer = (config: ServerConfig) => {
   defineSecuredUserRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
+   * Adds organisation routes
+   */
+  defineOrganisationRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  defineTeamRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  definePermissionGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  defineInvitationRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
    * Adds collection routes
+
    * will give simple CRUD endpoints for defined collections
    */
   // dropping this for now!
@@ -287,7 +301,7 @@ export const defineServer = (config: ServerConfig) => {
   });
 
   // Log all registered endpoints
-  // logApiRoutes(app);
+  logApiRoutes(app);
 
   return {
     idleTimeout: 255,

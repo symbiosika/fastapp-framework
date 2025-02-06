@@ -17,9 +17,9 @@ import {
   deleteOrganisation,
 } from "../../lib/usermanagement/oganisations";
 
-const BASE_PATH = "/usermanagement";
+const BASE_PATH = ""; // "/usermanagement";
 
-export function defineUserManagementRoutes(
+export default function defineOrganisationRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
@@ -27,7 +27,7 @@ export function defineUserManagementRoutes(
    * Create a new organisation
    */
   app.post(
-    API_BASE_PATH + BASE_PATH + "/organisations",
+    API_BASE_PATH + BASE_PATH + "/organisation",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -47,7 +47,7 @@ export function defineUserManagementRoutes(
    * Get an organisation
    */
   app.get(
-    API_BASE_PATH + BASE_PATH + "/organisations/:organisationId",
+    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -69,7 +69,7 @@ export function defineUserManagementRoutes(
    * Update an organisation
    */
   app.put(
-    API_BASE_PATH + BASE_PATH + "/organisations/:organisationId",
+    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -92,7 +92,7 @@ export function defineUserManagementRoutes(
    * Delete an organisation
    */
   app.delete(
-    API_BASE_PATH + BASE_PATH + "/organisations/:organisationId",
+    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {

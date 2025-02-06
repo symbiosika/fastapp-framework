@@ -57,7 +57,7 @@ class ChatHistoryStoreInDb implements ChatHistoryStore {
         id: chatId,
         name: `Chat ${chatId}`,
         userId: options?.userId,
-        organisationId: options.meta.organisationId,
+        organisationId: options.meta.organisationId ?? '',
         messages: session.actualChat,
         state: session.state,
         createdAt: session.createdAt.toISOString(),

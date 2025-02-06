@@ -22,9 +22,9 @@ import {
   removePermissionFromGroup,
 } from "../../../../lib/usermanagement/permissions";
 
-const BASE_PATH = "/usermanagement";
+const BASE_PATH = ""; // "/usermanagement";
 
-export function defineUserManagementRoutes(
+export default function definePermissionGroupRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
