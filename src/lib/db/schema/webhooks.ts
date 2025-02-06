@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { pgEnum, text, uuid, index, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgEnum,
+  text,
+  uuid,
+  index,
+  timestamp,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { organisations, users } from "./users";
 import { pgBaseTable } from ".";
@@ -11,6 +18,7 @@ import {
 
 export const webhookTypeEnum = pgEnum("webhook_type", ["n8n"]);
 export const webhookEventEnum = pgEnum("webhook_event", ["chat-output"]);
+export const webhookMethodEnum = pgEnum("webhook_method", ["POST", "GET"]);
 
 // Table for webhooks. Webhooks are used to send notifications to external services.
 export const webhooks = pgBaseTable(
@@ -28,15 +36,16 @@ export const webhooks = pgBaseTable(
       .references(() => organisations.id, {
         onDelete: "cascade",
       })
-
       .notNull(),
     name: text("name").notNull(),
     type: webhookTypeEnum("type").notNull(),
     event: webhookEventEnum("event").notNull(),
     webhookUrl: text("webhook_url").notNull(),
+    method: webhookMethodEnum("method").notNull().default("POST"),
+    headers: jsonb("headers").default({}).notNull(),
+    meta: jsonb("meta").default({}).notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
-
       .notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" })
       .defaultNow()

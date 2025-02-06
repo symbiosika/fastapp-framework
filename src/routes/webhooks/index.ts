@@ -8,9 +8,13 @@ import {
   getAllUsersWebhooks,
   getWebhookById,
   updateWebhook,
-} from "../../lib/webhooks";
+} from "../../lib/webhooks/crud";
 import { newWebhookSchema, webhookSchema } from "../../lib/db/schema/webhooks";
 import * as v from "valibot";
+import {
+  triggerWebhook,
+  WebhookTriggerError,
+} from "../../lib/webhooks/trigger";
 
 export default function defineWebhookRoutes(
   app: FastAppHono,
@@ -49,7 +53,14 @@ export default function defineWebhookRoutes(
     async (c: Context) => {
       try {
         const userId = c.get("usersId");
-        const organisationId = c.get("organisationId");
+        const organisationId = c.req.query("organisationId");
+
+        if (!organisationId) {
+          throw new HTTPException(400, {
+            message: "Organisation ID is required",
+          });
+        }
+
         const webhooks = await getAllUsersWebhooks(userId, organisationId);
         return c.json(webhooks);
       } catch (err) {
@@ -191,6 +202,40 @@ export default function defineWebhookRoutes(
         });
       } catch (err) {
         return c.json({ exists: false });
+      }
+    }
+  );
+
+  // Trigger a webhook
+  app.post(
+    API_BASE_PATH + "/webhooks/:id/trigger",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const webhookId = c.req.param("id");
+        const organisationId = c.req.query("organisationId");
+        const body = await c.req.json().catch(() => ({}));
+
+        if (!organisationId) {
+          throw new HTTPException(400, {
+            message: "Organisation ID is required",
+          });
+        }
+
+        const result = await triggerWebhook(webhookId, organisationId, {
+          payload: body,
+        });
+
+        return c.json(result);
+      } catch (err: any) {
+        if (err instanceof WebhookTriggerError) {
+          throw new HTTPException(500, {
+            message: err.message,
+          });
+        }
+        throw new HTTPException(500, {
+          message: "Error triggering webhook: " + err,
+        });
       }
     }
   );
