@@ -10,6 +10,11 @@ import {
 import { relations } from "drizzle-orm";
 import { organisations, users } from "./users";
 import { pgBaseTable } from ".";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 export const jobStatusEnum = pgEnum("job_status", [
   "pending",
@@ -61,3 +66,7 @@ export const jobsRelations = relations(jobs, ({ one }) => ({
 
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+
+export const jobsSelectSchema = createSelectSchema(jobs);
+export const jobsInsertSchema = createInsertSchema(jobs);
+export const jobsUpdateSchema = createUpdateSchema(jobs);

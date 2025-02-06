@@ -3,7 +3,11 @@ import { pgEnum, text, uuid, index, timestamp } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { organisations, users } from "./users";
 import { pgBaseTable } from ".";
-import { createSelectSchema, createInsertSchema } from "drizzle-valibot";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 export const webhookTypeEnum = pgEnum("webhook_type", ["n8n"]);
 export const webhookEventEnum = pgEnum("webhook_event", ["chat-output"]);
@@ -59,3 +63,4 @@ export type WebhookInsert = typeof webhooks.$inferInsert;
 
 export const webhookSchema = createSelectSchema(webhooks);
 export const newWebhookSchema = createInsertSchema(webhooks);
+export const updateWebhookSchema = createUpdateSchema(webhooks);

@@ -1,4 +1,4 @@
-import { FastAppHono } from "../../types";
+import type { FastAppHono } from "../../types";
 
 export const logApiRoutes = (app: FastAppHono) => {
   console.log("\n🛣️  Registered Routes:");

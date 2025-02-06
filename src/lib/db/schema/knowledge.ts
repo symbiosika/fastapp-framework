@@ -26,7 +26,6 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
-import * as v from "valibot";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [

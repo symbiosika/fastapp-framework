@@ -2,7 +2,12 @@ import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations, sql } from "drizzle-orm";
 import { organisations, teams, users } from "./users";
-import { workspaceChatGroups, workspaceChatSessions, workspaces } from "./workspaces";
+import { workspaceChatSessions, workspaces } from "./workspaces";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Table to store chat sessions
 export const chatSessions = pgBaseTable(
@@ -40,7 +45,12 @@ export type ChatSessionsSelect = typeof chatSessions.$inferSelect;
 export type ChatSessionsInsert = typeof chatSessions.$inferInsert;
 export type ChatSessionsUpdate = Partial<ChatSessionsInsert>;
 
+export const chatSessionsSelectSchema = createSelectSchema(chatSessions);
+export const chatSessionsInsertSchema = createInsertSchema(chatSessions);
+export const chatSessionsUpdateSchema = createUpdateSchema(chatSessions);
+
 // Table to organize chat sessions into simple groups
+
 export const chatSessionGroups = pgBaseTable(
   "chat_session_groups",
   {
@@ -57,7 +67,9 @@ export const chatSessionGroups = pgBaseTable(
     // optional team id to organize chats into teams
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
     // optional workspace id to organize chats into workspaces
-    workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
     createdAt: timestamp("created_at", { mode: "string" }).notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
   },
@@ -66,7 +78,9 @@ export const chatSessionGroups = pgBaseTable(
       chatSessionGroups.organisationId
     ),
     index("chat_session_groups_team_id_idx").on(chatSessionGroups.teamId),
-    index("chat_session_groups_workspace_id_idx").on(chatSessionGroups.workspaceId),
+    index("chat_session_groups_workspace_id_idx").on(
+      chatSessionGroups.workspaceId
+    ),
   ]
 );
 
@@ -74,7 +88,15 @@ export type ChatSessionGroupsSelect = typeof chatSessionGroups.$inferSelect;
 export type ChatSessionGroupsInsert = typeof chatSessionGroups.$inferInsert;
 export type ChatSessionGroupsUpdate = Partial<ChatSessionGroupsInsert>;
 
+export const chatSessionGroupsSelectSchema =
+  createSelectSchema(chatSessionGroups);
+export const chatSessionGroupsInsertSchema =
+  createInsertSchema(chatSessionGroups);
+export const chatSessionGroupsUpdateSchema =
+  createUpdateSchema(chatSessionGroups);
+
 // Table to assign users to chat session groups
+
 export const chatSessionGroupAssignments = pgBaseTable(
   "chat_session_group_assignments",
   {
@@ -105,7 +127,18 @@ export type ChatSessionGroupAssignmentsInsert =
 export type ChatSessionGroupAssignmentsUpdate =
   Partial<ChatSessionGroupAssignmentsInsert>;
 
+export const chatSessionGroupAssignmentsSelectSchema = createSelectSchema(
+  chatSessionGroupAssignments
+);
+export const chatSessionGroupAssignmentsInsertSchema = createInsertSchema(
+  chatSessionGroupAssignments
+);
+export const chatSessionGroupAssignmentsUpdateSchema = createUpdateSchema(
+  chatSessionGroupAssignments
+);
+
 // Relations
+
 export const chatSessionGroupRelations = relations(
   chatSessionGroups,
   ({ one, many }) => ({

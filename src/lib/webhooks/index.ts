@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
-import { WebhookInsert, webhooks, WebhookSelect } from "../db/schema/webhooks";
+import type { WebhookInsert, WebhookSelect } from "../db/schema/webhooks";
+import { webhooks } from "../db/schema/webhooks";
 
 /**
  * Helper to check if user has access to webhook

@@ -8,6 +8,11 @@ import {
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { organisations } from "./users";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 const bytea = customType<{
   data: Buffer;
@@ -55,3 +60,7 @@ export const files = pgBaseTable(
 
 export type FilesSelect = typeof files.$inferSelect;
 export type FilesInsert = typeof files.$inferInsert;
+
+export const filesSelectSchema = createSelectSchema(files);
+export const filesInsertSchema = createInsertSchema(files);
+export const filesUpdateSchema = createUpdateSchema(files);

@@ -13,6 +13,11 @@ import {
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { pgBaseTable } from ".";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Enum for one-time purchase status
 export const purchaseStatusEnum = pgEnum("purchase_status", [
@@ -55,7 +60,12 @@ export const products = pgBaseTable(
 export type ProductsSelect = typeof products.$inferSelect;
 export type ProductsInsert = typeof products.$inferInsert;
 
+export const productsSelectSchema = createSelectSchema(products);
+export const productsInsertSchema = createInsertSchema(products);
+export const productsUpdateSchema = createUpdateSchema(products);
+
 // Active Subscriptions Table
+
 export const activeSubscriptions = pgBaseTable(
   "active_subscriptions",
   {
@@ -112,6 +122,12 @@ export const activeSubscriptions = pgBaseTable(
 export type ActiveSubscriptionsSelect = typeof activeSubscriptions.$inferSelect;
 export type ActiveSubscriptionsInsert = typeof activeSubscriptions.$inferInsert;
 
+export const activeSubscriptionsSelectSchema =
+  createSelectSchema(activeSubscriptions);
+export const activeSubscriptionsInsertSchema =
+  createInsertSchema(activeSubscriptions);
+export const activeSubscriptionsUpdateSchema =
+  createUpdateSchema(activeSubscriptions);
 // One-time Purchases Table
 export const purchases = pgBaseTable(
   "purchases",
@@ -152,7 +168,12 @@ export const purchases = pgBaseTable(
 export type PurchasesSelect = typeof purchases.$inferSelect;
 export type PurchasesInsert = typeof purchases.$inferInsert;
 
+export const purchasesSelectSchema = createSelectSchema(purchases);
+export const purchasesInsertSchema = createInsertSchema(purchases);
+export const purchasesUpdateSchema = createUpdateSchema(purchases);
+
 // Relations
+
 export const activeSubscriptionsRelations = relations(
   activeSubscriptions,
   ({ one }) => ({

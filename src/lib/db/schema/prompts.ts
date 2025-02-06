@@ -13,6 +13,11 @@ import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { organisations, users } from "./users";
 import { workspacePromptTemplates } from "./workspaces";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Table to store LLM Prompt templates
 export const promptTemplates = pgBaseTable(
@@ -60,6 +65,10 @@ export const promptTemplates = pgBaseTable(
 export type PromptTemplatesSelect = typeof promptTemplates.$inferSelect;
 export type PromptTemplatesInsert = typeof promptTemplates.$inferInsert;
 
+export const promptTemplatesSelectSchema = createSelectSchema(promptTemplates);
+export const promptTemplatesInsertSchema = createInsertSchema(promptTemplates);
+export const promptTemplatesUpdateSchema = createUpdateSchema(promptTemplates);
+
 export const promptTemplatePlaceholderTypeEnum = pgEnum(
   "prompt_template_type",
   ["text", "image"]
@@ -94,7 +103,18 @@ export type PromptTemplatePlaceholdersSelect =
 export type PromptTemplatePlaceholdersInsert =
   typeof promptTemplatePlaceholders.$inferInsert;
 
+export const promptTemplatePlaceholdersSelectSchema = createSelectSchema(
+  promptTemplatePlaceholders
+);
+export const promptTemplatePlaceholdersInsertSchema = createInsertSchema(
+  promptTemplatePlaceholders
+);
+export const promptTemplatePlaceholdersUpdateSchema = createUpdateSchema(
+  promptTemplatePlaceholders
+);
+
 // Table for placeholder examples/suggestions
+
 export const promptTemplatePlaceholderExamples = pgBaseTable(
   "prompt_template_placeholder_examples",
   {
@@ -116,7 +136,18 @@ export type PromptTemplatePlaceholderExamplesSelect =
 export type PromptTemplatePlaceholderExamplesInsert =
   typeof promptTemplatePlaceholderExamples.$inferInsert;
 
+export const promptTemplatePlaceholderExamplesSelectSchema = createSelectSchema(
+  promptTemplatePlaceholderExamples
+);
+export const promptTemplatePlaceholderExamplesInsertSchema = createInsertSchema(
+  promptTemplatePlaceholderExamples
+);
+export const promptTemplatePlaceholderExamplesUpdateSchema = createUpdateSchema(
+  promptTemplatePlaceholderExamples
+);
+
 // Update the relations
+
 export const promptTemplatePlaceholdersRelations = relations(
   promptTemplatePlaceholders,
   ({ one, many }) => ({
@@ -183,6 +214,10 @@ export const promptSnippets = pgBaseTable(
 
 export type PromptSnippetsSelect = typeof promptSnippets.$inferSelect;
 export type PromptSnippetsInsert = typeof promptSnippets.$inferInsert;
+
+export const promptSnippetsSelectSchema = createSelectSchema(promptSnippets);
+export const promptSnippetsInsertSchema = createInsertSchema(promptSnippets);
+export const promptSnippetsUpdateSchema = createUpdateSchema(promptSnippets);
 
 export const promptSnippetsRelations = relations(promptSnippets, ({ one }) => ({
   user: one(users, {

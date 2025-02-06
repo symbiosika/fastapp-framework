@@ -1,5 +1,5 @@
 import {
-  UserChatMeta,
+  type UserChatMeta,
   type PlaceholderArgumentDict,
   type PlaceholderParser,
   type VariableDictionaryInMemory,

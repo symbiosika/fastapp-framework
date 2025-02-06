@@ -22,6 +22,11 @@ import { activeSubscriptions, purchases } from "./payment";
 import { promptSnippets } from "./prompts";
 import { chatSessionGroupAssignments, chatSessions } from "./chat";
 import { teamSpecificData } from "./additional-data";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 export const organisations = pgBaseTable(
   "organisations",
@@ -43,6 +48,10 @@ export const organisations = pgBaseTable(
 
 export type OrganisationsSelect = typeof organisations.$inferSelect;
 export type OrganisationsInsert = typeof organisations.$inferInsert;
+
+export const organisationsSelectSchema = createSelectSchema(organisations);
+export const organisationsInsertSchema = createInsertSchema(organisations);
+export const organisationsUpdateSchema = createUpdateSchema(organisations);
 
 export const users = pgBaseTable(
   "users",
@@ -84,8 +93,13 @@ export const users = pgBaseTable(
 export type UsersSelect = typeof users.$inferSelect;
 export type UsersInsert = typeof users.$inferInsert;
 
+export const usersSelectSchema = createSelectSchema(users);
+export const usersInsertSchema = createInsertSchema(users);
+export const usersUpdateSchema = createUpdateSchema(users);
+
 export const sessions = pgBaseTable(
   "sessions",
+
   {
     sessionToken: text("session_token").primaryKey(),
     userId: uuid("user_id")
@@ -101,6 +115,10 @@ export const sessions = pgBaseTable(
 
 export type SessionsSelect = typeof sessions.$inferSelect;
 export type SessionsInsert = typeof sessions.$inferInsert;
+
+export const sessionsSelectSchema = createSelectSchema(sessions);
+export const sessionsInsertSchema = createInsertSchema(sessions);
+export const sessionsUpdateSchema = createUpdateSchema(sessions);
 
 // User Permission Groups Table
 export const userPermissionGroups = pgBaseTable(
@@ -134,6 +152,13 @@ export type UserPermissionGroupsSelect =
 export type UserPermissionGroupsInsert =
   typeof userPermissionGroups.$inferInsert;
 
+export const userPermissionGroupsSelectSchema =
+  createSelectSchema(userPermissionGroups);
+export const userPermissionGroupsInsertSchema =
+  createInsertSchema(userPermissionGroups);
+export const userPermissionGroupsUpdateSchema =
+  createUpdateSchema(userPermissionGroups);
+
 // User Group Members Table
 export const userGroupMembers = pgBaseTable(
   "user_group_members",
@@ -154,6 +179,13 @@ export const userGroupMembers = pgBaseTable(
 
 export type UserGroupMembersSelect = typeof userGroupMembers.$inferSelect;
 export type UserGroupMembersInsert = typeof userGroupMembers.$inferInsert;
+
+export const userGroupMembersSelectSchema =
+  createSelectSchema(userGroupMembers);
+export const userGroupMembersInsertSchema =
+  createInsertSchema(userGroupMembers);
+export const userGroupMembersUpdateSchema =
+  createUpdateSchema(userGroupMembers);
 
 // Table "MagicLink Sessions"
 export const magicLinkSessions = pgBaseTable(
@@ -180,6 +212,13 @@ export const magicLinkSessions = pgBaseTable(
 
 export type MagicLinkSessionsSelect = typeof magicLinkSessions.$inferSelect;
 export type MagicLinkSessionsInsert = typeof magicLinkSessions.$inferInsert;
+
+export const magicLinkSessionsSelectSchema =
+  createSelectSchema(magicLinkSessions);
+export const magicLinkSessionsInsertSchema =
+  createInsertSchema(magicLinkSessions);
+export const magicLinkSessionsUpdateSchema =
+  createUpdateSchema(magicLinkSessions);
 
 // Permission Type Enum
 export const permissionTypeEnum = pgEnum("permission_type", ["regex"]);
@@ -218,7 +257,12 @@ export const pathPermissions = pgBaseTable(
 export type PathPermissionsSelect = typeof pathPermissions.$inferSelect;
 export type PathPermissionsInsert = typeof pathPermissions.$inferInsert;
 
+export const pathPermissionsSelectSchema = createSelectSchema(pathPermissions);
+export const pathPermissionsInsertSchema = createInsertSchema(pathPermissions);
+export const pathPermissionsUpdateSchema = createUpdateSchema(pathPermissions);
+
 // Group to Permission Table
+
 export const groupPermissions = pgBaseTable(
   "group_permissions",
   {
@@ -242,6 +286,13 @@ export const groupPermissions = pgBaseTable(
 
 export type GroupPermissionsSelect = typeof groupPermissions.$inferSelect;
 export type GroupPermissionsInsert = typeof groupPermissions.$inferInsert;
+
+export const groupPermissionsSelectSchema =
+  createSelectSchema(groupPermissions);
+export const groupPermissionsInsertSchema =
+  createInsertSchema(groupPermissions);
+export const groupPermissionsUpdateSchema =
+  createUpdateSchema(groupPermissions);
 
 // Teams Table
 export const teams = pgBaseTable(
@@ -269,11 +320,16 @@ export const teams = pgBaseTable(
 export type TeamsSelect = typeof teams.$inferSelect;
 export type TeamsInsert = typeof teams.$inferInsert;
 
+export const teamsSelectSchema = createSelectSchema(teams);
+export const teamsInsertSchema = createInsertSchema(teams);
+export const teamsUpdateSchema = createUpdateSchema(teams);
+
 // Table team_members
 export const teamMemberRoleEnum = pgEnum("team_member_role", [
   "admin",
   "member",
 ]);
+
 export const teamMembers = pgBaseTable(
   "team_members",
   {
@@ -295,6 +351,10 @@ export const teamMembers = pgBaseTable(
 
 export type TeamMembersSelect = typeof teamMembers.$inferSelect;
 export type TeamMembersInsert = typeof teamMembers.$inferInsert;
+
+export const teamMembersSelectSchema = createSelectSchema(teamMembers);
+export const teamMembersInsertSchema = createInsertSchema(teamMembers);
+export const teamMembersUpdateSchema = createUpdateSchema(teamMembers);
 
 // RELATIONS
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -426,6 +486,16 @@ export type OrganisationInvitationsSelect =
 export type OrganisationInvitationsInsert =
   typeof organisationInvitations.$inferInsert;
 
+export const organisationInvitationsSelectSchema = createSelectSchema(
+  organisationInvitations
+);
+export const organisationInvitationsInsertSchema = createInsertSchema(
+  organisationInvitations
+);
+export const organisationInvitationsUpdateSchema = createUpdateSchema(
+  organisationInvitations
+);
+
 export const organisationMemberRoleEnum = pgEnum("organisation_member_role", [
   "owner",
   "admin",
@@ -458,7 +528,15 @@ export const organisationMembers = pgBaseTable(
 export type OrganisationMembersSelect = typeof organisationMembers.$inferSelect;
 export type OrganisationMembersInsert = typeof organisationMembers.$inferInsert;
 
+export const organisationMembersSelectSchema =
+  createSelectSchema(organisationMembers);
+export const organisationMembersInsertSchema =
+  createInsertSchema(organisationMembers);
+export const organisationMembersUpdateSchema =
+  createUpdateSchema(organisationMembers);
+
 // Neue Beziehungen für organisationMembers
+
 export const organisationMembersRelations = relations(
   organisationMembers,
   ({ one }) => ({

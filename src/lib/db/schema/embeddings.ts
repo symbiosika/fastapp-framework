@@ -10,6 +10,11 @@ import {
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { organisations } from "./users";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Table for embeddings for all kinds of data. The source can be defined by the sourceTable and sourceId.
 export const embeddings = pgBaseTable(
@@ -44,3 +49,7 @@ export const embeddings = pgBaseTable(
 
 export type EmbeddingsSelect = typeof embeddings.$inferSelect;
 export type EmbeddingsInsert = typeof embeddings.$inferInsert;
+
+export const embeddingsSelectSchema = createSelectSchema(embeddings);
+export const embeddingsInsertSchema = createInsertSchema(embeddings);
+export const embeddingsUpdateSchema = createUpdateSchema(embeddings);

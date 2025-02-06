@@ -1,4 +1,4 @@
-import { FastAppHono } from "../../types";
+import type { FastAppHono } from "../../types";
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";

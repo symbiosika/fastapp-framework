@@ -13,6 +13,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { organisations } from "./users";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Secrets
 export const secrets = pgBaseTable(
@@ -51,3 +56,7 @@ export const secrets = pgBaseTable(
 
 export type SecretsSelect = typeof secrets.$inferSelect;
 export type SecretsInsert = typeof secrets.$inferInsert;
+
+export const secretsSelectSchema = createSelectSchema(secrets);
+export const secretsInsertSchema = createInsertSchema(secrets);
+export const secretsUpdateSchema = createUpdateSchema(secrets);

@@ -11,6 +11,11 @@ import {
 import { relations } from "drizzle-orm";
 import { teams, users } from "./users";
 import { pgBaseTable } from ".";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Table for user specific data
 export const userSpecificData = pgBaseTable(
@@ -43,6 +48,13 @@ export const userSpecificData = pgBaseTable(
 export type UserSpecificDataSelect = typeof userSpecificData.$inferSelect;
 export type UserSpecificDataInsert = typeof userSpecificData.$inferInsert;
 
+export const userSpecificDataSelectSchema =
+  createSelectSchema(userSpecificData);
+export const userSpecificDataInsertSchema =
+  createInsertSchema(userSpecificData);
+export const userSpecificDataUpdateSchema =
+  createUpdateSchema(userSpecificData);
+
 // Table for application specific data. This is data that does not belong to a user or a group or an organisation.
 export const appSpecificData = pgBaseTable(
   "app_specific_data",
@@ -72,6 +84,10 @@ export const appSpecificData = pgBaseTable(
 
 export type AppSpecificDataSelect = typeof appSpecificData.$inferSelect;
 export type AppSpecificDataInsert = typeof appSpecificData.$inferInsert;
+
+export const appSpecificDataSelectSchema = createSelectSchema(appSpecificData);
+export const appSpecificDataInsertSchema = createInsertSchema(appSpecificData);
+export const appSpecificDataUpdateSchema = createUpdateSchema(appSpecificData);
 
 export const userSpecificDataRelations = relations(
   userSpecificData,
@@ -115,7 +131,18 @@ export type OrganisationSpecificDataSelect =
 export type OrganisationSpecificDataInsert =
   typeof organisationSpecificData.$inferInsert;
 
+export const organisationSpecificDataSelectSchema = createSelectSchema(
+  organisationSpecificData
+);
+export const organisationSpecificDataInsertSchema = createInsertSchema(
+  organisationSpecificData
+);
+export const organisationSpecificDataUpdateSchema = createUpdateSchema(
+  organisationSpecificData
+);
+
 // Table for team specific data
+
 export const teamSpecificData = pgBaseTable(
   "team_specific_data",
   {
@@ -146,6 +173,13 @@ export const teamSpecificData = pgBaseTable(
 
 export type TeamSpecificDataSelect = typeof teamSpecificData.$inferSelect;
 export type TeamSpecificDataInsert = typeof teamSpecificData.$inferInsert;
+
+export const teamSpecificDataSelectSchema =
+  createSelectSchema(teamSpecificData);
+export const teamSpecificDataInsertSchema =
+  createInsertSchema(teamSpecificData);
+export const teamSpecificDataUpdateSchema =
+  createUpdateSchema(teamSpecificData);
 
 export const teamSpecificDataRelations = relations(
   teamSpecificData,

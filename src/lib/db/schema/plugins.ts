@@ -10,6 +10,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { organisations } from "./users";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Plugins
 export const plugins = pgBaseTable(
@@ -44,3 +49,7 @@ export const plugins = pgBaseTable(
 export type PluginsSelect = typeof plugins.$inferSelect;
 export type PluginsInsert = typeof plugins.$inferInsert;
 export type PluginsUpdate = Partial<PluginsInsert>;
+
+export const pluginsSelectSchema = createSelectSchema(plugins);
+export const pluginsInsertSchema = createInsertSchema(plugins);
+export const pluginsUpdateSchema = createUpdateSchema(plugins);

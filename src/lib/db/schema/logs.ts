@@ -11,6 +11,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { organisations } from "./users";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-valibot";
 
 // Enum for the type of file source
 export const logLevelEnum = pgEnum("log_level", [
@@ -51,3 +56,7 @@ export const appLogs = pgBaseTable(
 
 export type AppLogsSelect = typeof appLogs.$inferSelect;
 export type AppLogsInsert = typeof appLogs.$inferInsert;
+
+export const appLogsSelectSchema = createSelectSchema(appLogs);
+export const appLogsInsertSchema = createInsertSchema(appLogs);
+export const appLogsUpdateSchema = createUpdateSchema(appLogs);
