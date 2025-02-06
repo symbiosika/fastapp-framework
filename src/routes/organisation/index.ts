@@ -15,6 +15,7 @@ import {
   getOrganisation,
   updateOrganisation,
   deleteOrganisation,
+  getOrganisationMembers,
 } from "../../lib/usermanagement/oganisations";
 
 const BASE_PATH = ""; // "/usermanagement";
@@ -62,6 +63,21 @@ export default function defineOrganisationRoutes(
           message: "Error getting organisation: " + err,
         });
       }
+    }
+  );
+
+  /**
+   * Get all members of an organisation
+   */
+  app.get(
+    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/members",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c: Context) => {
+      const userId = c.get("usersId");
+      const organisationId = c.req.param("organisationId");
+      const members = await getOrganisationMembers(userId, organisationId);
+      return c.json(members);
     }
   );
 

@@ -237,10 +237,13 @@ export const removeOrganisationMember = async (
 /**
  * Get all members of an organisation
  */
-export const getOrganisationMembers = async (organisationId: string) => {
+export const getOrganisationMembers = async (
+  userId: string,
+  organisationId: string
+) => {
   return await getDb()
     .select({
-      usersEmail: users.email,
+      userEmail: users.email,
       role: organisationMembers.role,
       joinedAt: organisationMembers.joinedAt,
     })
