@@ -41,7 +41,7 @@ export async function createChatSession(
 }
 
 /**
- * Retrieve a chat session by ID and organization ID.
+ * Retrieve a chat session by ID and organisation ID.
  */
 export async function getChatSession(
   id: string,
@@ -61,7 +61,7 @@ export async function getChatSession(
 }
 
 /**
- * Update an existing chat session by ID and organization ID.
+ * Update an existing chat session by ID and organisation ID.
  */
 export async function updateChatSession(
   id: string,
@@ -83,7 +83,7 @@ export async function updateChatSession(
 }
 
 /**
- * Delete a chat session by ID and organization ID.
+ * Delete a chat session by ID and organisation ID.
  */
 export async function deleteChatSession(
   id: string,
@@ -175,7 +175,7 @@ export async function createChatSessionGroup(
 }
 
 /**
- * Get a chat session group by ID and organization ID.
+ * Get a chat session group by ID and organisation ID.
  */
 export async function getChatSessionGroup(
   id: string,
@@ -230,7 +230,7 @@ export async function getChatSessionGroupsByUser(
 }
 
 /**
- * Update an existing chat session group by ID and organization ID.
+ * Update an existing chat session group by ID and organisation ID.
  * Only allows update if the user is a member of the group.
  */
 export async function updateChatSessionGroup(
@@ -272,7 +272,7 @@ export async function updateChatSessionGroup(
 }
 
 /**
- * Delete a chat session group by ID and organization ID.
+ * Delete a chat session group by ID and organisation ID.
  * Only allows deletion if the user is a member of the group.
  */
 export async function deleteChatSessionGroup(

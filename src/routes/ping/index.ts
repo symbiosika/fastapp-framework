@@ -18,6 +18,7 @@ export default function definePingRoute(app: FastAppHono, basePath: string) {
    */
   app.get(basePath + "/ping", async (c) => {
     let canConnectToInternet = false;
+    // console.log("ping");
     try {
       const response = await fetch("https://www.github.com");
       canConnectToInternet = response.ok;

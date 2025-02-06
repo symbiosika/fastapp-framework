@@ -498,6 +498,27 @@
       "when": 1738741379741,
       "tag": "0070_dizzy_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1738846642529,
+      "tag": "0071_flowery_captain_flint",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1738846944111,
+      "tag": "0072_strange_blackheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1738848120755,
+      "tag": "0073_smart_sumo",
+      "breakpoints": true
     }
   ]
 }

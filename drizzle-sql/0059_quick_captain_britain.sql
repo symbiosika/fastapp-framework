@@ -1,7 +1,7 @@
--- Insert a new organization named "DEFAULT"
+-- Insert a new organisation named "DEFAULT"
 INSERT INTO base_organisations (name, created_at, updated_at)
 VALUES ('DEFAULT', NOW(), NOW());
--- Get the ID of the newly created "DEFAULT" organization
+-- Get the ID of the newly created "DEFAULT" organisation
 DO $$
 DECLARE
     default_org_id UUID;
@@ -10,7 +10,7 @@ BEGIN
     -- Add all existing users to the DEFAULT organisation
     INSERT INTO base_organisation_members (user_id, organisation_id, role, joined_at)
     SELECT id, default_org_id, 'admin', NOW() FROM base_users;
-    -- Update all users to set their last_organisation_id to the "DEFAULT" organization
+    -- Update all users to set their last_organisation_id to the "DEFAULT" organisation
     UPDATE base_users
     SET last_organisation_id = default_org_id;
 END $$;--> statement-breakpoint
@@ -29,7 +29,7 @@ ALTER TABLE "base_jobs" ADD COLUMN "organisation_id" uuid;
 ALTER TABLE "base_plugins" ADD COLUMN "organisation_id" uuid;
 ALTER TABLE "base_app_logs" ADD COLUMN "organisation_id" uuid;
 
--- Get the ID of the "DEFAULT" organization
+-- Get the ID of the "DEFAULT" organisation
 DO $$
 DECLARE
     default_org_id UUID;

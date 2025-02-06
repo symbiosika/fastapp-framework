@@ -5,6 +5,7 @@ The Knowledge Texts API provides CRUD operations for managing knowledge text ent
 ## Data Types
 
 ### KnowledgeTextInsert
+
 ```typescript
 {
   organisationId: string;
@@ -18,6 +19,7 @@ The Knowledge Texts API provides CRUD operations for managing knowledge text ent
 ```
 
 ### KnowledgeTextSelect (Response Type)
+
 ```typescript
 {
   id: string;
@@ -36,13 +38,15 @@ The Knowledge Texts API provides CRUD operations for managing knowledge text ent
 ## API Endpoints
 
 ### Create Knowledge Text
+
 Creates a new knowledge text entry.
 
 **Endpoint:** `POST /api/v1/organisation/:organisationId/ai/knowledge/texts`
 **Auth:** Required  
-**Permissions:** User must have access to the organization
+**Permissions:** User must have access to the organisation
 
 **Request Body:**
+
 ```json
 {
   "organisationId": "uuid",
@@ -58,13 +62,15 @@ Creates a new knowledge text entry.
 **Response:** Returns the created knowledge text entry
 
 ### Read Knowledge Texts
+
 Retrieves knowledge text entries with optional filtering.
 
 **Endpoint:** `GET /api/v1/organisation/:organisationId/ai/knowledge/texts`  
 **Auth:** Required  
-**Permissions:** User must have access to the organization
+**Permissions:** User must have access to the organisation
 
 **Query Parameters:**
+
 - `id`: Optional specific entry ID
 - `limit`: Maximum number of entries (default: 10)
 - `page`: Page number for pagination (default: 1)
@@ -74,13 +80,15 @@ Retrieves knowledge text entries with optional filtering.
 **Response:** Returns an array of knowledge text entries
 
 ### Update Knowledge Text
+
 Updates an existing knowledge text entry.
 
 **Endpoint:** `PUT /api/v1/organisation/:organisationId/ai/knowledge/texts/:id`  
 **Auth:** Required  
-**Permissions:** User must have access to the organization and the specific entry
+**Permissions:** User must have access to the organisation and the specific entry
 
 **Request Body:**
+
 ```json
 {
   "organisationId": "uuid",
@@ -95,13 +103,15 @@ Updates an existing knowledge text entry.
 **Response:** Returns the updated knowledge text entry
 
 ### Delete Knowledge Text
+
 Deletes a knowledge text entry.
 
 **Endpoint:** `DELETE /api/v1/organisation/:organisationId/ai/knowledge/texts/:id`  
 **Auth:** Required  
-**Permissions:** User must have access to the organization and the specific entry
+**Permissions:** User must have access to the organisation and the specific entry
 
 **Response:**
+
 ```json
 {
   "success": true
@@ -109,6 +119,7 @@ Deletes a knowledge text entry.
 ```
 
 ## Access Control
+
 - Entries can be associated with specific users, teams, or workspaces
 - Public entries have null values for userId, teamId, and workspaceId
 - Users can only access entries that are either:
@@ -118,13 +129,16 @@ Deletes a knowledge text entry.
   - Assigned to their workspace
 
 ## Error Handling
+
 All endpoints return HTTP 400 with an error message if:
+
 - Required parameters are missing
 - Validation fails
 - Entry is not found
 - User lacks permission to access the entry
 
 Example error response:
+
 ```json
 {
   "message": "Knowledge text not found or access denied"

@@ -6,7 +6,7 @@ These endpoints allow you to manage organizations, teams, permissions, and invit
 
 ### Create Organization
 
-Creates a new organization.
+Creates a new organisation.
 
 ```http
 POST /api/v1/organisations
@@ -23,7 +23,7 @@ POST /api/v1/organisations
 
 ### Get Organization
 
-Retrieves a specific organization by ID.
+Retrieves a specific organisation by ID.
 
 ```http
 GET /api/v1/organisations/:organisationId
@@ -31,7 +31,7 @@ GET /api/v1/organisations/:organisationId
 
 ### Update Organization
 
-Updates an existing organization.
+Updates an existing organisation.
 
 ```http
 PUT /api/v1/organisations/:organisationId
@@ -48,7 +48,7 @@ PUT /api/v1/organisations/:organisationId
 
 ### Delete Organization
 
-Deletes an organization.
+Deletes an organisation.
 
 ```http
 DELETE /api/v1/organisations/:organisationId
@@ -58,7 +58,7 @@ DELETE /api/v1/organisations/:organisationId
 
 ### Create Team
 
-Creates a new team within an organization.
+Creates a new team within an organisation.
 
 ```http
 POST /api/v1//organisations/:organisationId/teams
@@ -77,7 +77,7 @@ POST /api/v1//organisations/:organisationId/teams
 
 ### Get Teams by Organization
 
-Retrieves all teams and their members for a specific organization.
+Retrieves all teams and their members for a specific organisation.
 
 ```http
 GET /api/v1/organisations/:organisationId/teams
@@ -259,7 +259,7 @@ DELETE /api/v1/organisations/:organisationId/permission-groups/:permissionGroupI
 
 ### Create Invitation
 
-Creates a new organization invitation.
+Creates a new organisation invitation.
 
 ```http
 POST /api/v1/organisations/:organisationId/invitations
@@ -276,7 +276,7 @@ POST /api/v1/organisations/:organisationId/invitations
 
 ### Get All Invitations
 
-Retrieves all organization invitations.
+Retrieves all organisation invitations.
 
 ```http
 GET /api/v1/organisations/:organisationId/invitations
@@ -284,7 +284,7 @@ GET /api/v1/organisations/:organisationId/invitations
 
 ### Accept Invitation
 
-Accepts an organization invitation.
+Accepts an organisation invitation.
 
 ```http
 POST /api/v1/organisations/:organisationId/invitations/:id/accept
@@ -294,7 +294,7 @@ Note: Use `id=all` to accept all pending invitations for the authenticated user.
 
 ### Decline Invitation
 
-Declines an organization invitation.
+Declines an organisation invitation.
 
 ```http
 POST /api/v1/organisations/:organisationId/invitations/:id/decline
@@ -312,7 +312,7 @@ GET /api/v1/user/my-organisations
 
 ### Get Last Organization
 
-Retrieves the last accessed organization for the authenticated user.
+Retrieves the last accessed organisation for the authenticated user.
 
 ```http
 GET /api/v1/user/last-organisation
@@ -320,7 +320,7 @@ GET /api/v1/user/last-organisation
 
 ### Set Last Organization
 
-Sets the last accessed organization for the authenticated user.
+Sets the last accessed organisation for the authenticated user.
 
 ```http
 POST /api/v1/user/set-last-organisation/:id
@@ -328,7 +328,7 @@ POST /api/v1/user/set-last-organisation/:id
 
 ### Get Organization Permission Groups
 
-Retrieves all permission groups for a specific organization.
+Retrieves all permission groups for a specific organisation.
 
 ```http
 GET /api/v1/organisations/:organisationId/permission-groups

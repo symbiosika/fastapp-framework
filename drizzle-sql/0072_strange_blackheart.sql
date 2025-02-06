@@ -1,0 +1,2 @@
+ALTER TABLE "base_webhooks" ADD COLUMN "user_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "base_webhooks" ADD CONSTRAINT "base_webhooks_user_id_base_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."base_users"("id") ON DELETE cascade ON UPDATE no action;

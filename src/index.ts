@@ -32,7 +32,7 @@ import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templat
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
-import { defineCollectionRoutes } from "./routes/collections";
+// import { defineCollectionRoutes } from "./routes/collections";
 import defineManageSecretsRoutes from "./routes/organisation/[organisationId]/secrets";
 import definePluginRoutes from "./routes/organisation/[organisationId]/plugins";
 import definePingRoute from "./routes/ping";
@@ -43,6 +43,8 @@ import scheduler from "./lib/cron";
 import { initializePluginCache } from "./lib/plugins";
 // Store
 import { _GLOBAL_SERVER_CONFIG, setGlobalServerConfig } from "./store";
+// Utils
+import { logApiRoutes } from "./lib/utils/log-api-routes";
 
 /**
  * services
@@ -58,6 +60,7 @@ import usermanagementService from "./usermanagement-service";
 import filesService from "./files-service";
 import middlewareService from "./middleware-service";
 import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
+import defineWebhookRoutes from "./routes/webhooks";
 
 /**
  * MAIN FUNCTION
@@ -101,7 +104,9 @@ export const defineServer = (config: ServerConfig) => {
    * Init the main Hono app
    */
   const app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+  app.use(logger());
   if (config.useConsoleLogger) {
+    console.log("Using console logger");
     app.use(logger());
   }
 
@@ -175,7 +180,14 @@ export const defineServer = (config: ServerConfig) => {
   definePluginRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
+   * Adds routes to manage webhooks
+   * Webhooks are used to trigger actions from external sources
+   */
+  defineWebhookRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
    * Adds payment routes if needed
+
    */
   if (_GLOBAL_SERVER_CONFIG.useStripe) {
     const paymentApp = new Hono();
@@ -275,12 +287,7 @@ export const defineServer = (config: ServerConfig) => {
   });
 
   // Log all registered endpoints
-  console.log("\n🛣️  Registered Routes:");
-  app.routes.forEach((route) => {
-    const method = route.method;
-    console.log(`${method.toUpperCase().padEnd(6)} ${route.path}`);
-  });
-  console.log(); // Empty line for better readability
+  // logApiRoutes(app);
 
   return {
     idleTimeout: 255,
