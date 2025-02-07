@@ -16,6 +16,7 @@ import {
   updateOrganisation,
   deleteOrganisation,
   getOrganisationMembers,
+  addOrganisationMember,
 } from "../../lib/usermanagement/oganisations";
 
 const BASE_PATH = ""; // "/usermanagement";
@@ -35,6 +36,8 @@ export default function defineOrganisationRoutes(
       try {
         const data = await c.req.json();
         const org = await createOrganisation(data);
+        // put the user in the organisation
+        await addOrganisationMember(org.id, c.get("usersId"), "admin");
         return c.json(org);
       } catch (err) {
         throw new HTTPException(500, {
