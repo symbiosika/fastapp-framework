@@ -42,6 +42,8 @@ import definePluginRoutes from "./routes/organisation/[organisationId]/plugins";
 import definePingRoute from "./routes/ping";
 import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
 import defineWebhookRoutes from "./routes/webhooks";
+import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
+
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
 
@@ -226,6 +228,7 @@ export const defineServer = (config: ServerConfig) => {
   aiKnowledgeRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
   aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
   aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+  defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Adds workspace routes

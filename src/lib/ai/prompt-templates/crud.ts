@@ -8,8 +8,8 @@ import {
   type PromptTemplatesInsert,
   promptTemplatePlaceholderExamples,
 } from "../../../lib/db/db-schema";
-import { getPromptTemplateDefinition } from ".";
 import { RESPONSES } from "../../responses";
+import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
 
 /**
  * Get all placeholders for one template as an object

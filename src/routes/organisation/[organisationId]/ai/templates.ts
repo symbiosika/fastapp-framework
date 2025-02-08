@@ -14,7 +14,7 @@ import {
   getTemplates,
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
-} from "../../../../lib/ai/generation/crud";
+} from "../../../../lib/ai/prompt-templates/crud";
 import type { FastAppHono } from "../../../../types";
 import { HTTPException } from "hono/http-exception";
 import { parseCommaSeparatedListFromUrlParam } from "../../../../lib/url";

@@ -1,9 +1,9 @@
-import { getDb } from "../db/db-connection";
+import { getDb } from "../../../lib/db/db-connection";
 import {
   chatSessionGroupAssignments,
   chatSessions,
   chatSessionGroups,
-} from "../db/schema/chat";
+} from "../../db/schema/chat";
 import { eq, and, desc, gte, lte, or, exists, inArray } from "drizzle-orm";
 import type {
   ChatSessionsInsert,
@@ -13,11 +13,12 @@ import type {
   ChatSessionGroupsSelect,
   ChatSessionGroupsUpdate,
   ChatSessionGroupAssignmentsSelect,
-} from "../db/schema/chat";
+} from "../../db/schema/chat";
 
 /**
  * Create a new chat session.
  */
+
 export async function createChatSession(
   data: ChatSessionsInsert
 ): Promise<ChatSessionsSelect> {

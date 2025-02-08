@@ -1,9 +1,3 @@
-import {
-  type UserChatMeta,
-  type PlaceholderArgumentDict,
-  type PlaceholderParser,
-  type VariableDictionaryInMemory,
-} from "magic-prompt";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
@@ -12,6 +6,12 @@ import { getMarkdownFromUrl } from "../parsing/url";
 import { getPromptSnippetByNameAndCategory } from "../prompt-snippets";
 import { getKnowledgeTextByTitle } from "../knowledge/knowledge-texts";
 import log from "../../log";
+import type {
+  ChatSessionContext,
+  PlaceholderArgumentDict,
+  ChatStoreVariables,
+  PlaceholderParser,
+} from "./chat-store";
 
 const isNumber = (value: unknown): number | null | undefined => {
   if (value && typeof value === "number" && !isNaN(value)) {
@@ -20,10 +20,7 @@ const isNumber = (value: unknown): number | null | undefined => {
   return null;
 };
 
-const getIndexValue = (
-  variables: VariableDictionaryInMemory,
-  indexName: string
-) => {
+const getIndexValue = (variables: ChatStoreVariables, indexName: string) => {
   if (
     !variables[indexName] ||
     typeof variables[indexName] !== "number" ||
@@ -35,7 +32,7 @@ const getIndexValue = (
 };
 
 const incrementIndexValue = (
-  variables: VariableDictionaryInMemory,
+  variables: ChatStoreVariables,
   indexName: string
 ) => {
   const ixValue = getIndexValue(variables, indexName);
@@ -51,8 +48,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ) => {
       if (!args.variable) {
         throw new Error(
@@ -72,8 +69,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -130,8 +127,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -196,8 +193,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -250,8 +247,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
@@ -273,8 +270,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ) => {
       console.log("parse prompt_snippet placeholder", args);
       const snippet = await getPromptSnippetByNameAndCategory({
@@ -294,8 +291,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ) => {
       const text = await getKnowledgeTextByTitle({
         title: args.title + "",
@@ -312,8 +309,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ) => {
       if (!args.variable) {
         throw new Error(
@@ -333,8 +330,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     replacerFunction: async (
       match: string,
       args: PlaceholderArgumentDict,
-      variables: VariableDictionaryInMemory,
-      meta: UserChatMeta
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
     ) => {
       // get name of the array variable
       if (!args.name) {

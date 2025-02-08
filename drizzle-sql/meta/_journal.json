@@ -533,6 +533,13 @@
       "when": 1738864443397,
       "tag": "0075_tan_drax",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1739012473026,
+      "tag": "0076_small_gunslinger",
+      "breakpoints": true
     }
   ]
 }

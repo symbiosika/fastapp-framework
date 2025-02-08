@@ -35,6 +35,9 @@ export const chatSessions = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    lastUsedAt: timestamp("last_used_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
   (chatSessions) => [
     index("chat_sessions_updated_at_idx").on(chatSessions.updatedAt),

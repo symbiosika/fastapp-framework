@@ -10,8 +10,7 @@ import {
   getPlainPlaceholdersForPromptTemplate,
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
-} from "./lib/ai/generation/crud";
-import { useTemplateChat } from "./lib/ai/generation";
+} from "./lib/ai/prompt-templates/crud";
 import { parseDocument } from "./lib/ai/parsing";
 import { extractKnowledgeFromExistingDbEntry } from "./lib/ai/knowledge/add-knowledge";
 import { getKnowledgeEntries } from "./lib/ai/knowledge/get-knowledge";
@@ -45,6 +44,7 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
+import { chatWithAgent } from "./lib/ai/chat";
 
 export default {
   // prompt templates
@@ -56,7 +56,7 @@ export default {
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
   // chat
-  useTemplateChat,
+  chatWithAgent,
   // knowledge
   parseDocument,
   extractKnowledgeFromExistingDbEntry,
