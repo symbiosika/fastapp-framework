@@ -7,8 +7,8 @@ import type {
   AgentOutput,
   Agent,
   AgentOptions,
+  AgentInputVariables,
 } from "../../types/agents";
-import type { ChatStoreVariables } from "../chat/chat-store";
 import {
   parseIntFromUnknown,
   parseStringFromUnknown,
@@ -19,17 +19,22 @@ export class LLMAgent implements Agent {
 
   async run(
     context: AgentContext,
-    inputs: ChatStoreVariables,
+    inputs: AgentInputVariables,
     options: AgentOptions
   ): Promise<AgentOutput> {
-    // The "default" input variable is "user_input", but your code can adapt:
+    // The "default" input variable is "user_input"
     const userInput = inputs.user_input ? inputs.user_input.toString() : "";
 
-    // Convert userInput into the messages (like you do in chatWithAgent):
-    // In your existing code, you have initChatMessage, etc.
-
-    const userMessage = initChatMessage(userInput, "user");
-    const replaced = await replaceVariables([userMessage], inputs);
+    const messages = inputs.messages ?? [];
+    // Only add the user message if it's not already the last message in the conversation
+    if (
+      messages.length === 0 ||
+      messages[messages.length - 1].role !== "user" ||
+      messages[messages.length - 1].content !== userInput
+    ) {
+      messages.push(initChatMessage(userInput, "user"));
+    }
+    const replaced = await replaceVariables(messages, inputs);
 
     // Possibly handle custom placeholders
     const { replacedMessages } = await replaceCustomPlaceholders(

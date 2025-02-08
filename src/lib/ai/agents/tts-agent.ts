@@ -3,15 +3,15 @@ import type {
   AgentContext,
   AgentOptions,
   AgentOutput,
+  AgentInputVariables,
 } from "../../types/agents";
-import type { ChatStoreVariables } from "../chat/chat-store";
 
 export class TTSAgent implements Agent {
   name = "ttsAgent";
 
   async run(
     context: AgentContext,
-    inputs: ChatStoreVariables,
+    inputs: AgentInputVariables,
     options: AgentOptions
   ): Promise<AgentOutput> {
     // The "default" input variable is "user_input", but your code can adapt:

@@ -12,6 +12,8 @@ import type {
   ChatStoreVariables,
   PlaceholderParser,
 } from "./chat-store";
+import { speechToText } from "../standard";
+import { getFileFromDb } from "../../storage/db";
 
 const isNumber = (value: unknown): number | null | undefined => {
   if (value && typeof value === "number" && !isNaN(value)) {
@@ -364,6 +366,64 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       // increment index
       incrementIndexValue(variables, ixName);
       return { content: val + "" };
+    },
+  },
+  {
+    name: "stt",
+    replacerFunction: async (
+      match: string,
+      args: PlaceholderArgumentDict,
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+    }> => {
+      if (!args.id) {
+        throw new Error("id parameter is required for stt placeholder");
+      }
+
+      const fileSource = (args.source || "db") as FileSourceType;
+      const bucket = args.bucket ? args.bucket + "" : "default";
+      const id = args.id + "";
+      const organisationId = args.organisationId
+        ? args.organisationId + ""
+        : "";
+
+      // Get file from storage
+      const file = await getFileFromDb(id, bucket, organisationId).catch(
+        (e) => {
+          log.error("Error getting file", e);
+          return null;
+        }
+      );
+
+      if (!file) {
+        log.error("File not found", id);
+        return { content: "" };
+      }
+
+      // Check if file is an audio file
+      if (!file.type?.startsWith("audio/")) {
+        log.error("File is not an audio file", file.type);
+        return { content: "" };
+      }
+
+      // Convert speech to text
+      const transcription = await speechToText({
+        file: file,
+        returnSegments: false,
+        returnWords: false,
+      }).catch((e) => {
+        log.error("Error transcribing audio", e);
+        return null;
+      });
+
+      if (!transcription) {
+        return { content: "" };
+      }
+
+      return { content: transcription.text };
     },
   },
 ];

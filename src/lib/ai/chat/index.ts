@@ -2,14 +2,14 @@
  * A lib to control chat flows
  */
 import * as v from "valibot";
-import type { ChatSession } from "./chat-store";
+import type { ChatMessage, ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
 import type { ChatWithTemplateReturn } from "../../../types";
 import { LLMAgent } from "../agents/llm-agent";
 import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
-import type { Agent } from "../../types/agents";
+import type { Agent, AgentInputVariables } from "../../types/agents";
 import { LLMOptions } from "../../db/db-schema";
 
 const chatInitValidation = v.object({
@@ -75,7 +75,8 @@ const initChatSession = async (
   }
 
   // if the session was not found or the chatId is not provided -> create a new chat
-  if (!session || !query.chatId) {
+  // also if the session is empty, we need to create the initial messages etc.
+  if (!session || !query.chatId || (session && session.messages.length === 0)) {
     // Init the Agent System Prompt
     const agentTemplate = await initAgentsSystemPrompt(
       query.userId,
@@ -83,10 +84,7 @@ const initChatSession = async (
       query.initiateTemplate ?? {}
     );
     // set as message
-    const initialMessage = await initChatMessage(
-      agentTemplate.template,
-      "system"
-    );
+    const initialMessage = initChatMessage(agentTemplate.template, "system");
 
     // merge the llmOptions from the user with the llmOptions from the template
     llmOptions = {
@@ -106,16 +104,40 @@ const initChatSession = async (
       variables = { ...variables, userMessage: query.userMessage };
     }
 
-    session = await chatStore.create({
-      messages: [initialMessage],
-      variables,
-      context: {
-        userId: query.userId,
-        organisationId: query.organisationId,
-        chatSessionGroupId: query.chatSessionGroupId,
+    if (!session) {
+      // create a new session in the db
+      session = await chatStore.create({
+        messages: [initialMessage],
+        variables,
+        context: {
+          userId: query.userId,
+          organisationId: query.organisationId,
+          chatSessionGroupId: query.chatSessionGroupId,
+        },
+      });
+      isNewSession = true;
+    } else {
+      // update the session in the db for existing but empty sessions
+      session = await chatStore.set(session.id, {
+        messages: [initialMessage],
+        state: {
+          ...session.state,
+          variables,
+        },
+      });
+    }
+  }
+  // update the session in the db for existing sessions and is not empty
+  else {
+    session = await chatStore.set(session.id, {
+      state: {
+        ...session.state,
+        variables: {
+          ...session.state.variables,
+          ...(query.variables ?? {}),
+        },
       },
     });
-    isNewSession = true;
   }
 
   return { session, isNewSession, llmOptions };
@@ -129,7 +151,13 @@ export const chatWithAgent = async (query: unknown) => {
   const { session, isNewSession, llmOptions } =
     await initChatSession(parsedQuery);
 
-  // Use the LLMAgent directly
+  // Determine the current user input from the session state
+  const newUserInput = session.state.variables["userMessage"] ?? "";
+
+  // Create a shallow copy of the current chat messages
+  let messages = [...session.messages];
+
+  // Use the LLMAgent directly, passing the full chat history
   const llmAgent = agents.llmAgent;
   const result = await llmAgent.run(
     {
@@ -138,24 +166,25 @@ export const chatWithAgent = async (query: unknown) => {
       chatSessionGroupId: parsedQuery.chatSessionGroupId,
     },
     {
-      user_input: session.state.variables["userMessage"] ?? "",
+      user_input: newUserInput,
+      messages,
       ...(parsedQuery.variables ?? {}),
-    },
+    } as unknown as AgentInputVariables,
     llmOptions
   );
 
   // Convert agent output to chat message
   const resultMessage = initChatMessage(result.outputs.default, "assistant");
 
-  // Update session with new message
-  const messages = [...session.messages, resultMessage];
+  // Add the assistant's response to the messages array
+  messages.push(resultMessage);
 
   // Create headline for new sessions
   if (isNewSession) {
     session.name = await createHeadlineFromChat(messages);
   }
 
-  // Save to chat store
+  // Save to chat store with the updated messages and state
   await chatStore.set(session.id, {
     messages,
     name: session.name,
@@ -176,4 +205,34 @@ export const chatWithAgent = async (query: unknown) => {
       type: "markdown",
     },
   };
+};
+
+/**
+ * Create an empty chat session
+ */
+export const createEmptySession = async (input: {
+  userId: string;
+  organisationId: string;
+  chatId?: string;
+  chatSessionGroupId?: string;
+}): Promise<{ chatId: string }> => {
+  if (input.chatId) {
+    const exists = await chatStore.checkIfSessionExists(input.chatId);
+    if (exists) {
+      return { chatId: input.chatId };
+    }
+  }
+
+  const session = await chatStore.create({
+    chatId: input.chatId,
+    messages: [],
+    variables: {},
+    context: {
+      userId: input.userId,
+      organisationId: input.organisationId,
+      chatSessionGroupId: input.chatSessionGroupId,
+    },
+  });
+
+  return { chatId: session.id };
 };

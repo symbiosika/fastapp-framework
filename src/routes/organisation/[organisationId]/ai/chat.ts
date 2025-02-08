@@ -11,8 +11,9 @@ import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
-import { chatWithAgent } from "../../../../lib/ai/chat";
+import { chatWithAgent, createEmptySession } from "../../../../lib/ai/chat";
 import { chatStore } from "../../../../lib/ai/chat/chat-store";
+import * as v from "valibot";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -109,6 +110,41 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       // const organisationId = c.req.param("organisationId");
       await chatStore.drop(id);
       return c.json(RESPONSES.SUCCESS);
+    }
+  );
+
+  /**
+   * Create an empty chat session
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/ensure-session",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const parsedBody = v.parse(
+          v.object({
+            chatId: v.string(),
+            chatSessionGroupId: v.optional(v.string()),
+          }),
+          body
+        );
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+
+        const session = await createEmptySession({
+          userId: usersId,
+          organisationId,
+          chatId: body.chatId,
+          chatSessionGroupId: body.chatSessionGroupId,
+        });
+        return c.json(session);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
     }
   );
 }

@@ -113,6 +113,16 @@ class ChatHistoryStoreInDb {
     return session[0] as ChatSession;
   }
 
+  async checkIfSessionExists(chatId: string): Promise<boolean> {
+    const session = await getDb()
+      .select({
+        id: chatSessions.id,
+      })
+      .from(chatSessions)
+      .where(eq(chatSessions.id, chatId));
+    return session.length > 0;
+  }
+
   async get(chatId: string): Promise<ChatSession | null> {
     try {
       // update and get the last used at date

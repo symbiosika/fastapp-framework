@@ -1,6 +1,18 @@
-import type { ChatStoreVariables } from "../ai/chat/chat-store";
+import type {
+  ChatMessage,
+  ChatStoreVariables,
+  VariableType,
+} from "../ai/chat/chat-store";
 
-export type AgentOutputVariables = ChatStoreVariables & {
+export type AgentInputVariables = {
+  [key: string]: VariableType | string | undefined;
+} & {
+  messages?: ChatMessage[];
+};
+
+export type AgentOutputVariables = {
+  [key: string]: VariableType | string | undefined;
+} & {
   default: string;
 };
 
@@ -14,7 +26,7 @@ export type AgentOptions = Record<string, SimpleVariableType>;
  * - context: execution context such as userId, organisationId, etc.
  * - inputs: a dictionary of input values
  * - options: a dictionary of options
- * 
+ *
  * It returns a promise with an output dictionary
  * that can contain text, audio URLs, or any other data.
  */
@@ -22,11 +34,11 @@ export interface Agent {
   name: string; // e.g. "llmAgent", "ttsAgent", etc.
 
   /**
-   * Executes the agent’s functionality.
+   * Executes the agent's functionality.
    */
   run(
     context: AgentContext,
-    inputs: ChatStoreVariables,
+    inputs: AgentInputVariables,
     options: AgentOptions
   ): Promise<AgentOutput>;
 }
