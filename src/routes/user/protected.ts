@@ -307,15 +307,19 @@ export function defineSecuredUserRoutes(
   /**
    * Refresh the own token
    */
-  app.post(API_BASE_PATH + "/user/refresh-token", async (c: Context) => {
-    try {
-      const userId = c.get("usersId");
-      const newTokenData = await LocalAuth.refreshToken(userId);
-      return c.json(newTokenData);
-    } catch (error) {
-      throw new HTTPException(401, {
-        message: "Token-Refresh fehlgeschlagen: " + error,
-      });
+  app.get(
+    API_BASE_PATH + "/user/refresh-token",
+    authAndSetUsersInfo,
+    async (c: Context) => {
+      try {
+        const userId = c.get("usersId");
+        const newTokenData = await LocalAuth.refreshToken(userId);
+        return c.json(newTokenData);
+      } catch (error) {
+        throw new HTTPException(401, {
+          message: "Token-Refresh fehlgeschlagen: " + error,
+        });
+      }
     }
-  });
+  );
 }
