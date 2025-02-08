@@ -4,7 +4,7 @@ import type {
   AgentOptions,
   AgentOutput,
 } from "../../types/agents";
-import { ChatStoreVariables } from "../chat/chat-store";
+import type { ChatStoreVariables } from "../chat/chat-store";
 
 export class TTSAgent implements Agent {
   name = "ttsAgent";

@@ -1,5 +1,5 @@
 import type { AgentContext, Agent, AgentOptions } from "../../types/agents";
-import { ChatStoreVariables } from "../chat/chat-store";
+import type { ChatStoreVariables } from "../chat/chat-store";
 
 export interface FlowStep {
   // Which agent to call

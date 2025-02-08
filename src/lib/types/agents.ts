@@ -1,4 +1,4 @@
-import { ChatStoreVariables } from "../ai/chat/chat-store";
+import type { ChatStoreVariables } from "../ai/chat/chat-store";
 
 export type AgentOutputVariables = ChatStoreVariables & {
   default: string;

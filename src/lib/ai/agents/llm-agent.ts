@@ -8,7 +8,7 @@ import type {
   Agent,
   AgentOptions,
 } from "../../types/agents";
-import { ChatStoreVariables } from "../chat/chat-store";
+import type { ChatStoreVariables } from "../chat/chat-store";
 import {
   parseIntFromUnknown,
   parseStringFromUnknown,

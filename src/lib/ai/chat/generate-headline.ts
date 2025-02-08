@@ -1,6 +1,7 @@
 import { generateLongText } from "../standard";
 import log from "../../log";
-import { ChatMessage } from "./chat-store";
+import type { ChatMessage } from "./chat-store";
+
 
 /**
  * Create a headline from a chat
