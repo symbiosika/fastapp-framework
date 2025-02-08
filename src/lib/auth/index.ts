@@ -88,8 +88,6 @@ const setUserInDb = async (
 };
 
 export const generateJwt = async (user: UsersEntity, expiresIn: number) => {
-  // use same keys as Auth0 here
-
   const token = jwt.sign(
     { email: user.email, sub: user.id, symbiosika: { roles: [] } },
     JWT_PRIVATE_KEY,
@@ -199,5 +197,17 @@ export const LocalAuth = {
     newPassword: string
   ) {
     return await changePassword(email, oldPassword, newPassword);
+  },
+
+  async refreshToken(userId: string) {
+    const user = await getDb().select().from(users).where(eq(users.id, userId));
+    if (!user || user.length === 0) {
+      throw "User not found";
+    }
+    const { token, expiresAt } = await generateJwt(
+      user[0],
+      _GLOBAL_SERVER_CONFIG.jwtExpiresAfter
+    );
+    return { token, expiresAt };
   },
 };
