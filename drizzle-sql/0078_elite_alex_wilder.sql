@@ -1,0 +1,1 @@
+ALTER TABLE "base_prompt_templates" ALTER COLUMN "llm_options" SET DEFAULT '{}'::jsonb;

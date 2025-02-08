@@ -547,6 +547,13 @@
       "when": 1739032088878,
       "tag": "0077_tan_young_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1739032393357,
+      "tag": "0078_elite_alex_wilder",
+      "breakpoints": true
     }
   ]
 }

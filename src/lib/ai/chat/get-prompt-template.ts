@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { promptTemplates } from "../../../lib/db/db-schema";
+import { LLMOptions, promptTemplates } from "../../../lib/db/db-schema";
 import { eq, and } from "drizzle-orm";
 import type { ChatMessageRole } from "./chat-store";
 import type { ChatMessage } from "./chat-store";
@@ -10,6 +10,7 @@ export type AgentSystemPrompt = {
   category: string;
   label: string;
   template: string;
+  llmOptions: LLMOptions;
   langCode: string | null;
   needsInitialCall: boolean;
   promptTemplatePlaceholders: {
@@ -129,6 +130,7 @@ export const initAgentsSystemPrompt = async (
     return {
       id: "",
       name: "",
+      llmOptions: {},
       category: "",
       label: "",
       template: `You are a helpful assistant and will help the user with his questions. You will answer to everything. Your answer will be in the language of the user.`,
@@ -155,6 +157,7 @@ export const initAgentsSystemPrompt = async (
           defaultValue: placeholder.defaultValue,
         })
       ),
+      llmOptions: promptTemplate.llmOptions ?? {},
     };
 };
 

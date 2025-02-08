@@ -10,6 +10,7 @@ import { LLMAgent } from "../agents/llm-agent";
 import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { Agent } from "../../types/agents";
+import { LLMOptions } from "../../db/db-schema";
 
 const chatInitValidation = v.object({
   userId: v.string(),
@@ -59,9 +60,14 @@ const flowEngine = new FlowEngine(agents);
  */
 const initChatSession = async (
   query: ChatInitInput
-): Promise<{ session: ChatSession; isNewSession: boolean }> => {
+): Promise<{
+  session: ChatSession;
+  isNewSession: boolean;
+  llmOptions: LLMOptions;
+}> => {
   let session: ChatSession | null = null;
   let isNewSession = false;
+  let llmOptions: LLMOptions = {};
 
   // if a chatId is provided -> try get the chat
   if (query.chatId) {
@@ -82,9 +88,16 @@ const initChatSession = async (
       "system"
     );
 
+    // merge the llmOptions from the user with the llmOptions from the template
+    llmOptions = {
+      ...(query.llmOptions ?? {}),
+      ...(agentTemplate.llmOptions ?? {}),
+    };
+
     let variables = {
       ...(query.variables ?? {}),
     };
+
     // replace the main user message
     if (query.variables?.user_input) {
       variables = { ...variables, userMessage: query.variables.user_input };
@@ -105,7 +118,7 @@ const initChatSession = async (
     isNewSession = true;
   }
 
-  return { session, isNewSession };
+  return { session, isNewSession, llmOptions };
 };
 
 // Keep existing chatWithAgent function, but internally use LLMAgent
@@ -113,7 +126,8 @@ export const chatWithAgent = async (query: unknown) => {
   const parsedQuery = v.parse(chatInitValidation, query);
 
   // Initialize session as before
-  const { session, isNewSession } = await initChatSession(parsedQuery);
+  const { session, isNewSession, llmOptions } =
+    await initChatSession(parsedQuery);
 
   // Use the LLMAgent directly
   const llmAgent = agents.llmAgent;
@@ -125,9 +139,9 @@ export const chatWithAgent = async (query: unknown) => {
     },
     {
       user_input: session.state.variables["userMessage"] ?? "",
-      ...parsedQuery.llmOptions,
+      ...(parsedQuery.variables ?? {}),
     },
-    parsedQuery.llmOptions ?? {}
+    llmOptions
   );
 
   // Convert agent output to chat message
