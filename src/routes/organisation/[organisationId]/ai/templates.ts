@@ -31,38 +31,13 @@ import {
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
 import * as v from "valibot";
-
-// Validation for template
-const addPromptTemplateSchema = v.object({
-  name: v.pipe(v.string(), v.minLength(1)),
-  organisationId: v.string(),
-  template: v.string(),
-  label: v.pipe(v.string(), v.minLength(1)),
-  description: v.pipe(v.string(), v.minLength(0)),
-  hidden: v.boolean(),
-  createdAt: v.optional(v.string()),
-  updatedAt: v.optional(v.string()),
-  userId: v.nullable(v.optional(v.string())),
-  category: v.optional(v.string()),
-  langCode: v.nullable(v.optional(v.string())),
-  needsInitialCall: v.boolean(),
-});
-
-// validation for template placeholders
-const addPromptTemplatePlaceholderSchema = v.object({
-  name: v.pipe(v.string(), v.minLength(1)),
-  label: v.pipe(v.string(), v.minLength(1)),
-  description: v.pipe(v.string(), v.minLength(0)),
-  hidden: v.boolean(),
-  promptTemplateId: v.string(),
-  type: v.picklist(["image", "text"] as const),
-  requiredByUser: v.boolean(),
-  defaultValue: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
-  suggestions: v.optional(v.array(v.string())),
-});
+import {
+  promptTemplatePlaceholdersInsertSchema,
+  promptTemplatesInsertSchema,
+} from "../../../../dbSchema";
 
 const updatePromptTemplatePlaceholderSchema = v.intersect([
-  addPromptTemplateSchema,
+  promptTemplatesInsertSchema,
   v.object({
     id: v.string(),
   }),
@@ -122,7 +97,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const body = await c.req.json();
         const organisationId = c.req.param("organisationId");
-        const validatedBody = v.parse(addPromptTemplateSchema, body);
+        const validatedBody = v.parse(promptTemplatesInsertSchema, body);
 
         if (organisationId !== validatedBody.organisationId) {
           throw new HTTPException(400, {
@@ -226,7 +201,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const promptTemplateId = c.req.param("promptTemplateId");
         const body = await c.req.json();
-        const validatedBody = v.parse(addPromptTemplatePlaceholderSchema, body);
+        const validatedBody = v.parse(
+          promptTemplatePlaceholdersInsertSchema,
+          body
+        );
         const r = await addPromptTemplatePlaceholder({
           ...validatedBody,
           promptTemplateId,
