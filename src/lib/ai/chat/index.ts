@@ -2,19 +2,19 @@
  * A lib to control chat flows
  */
 import * as v from "valibot";
-import type { ChatMessage, ChatSession } from "./chat-store";
+import type { ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
-import { replaceCustomPlaceholders, replaceVariables } from "./replacer";
-import { customAppPlaceholders } from "../chat/custom-placeholders";
-import { generateLongText } from "../standard";
 import type { ChatWithTemplateReturn } from "../../../types";
-
-import log from "../../log";
+import { LLMAgent } from "../agents/llm-agent";
+import { FlowEngine } from "../agents/flow";
+import { createHeadlineFromChat } from "./generate-headline";
+import type { Agent } from "../../types/agents";
 
 const chatInitValidation = v.object({
   userId: v.string(),
   organisationId: v.string(),
+
   chatId: v.optional(v.string()),
   chatSessionGroupId: v.optional(v.string()),
   initiateTemplate: v.optional(
@@ -45,10 +45,19 @@ const chatInitValidation = v.object({
 });
 type ChatInitInput = v.InferOutput<typeof chatInitValidation>;
 
+// Initialize available agents
+const agents: Record<string, Agent> = {
+  llmAgent: new LLMAgent(),
+};
+const flowEngine = new FlowEngine(agents);
+
 /**
- * Initialize a (agent) chat session
+ * Initialize a chat session with an optionaltemplate
+ * Will check if the chat already exists, and if not, will create a new one
+ * If the user has given a promptName or promptId,
+ * it will be used to initiate the chat with the template as system prompt
  */
-const initSession = async (
+const initChatSession = async (
   query: ChatInitInput
 ): Promise<{ session: ChatSession; isNewSession: boolean }> => {
   let session: ChatSession | null = null;
@@ -99,109 +108,58 @@ const initSession = async (
   return { session, isNewSession };
 };
 
-/**
- * Create a headline from a chat
- */
-const createHeadlineFromChat = async (messages: ChatMessage[]) => {
-  try {
-    const chat = [
-      {
-        role: "system",
-        content: `You are a helpful assistant that creates small headlines from chats.
-      The headline should be a short description of the chat.
-      The headline should be in the language of the chat.
-      The headline should be no longer than 100 characters.
-      `,
-      },
-      // all messages but not the first one
-      ...messages.slice(1),
-      {
-        role: "user",
-        content: `Create the headline for the given chat. No other text than the headline.`,
-      },
-    ];
-    const headline = await generateLongText(chat as any, {
-      maxTokens: 100,
-      model: "openai:gpt-4o-mini",
-      temperature: 0,
-      outputType: "text",
-    });
-    return headline.text;
-  } catch (error) {
-    log.error(error + "");
-    throw new Error("Failed to create headline from chat");
-  }
-};
-
-/**
- * Chat with an agent
- */
-export const chatWithAgent = async (query: ChatInitInput) => {
-  // check input
+// Keep existing chatWithAgent function, but internally use LLMAgent
+export const chatWithAgent = async (query: unknown) => {
   const parsedQuery = v.parse(chatInitValidation, query);
-  // create context
-  const context = {
-    userId: parsedQuery.userId,
-    organisationId: parsedQuery.organisationId,
-    chatSessionGroupId: parsedQuery.chatSessionGroupId,
-  };
-  // init the session
-  const { session, isNewSession } = await initSession(parsedQuery);
 
-  // append the user message to the session
-  const usersMessage = initChatMessage(
-    session.state.variables["userMessage"] ?? "",
-    "user"
-  );
-  const messages = [...session.messages, usersMessage];
+  // Initialize session as before
+  const { session, isNewSession } = await initChatSession(parsedQuery);
 
-  // replace all placeholders
-  const replacedWithVariables = await replaceVariables(
-    messages,
-    session.state.variables
+  // Use the LLMAgent directly
+  const llmAgent = agents.llmAgent;
+  const result = await llmAgent.run(
+    {
+      userId: parsedQuery.userId,
+      organisationId: parsedQuery.organisationId,
+      chatSessionGroupId: parsedQuery.chatSessionGroupId,
+    },
+    {
+      user_input: session.state.variables["userMessage"] ?? "",
+      ...parsedQuery.llmOptions,
+    },
+    parsedQuery.llmOptions ?? {}
   );
 
-  // replace other custom placeholders
-  const { replacedMessages, skipThisBlock } = await replaceCustomPlaceholders(
-    replacedWithVariables,
-    customAppPlaceholders,
-    session.state.variables,
-    context
-  );
+  // Convert agent output to chat message
+  const resultMessage = initChatMessage(result.outputs.default, "assistant");
 
-  // execute LLM
-  const llmResult = await generateLongText(replacedMessages as any, {
-    maxTokens: parsedQuery.llmOptions?.maxTokens,
-    model: parsedQuery.llmOptions?.model,
-    temperature: parsedQuery.llmOptions?.temperature,
-    outputType: "text",
-  });
-  const resultMessage = initChatMessage(llmResult.text, "assistant");
-  messages.push(resultMessage);
+  // Update session with new message
+  const messages = [...session.messages, resultMessage];
 
-  // if this is a new session we need to create a headline
+  // Create headline for new sessions
   if (isNewSession) {
-    const headline = await createHeadlineFromChat(messages);
-    session.name = headline;
+    session.name = await createHeadlineFromChat(messages);
   }
 
-  // save the session
+  // Save to chat store
   await chatStore.set(session.id, {
     messages,
     name: session.name,
     state: session.state,
   });
 
-  const result = <ChatWithTemplateReturn>{
+  return <ChatWithTemplateReturn>{
     chatId: session.id,
     message: resultMessage,
-    meta: context,
+    meta: {
+      userId: parsedQuery.userId,
+      organisationId: parsedQuery.organisationId,
+      chatSessionGroupId: parsedQuery.chatSessionGroupId,
+    },
     finished: true,
-    llmOptions: query.llmOptions,
+    llmOptions: parsedQuery.llmOptions,
     render: {
       type: "markdown",
     },
   };
-
-  return result;
 };
