@@ -540,6 +540,13 @@
       "when": 1739012473026,
       "tag": "0076_small_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1739032088878,
+      "tag": "0077_tan_young_avengers",
+      "breakpoints": true
     }
   ]
 }

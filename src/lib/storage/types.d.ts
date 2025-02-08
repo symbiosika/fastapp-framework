@@ -2,10 +2,15 @@ export interface SaveFileFunction {
   (
     file: File,
     bucket: string,
-    organisationId: string
+    organisationId: string,
+    options?: {
+      chatId?: string;
+      workspaceId?: string;
+    }
   ): Promise<{
     path: string;
     id: string;
+    name: string;
     organisationId: string;
   }>;
 }

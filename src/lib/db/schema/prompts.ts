@@ -2,6 +2,7 @@ import { getTableColumns, sql } from "drizzle-orm";
 import {
   boolean,
   index,
+  jsonb,
   pgEnum,
   text,
   timestamp,
@@ -18,6 +19,13 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
+
+export type LLMOptions = {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  outputType: "text" | "json" | "image" | "audio";
+};
 
 // Table to store LLM Prompt templates
 export const promptTemplates = pgBaseTable(
@@ -42,6 +50,7 @@ export const promptTemplates = pgBaseTable(
       .notNull(),
     hidden: boolean("hidden").notNull().default(false),
     needsInitialCall: boolean("needs_initial_call").notNull().default(false),
+    llmOptions: jsonb("llm_options").$type<LLMOptions>(),
     // metadata
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()

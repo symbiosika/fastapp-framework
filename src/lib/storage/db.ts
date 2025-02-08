@@ -2,9 +2,9 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import { files } from "../db/schema/files";
 import type {
-  SaveFileFunction,
   DeleteFileFunction,
   GetFileFunction,
+  SaveFileFunction,
 } from "./types";
 
 const getIdFromFileName = (fileName: string) => {
@@ -14,7 +14,8 @@ const getIdFromFileName = (fileName: string) => {
 export const saveFileToDb: SaveFileFunction = async (
   file,
   bucket,
-  organisationId
+  organisationId,
+  options
 ) => {
   try {
     // Convert the file to a buffer
@@ -31,6 +32,8 @@ export const saveFileToDb: SaveFileFunction = async (
       fileType: file.type,
       file: fileBuffer,
       extension: fileExtension,
+      chatId: options?.chatId,
+      workspaceId: options?.workspaceId,
     };
 
     // Insert the file into the database

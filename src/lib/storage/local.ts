@@ -29,6 +29,7 @@ export const saveFileToLocalDisc: SaveFileFunction = async (
   return {
     path: `/api/v1/organisation/${organisationId}/files/local/${bucket}/${id}.${file.name.split(".").pop()}`,
     id: id,
+    name: fileName,
     organisationId: organisationId,
   };
 };

@@ -39,11 +39,25 @@ export const FileHandler = {
       const form = await c.req.formData();
       const file = form.get("file") as File;
 
+      // Get optional chatId and workspaceId from form data
+      const chatId = form.get("chatId")?.toString();
+      const workspaceId = form.get("workspaceId")?.toString();
+
+      const options = {
+        ...(chatId && { chatId }),
+        ...(workspaceId && { workspaceId }),
+      };
+
       if (type === "db") {
-        const entry = await saveFileToDb(file, bucket, organisationId);
+        const entry = await saveFileToDb(file, bucket, organisationId, options);
         return c.json(entry);
       } else if (type === "local") {
-        const entry = await saveFileToLocalDisc(file, bucket, organisationId);
+        const entry = await saveFileToLocalDisc(
+          file,
+          bucket,
+          organisationId,
+          options
+        );
         return c.json(entry);
       }
     } catch (err) {

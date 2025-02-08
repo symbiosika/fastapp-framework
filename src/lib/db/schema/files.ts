@@ -4,6 +4,7 @@ import {
   timestamp,
   customType,
   index,
+  text,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -13,6 +14,8 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
+import { workspaces } from "./workspaces";
+import { chatSessions } from "./chat";
 
 const bytea = customType<{
   data: Buffer;
@@ -47,6 +50,13 @@ export const files = pgBaseTable(
     extension: varchar("extension", { length: 255 }).notNull(),
     file: bytea("file").notNull(),
     expiresAt: timestamp("expires_at", { mode: "string" }),
+    // reference on chat and workspace to drop files automatically
+    chatId: text("chat_id").references(() => chatSessions.id, {
+      onDelete: "cascade",
+    }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
   },
   (table) => [
     index("files_id_idx").on(table.id),
@@ -55,6 +65,8 @@ export const files = pgBaseTable(
     index("files_updated_at_idx").on(table.updatedAt),
     index("files_name_idx").on(table.name),
     index("files_expires_at_idx").on(table.expiresAt),
+    index("files_chat_id_idx").on(table.chatId),
+    index("files_workspace_id_idx").on(table.workspaceId),
   ]
 );
 
