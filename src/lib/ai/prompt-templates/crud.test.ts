@@ -29,8 +29,11 @@ describe("Prompt Template CRUD Operations", () => {
     prompt: "This is a test prompt",
     description: "Test description",
     hidden: false,
-    template: "This is a test template",
+    systemPrompt: "This is a test template",
+    userPrompt: null,
     langCode: "en",
+    needsInitialCall: false,
+    llmOptions: {},
   };
   let createdTemplateId: string;
 
@@ -80,10 +83,15 @@ describe("Prompt Template Placeholders CRUD Operations", () => {
     name: "Test Template",
     category: "test",
     prompt: "Test prompt",
-    template: "Test prompt",
+    systemPrompt: "Test prompt",
+    userPrompt: null,
+    langCode: "en",
+    needsInitialCall: false,
+    llmOptions: {},
     hidden: false,
   };
   let templateId: string;
+
   let placeholderId: string;
 
   // Setup: Create a template first

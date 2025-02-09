@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { LLMOptions, promptTemplates } from "../../../lib/db/db-schema";
+import { type LLMOptions, promptTemplates } from "../../../lib/db/db-schema";
 import { eq, and } from "drizzle-orm";
 import type { ChatMessageRole } from "./chat-store";
 import type { ChatMessage } from "./chat-store";
@@ -9,7 +9,8 @@ export type AgentSystemPrompt = {
   name: string;
   category: string;
   label: string;
-  template: string;
+  systemPrompt: string;
+  userPrompt: string | null;
   llmOptions: LLMOptions;
   langCode: string | null;
   needsInitialCall: boolean;
@@ -133,7 +134,8 @@ export const initAgentsSystemPrompt = async (
       llmOptions: {},
       category: "",
       label: "",
-      template: `You are a helpful assistant and will help the user with his questions. You will answer to everything. Your answer will be in the language of the user.`,
+      systemPrompt: `You are a helpful assistant and will help the user with his questions. You will answer to everything. Your answer will be in the language of the user.`,
+      userPrompt: null,
       langCode: null,
       needsInitialCall: false,
       promptTemplatePlaceholders: [],
@@ -144,7 +146,8 @@ export const initAgentsSystemPrompt = async (
       name: promptTemplate.name,
       category: promptTemplate.category,
       label: promptTemplate.label,
-      template: promptTemplate.template,
+      systemPrompt: promptTemplate.systemPrompt,
+      userPrompt: promptTemplate.userPrompt,
       langCode: promptTemplate.langCode,
       needsInitialCall: promptTemplate.needsInitialCall,
       promptTemplatePlaceholders: promptTemplate.promptTemplatePlaceholders.map(

@@ -28,12 +28,14 @@ export class LLMAgent implements Agent {
     const messages = inputs.messages ?? [];
     // Only add the user message if it's not already the last message in the conversation
     if (
-      messages.length === 0 ||
-      messages[messages.length - 1].role !== "user" ||
-      messages[messages.length - 1].content !== userInput
+      !inputs.messagesIncludeUserPrompt &&
+      (messages.length === 0 ||
+        messages[messages.length - 1].role !== "user" ||
+        messages[messages.length - 1].content !== userInput)
     ) {
       messages.push(initChatMessage(userInput, "user"));
     }
+
     const replaced = await replaceVariables(messages, inputs);
 
     // Possibly handle custom placeholders

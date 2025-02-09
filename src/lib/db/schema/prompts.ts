@@ -39,10 +39,12 @@ export const promptTemplates = pgBaseTable(
     description: text("description").notNull().default(""),
     // optional type (short string) to group prompts
     category: varchar("category", { length: 255 }).notNull().default(""),
-    template: text("template").notNull(),
+    systemPrompt: text("system_prompt").notNull(),
+    userPrompt: text("user_prompt"),
     langCode: varchar("lang_code", { length: 2 }),
     // optional user id of the creator
     userId: uuid("user_id").references(() => users.id),
+
     organisationId: uuid("organisation_id")
       .references(() => organisations.id, {
         onDelete: "cascade",

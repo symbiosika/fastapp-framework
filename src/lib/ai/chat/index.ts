@@ -10,7 +10,7 @@ import { LLMAgent } from "../agents/llm-agent";
 import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { Agent, AgentInputVariables } from "../../types/agents";
-import { LLMOptions } from "../../db/db-schema";
+import type { LLMOptions } from "../../db/db-schema";
 
 const chatInitValidation = v.object({
   userId: v.string(),
@@ -32,7 +32,6 @@ const chatInitValidation = v.object({
       skip: v.boolean(),
     })
   ),
-  userMessage: v.optional(v.string()),
   variables: v.optional(
     v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
   ),
@@ -64,9 +63,11 @@ const initChatSession = async (
   session: ChatSession;
   isNewSession: boolean;
   llmOptions: LLMOptions;
+  includesUserPrompt: boolean;
 }> => {
   let session: ChatSession | null = null;
   let isNewSession = false;
+  let includesUserPrompt = false;
   let llmOptions: LLMOptions = {};
 
   // if a chatId is provided -> try get the chat
@@ -84,7 +85,14 @@ const initChatSession = async (
       query.initiateTemplate ?? {}
     );
     // set as message
-    const initialMessage = initChatMessage(agentTemplate.template, "system");
+    const messages = [initChatMessage(agentTemplate.systemPrompt, "system")];
+
+    // check if a users prompt is provided
+    let userMessage: ChatMessage | null = null;
+    if (agentTemplate.userPrompt && agentTemplate.userPrompt !== "") {
+      includesUserPrompt = true;
+      messages.push(initChatMessage(agentTemplate.userPrompt, "user"));
+    }
 
     // merge the llmOptions from the user with the llmOptions from the template
     llmOptions = {
@@ -96,18 +104,10 @@ const initChatSession = async (
       ...(query.variables ?? {}),
     };
 
-    // replace the main user message
-    if (query.variables?.user_input) {
-      variables = { ...variables, userMessage: query.variables.user_input };
-    }
-    if (query.userMessage) {
-      variables = { ...variables, userMessage: query.userMessage };
-    }
-
     if (!session) {
       // create a new session in the db
       session = await chatStore.create({
-        messages: [initialMessage],
+        messages,
         variables,
         context: {
           userId: query.userId,
@@ -119,7 +119,7 @@ const initChatSession = async (
     } else {
       // update the session in the db for existing but empty sessions
       session = await chatStore.set(session.id, {
-        messages: [initialMessage],
+        messages,
         state: {
           ...session.state,
           variables,
@@ -140,7 +140,7 @@ const initChatSession = async (
     });
   }
 
-  return { session, isNewSession, llmOptions };
+  return { session, isNewSession, llmOptions, includesUserPrompt };
 };
 
 // Keep existing chatWithAgent function, but internally use LLMAgent
@@ -148,11 +148,8 @@ export const chatWithAgent = async (query: unknown) => {
   const parsedQuery = v.parse(chatInitValidation, query);
 
   // Initialize session as before
-  const { session, isNewSession, llmOptions } =
+  const { session, isNewSession, llmOptions, includesUserPrompt } =
     await initChatSession(parsedQuery);
-
-  // Determine the current user input from the session state
-  const newUserInput = session.state.variables["userMessage"] ?? "";
 
   // Create a shallow copy of the current chat messages
   let messages = [...session.messages];
@@ -166,8 +163,9 @@ export const chatWithAgent = async (query: unknown) => {
       chatSessionGroupId: parsedQuery.chatSessionGroupId,
     },
     {
-      user_input: newUserInput,
+      user_input: session.state.variables["user_input"] ?? "",
       messages,
+      messagesIncludeUserPrompt: includesUserPrompt,
       ...(parsedQuery.variables ?? {}),
     } as unknown as AgentInputVariables,
     llmOptions

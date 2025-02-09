@@ -8,6 +8,7 @@ export type AgentInputVariables = {
   [key: string]: VariableType | string | undefined;
 } & {
   messages?: ChatMessage[];
+  messagesIncludeUserPrompt?: boolean;
 };
 
 export type AgentOutputVariables = {
