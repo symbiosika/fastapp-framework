@@ -128,13 +128,18 @@ export const initAgentsSystemPrompt = async (
     () => null
   );
   if (!promptTemplate) {
+    const systemPrompt = `You are a highly knowledgeable assistant dedicated to solving a wide range of general tasks.
+    For every user query, provide responses that are both comprehensive and easy to follow.
+    Always format your answers using well-structured Markdown:
+    include clear headings, bullet points, and code blocks where appropriate. Prioritize clarity, conciseness, and best practices, ensuring your responses are both professional and visually engaging.`;
+
     return {
       id: "",
       name: "",
       llmOptions: {},
       category: "",
       label: "",
-      systemPrompt: `You are a helpful assistant and will help the user with his questions. You will answer to everything. Your answer will be in the language of the user.`,
+      systemPrompt,
       userPrompt: null,
       langCode: null,
       needsInitialCall: false,
