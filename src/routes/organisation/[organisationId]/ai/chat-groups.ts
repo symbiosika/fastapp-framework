@@ -71,16 +71,13 @@ export default function defineChatGroupRoutes(
         const usersId = c.get("usersId");
         const organisationId = c.req.param("organisationId");
 
-        const parsedBody = v.parse(chatSessionGroupsInsertSchema, body);
+        const parsedBody = v.parse(chatSessionGroupsInsertSchema, {
+          ...body,
+          organisationId,
+        });
 
         // Create the chat group
-        const chatGroup = await createChatSessionGroup({
-          name: parsedBody.name,
-          meta: parsedBody.meta,
-          organisationId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
+        const chatGroup = await createChatSessionGroup(parsedBody);
 
         // Assign the creating user to the chat group
         await addUserToChatSessionGroup(chatGroup.id, usersId);

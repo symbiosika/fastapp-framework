@@ -73,9 +73,14 @@ export const chatSessionGroups = pgBaseTable(
     workspaceId: uuid("workspace_id").references(() => workspaces.id, {
       onDelete: "cascade",
     }),
-    createdAt: timestamp("created_at", { mode: "string" }).notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
   },
+
   (chatSessionGroups) => [
     index("chat_session_groups_organisation_id_idx").on(
       chatSessionGroups.organisationId

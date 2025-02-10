@@ -78,6 +78,8 @@ const initChatSession = async (
   // if the session was not found or the chatId is not provided -> create a new chat
   // also if the session is empty, we need to create the initial messages etc.
   if (!session || !query.chatId || (session && session.messages.length === 0)) {
+    isNewSession = true;
+
     // Init the Agent System Prompt
     const agentTemplate = await initAgentsSystemPrompt(
       query.userId,
@@ -115,7 +117,6 @@ const initChatSession = async (
           chatSessionGroupId: query.chatSessionGroupId,
         },
       });
-      isNewSession = true;
     } else {
       // update the session in the db for existing but empty sessions
       session = await chatStore.set(session.id, {

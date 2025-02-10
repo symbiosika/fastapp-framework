@@ -15,6 +15,7 @@ export const createHeadlineFromChat = async (messages: ChatMessage[]) => {
         The headline should be a short description of the chat.
         The headline should be in the language of the chat.
         The headline should be no longer than 100 characters.
+        The headline should be a single sentence and never contains markdown syntax or hashtags.
         `,
       },
       // all messages but not the first one
