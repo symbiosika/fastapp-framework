@@ -1,0 +1,51 @@
+import logger from "../../lib/log";
+import fs from "fs/promises";
+import path from "path";
+import { createGzip } from "zlib";
+import { Readable } from "stream";
+import { FastAppHono } from "../../types";
+
+export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
+  app.get(basePath + "/admin/logs/download", async (c) => {
+    try {
+      const logFiles = await logger.getLogFilePaths();
+
+      if (logFiles.length === 0) {
+        return c.json({ error: "No log files found" }, 404);
+      }
+
+      // Concatenate all log contents with file names as headers
+      let allLogs = "";
+      for (const filePath of logFiles) {
+        const content = await fs.readFile(filePath, "utf-8");
+        const fileName = path.basename(filePath);
+        allLogs += `=== ${fileName} ===\n${content}\n\n`;
+      }
+
+      // Create gzip stream and compress data
+      const gzip = createGzip();
+      const source = Readable.from(allLogs);
+      source.pipe(gzip);
+
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of gzip) {
+        chunks.push(chunk);
+      }
+
+      const file = new Blob(chunks, {
+        type: "application/gzip",
+      });
+
+      return new Response(file, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/gzip",
+          "Content-Disposition": 'attachment; filename="logs.txt.gz"',
+        },
+      });
+    } catch (error) {
+      console.error("Error creating log archive:", error);
+      return c.json({ error: "Failed to create log archive" }, 500);
+    }
+  });
+}

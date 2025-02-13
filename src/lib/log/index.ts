@@ -146,6 +146,31 @@ class Logger {
       await this.debug(`(${chatId}) ${message.role}: ${contentSnippet}`);
     }
   }
+
+  async getLogFilePaths(): Promise<string[]> {
+    const logFiles: string[] = [];
+    
+    try {
+      // Add main log file if it exists
+      try {
+        await fs.access(this.logFilePath);
+        logFiles.push(this.logFilePath);
+      } catch {}
+      
+      // Add rotated log files if they exist
+      for (let i = 1; i <= this.maxFiles; i++) {
+        const rotatedPath = `${this.logFilePath}.${i}`;
+        try {
+          await fs.access(rotatedPath);
+          logFiles.push(rotatedPath);
+        } catch {}
+      }
+    } catch (error) {
+      console.error("Error getting log file paths:", error);
+    }
+    
+    return logFiles;
+  }
 }
 
 export default new Logger();

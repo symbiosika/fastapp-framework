@@ -43,6 +43,7 @@ import definePingRoute from "./routes/ping";
 import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
 import defineWebhookRoutes from "./routes/webhooks";
 import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
+import defineAdminRoutes from "./routes/admin";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
@@ -153,6 +154,11 @@ export const defineServer = (config: ServerConfig) => {
    * and check if the server has external internet access
    */
   definePingRoute(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
+   * Adds admin routes
+   */
+  defineAdminRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
   /**
    * Adds user routes for profile, register, login, logout, etc.
