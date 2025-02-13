@@ -1,5 +1,13 @@
 import { sql } from "drizzle-orm";
-import { uuid, timestamp, text, index, unique } from "drizzle-orm/pg-core";
+import {
+  uuid,
+  timestamp,
+  text,
+  index,
+  unique,
+  jsonb,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
 import { organisations, teams, users } from "./users";
@@ -20,6 +28,9 @@ export const workspaces = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    parentId: uuid("parentId").references((): AnyPgColumn => workspaces.id, {
+      onDelete: "cascade",
+    }),
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id, { onDelete: "cascade" }),
@@ -28,6 +39,12 @@ export const workspaces = pgBaseTable(
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
+    result: jsonb("result").$type<{
+      success?: boolean;
+      error?: string;
+      text?: string;
+    }>(),
+    finishedAt: timestamp("finished_at", { mode: "string" }),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
@@ -250,6 +267,33 @@ export const workspaceChatSessionsUpdateSchema = createUpdateSchema(
   workspaceChatSessions
 );
 
+// Junction table for workspace to user assignments
+export const workspaceUsers = pgBaseTable(
+  "workspace_users",
+  {
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("workspace_user_unique").on(table.workspaceId, table.userId),
+    index("workspace_users_workspace_idx").on(table.workspaceId),
+  ]
+);
+
+export type WorkspaceUsersSelect = typeof workspaceUsers.$inferSelect;
+export type WorkspaceUsersInsert = typeof workspaceUsers.$inferInsert;
+
+export const workspaceUsersSelectSchema = createSelectSchema(workspaceUsers);
+export const workspaceUsersInsertSchema = createInsertSchema(workspaceUsers);
+export const workspaceUsersUpdateSchema = createUpdateSchema(workspaceUsers);
+
 // Relations
 export const workspaceRelations = relations(workspaces, ({ one, many }) => ({
   organisation: one(organisations, {
@@ -269,6 +313,7 @@ export const workspaceRelations = relations(workspaces, ({ one, many }) => ({
   promptTemplates: many(workspacePromptTemplates),
   chatGroups: many(workspaceChatGroups),
   chatSessions: many(workspaceChatSessions),
+  users: many(workspaceUsers),
 }));
 
 export const workspaceKnowledgeTextsRelations = relations(
@@ -341,12 +386,24 @@ export const workspaceChatSessionsRelations = relations(
   })
 );
 
+export const workspaceUsersRelations = relations(workspaceUsers, ({ one }) => ({
+  workspace: one(workspaces, {
+    fields: [workspaceUsers.workspaceId],
+    references: [workspaces.id],
+  }),
+  user: one(users, {
+    fields: [workspaceUsers.userId],
+    references: [users.id],
+  }),
+}));
+
 export type CreateWorkspaceInput = WorkspacesInsert & {
   knowledgeTextIds?: string[];
   knowledgeEntryIds?: string[];
   promptTemplateIds?: string[];
   chatGroupIds?: string[];
   chatSessionIds?: string[];
+  userIds?: string[];
 };
 
 export type WorkspaceRelations = {
@@ -355,6 +412,7 @@ export type WorkspaceRelations = {
   promptTemplateIds?: string[];
   chatGroupIds?: string[];
   chatSessionIds?: string[];
+  userIds?: string[];
 };
 
 export const WorkspaceRelationsSchema = v.object({
@@ -363,4 +421,5 @@ export const WorkspaceRelationsSchema = v.object({
   promptTemplateIds: v.optional(v.array(v.string())),
   chatGroupIds: v.optional(v.array(v.string())),
   chatSessionIds: v.optional(v.array(v.string())),
+  userIds: v.optional(v.array(v.string())),
 });

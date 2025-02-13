@@ -17,6 +17,11 @@ import {
   addToWorkspace,
   dropFromWorkspace,
 } from "../../../../lib/workspaces";
+import {
+  getWorkspaceUsers,
+  addUsersToWorkspace,
+  removeUsersFromWorkspace,
+} from "../../../../lib/workspaces/users";
 import type { FastAppHono } from "../../../../types";
 import {
   WorkspaceRelationsSchema,
@@ -188,6 +193,84 @@ export default function defineWorkspaceRoutes(
 
         await dropFromWorkspace(workspaceId, parsed, userId);
         return c.json({ message: "Relations removed from workspace" });
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all members of a workspace
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/workspaces/:workspaceId/members",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const workspaceId = c.req.param("workspaceId");
+        const userId = c.get("usersId");
+        const members = await getWorkspaceUsers(workspaceId, userId);
+        return c.json(members);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Add members to a workspace
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/workspaces/:workspaceId/members",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const workspaceId = c.req.param("workspaceId");
+        const userId = c.get("usersId");
+        const { userIds } = await c.req.json();
+
+        if (!Array.isArray(userIds)) {
+          throw new Error("userIds must be an array");
+        }
+
+        const members = await addUsersToWorkspace(workspaceId, userIds, userId);
+        return c.json(members);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Remove members from a workspace
+   */
+  app.delete(
+    API_BASE_PATH +
+      "/organisation/:organisationId/workspaces/:workspaceId/members",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const workspaceId = c.req.param("workspaceId");
+        const userId = c.get("usersId");
+        const { userIds } = await c.req.json();
+
+        if (!Array.isArray(userIds)) {
+          throw new Error("userIds must be an array");
+        }
+
+        await removeUsersFromWorkspace(workspaceId, userIds, userId);
+        return c.json({ message: "Members removed successfully" });
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",

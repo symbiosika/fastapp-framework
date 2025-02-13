@@ -23,8 +23,6 @@ import {
   getTeamMembers,
 } from "../../../../lib/usermanagement/teams";
 
-const BASE_PATH = ""; // "/usermanagement";
-
 export default function defineTeamRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
@@ -33,7 +31,7 @@ export default function defineTeamRoutes(
    * Create a new team
    */
   app.post(
-    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams",
+    API_BASE_PATH + "/organisation/:organisationId/teams",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -55,7 +53,7 @@ export default function defineTeamRoutes(
    * Get all teams of an organisation
    */
   app.get(
-    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams",
+    API_BASE_PATH + "/organisation/:organisationId/teams",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -77,7 +75,7 @@ export default function defineTeamRoutes(
    * Get a team by id
    */
   app.get(
-    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -90,7 +88,7 @@ export default function defineTeamRoutes(
    * Update a team
    */
   app.put(
-    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -110,7 +108,7 @@ export default function defineTeamRoutes(
    * Delete a team
    */
   app.delete(
-    API_BASE_PATH + BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -123,9 +121,7 @@ export default function defineTeamRoutes(
    * Get all members of a team
    */
   app.get(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/teams/:id/members",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:id/members",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -141,9 +137,7 @@ export default function defineTeamRoutes(
    * Add a member to a team
    */
   app.post(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/teams/:teamId/members",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:teamId/members",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c: Context) => {
@@ -164,7 +158,6 @@ export default function defineTeamRoutes(
    */
   app.put(
     API_BASE_PATH +
-      BASE_PATH +
       "/organisation/:organisationId/teams/:teamId/members/:destinationUserId",
     authAndSetUsersInfo,
     checkUserPermission,
@@ -186,7 +179,6 @@ export default function defineTeamRoutes(
    */
   app.delete(
     API_BASE_PATH +
-      BASE_PATH +
       "/organisation/:organisationId/teams/:teamId/members/:usedestinationUserIdrId",
     authAndSetUsersInfo,
     checkUserPermission,

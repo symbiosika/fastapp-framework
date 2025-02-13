@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { createGzip } from "zlib";
 import { Readable } from "stream";
-import { FastAppHono } from "../../types";
+import type { FastAppHono } from "../../types";
 
 export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   app.get(basePath + "/admin/logs/download", async (c) => {

@@ -582,6 +582,20 @@
       "when": 1739454236936,
       "tag": "0082_third_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1739457773848,
+      "tag": "0083_curved_masque",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1739459278726,
+      "tag": "0084_brave_chronomancer",
+      "breakpoints": true
     }
   ]
 }

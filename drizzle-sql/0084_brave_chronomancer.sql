@@ -1,0 +1,2 @@
+ALTER TABLE "base_workspaces" ADD COLUMN "parentId" uuid;--> statement-breakpoint
+ALTER TABLE "base_workspaces" ADD CONSTRAINT "base_workspaces_parentId_base_workspaces_id_fk" FOREIGN KEY ("parentId") REFERENCES "public"."base_workspaces"("id") ON DELETE cascade ON UPDATE no action;
