@@ -1,0 +1,2 @@
+ALTER TABLE "base_knowledge_entry" ADD COLUMN "source_external_id" varchar(255);--> statement-breakpoint
+CREATE INDEX "knowledge_entry_source_external_id_idx" ON "base_knowledge_entry" USING btree ("source_external_id");

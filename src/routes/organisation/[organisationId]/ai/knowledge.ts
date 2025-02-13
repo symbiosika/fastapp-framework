@@ -6,7 +6,10 @@
 import type { FastAppHono } from "../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import { extractKnowledgeFromExistingDbEntry } from "../../../../lib/ai/knowledge/add-knowledge";
+import {
+  extractKnowledgeFromExistingDbEntry,
+  extractKnowledgeInOneStep,
+} from "../../../../lib/ai/knowledge/add-knowledge";
 import { parseDocument } from "../../../../lib/ai/parsing";
 import {
   deleteKnowledgeEntry,
@@ -31,12 +34,14 @@ import {
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
 import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
+import { deleteFileFromDB, saveFileToDb } from "../../../../lib/storage/db";
 
 const FileSourceType = {
   DB: "db",
   LOCAL: "local",
   URL: "url",
   TEXT: "text",
+  EXTERNAL: "external",
 } as const;
 
 const generateKnowledgeValidation = v.object({
@@ -130,6 +135,22 @@ type UpdateKnowledgeTextInput = v.InferOutput<
   typeof updateKnowledgeTextValidation
 >;
 
+const uploadAndLearnValidation = v.object({
+  organisationId: v.string(),
+  filters: v.optional(v.record(v.string(), v.string())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  text: v.optional(v.string()),
+  meta: v.optional(
+    v.object({
+      sourceUri: v.string(),
+      sourceId: v.string(),
+    })
+  ),
+});
+type UploadAndLearnInput = v.InferOutput<typeof uploadAndLearnValidation>;
+
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Call the knowledge extraction from a document to generate embeddings in the database
@@ -137,7 +158,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.post(
     API_BASE_PATH +
-    "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -248,7 +269,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.post(
     API_BASE_PATH +
-    "/organisation/:organisationId/ai/knowledge/similarity-search",
+      "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -304,7 +325,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.get(
     API_BASE_PATH +
-    "/organisation/:organisationId/ai/knowledge/similarity-search",
+      "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
@@ -504,7 +525,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
           userId,
           teamId,
-          workspaceId
+          workspaceId,
         });
         return c.json(r);
       } catch (e) {
@@ -535,7 +556,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
           userId,
           teamId,
-          workspaceId
+          workspaceId,
         });
         return c.json(r);
       } catch (e) {
@@ -563,9 +584,79 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
           userId,
           teamId,
-          workspaceId
+          workspaceId,
         });
         return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Upload a file, learn from it, and then delete it
+   * This endpoint combines file upload and knowledge extraction in one step
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/upload-and-learn",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      const organisationId = c.req.param("organisationId");
+      const contentType = c.req.header("content-type");
+      const userId = c.get("usersId");
+
+      let data;
+      let file;
+      let teamId;
+      let workspaceId;
+      let filters;
+
+      if (contentType && contentType.includes("multipart/form-data")) {
+        const form = await c.req.formData();
+        teamId = form.get("teamId")?.toString();
+
+        if (teamId && teamId === "") {
+          teamId = undefined;
+        }
+        workspaceId = form.get("workspaceId")?.toString();
+        if (workspaceId && workspaceId === "") {
+          workspaceId = undefined;
+        }
+        try {
+          filters = form.get("filters")
+            ? JSON.parse(form.get("filters")?.toString() || "{}")
+            : undefined;
+        } catch (e) {
+          throw new HTTPException(400, {
+            message: "Error parsing filters from form-data.",
+          });
+        }
+        file = form.get("file") as File;
+        data = {
+          userId,
+          organisationId,
+          teamId,
+          workspaceId,
+          filters,
+        };
+      } else {
+        data = await c.req.json();
+        data = {
+          ...data,
+          organisationId,
+          userId,
+        };
+      }
+
+      try {
+        const parsedData = v.parse(uploadAndLearnValidation, data);
+        const r = await extractKnowledgeInOneStep(
+          { ...parsedData, file },
+          true
+        );
+        return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

@@ -24,14 +24,15 @@ import {
   type KnowledgeEntryInsert,
   knowledgeEntryFilters,
 } from "../../db/schema/knowledge";
-import { parseDocument } from "../parsing";
+import { parseDocument, parseFile } from "../parsing";
 import { nanoid } from "nanoid";
 import { upsertFilter } from "./knowledge-filters";
+import { eq } from "drizzle-orm";
 
 /**
  * Helper function to store a knowledge entry in the database
  */
-const storeKnowledgeEntry = async (
+export const storeKnowledgeEntry = async (
   data: KnowledgeEntryInsert,
   filters: Record<string, string>
 ) => {
@@ -78,6 +79,7 @@ export const extractKnowledgeFromText = async (data: {
   sourceType?: FileSourceType;
   sourceFileBucket?: string;
   sourceId?: string;
+  sourceExternalId?: string;
   sourceUrl?: string;
   userId?: string;
   teamId?: string;
@@ -177,4 +179,104 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     teamId: data.teamId,
     workspaceId: data.workspaceId,
   });
+};
+
+/**
+ * Check if an external source knowledge entry already exists
+ */
+export const checkIfExternalSourceKnowledgeEntryExists = async (
+  data: {
+    organisationId: string;
+    sourceExternalId?: string;
+  },
+  deleteIfExists?: boolean
+) => {
+  if (!data.sourceExternalId) {
+    return false;
+  }
+  const entry = await getDb().query.knowledgeEntry.findFirst({
+    where: eq(knowledgeEntry.sourceExternalId, data.sourceExternalId),
+  });
+  if (entry) {
+    if (deleteIfExists) {
+      await getDb()
+        .delete(knowledgeEntry)
+        .where(eq(knowledgeEntry.id, entry.id));
+    }
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Extract knowledge from a file or text and store it in the database
+ */
+export const extractKnowledgeInOneStep = async (
+  data: {
+    organisationId: string;
+    filters?: Record<string, string>;
+    teamId?: string;
+    workspaceId?: string;
+    file?: File;
+    data?: {
+      title: string;
+      text: string;
+    };
+    meta?: {
+      sourceUri: string;
+      sourceId: string;
+    };
+  },
+  overwrite?: boolean
+) => {
+  const bucket = "default";
+
+  // Check if the external source knowledge entry already exists
+  await checkIfExternalSourceKnowledgeEntryExists(
+    {
+      organisationId: data.organisationId,
+      sourceExternalId: data.meta?.sourceId,
+    },
+    overwrite
+  );
+
+  // if the file is provided, extract knowledge from it
+  if (data.file) {
+    // 1. parse file content
+    const parsed = await parseFile(data.file);
+
+    // 2. Extract knowledge
+    const result = await extractKnowledgeFromText({
+      organisationId: data.organisationId,
+      title: data.file.name ?? "Unknown",
+      text: parsed.text,
+      filters: data.filters,
+      teamId: data.teamId,
+      workspaceId: data.workspaceId,
+      sourceType: "external",
+      sourceExternalId: data.meta?.sourceId ?? data.file.name,
+      sourceFileBucket: bucket,
+      sourceUrl: data.meta?.sourceUri ?? data.file.name,
+    });
+    return result;
+  }
+  // if the text is provided, extract knowledge from it
+  else if (data.data) {
+    return extractKnowledgeFromText({
+      organisationId: data.organisationId,
+      title: data.data.title,
+      text: data.data.text,
+      filters: data.filters,
+      teamId: data.teamId,
+      workspaceId: data.workspaceId,
+      sourceExternalId: data.meta?.sourceId ?? data.data.title,
+      sourceType: "external",
+      sourceFileBucket: bucket,
+      sourceUrl: data.meta?.sourceUri ?? data.data.title,
+    });
+  }
+  // if no file and no text is provided, throw an error
+  else {
+    throw new Error("No file or text provided");
+  }
 };

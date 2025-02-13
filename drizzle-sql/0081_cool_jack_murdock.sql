@@ -1,0 +1,1 @@
+ALTER TYPE "public"."file_source_type" ADD VALUE 'external';

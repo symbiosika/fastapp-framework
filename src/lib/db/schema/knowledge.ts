@@ -35,6 +35,7 @@ export const fileSourceTypeEnum = pgEnum("file_source_type", [
   "text",
   "finetuning",
   "plugin",
+  "external",
 ]);
 
 // Table to store input texts
@@ -111,6 +112,7 @@ export const knowledgeEntry = pgBaseTable(
     }),
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
+    sourceExternalId: varchar("source_external_id", { length: 255 }),
     sourceFileBucket: text("source_file_bucket"),
     sourceUrl: text("source_url"),
     name: varchar("name", { length: 255 }).notNull(),
@@ -135,6 +137,9 @@ export const knowledgeEntry = pgBaseTable(
     index("knowledge_entry_team_id_idx").on(knowledgeEntry.teamId),
     index("knowledge_entry_user_id_idx").on(knowledgeEntry.userId),
     index("knowledge_entry_workspace_id_idx").on(knowledgeEntry.workspaceId),
+    index("knowledge_entry_source_external_id_idx").on(
+      knowledgeEntry.sourceExternalId
+    ),
   ]
 );
 
