@@ -95,7 +95,7 @@ export default function defineWorkspaceRoutes(
         const organisationId = c.req.param("organisationId");
         validateOrganisationId(body, organisationId);
 
-        const parsed = v.parse(workspacesInsertSchema, body);
+        const parsed = v.parse(workspacesInsertSchema, { ...body, userId });
         const workspace = await createWorkspace(userId, parsed);
         return c.json(workspace);
       } catch (error) {
