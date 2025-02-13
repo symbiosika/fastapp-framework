@@ -76,14 +76,6 @@ export const getWorkspaceById = async (id: string, userId: string) => {
 
   return await getDb().query.workspaces.findFirst({
     where: eq(workspaces.id, id),
-    with: {
-      knowledgeTexts: true,
-      knowledgeEntries: true,
-      promptTemplates: true,
-      chatGroups: true,
-      user: true,
-      team: true,
-    },
   });
 };
 
@@ -106,14 +98,6 @@ export const getAllUsersWorkspaces = async (userId: string) => {
       inArray(workspaces.teamId, teamIds)
     ),
     orderBy: (workspaces) => workspaces.name,
-    with: {
-      knowledgeTexts: true,
-      knowledgeEntries: true,
-      promptTemplates: true,
-      chatGroups: true,
-      user: true,
-      team: true,
-    },
   });
 };
 
@@ -306,4 +290,36 @@ export const dropFromWorkspace = async (
         )
       );
   }
+};
+
+/**
+ * Get all child workspaces for a given parent workspace ID
+ * Will check if user has access to parent workspace
+ */
+export const getChildWorkspaces = async (parentId: string, userId: string) => {
+  // First verify user has access to parent workspace
+  if (!(await hasAccessToWorkspace(parentId, userId))) {
+    throw new Error("User does not have permission to access workspace");
+  }
+
+  return await getDb().query.workspaces.findMany({
+    where: eq(workspaces.parentId, parentId),
+  });
+};
+
+/**
+ * Get the parent workspace of a workspace
+ * Will check if user has access to workspace
+ */
+export const getParentWorkspace = async (
+  workspaceId: string,
+  userId: string
+) => {
+  if (!(await hasAccessToWorkspace(workspaceId, userId))) {
+    throw new Error("User does not have permission to access workspace");
+  }
+
+  return await getDb().query.workspaces.findFirst({
+    where: eq(workspaces.id, workspaceId),
+  });
 };

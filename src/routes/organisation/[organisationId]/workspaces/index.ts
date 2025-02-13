@@ -16,6 +16,7 @@ import {
   deleteWorkspace,
   addToWorkspace,
   dropFromWorkspace,
+  getChildWorkspaces,
 } from "../../../../lib/workspaces";
 import {
   getWorkspaceUsers,
@@ -30,6 +31,7 @@ import {
 } from "../../../../lib/db/schema/workspaces";
 import * as v from "valibot";
 import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
+import { eq } from "drizzle-orm";
 
 /**
  * Define the workspace management routes
@@ -271,6 +273,29 @@ export default function defineWorkspaceRoutes(
 
         await removeUsersFromWorkspace(workspaceId, userIds, userId);
         return c.json({ message: "Members removed successfully" });
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all child workspaces for a parent workspace
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/workspaces/:workspaceId/children",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const parentId = c.req.param("workspaceId");
+        const userId = c.get("usersId");
+
+        const childWorkspaces = await getChildWorkspaces(parentId, userId);
+        return c.json(childWorkspaces);
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
