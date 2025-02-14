@@ -1,4 +1,4 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
   workspaces,
@@ -83,7 +83,10 @@ export const getWorkspaceById = async (id: string, userId: string) => {
  * Get all workspaces accessible by user
  * Filters by personal workspaces and team workspaces the user is part of
  */
-export const getAllUsersWorkspaces = async (userId: string) => {
+export const getAllUsersWorkspaces = async (
+  userId: string,
+  parentId?: string | null
+) => {
   // Get teams the user is part of
   const userTeams = await getDb().query.teamMembers.findMany({
     where: eq(teamMembers.userId, userId),
@@ -93,9 +96,10 @@ export const getAllUsersWorkspaces = async (userId: string) => {
 
   // Get workspaces where user is owner or part of team
   return await getDb().query.workspaces.findMany({
-    where: or(
-      eq(workspaces.userId, userId),
-      inArray(workspaces.teamId, teamIds)
+    where: and(
+      or(eq(workspaces.userId, userId), inArray(workspaces.teamId, teamIds)),
+      // Add parentId filter if provided
+      parentId ? eq(workspaces.parentId, parentId) : isNull(workspaces.parentId)
     ),
     orderBy: (workspaces) => workspaces.name,
   });

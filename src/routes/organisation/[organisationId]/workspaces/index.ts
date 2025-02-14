@@ -50,7 +50,12 @@ export default function defineWorkspaceRoutes(
     async (c) => {
       try {
         const userId = c.get("usersId");
-        const workspaces = await getAllUsersWorkspaces(userId);
+        const parentId = c.req.query("parentId");
+        
+        // Convert "null" string to actual null value
+        const parentIdFilter = parentId === "null" ? null : parentId;
+        
+        const workspaces = await getAllUsersWorkspaces(userId, parentIdFilter);
         return c.json(workspaces);
       } catch (error) {
         throw new HTTPException(500, {
