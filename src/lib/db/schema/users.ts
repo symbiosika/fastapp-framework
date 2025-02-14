@@ -27,6 +27,7 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
+import { workspaceUsers } from "./workspaces";
 
 export const organisations = pgBaseTable(
   "organisations",
@@ -367,6 +368,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   chatSessions: many(chatSessions),
   chatSessionGroupAssignments: many(chatSessionGroupAssignments),
   organisationMembers: many(organisationMembers),
+  workspaceUsers: many(workspaceUsers),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
