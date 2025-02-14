@@ -243,6 +243,7 @@ export const getOrganisationMembers = async (
 ) => {
   return await getDb()
     .select({
+      id: organisationMembers.userId,
       userEmail: users.email,
       role: organisationMembers.role,
       joinedAt: organisationMembers.joinedAt,

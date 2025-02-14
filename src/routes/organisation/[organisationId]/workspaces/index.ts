@@ -51,10 +51,10 @@ export default function defineWorkspaceRoutes(
       try {
         const userId = c.get("usersId");
         const parentId = c.req.query("parentId");
-        
+
         // Convert "null" string to actual null value
         const parentIdFilter = parentId === "null" ? null : parentId;
-        
+
         const workspaces = await getAllUsersWorkspaces(userId, parentIdFilter);
         return c.json(workspaces);
       } catch (error) {
@@ -263,20 +263,16 @@ export default function defineWorkspaceRoutes(
    */
   app.delete(
     API_BASE_PATH +
-      "/organisation/:organisationId/workspaces/:workspaceId/members",
+      "/organisation/:organisationId/workspaces/:workspaceId/members/:memberId",
     authAndSetUsersInfo,
     checkUserPermission,
     async (c) => {
       try {
         const workspaceId = c.req.param("workspaceId");
         const userId = c.get("usersId");
-        const { userIds } = await c.req.json();
+        const memberId = c.req.param("memberId");
 
-        if (!Array.isArray(userIds)) {
-          throw new Error("userIds must be an array");
-        }
-
-        await removeUsersFromWorkspace(workspaceId, userIds, userId);
+        await removeUsersFromWorkspace(workspaceId, [memberId], userId);
         return c.json({ message: "Members removed successfully" });
       } catch (error) {
         throw new HTTPException(400, {

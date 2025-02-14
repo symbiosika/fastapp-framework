@@ -5,6 +5,7 @@ import {
   type WorkspaceUsersInsert,
 } from "../db/schema/workspaces";
 import { hasAccessToWorkspace } from "./index";
+import { users } from "../db/schema/users";
 
 /**
  * Add users to a workspace
@@ -94,10 +95,12 @@ export const getWorkspaceUsers = async (
     throw new Error("Must be workspace owner or member to view users");
   }
 
-  return await getDb().query.workspaceUsers.findMany({
-    where: eq(workspaceUsers.workspaceId, workspaceId),
-    with: {
-      user: true,
-    },
-  });
+  return await getDb()
+    .select({
+      userId: workspaceUsers.userId,
+      userEmail: users.email,
+    })
+    .from(workspaceUsers)
+    .leftJoin(users, eq(workspaceUsers.userId, users.id))
+    .where(eq(workspaceUsers.workspaceId, workspaceId));
 };
