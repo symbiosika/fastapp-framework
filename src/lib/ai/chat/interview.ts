@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { chatStore } from "./chat-store";
 import { initChatMessage } from "./get-prompt-template";
-import type { ChatSession } from "./chat-store";
+import type { ChatSession, ChatMessage } from "./chat-store";
 import type { LLMOptions } from "../../db/db-schema";
 import { generateLongText } from "../standard";
 import { replaceVariables } from "./replacer";
@@ -30,16 +30,72 @@ const interviewRespondValidation = v.object({
 });
 
 /**
+ * Generate or update the moderator's summary based on the conversation so far.
+ * Now uses an LLM call to intelligently normalize, summarize, and merge the existing summary with new conversation content.
+ */
+async function generateModeratorSummary(
+  messages: ChatMessage[],
+  oldSummary: string | undefined
+) {
+  // Generate a consolidated text from all messages (optionally translate roles)
+  const conversationText = messages
+    .map((m) => {
+      const role =
+        m.role === "user"
+          ? "User"
+          : m.role === "assistant"
+            ? "Assistant"
+            : m.role;
+      return `${role}: ${m.content}`;
+    })
+    .join("\n");
+
+  // Create a summarization prompt that incorporates the existing summary
+  const summarizationPrompt = `
+Please intelligently summarize the following conversation. Incorporate the existing summary and combine all important information. Use a concise and normalized language.
+You will use the language of the conversation.
+
+Existing summary: "${oldSummary || "No existing summary"}"
+
+Conversation:
+-------------------------------------------
+${conversationText}
+-------------------------------------------
+Answer (normalized summary):
+  `.trim();
+
+  // Pack the prompt into a ChatMessage to create the LLM context
+  const summarizationMessage = initChatMessage(summarizationPrompt, "system", {
+    human: false,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Call the LLM for summarization. Here we use generateLongText,
+  // which internally calls the LLM to generate a longer text.
+  const result = await generateLongText(
+    [{ ...summarizationMessage, content: summarizationMessage.content ?? "" }],
+    {
+      maxTokens: 500,
+      model: "openai:gpt-4o-mini",
+      temperature: 0.7,
+      outputType: "text",
+    }
+  );
+
+  return result.text.trim();
+}
+
+/**
  * Handles the core interview logic, generating responses based on the context
  * and user input
  */
 async function generateInterviewResponse(
-  messages: any[],
+  messages: ChatMessage[],
   userInput: string,
   session: ChatSession,
   llmOptions: LLMOptions
 ) {
-  // Initialize with system prompt if this is the first message
+  // If messages are empty, set up the system prompt from the perspective of the interviewer
   if (messages.length === 0) {
     const systemPrompt = `
       You are conducting an interview about: "${session.state.interview?.name ?? "No name provided"}".
@@ -47,7 +103,22 @@ async function generateInterviewResponse(
       The issue is about: "${session.state.interview?.description ?? "No description provided"}".
       Please respond as a structured interviewer, ensuring we do not go off-topic.
     `;
+    messages.push(
+      initChatMessage(systemPrompt, "system", {
+        human: false,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  }
 
+  // Check if the interview goals are set; if not, prompt the user to set them
+  const goalsNotSet =
+    !session.state.interview?.goals ||
+    session.state.interview.goals.length === 0;
+  if (goalsNotSet) {
+    const systemPrompt = `
+      The interview goals have not been set yet. Ask the user to provide the goals they want to accomplish in this interview.
+    `;
     messages.push(
       initChatMessage(systemPrompt, "system", {
         human: false,
@@ -64,7 +135,23 @@ async function generateInterviewResponse(
     })
   );
 
-  // Replace variables and generate response
+  // Potentially add a "moderator guidance" message
+  const summarySoFar = session.state.interview?.summary || "";
+  const goalsList = session.state.interview?.goals || [];
+  const moderatorMessage = `
+    Moderator's note:
+    Current goals: ${goalsList.join(", ") || "(none)"}.
+    Current summary: "${summarySoFar}".
+    Please ensure the interviewer keeps the conversation focused on these goals.
+  `;
+  messages.push(
+    initChatMessage(moderatorMessage, "system", {
+      human: false,
+      timestamp: new Date().toISOString(),
+    })
+  );
+
+  // Replace variables and generate interviewer response
   const replacedMessages = await replaceVariables(messages, {
     user_input: userInput,
     interviewName: session.state.interview?.name,
@@ -102,28 +189,45 @@ export async function respondInInterview(query: unknown) {
     temperature: parsed.llmOptions?.temperature ?? 0,
   };
 
-  // Generate interview response
-  const response = await generateInterviewResponse(
+  // 3) Generate interviewer response
+  const interviewerResponse = await generateInterviewResponse(
     messages,
     parsed.user_input,
     session,
     llmOptions
   );
 
-  // Create and append the interviewer's reply
-  const interviewerReply = initChatMessage(response, "assistant", {
+  // 4) Create and append the interviewer's reply
+  const interviewerReply = initChatMessage(interviewerResponse, "assistant", {
     human: false,
     model: llmOptions.model,
     timestamp: new Date().toISOString(),
   });
   messages.push(interviewerReply);
 
-  // Update chat session
+  // 5) Update the moderator's summary. We merge the new summary into session state
+  const newSummary = await generateModeratorSummary(
+    messages,
+    session.state.interview?.summary
+  );
+
+  if (!session.state.interview) {
+    throw new Error("Interview state not initialized");
+  }
+
+  session.state.interview = {
+    ...session.state.interview,
+    summary: newSummary,
+  };
+
+  // 6) Update chat session in the database
   await chatStore.set(parsed.chatId, {
     messages,
+    state: session.state,
     updatedAt: new Date().toISOString(),
   });
 
+  // 7) Return data (including new summary) so the frontend can display it
   return {
     chatId: parsed.chatId,
     interview: session.state.interview,

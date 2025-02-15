@@ -50,6 +50,8 @@ export type ChatSession = ChatSessionsSelect & {
       guidelines: string;
       moderator: string;
       interviewer: string;
+      goals?: string[];
+      summary?: string;
     };
   };
   messages: ChatMessage[];
