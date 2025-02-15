@@ -11,7 +11,6 @@ import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { Agent, AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
-import { InterviewAgent } from "../agents/interview-agent";
 
 const chatInitValidation = v.object({
   userId: v.string(),
@@ -49,7 +48,6 @@ type ChatInitInput = v.InferOutput<typeof chatInitValidation>;
 // Initialize available agents
 const agents: Record<string, Agent> = {
   llmAgent: new LLMAgent(),
-  interviewAgent: new InterviewAgent(),
 };
 const flowEngine = new FlowEngine(agents);
 

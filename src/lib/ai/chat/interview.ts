@@ -1,10 +1,10 @@
 import * as v from "valibot";
 import { chatStore } from "./chat-store";
 import { initChatMessage } from "./get-prompt-template";
-import { InterviewAgent } from "../agents/interview-agent";
 import type { ChatSession } from "./chat-store";
-import type { AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
+import { generateLongText } from "../standard";
+import { replaceVariables } from "./replacer";
 
 /**
  * This valibot validation ensures we get the required fields when the user
@@ -30,14 +30,60 @@ const interviewRespondValidation = v.object({
 });
 
 /**
- * Respond to an ongoing interview session. This function is meant to act
- * as a "middleware" between your API endpoint and the InterviewAgent.
- *
- * 1. Validate incoming data.
- * 2. Retrieve the relevant chat session (which stores interview data).
- * 3. Append the user's message to the chat history.
- * 4. Call the InterviewAgent, which returns interviewer-like responses.
- * 5. Update the chat store with the new messages and return to the caller.
+ * Handles the core interview logic, generating responses based on the context
+ * and user input
+ */
+async function generateInterviewResponse(
+  messages: any[],
+  userInput: string,
+  session: ChatSession,
+  llmOptions: LLMOptions
+) {
+  // Initialize with system prompt if this is the first message
+  if (messages.length === 0) {
+    const systemPrompt = `
+      You are conducting an interview about: "${session.state.interview?.name ?? "No name provided"}".
+      Guidelines: ${session.state.interview?.guidelines ?? "No guidelines provided"}.
+      The issue is about: "${session.state.interview?.description ?? "No description provided"}".
+      Please respond as a structured interviewer, ensuring we do not go off-topic.
+    `;
+
+    messages.push(
+      initChatMessage(systemPrompt, "system", {
+        human: false,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  }
+
+  // Add user message
+  messages.push(
+    initChatMessage(userInput, "user", {
+      human: true,
+      timestamp: new Date().toISOString(),
+    })
+  );
+
+  // Replace variables and generate response
+  const replacedMessages = await replaceVariables(messages, {
+    user_input: userInput,
+    interviewName: session.state.interview?.name,
+    interviewDescription: session.state.interview?.description,
+    guidelines: session.state.interview?.guidelines,
+  });
+
+  const result = await generateLongText(replacedMessages as any, {
+    maxTokens: llmOptions.maxTokens,
+    model: llmOptions.model,
+    temperature: llmOptions.temperature,
+    outputType: "text" as const,
+  });
+
+  return result.text;
+}
+
+/**
+ * Respond to an ongoing interview session.
  */
 export async function respondInInterview(query: unknown) {
   // 1) Validate user input
@@ -49,50 +95,30 @@ export async function respondInInterview(query: unknown) {
     throw new Error(`No existing interview with chatId=${parsed.chatId}`);
   }
 
-  // Don't add the user message here, let the agent handle it
   const messages = [...session.messages];
-
-  // 4) Call the InterviewAgent
-  const agent = new InterviewAgent();
-  const agentInputs: AgentInputVariables = {
-    user_input: parsed.user_input,
-    interviewName: session.state.interview?.name ?? "",
-    interviewDescription: session.state.interview?.description ?? "",
-    guidelines: session.state.interview?.guidelines ?? "",
-    messages: messages,
-    messagesIncludeUserPrompt: false,
-  } as any;
-
-  // Merge any user-provided llmOptions with defaults
   const llmOptions: LLMOptions = {
     model: parsed.llmOptions?.model ?? "openai:gpt-4o-mini",
     maxTokens: parsed.llmOptions?.maxTokens ?? 1000,
     temperature: parsed.llmOptions?.temperature ?? 0,
   };
 
-  const agentResult = await agent.run(
-    {
-      userId: parsed.userId,
-      organisationId: parsed.organisationId,
-      chatSessionGroupId: session.chatSessionGroupId ?? undefined,
-    },
-    agentInputs,
+  // Generate interview response
+  const response = await generateInterviewResponse(
+    messages,
+    parsed.user_input,
+    session,
     llmOptions
   );
 
-  // 5) Append the agent's response
-  const interviewerReply = initChatMessage(
-    agentResult.outputs.default,
-    "assistant",
-    {
-      human: false,
-      model: llmOptions.model,
-      timestamp: new Date().toISOString(),
-    }
-  );
+  // Create and append the interviewer's reply
+  const interviewerReply = initChatMessage(response, "assistant", {
+    human: false,
+    model: llmOptions.model,
+    timestamp: new Date().toISOString(),
+  });
   messages.push(interviewerReply);
 
-  // 6) Update the chat session
+  // Update chat session
   await chatStore.set(parsed.chatId, {
     messages,
     updatedAt: new Date().toISOString(),
