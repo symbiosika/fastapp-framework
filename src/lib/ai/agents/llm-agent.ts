@@ -33,7 +33,12 @@ export class LLMAgent implements Agent {
         messages[messages.length - 1].role !== "user" ||
         messages[messages.length - 1].content !== userInput)
     ) {
-      messages.push(initChatMessage(userInput, "user"));
+      messages.push(
+        initChatMessage(userInput, "user", {
+          human: true,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
 
     const replaced = await replaceVariables(messages, inputs);

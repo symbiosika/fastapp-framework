@@ -86,14 +86,23 @@ const initChatSession = async (
       query.organisationId,
       query.initiateTemplate ?? {}
     );
-    // set as message
-    const messages = [initChatMessage(agentTemplate.systemPrompt, "system")];
+    // set as message with meta information
+    const messages = [
+      initChatMessage(agentTemplate.systemPrompt, "system", {
+        human: false,
+        timestamp: new Date().toISOString(),
+      }),
+    ];
 
     // check if a users prompt is provided
-    let userMessage: ChatMessage | null = null;
     if (agentTemplate.userPrompt && agentTemplate.userPrompt !== "") {
       includesUserPrompt = true;
-      messages.push(initChatMessage(agentTemplate.userPrompt, "user"));
+      messages.push(
+        initChatMessage(agentTemplate.userPrompt, "user", {
+          human: true,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
 
     // merge the llmOptions from the user with the llmOptions from the template
@@ -172,8 +181,12 @@ export const chatWithAgent = async (query: unknown) => {
     llmOptions
   );
 
-  // Convert agent output to chat message
-  const resultMessage = initChatMessage(result.outputs.default, "assistant");
+  // Convert agent output to chat message with meta information
+  const resultMessage = initChatMessage(result.outputs.default, "assistant", {
+    human: false,
+    model: llmOptions.model,
+    timestamp: new Date().toISOString(),
+  });
 
   // Add the assistant's response to the messages array
   messages.push(resultMessage);

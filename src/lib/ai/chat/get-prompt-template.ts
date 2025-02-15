@@ -174,11 +174,17 @@ export const initAgentsSystemPrompt = async (
  */
 export const initChatMessage = (
   message: string,
-  role: ChatMessageRole = "system"
+  role: ChatMessageRole = "system",
+  meta?: {
+    model?: string;
+    human?: boolean;
+    timestamp?: string;
+  }
 ) => {
   const chatMessage: ChatMessage = {
     role: role,
     content: message,
+    meta: meta,
   };
   return chatMessage;
 };

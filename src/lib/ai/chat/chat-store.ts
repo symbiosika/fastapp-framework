@@ -35,6 +35,11 @@ export type ChatMessageRole = "system" | "user" | "assistant";
 export type ChatMessage = {
   role: ChatMessageRole;
   content?: string | any;
+  meta?: {
+    model?: string;
+    human?: boolean;
+    timestamp?: string;
+  };
 };
 
 export type ChatSession = ChatSessionsSelect & {
