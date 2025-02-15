@@ -12,6 +12,7 @@ import {
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
 import { chatWithAgent, createEmptySession } from "../../../../lib/ai/chat";
+import { respondInInterview } from "../../../../lib/ai/chat/interview";
 import { chatStore } from "../../../../lib/ai/chat/chat-store";
 import * as v from "valibot";
 
@@ -144,6 +145,85 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         throw new HTTPException(400, {
           message: e + "",
         });
+      }
+    }
+  );
+
+  /**
+   * Start a new interview session
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/interview/start",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+
+        // body might contain interviewName, description, guidelines, moderator, interviewer
+        // E.g.:
+        // {
+        //   "interviewName": "Job Interview - Developer",
+        //   "description": "We want to assess candidate's dev knowledge",
+        //   "guidelines": "Keep answers short, no personal data",
+        // }
+
+        // Create new session with interview data
+        const session = await chatStore.create({
+          messages: [],
+          variables: {}, // or pass in any additional variables
+          context: {
+            userId: usersId,
+            organisationId,
+          },
+          interview: {
+            name: body.interviewName ?? "New Interview",
+            description: body.description ?? "",
+            guidelines: body.guidelines ?? "",
+          },
+        });
+
+        return c.json({
+          chatId: session.id,
+          name: session.name,
+          interview: session.state.interview,
+        });
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Submit response to interview question
+   * Calls our "respondInInterview" middleware
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/interview/:chatId/respond",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const body = await c.req.json();
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const chatId = c.req.param("chatId");
+
+        // We'll call our interview "middleware" function:
+        const result = await respondInInterview({
+          userId: usersId,
+          organisationId,
+          chatId,
+          user_input: body.user_input ?? "",
+          llmOptions: body.llmOptions,
+        });
+
+        return c.json(result);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
     }
   );

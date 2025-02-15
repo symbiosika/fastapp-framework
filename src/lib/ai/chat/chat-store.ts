@@ -43,7 +43,15 @@ export type ChatMessage = {
 };
 
 export type ChatSession = ChatSessionsSelect & {
-  state: ChatStoreState;
+  state: ChatStoreState & {
+    interview?: {
+      name: string;
+      description: string;
+      guidelines: string;
+      moderator: string;
+      interviewer: string;
+    };
+  };
   messages: ChatMessage[];
 };
 
@@ -95,6 +103,11 @@ class ChatHistoryStoreInDb {
     variables?: ChatStoreVariables;
     context: ChatSessionContext;
     messages?: ChatMessage[];
+    interview?: {
+      name: string;
+      description: string;
+      guidelines: string;
+    };
   }): Promise<ChatSession> {
     const chatId = options?.chatId || nanoid(16);
     options?.chatId && log.debug(`Create chat session ${chatId}`);
@@ -109,6 +122,7 @@ class ChatHistoryStoreInDb {
         messages: options.messages || [],
         state: {
           variables: options.variables || {},
+          interview: options.interview,
         },
         deleteAt: this.getDeleteAt(),
         chatSessionGroupId: options.context.chatSessionGroupId,
