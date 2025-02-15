@@ -57,6 +57,10 @@ export interface ServerConfig {
 
   // logging in console (hono logger)
   useConsoleLogger?: boolean;
+
+  // Licencing
+  useLicenseSystem?: boolean;
+  publicKey: string;
 }
 
 export interface DBStandardData {

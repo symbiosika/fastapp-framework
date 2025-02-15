@@ -14,6 +14,8 @@ export const _GLOBAL_SERVER_CONFIG = {
   jwtExpiresAfter: 60 * 60 * 24 * 30, // 30 days
   useStripe: false,
   useConsoleLogger: true,
+  useLicenseSystem: false,
+  publicKey: "",
 };
 
 /**
@@ -45,4 +47,7 @@ export const setGlobalServerConfig = (config: ServerConfig) => {
   }
 
   _GLOBAL_SERVER_CONFIG.useStripe = config.useStripe ?? false;
+
+  _GLOBAL_SERVER_CONFIG.useLicenseSystem = config.useLicenseSystem ?? false;
+  _GLOBAL_SERVER_CONFIG.publicKey = config.publicKey ?? "";
 };
