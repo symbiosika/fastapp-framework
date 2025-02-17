@@ -12,7 +12,6 @@ import type {
 import { HTTPException } from "hono/http-exception";
 import { users } from "../../lib/db/db-schema";
 import { eq } from "drizzle-orm";
-import type { Context } from "hono";
 import { getDb } from "../../lib/db/db-connection";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
@@ -32,6 +31,9 @@ import {
 } from "../../lib/usermanagement/teams";
 import * as v from "valibot";
 import { LocalAuth } from "../../lib/auth";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import { getUserById, updateUser } from "../../lib/usermanagement/user";
 
 /**
  * Pre-register custom verification
@@ -57,8 +59,14 @@ export const registerPostRegisterAction = (
   postRegisterActions.push(action);
 };
 
-const setupValidation = v.object({
-  organisationName: v.pipe(v.string(), v.minLength(3), v.maxLength(255)),
+const userSchema = v.object({
+  id: v.string(),
+  email: v.string(),
+  firstname: v.string(),
+  surname: v.string(),
+  image: v.optional(v.string()),
+  meta: v.optional(v.object({})),
+  lastOrganisationId: v.optional(v.string()),
 });
 
 /**
@@ -74,26 +82,32 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/me",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      // check if id is set
-      const id = c.get("usersId");
-      const user = await getDb()
-        .select({
-          id: users.id,
-          email: users.email,
-          firstname: users.firstname,
-          surname: users.surname,
-          image: users.image,
-          meta: users.meta,
-          lastOrganisationId: users.lastOrganisationId,
-        })
-        .from(users)
-        .where(eq(users.id, id));
-
-      if (!user || user.length === 0) {
-        throw new HTTPException(404, { message: "User not found" });
-      } else {
-        return c.json(user[0]);
+    describeRoute({
+      method: "get",
+      path: "/user/me",
+      tags: ["user"],
+      summary: "Get the own user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(userSchema),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        // check if id is set
+        const uid = c.get("usersId");
+        const user = await getUserById(uid);
+        return c.json(user);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting user: " + err,
+        });
       }
     }
   );
@@ -104,14 +118,39 @@ export function defineSecuredUserRoutes(
   app.put(
     API_BASE_PATH + "/user/me",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "put",
+      path: "/user/me",
+      tags: ["user"],
+      summary: "Update the own user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(userSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        firstname: v.optional(v.string()),
+        surname: v.optional(v.string()),
+        image: v.optional(v.string()),
+      })
+    ),
+    async (c) => {
       try {
-        const { firstname, surname, image } = await c.req.json();
-        const user = await getDb()
-          .update(users)
-          .set({ firstname, surname, image })
-          .where(eq(users.id, c.get("usersId")))
-          .returning();
+        const { firstname, surname, image } = c.req.valid("json");
+        await updateUser(c.get("usersId"), {
+          firstname,
+          surname,
+          image,
+        });
+        const user = await getUserById(c.get("usersId"));
         return c.json(user);
       } catch (err) {
         throw new HTTPException(500, {
@@ -128,7 +167,38 @@ export function defineSecuredUserRoutes(
   app.post(
     API_BASE_PATH + "/user/setup",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/user/setup",
+      tags: ["user"],
+      summary:
+        "Setup the user's first organisation. Can throw an error if the user already has an organisation and this is not allowed",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  name: v.string(),
+                  description: v.optional(v.string()),
+                  createdAt: v.string(),
+                  updatedAt: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        organisationName: v.string(),
+      })
+    ),
+    async (c) => {
       try {
         const userId = c.get("usersId");
         // check if user has an organisation
@@ -136,9 +206,7 @@ export function defineSecuredUserRoutes(
         if (orgs.length > 0) {
           return c.json({ state: "already-setup" });
         }
-        const body = await c.req.json();
-        const parsed = v.parse(setupValidation, body);
-
+        const parsed = c.req.valid("json");
         const org = await createOrganisation({
           name: parsed.organisationName,
         });
@@ -160,12 +228,34 @@ export function defineSecuredUserRoutes(
   app.put(
     API_BASE_PATH + "/user/me/password",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      const userId = c.get("usersId");
-      const usersEmail = c.get("usersEmail");
-      const { oldPassword, newPassword } = await c.req.json();
-      await LocalAuth.changePassword(usersEmail, oldPassword, newPassword);
-      return c.json({ success: true });
+    describeRoute({
+      method: "put",
+      path: "/user/me/password",
+      tags: ["user"],
+      summary: "Change the own password",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        oldPassword: v.string(),
+        newPassword: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const { email } = await getUserById(userId);
+        const { oldPassword, newPassword } = c.req.valid("json");
+        await LocalAuth.changePassword(email, oldPassword, newPassword);
+        return c.json({ success: true });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error changing password: " + err,
+        });
+      }
     }
   );
 
@@ -175,7 +265,31 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/organisations",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/user/organisations",
+      tags: ["user", "organisations"],
+      summary: "Get the user's organisations",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(
+                  v.object({
+                    id: v.string(),
+                    name: v.string(),
+                    role: v.string(),
+                  })
+                )
+              ),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
       try {
         const userId = c.get("usersId");
         const orgs = await getUserOrganisations(userId);
@@ -194,9 +308,24 @@ export function defineSecuredUserRoutes(
   app.delete(
     API_BASE_PATH + "/user/organisation/:organisationId/membership",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "delete",
+      path: "/user/organisation/:organisationId/membership",
+      tags: ["user", "organisations"],
+      summary: "Drop the membership of a user from an organisation",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        organisationId: v.string(),
+      })
+    ),
+    async (c) => {
       const userId = c.get("usersId");
-      const organisationId = c.req.param("organisationId");
+      const organisationId = c.req.valid("query").organisationId;
       try {
         await dropUserFromOrganisation(userId, organisationId);
         return c.json({ success: true });
@@ -214,9 +343,36 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/organisation/:organisationId/teams",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/user/organisation/:organisationId/teams",
+      tags: ["user", "teams"],
+      summary: "Get the user's teams",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(
+                  v.object({
+                    id: v.string(),
+                    name: v.string(),
+                    role: v.string(),
+                  })
+                )
+              ),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
       const userId = c.get("usersId");
       const organisationId = c.req.param("organisationId");
+      if (!organisationId) {
+        throw new HTTPException(400, { message: "organisationId is required" });
+      }
       const teams = await getTeamsByUser(userId, organisationId);
       return c.json(teams);
     }
@@ -229,9 +385,28 @@ export function defineSecuredUserRoutes(
     API_BASE_PATH +
       "/user/organisation/:organisationId/teams/:teamId/membership",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "delete",
+      path: "/user/organisation/:organisationId/teams/:teamId/membership",
+      tags: ["user", "teams"],
+      summary: "Drop the membership of a user from a team",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.object({ success: v.boolean() })),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
       const userId = c.get("usersId");
       const teamId = c.req.param("teamId");
+      if (!teamId) {
+        throw new HTTPException(400, { message: "teamId is required" });
+      }
       await dropUserFromTeam(userId, teamId);
       return c.json({ success: true });
     }
@@ -243,7 +418,31 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/last-organisation",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/user/last-organisation",
+      tags: ["user"],
+      summary: "Get the user's last organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  name: v.string(),
+                  description: v.optional(v.string()),
+                  createdAt: v.string(),
+                  updatedAt: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
       try {
         const userId = c.get("usersId");
         const org = await getLastOrganisation(userId);
@@ -262,11 +461,37 @@ export function defineSecuredUserRoutes(
   app.put(
     API_BASE_PATH + "/user/last-organisation",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "put",
+      path: "/user/last-organisation",
+      tags: ["user"],
+      summary: "Set the user's last organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  userId: v.string(),
+                  lastOrganisationId: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        organisationId: v.string(),
+      })
+    ),
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const body = await c.req.json();
-        const orgId = body.organisationId;
+        const orgId = c.req.valid("json").organisationId;
         const result = await setLastOrganisation(userId, orgId);
         return c.json(result);
       } catch (err) {
@@ -283,11 +508,37 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/search",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      const email = c.req.query("email");
-      if (!email) {
-        throw new HTTPException(400, { message: "email is required" });
-      }
+    describeRoute({
+      method: "get",
+      path: "/user/search",
+      tags: ["user"],
+      summary: "Search for users by email address",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  email: v.string(),
+                  firstname: v.string(),
+                  surname: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        email: v.string(),
+      })
+    ),
+    async (c) => {
+      const email = c.req.valid("query").email;
       const u = await getDb()
         .select()
         .from(users)
@@ -310,7 +561,28 @@ export function defineSecuredUserRoutes(
   app.get(
     API_BASE_PATH + "/user/refresh-token",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/user/refresh-token",
+      tags: ["user"],
+      summary: "Refresh the own token",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  token: v.string(),
+                  expiresAt: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
       try {
         const userId = c.get("usersId");
         const newTokenData = await LocalAuth.refreshToken(userId);

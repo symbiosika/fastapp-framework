@@ -72,6 +72,12 @@ import middlewareService from "./middleware-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
 
 /**
+ * OpenAPI Docs
+ */
+import { swaggerUI } from "@hono/swagger-ui";
+import { openAPISpecs } from "hono-openapi";
+
+/**
  * MAIN FUNCTION
  * Define the server and start it
  *
@@ -331,6 +337,21 @@ export const defineServer = (config: ServerConfig) => {
 
   // Log all registered endpoints
   // logApiRoutes(app);
+
+  // OpenAPI Docs
+  app.get(
+    "/api/v1/openapi",
+    openAPISpecs(app, {
+      documentation: {
+        info: {
+          title: "Symbiosika Backend API",
+          version: "1.0.0",
+          description: "API for the Symbiosika AI Backend",
+        },
+      },
+    })
+  );
+  app.get("/api/v1/ui", swaggerUI({ url: "/api/v1/openapi" }));
 
   return {
     idleTimeout: 255,

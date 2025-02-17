@@ -4,7 +4,7 @@ import { serverSettings } from "./lib/db/schema/server";
 import { eq } from "drizzle-orm";
 import { _GLOBAL_SERVER_CONFIG } from "./store";
 import { html } from "hono/html";
-import { FastAppHono } from "./types";
+import type { FastAppHono } from "./types";
 import log from "./lib/log";
 
 interface License {

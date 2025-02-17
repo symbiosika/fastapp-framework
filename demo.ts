@@ -18,6 +18,7 @@ const server = defineServer({
   staticPublicDataPath: "./public",
   customPreRegisterCustomVerifications: [],
   useStripe: false,
+  publicKey: "",
 });
 
 export default server;

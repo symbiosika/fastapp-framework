@@ -7,6 +7,9 @@ import type { FastAppHono } from "../../types";
 import type { StripeDetailedItem } from "../../lib/types/shared/payment";
 import type Stripe from "stripe";
 import log from "../../lib/log";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import * as v from "valibot";
 
 /**
  * Check if the user has an active subscription
@@ -83,247 +86,350 @@ export default function defineRoutes(app: FastAppHono) {
    * Get all products
    * Can be filtered by group and type
    */
-  app.get("/products", async (c) => {
-    const group = c.req.query("group");
-    const type = c.req.query("type");
+  app.get(
+    "/products",
+    describeRoute({
+      method: "get",
+      path: "/products",
+      summary: "Get all products",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        group: v.optional(v.string()),
+        type: v.optional(
+          v.union([v.literal("subscription"), v.literal("payment")])
+        ),
+      })
+    ),
+    async (c) => {
+      const group = c.req.query("group");
+      const type = c.req.query("type");
+      if (!group)
+        throw new HTTPException(400, { message: "Group is required" });
+      if (type && type !== "subscription" && type !== "payment")
+        throw new HTTPException(400, {
+          message: "Type must be 'subscription' or 'payment'",
+        });
 
-    if (!group) throw new HTTPException(400, { message: "Group is required" });
-    if (type && type !== "subscription" && type !== "payment")
-      throw new HTTPException(400, {
-        message: "Type must be 'subscription' or 'payment'",
-      });
+      const products: StripeDetailedItem[] = await stripeService
+        .getProductsByGroupAndType(
+          group,
+          type as "subscription" | "payment" | undefined
+        )
+        .catch((e) => {
+          log.error(e);
+          throw new HTTPException(500, { message: e });
+        });
 
-    const products: StripeDetailedItem[] = await stripeService
-      .getProductsByGroupAndType(
-        group,
-        type as "subscription" | "payment" | undefined
-      )
-      .catch((e) => {
-        log.error(e);
-        throw new HTTPException(500, { message: e });
-      });
-
-    return c.json(products);
-  });
+      return c.json(products);
+    }
+  );
 
   /**
    * Get the user's subscription
    */
-  app.get("/subscriptions", async (c) => {
-    const userId = c.get("usersId");
-    const planName = c.req.query("planName");
-
-    log.debug("Checking user subscription", userId, planName);
-    const subscription = await checkUserSubscription(userId, planName).catch(
-      (e) => {
-        log.error(e);
-        throw new HTTPException(500, {
-          message: "Error checking user subscription. " + e,
-        });
-      }
-    );
-    return c.json(subscription);
-  });
+  app.get(
+    "/subscriptions",
+    describeRoute({
+      method: "get",
+      path: "/subscriptions",
+      summary: "Get the user's subscription",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        planName: v.optional(v.string()),
+      })
+    ),
+    async (c) => {
+      const userId = c.get("usersId");
+      const planName = c.req.query("planName");
+      log.debug("Checking user subscription", userId, planName);
+      const subscription = await checkUserSubscription(userId, planName).catch(
+        (e) => {
+          log.error(e);
+          throw new HTTPException(500, {
+            message: "Error checking user subscription. " + e,
+          });
+        }
+      );
+      return c.json(subscription);
+    }
+  );
 
   /**
    * Cancel the user's subscription
    */
-  app.post("/cancel-subscription", async (c) => {
-    const userId = c.get("usersId");
-    const planName = c.req.query("planName");
-    if (!planName) {
-      throw new HTTPException(400, { message: "Plan name is required" });
-    }
-
-    const entries = await getDb()
-      .select()
-      .from(activeSubscriptions)
-      .where(
-        and(
-          eq(activeSubscriptions.userId, userId),
-          eq(activeSubscriptions.planName, planName)
-        )
-      );
-
-    if (entries.length === 0) {
-      throw new HTTPException(404, { message: "No active subscription found" });
-    }
-    const cancelledSubscription = await stripeService.cancelSubscription(
-      entries[0].stripeCustomerId,
-      entries[0].stripeSubscriptionId
-    );
-
-    // Update local database
-    await getDb()
-      .update(activeSubscriptions)
-      .set({
-        status: "canceled",
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: new Date(cancelledSubscription.current_period_end),
-        updatedAt: new Date().toISOString(),
-        metadata: cancelledSubscription,
+  app.post(
+    "/cancel-subscription",
+    describeRoute({
+      method: "post",
+      path: "/cancel-subscription",
+      summary: "Cancel the user's subscription",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        planName: v.string(),
       })
-      .where(
-        and(
-          eq(activeSubscriptions.userId, userId),
-          eq(activeSubscriptions.planName, planName)
-        )
-      );
+    ),
+    async (c) => {
+      const userId = c.get("usersId");
+      const planName = c.req.query("planName");
 
-    return c.json({
-      message: "Subscription cancelled successfully",
-      cancelledSubscription,
-    });
-  });
-
-  /**
-   * Get the account link for the user to a plan
-   */
-  app.get("/account-link", async (c) => {
-    const userId = c.get("usersId");
-    const planName = c.req.query("planName");
-    const returnUrl = c.req.query("returnUrl");
-    if (!planName) {
-      throw new HTTPException(400, { message: "Plan name is required" });
-    }
-    if (!returnUrl) {
-      throw new HTTPException(400, { message: "Return URL is required" });
-    }
-    log.debug("Getting account link for user", userId);
-
-    try {
-      const subscriptions = await getDb()
+      const entries = await getDb()
         .select()
         .from(activeSubscriptions)
         .where(
           and(
             eq(activeSubscriptions.userId, userId),
-            eq(activeSubscriptions.planName, planName)
+            eq(activeSubscriptions.planName, planName!)
           )
         );
 
-      if (subscriptions.length === 0) {
-        throw new HTTPException(404, { message: "No Subscriptions found" });
-      }
-
-      const accountLinks: { url: string; planName: string }[] = [];
-      for (const subscription of subscriptions) {
-        const accountLink = await stripeService.generateAccountLink(
-          subscription.stripeCustomerId,
-          returnUrl
-        );
-        accountLinks.push({
-          url: accountLink.url,
-          planName: subscription.planName,
+      if (entries.length === 0) {
+        throw new HTTPException(404, {
+          message: "No active subscription found",
         });
       }
-      return c.json({ accountLinks });
-    } catch (error) {
-      log.error("Error getting account link", error + "");
-      throw new HTTPException(500, {
-        message: "Error getting account link. " + error,
+      const cancelledSubscription = await stripeService.cancelSubscription(
+        entries[0].stripeCustomerId,
+        entries[0].stripeSubscriptionId
+      );
+
+      // Update local database
+      await getDb()
+        .update(activeSubscriptions)
+        .set({
+          status: "canceled",
+          cancelAtPeriodEnd: true,
+          currentPeriodEnd: new Date(cancelledSubscription.current_period_end),
+          updatedAt: new Date().toISOString(),
+          metadata: cancelledSubscription,
+        })
+        .where(
+          and(
+            eq(activeSubscriptions.userId, userId),
+            eq(activeSubscriptions.planName, planName!)
+          )
+        );
+
+      return c.json({
+        message: "Subscription cancelled successfully",
+        cancelledSubscription,
       });
     }
-  });
+  );
+
+  /**
+   * Get the account link for the user to a plan
+   */
+  app.get(
+    "/account-link",
+    describeRoute({
+      method: "get",
+      path: "/account-link",
+      summary: "Get the account link for the user to a plan",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        planName: v.string(),
+        returnUrl: v.string(),
+      })
+    ),
+    async (c) => {
+      const userId = c.get("usersId");
+      const planName = c.req.query("planName")!;
+      const returnUrl = c.req.query("returnUrl")!;
+      log.debug("Getting account link for user", userId);
+
+      try {
+        const subscriptions = await getDb()
+          .select()
+          .from(activeSubscriptions)
+          .where(
+            and(
+              eq(activeSubscriptions.userId, userId),
+              eq(activeSubscriptions.planName, planName)
+            )
+          );
+
+        if (subscriptions.length === 0) {
+          throw new HTTPException(404, { message: "No Subscriptions found" });
+        }
+
+        const accountLinks: { url: string; planName: string }[] = [];
+        for (const subscription of subscriptions) {
+          const accountLink = await stripeService.generateAccountLink(
+            subscription.stripeCustomerId,
+            returnUrl!
+          );
+          accountLinks.push({
+            url: accountLink.url,
+            planName: subscription.planName,
+          });
+        }
+        return c.json({ accountLinks });
+      } catch (error) {
+        log.error("Error getting account link", error + "");
+        throw new HTTPException(500, {
+          message: "Error getting account link. " + error,
+        });
+      }
+    }
+  );
 
   /**
    * Create a checkout session
    */
-  app.post("/create-checkout-session", async (c) => {
-    const { productName, discount, successUrl, cancelUrl } = await c.req.json();
-    const userId = c.get("usersId");
-    const userEmail = c.get("usersEmail");
+  app.post(
+    "/create-checkout-session",
+    describeRoute({
+      method: "post",
+      path: "/create-checkout-session",
+      summary: "Create a checkout session",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        productName: v.string(),
+        discount: v.optional(v.string()),
+        successUrl: v.string(),
+        cancelUrl: v.string(),
+      })
+    ),
+    async (c) => {
+      const { productName, discount, successUrl, cancelUrl } =
+        await c.req.json();
+      const userId = c.get("usersId");
+      const userEmail = c.get("usersEmail");
 
-    log.debug("Creating checkout session for product", {
-      productName,
-      discount,
-      successUrl,
-      cancelUrl,
-    });
+      log.debug("Creating checkout session for product", {
+        productName,
+        discount,
+        successUrl,
+        cancelUrl,
+      });
 
-    let customerId = await stripeService.customerExists(userEmail);
-    if (!customerId) {
-      const customer = await stripeService.createCustomer(userEmail, userId);
-      customerId = customer.id;
+      let customerId = await stripeService.customerExists(userEmail);
+      if (!customerId) {
+        const customer = await stripeService.createCustomer(userEmail, userId);
+        customerId = customer.id;
+      }
+
+      const session = await stripeService.createSubscriptionSession(
+        customerId,
+        productName,
+        discount ?? "",
+        successUrl ?? undefined,
+        cancelUrl ?? undefined
+      );
+
+      // Store the session ID in your database, associated with the user
+      await storeCheckoutSession(
+        userId,
+        productName,
+        session,
+        session.mode as "payment" | "subscription"
+      );
+
+      return c.json({ checkoutUrl: session.url });
     }
-
-    const session = await stripeService.createSubscriptionSession(
-      customerId,
-      productName,
-      discount ?? "",
-      successUrl ?? undefined,
-      cancelUrl ?? undefined
-    );
-
-    // Store the session ID in your database, associated with the user
-    await storeCheckoutSession(
-      userId,
-      productName,
-      session,
-      session.mode as "payment" | "subscription"
-    );
-
-    return c.json({ checkoutUrl: session.url });
-  });
+  );
 
   // Redirect page after payment for both subscriptions and one-time payments
-  app.get("/success", async (c) => {
-    const sessionId = c.req.query("session_id");
-    log.debug("Finished session ID:", sessionId);
+  app.get(
+    "/success",
+    describeRoute({
+      method: "get",
+      path: "/success",
+      summary:
+        "Redirect page after payment for both subscriptions and one-time payments",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        session_id: v.string(),
+      })
+    ),
+    async (c) => {
+      const sessionId = c.req.query("session_id");
+      log.debug("Finished session ID:", sessionId);
 
-    if (!sessionId) {
-      throw new HTTPException(400, { message: "Session ID is required" });
-    }
+      if (!sessionId) {
+        throw new HTTPException(400, { message: "Session ID is required" });
+      }
 
-    try {
-      // Verify the session and update the database
-      const session = await stripeService.retrieveCheckoutSession(sessionId);
-      // log.debug("Success Session", session);
+      try {
+        // Verify the session and update the database
+        const session = await stripeService.retrieveCheckoutSession(sessionId);
+        // log.debug("Success Session", session);
 
-      if (
-        session.mode === "subscription" &&
-        session.payment_status === "paid"
-      ) {
-        log.debug("Updating subscription in database");
-        const purchase = await getDb()
-          .select()
-          .from(purchases)
-          .where(eq(purchases.stripePaymentIntentId, session.id))
-          .limit(1);
-        if (purchase.length === 0) {
-          log.error("No purchase found for session", session.id);
-          throw new HTTPException(404, { message: "No purchase found" });
+        if (
+          session.mode === "subscription" &&
+          session.payment_status === "paid"
+        ) {
+          log.debug("Updating subscription in database");
+          const purchase = await getDb()
+            .select()
+            .from(purchases)
+            .where(eq(purchases.stripePaymentIntentId, session.id))
+            .limit(1);
+          if (purchase.length === 0) {
+            log.error("No purchase found for session", session.id);
+            throw new HTTPException(404, { message: "No purchase found" });
+          }
+          await updatePaymentInDatabase(session.id, "succeeded", true);
+          await updateOrCreateSubscriptionInDatabase(
+            purchase[0].userId,
+            session,
+            purchase[0].productName
+          );
+          // redirect to the success page
+          return c.redirect("/static/");
+        } else if (
+          session.mode === "payment" &&
+          session.payment_status === "paid"
+        ) {
+          log.debug("Updating payment in database");
+          await updatePaymentInDatabase(session.id, "succeeded");
+          // redirect to the success page
+          return c.redirect("/static/");
+        } else {
+          return c.json({
+            success: false,
+            message: "Payment not completed",
+            session,
+          });
         }
-        await updatePaymentInDatabase(session.id, "succeeded", true);
-        await updateOrCreateSubscriptionInDatabase(
-          purchase[0].userId,
-          session,
-          purchase[0].productName
-        );
-        // redirect to the success page
-        return c.redirect("/static/");
-      } else if (
-        session.mode === "payment" &&
-        session.payment_status === "paid"
-      ) {
-        log.debug("Updating payment in database");
-        await updatePaymentInDatabase(session.id, "succeeded");
-        // redirect to the success page
-        return c.redirect("/static/");
-      } else {
-        return c.json({
-          success: false,
-          message: "Payment not completed",
-          session,
+      } catch (error) {
+        log.error("Error processing success page:", error + "");
+        throw new HTTPException(500, {
+          message: "Error processing success page. " + error,
         });
       }
-    } catch (error) {
-      log.error("Error processing success page:", error + "");
-      throw new HTTPException(500, {
-        message: "Error processing success page. " + error,
-      });
     }
-  });
+  );
 }
 
 /**

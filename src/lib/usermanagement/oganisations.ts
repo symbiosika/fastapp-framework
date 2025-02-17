@@ -146,11 +146,15 @@ export const setLastOrganisation = async (
     throw new Error("User is not a member of this organisation");
   }
 
-  return await getDb()
+  const [result] = await getDb()
     .update(users)
     .set({ lastOrganisationId: organisationId })
     .where(eq(users.id, userId))
-    .returning();
+    .returning({
+      userId: users.id,
+      lastOrganisationId: users.lastOrganisationId,
+    });
+  return result;
 };
 
 export const getTeamsAndMembersByOrganisation = async (
