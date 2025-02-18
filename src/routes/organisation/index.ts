@@ -31,7 +31,7 @@ import {
   organisationsUpdateSchema,
 } from "../../dbSchema";
 import { createOrganisationInvitation } from "../../lib/usermanagement/invitations";
-import { MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
 
 /**
  * Middleware to check if user is a member of the organisation

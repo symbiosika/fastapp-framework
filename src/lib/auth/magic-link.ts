@@ -11,7 +11,10 @@ const EXPIRE_TIME = 15 * 60 * 1000; // 15 minutes
 /**
  * Create a Magic Link Token
  */
-export const createMagicLinkToken = async (email: string): Promise<string> => {
+export const createMagicLinkToken = async (
+  email: string,
+  purpose: "login" | "email_verification" | "password_reset"
+): Promise<string> => {
   // Check if user exists
   const userResult = await getDb()
     .select()
@@ -32,6 +35,7 @@ export const createMagicLinkToken = async (email: string): Promise<string> => {
     userId: user.id,
     token,
     expiresAt: expiresAt.toISOString(),
+    purpose,
   });
 
   return token;
@@ -46,7 +50,7 @@ export const createMagicLoginLink = async (
   email: string,
   redirectUrl?: string
 ): Promise<string> => {
-  const token = await createMagicLinkToken(email);
+  const token = await createMagicLinkToken(email, "login");
   const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
   const magicLink = `${frontendUrl}/manage/#/magic-login?token=${encodeURIComponent(token)}&redirectUrl=${encodeURIComponent(redirectUrl || "")}`;
 
@@ -111,7 +115,7 @@ export const sendMagicLink = async (
  */
 export const sendVerificationEmail = async (email: string) => {
   // Create a token
-  const token = await createMagicLinkToken(email);
+  const token = await createMagicLinkToken(email, "email_verification");
 
   // Construct the magic link URL
   const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
@@ -261,7 +265,7 @@ export const verifyEmail = async (
 export const createResetPasswordLink = async (
   email: string
 ): Promise<string> => {
-  const token = await createMagicLinkToken(email);
+  const token = await createMagicLinkToken(email, "password_reset");
   const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
   // Example path /manage/#/reset-password?token=...
   const resetLink = `${frontendUrl}/manage/#/reset-password?token=${encodeURIComponent(token)}`;
@@ -293,4 +297,30 @@ export const sendResetPasswordLink = async (email: string): Promise<void> => {
       </html>
     `,
   });
+};
+
+// Neue Funktion zum Verifizieren eines Password-Reset-Tokens
+export const verifyPasswordResetToken = async (
+  token: string
+): Promise<{ userId: string }> => {
+  const nowMinusExpireTime = new Date(Date.now() - EXPIRE_TIME).toISOString();
+  const magicLinkResult = await getDb()
+    .select()
+    .from(magicLinkSessions)
+    .where(
+      and(
+        eq(magicLinkSessions.token, token),
+        eq(magicLinkSessions.purpose, "password_reset"),
+        gt(magicLinkSessions.expiresAt, nowMinusExpireTime)
+      )
+    );
+
+  if (magicLinkResult.length === 0) {
+    throw new Error("Invalid or expired password reset token");
+  }
+
+  // Token ist gültig - lösche ihn sofort, damit er nicht wiederverwendet werden kann
+  await deleteMagicLinkToken(magicLinkResult[0].id);
+
+  return { userId: magicLinkResult[0].userId };
 };

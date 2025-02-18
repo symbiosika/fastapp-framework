@@ -1,0 +1,2 @@
+CREATE TYPE "public"."magic_link_purpose" AS ENUM('login', 'email_verification', 'password_reset');--> statement-breakpoint
+ALTER TABLE "base_magic_link_sessions" ADD COLUMN "purpose" "magic_link_purpose" DEFAULT 'login' NOT NULL;

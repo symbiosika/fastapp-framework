@@ -195,6 +195,12 @@ export const userGroupMembersUpdateSchema =
   createUpdateSchema(userGroupMembers);
 
 // Table "MagicLink Sessions"
+export const magicLinkPurposeEnum = pgEnum("magic_link_purpose", [
+  "login",
+  "email_verification",
+  "password_reset"
+]);
+
 export const magicLinkSessions = pgBaseTable(
   "magic_link_sessions",
   {
@@ -209,6 +215,7 @@ export const magicLinkSessions = pgBaseTable(
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    purpose: magicLinkPurposeEnum("purpose").notNull().default("login"),
   },
   (magicLinkSession) => [
     uniqueIndex("unique_token").on(magicLinkSession.token),

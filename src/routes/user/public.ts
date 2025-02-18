@@ -17,6 +17,7 @@ import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { usersRestrictedSelectSchema, usersSelectSchema } from "../../dbSchema";
 import { RESPONSES } from "../../lib/responses";
+import { verifyPasswordResetToken } from "../../lib/auth/magic-link";
 
 /**
  * Pre-register custom verification
@@ -303,6 +304,40 @@ export function definePublicUserRoutes(
       const { email } = c.req.valid("json");
       await LocalAuth.forgotPasswort(email);
       return c.json(RESPONSES.SUCCESS);
+    }
+  );
+
+  /**
+   * Set new password with token
+   */
+  app.post(
+    API_BASE_PATH + "/user/reset-password",
+    describeRoute({
+      method: "post",
+      path: "/user/reset-password",
+      tags: ["user"],
+      summary: "Reset password with token",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        token: v.string(),
+        password: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const { token, password } = c.req.valid("json");
+        const { userId } = await verifyPasswordResetToken(token);
+
+        await LocalAuth.setNewPassword(userId, password);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(401, { message: "Invalid token: " + err });
+      }
     }
   );
 }

@@ -26,7 +26,7 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { RESPONSES } from "../../../../lib/responses";
-import { MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
 
 /**
  * Middleware to check if user is a member of the organisation
