@@ -76,6 +76,7 @@ import { defineLicenseRoutes, licenseManager } from "./license-service";
  */
 import { swaggerUI } from "@hono/swagger-ui";
 import { openAPISpecs } from "hono-openapi";
+import widdershins from "widdershins";
 
 /**
  * MAIN FUNCTION
@@ -332,6 +333,30 @@ export const defineServer = (config: ServerConfig) => {
         })
       );
       app.get("/api/v1/ui", swaggerUI({ url: "/api/v1/openapi" }));
+
+      // Add Markdown export endpoint
+      app.get("/api/v1/docs.md", async (c, next) => {
+        const spec = await openAPISpecs(app, {
+          documentation: {
+            info: {
+              title: "Symbiosika Backend API",
+              version: "1.0.0",
+              description: "API for the Symbiosika AI Backend",
+            },
+          },
+        })(c, next);
+
+        const options = {
+          language_tabs: [
+            { javascript: "JavaScript", typescript: "TypeScript" },
+          ],
+          summary: true,
+          tocSummary: true,
+        };
+
+        const markdown = await widdershins.convert(await spec!.json(), options);
+        return c.text(markdown);
+      });
 
       /**
        * Start job queue if needed
