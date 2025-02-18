@@ -460,6 +460,12 @@ export const organisationInvitationStatusEnum = pgEnum(
   ["pending", "accepted", "declined"]
 );
 
+export const organisationMemberRoleEnum = pgEnum("organisation_member_role", [
+  "owner",
+  "admin",
+  "member",
+]);
+
 export const organisationInvitations = pgBaseTable(
   "organisation_invitations",
   {
@@ -467,6 +473,7 @@ export const organisationInvitations = pgBaseTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     email: text("email").notNull(), // cannot be the userId since a user is maybe not registered yet
+    role: organisationMemberRoleEnum("role").notNull().default("member"),
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id, { onDelete: "cascade" }),
@@ -503,12 +510,6 @@ export const organisationInvitationsInsertSchema = createInsertSchema(
 export const organisationInvitationsUpdateSchema = createUpdateSchema(
   organisationInvitations
 );
-
-export const organisationMemberRoleEnum = pgEnum("organisation_member_role", [
-  "owner",
-  "admin",
-  "member",
-]);
 
 export const organisationMembers = pgBaseTable(
   "organisation_members",

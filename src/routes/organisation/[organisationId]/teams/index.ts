@@ -26,6 +26,41 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { RESPONSES } from "../../../../lib/responses";
+import { MiddlewareHandler } from "hono";
+
+/**
+ * Middleware to check if user is a member of the organisation
+ */
+export const isTeamMember: MiddlewareHandler = async (c, next) => {
+  const userId = c.get("usersId");
+  const teamId = c.req.param("teamId")!;
+
+  try {
+    await checkTeamMemberRole(teamId, userId, ["admin", "member"]);
+    await next();
+  } catch (err) {
+    throw new HTTPException(403, {
+      message: "User is not a member of this team",
+    });
+  }
+};
+
+/**
+ * Middleware to check if user is an admin of the team
+ */
+export const isTeamAdmin: MiddlewareHandler = async (c, next) => {
+  const userId = c.get("usersId");
+  const teamId = c.req.param("teamId")!;
+
+  try {
+    await checkTeamMemberRole(teamId, userId, ["admin"]);
+    await next();
+  } catch (err) {
+    throw new HTTPException(403, {
+      message: "User is not an admin of this team",
+    });
+  }
+};
 
 export default function defineTeamRoutes(
   app: FastAppHono,
@@ -63,6 +98,7 @@ export default function defineTeamRoutes(
         const team = await createTeam(data);
         // assign the user to the team
         await addTeamMember(team.id, c.get("usersId"), "admin");
+
         return c.json(team);
       } catch (err) {
         throw new HTTPException(500, {
@@ -110,17 +146,17 @@ export default function defineTeamRoutes(
   );
 
   /**
-   * Get a team by id
+   * Get a team by teamId
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:teamId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/teams/:id",
+      path: "/organisation/:organisationId/teams/:teamId",
       tags: ["teams"],
-      summary: "Get a team by id",
+      summary: "Get a team by its id",
       responses: {
         200: {
           description: "Successful response",
@@ -134,11 +170,12 @@ export default function defineTeamRoutes(
     }),
     validator(
       "param",
-      v.object({ organisationId: v.string(), id: v.string() })
+      v.object({ organisationId: v.string(), teamId: v.string() })
     ),
+    isTeamMember, // check if user is a member of the organisation
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      const team = await getTeam(id);
+      const { organisationId, teamId } = c.req.valid("param");
+      const team = await getTeam(teamId);
       return c.json(team);
     }
   );
@@ -147,12 +184,12 @@ export default function defineTeamRoutes(
    * Update a team
    */
   app.put(
-    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:teamId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "put",
-      path: "/organisation/:organisationId/teams/:id",
+      path: "/organisation/:organisationId/teams/:teamId",
       tags: ["teams"],
       summary: "Update a team",
       responses: {
@@ -169,13 +206,14 @@ export default function defineTeamRoutes(
     validator("json", teamsInsertSchema),
     validator(
       "param",
-      v.object({ organisationId: v.string(), id: v.string() })
+      v.object({ organisationId: v.string(), teamId: v.string() })
     ),
+    isTeamAdmin, // check if user is an admin of the team
     async (c) => {
       try {
-        const { organisationId, id } = c.req.valid("param");
+        const { organisationId, teamId } = c.req.valid("param");
         const data = c.req.valid("json");
-        const team = await updateTeam(id, data);
+        const team = await updateTeam(teamId, data);
         return c.json(team);
       } catch (err) {
         throw new HTTPException(500, {
@@ -189,12 +227,12 @@ export default function defineTeamRoutes(
    * Delete a team
    */
   app.delete(
-    API_BASE_PATH + "/organisation/:organisationId/teams/:id",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:teamId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "delete",
-      path: "/organisation/:organisationId/teams/:id",
+      path: "/organisation/:organisationId/teams/:teamId",
       tags: ["teams"],
       summary: "Delete a team",
       responses: {
@@ -205,12 +243,13 @@ export default function defineTeamRoutes(
     }),
     validator(
       "param",
-      v.object({ organisationId: v.string(), id: v.string() })
+      v.object({ organisationId: v.string(), teamId: v.string() })
     ),
+    isTeamAdmin, // check if user is an admin of the team
     async (c) => {
       try {
-        const { organisationId, id } = c.req.valid("param");
-        await deleteTeam(id);
+        const { organisationId, teamId } = c.req.valid("param");
+        await deleteTeam(teamId);
         return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
@@ -224,12 +263,12 @@ export default function defineTeamRoutes(
    * Get all members of a team
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/teams/:id/members",
+    API_BASE_PATH + "/organisation/:organisationId/teams/:teamId/members",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/teams/:id/members",
+      path: "/organisation/:organisationId/teams/:teamId/members",
       tags: ["teams"],
       summary: "Get all members of a team",
       responses: {
@@ -254,15 +293,16 @@ export default function defineTeamRoutes(
     }),
     validator(
       "param",
-      v.object({ organisationId: v.string(), id: v.string() })
+      v.object({ organisationId: v.string(), teamId: v.string() })
     ),
+    isTeamMember, // check if user is a member of the team
     async (c) => {
       try {
-        const { organisationId, id } = c.req.valid("param");
+        const { organisationId, teamId } = c.req.valid("param");
         const members = await getTeamMembers(
           c.get("usersId"),
           organisationId,
-          id
+          teamId
         );
         return c.json(members);
       } catch (err) {
@@ -314,6 +354,7 @@ export default function defineTeamRoutes(
       "param",
       v.object({ organisationId: v.string(), teamId: v.string() })
     ),
+    isTeamAdmin, // check if user is an admin of the team
     async (c) => {
       try {
         const { userId, role } = await c.req.valid("json");
@@ -373,14 +414,13 @@ export default function defineTeamRoutes(
         destinationUserId: v.string(),
       })
     ),
-
+    isTeamAdmin, // check if user is an admin of the team
     async (c) => {
       const userId = c.get("usersId");
       const { role } = c.req.valid("json");
       const { organisationId, teamId, destinationUserId } =
         c.req.valid("param");
 
-      await checkTeamMemberRole(teamId, userId, "admin");
       const member = await updateTeamMemberRole(
         teamId,
         destinationUserId,
@@ -417,13 +457,13 @@ export default function defineTeamRoutes(
         destinationUserId: v.string(),
       })
     ),
+    isTeamAdmin, // check if user is an admin of the team
     async (c) => {
       try {
         const userId = c.get("usersId");
         const { organisationId, teamId, destinationUserId } =
           c.req.valid("param");
 
-        await checkTeamMemberRole(teamId, userId, "admin");
         await removeTeamMember(teamId, destinationUserId);
         return c.json(RESPONSES.SUCCESS);
       } catch (err) {

@@ -5,7 +5,7 @@
  */
 
 import { getDb } from "../db/db-connection";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import {
   teams,
   teamMembers,
@@ -130,17 +130,20 @@ export const addTeamMember = async (
 export const checkTeamMemberRole = async (
   teamId: string,
   userId: string,
-  roleToCheck: "admin" | "member"
+  roleToCheck: ("admin" | "member")[]
 ) => {
   const member = await getDb()
     .select()
     .from(teamMembers)
     .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
-  if (member.length === 0 || member[0].role !== roleToCheck) {
+  if (member.length === 0) {
+    throw new Error("You are not allowed to remove team members");
+  } else if (roleToCheck.includes(member[0].role)) {
+    return true;
+  } else {
     throw new Error("You are not allowed to remove team members");
   }
-  return true;
 };
 
 /**
@@ -150,6 +153,30 @@ export const removeTeamMember = async (
   teamId: string,
   destinationUserId: string
 ) => {
+  // check if the team is not empty after dropping
+  const members = await getDb()
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.teamId, teamId));
+  if (members.length === 1) {
+    throw new Error("Team must have at least one member");
+  }
+
+  // check if the team has at least one more admin
+  const admins = await getDb()
+    .select()
+    .from(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.role, "admin"),
+        ne(teamMembers.userId, destinationUserId)
+      )
+    );
+  if (admins.length === 0) {
+    throw new Error("Team must have at least one admin");
+  }
+
   // do the actual removal
   await getDb()
     .delete(teamMembers)

@@ -1,0 +1,1 @@
+ALTER TABLE "base_organisation_invitations" ADD COLUMN "role" "organisation_member_role" DEFAULT 'member' NOT NULL;

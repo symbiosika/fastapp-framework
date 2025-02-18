@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db/db-connection";
-import { eq, and, sql, ne } from "drizzle-orm";
+import { eq, and, sql, ne, or } from "drizzle-orm";
 import {
   organisations,
   teams,
@@ -90,12 +90,15 @@ export const dropUserFromOrganisation = async (
     .where(
       and(
         eq(organisationMembers.organisationId, organisationId),
-        eq(organisationMembers.role, "owner"),
+        or(
+          eq(organisationMembers.role, "owner"),
+          eq(organisationMembers.role, "admin")
+        ),
         ne(organisationMembers.userId, userId)
       )
     );
   if (owners.length < 1) {
-    throw new Error("Organisation must have at least one owner");
+    throw new Error("Organisation must have at least one owner or admin");
   }
   await getDb()
     .delete(organisationMembers)
@@ -281,4 +284,28 @@ export const getOrganisationMembers = async (
     .from(organisationMembers)
     .leftJoin(users, eq(organisationMembers.userId, users.id))
     .where(eq(organisationMembers.organisationId, organisationId));
+};
+
+/**
+ * Get the role of a userId in an organisation
+ */
+export const getOrganisationMemberRole = async (
+  organisationId: string,
+  userId: string
+): Promise<"owner" | "admin" | "member"> => {
+  const result = await getDb()
+    .select({
+      role: organisationMembers.role,
+    })
+    .from(organisationMembers)
+    .where(
+      and(
+        eq(organisationMembers.organisationId, organisationId),
+        eq(organisationMembers.userId, userId)
+      )
+    );
+  if (result.length < 1) {
+    throw new Error("User is not a member of this organisation");
+  }
+  return result[0].role;
 };
