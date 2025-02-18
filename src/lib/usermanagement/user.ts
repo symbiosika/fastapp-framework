@@ -35,8 +35,33 @@ export const getUserById = async (userId: string) => {
   return user[0] ?? undefined;
 };
 
-export const getUserByEmail = async (email: string) => {
-  const user = await getDb().select().from(users).where(eq(users.email, email));
+export const getUserByEmail = async (
+  email: string,
+  organisationId?: string
+) => {
+  const q = getDb()
+    .select({
+      id: users.id,
+      email: users.email,
+      firstname: users.firstname,
+      surname: users.surname,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .$dynamic();
+
+  if (organisationId) {
+    q.innerJoin(
+      organisationMembers,
+      and(
+        eq(organisationMembers.userId, users.id),
+        eq(organisationMembers.organisationId, organisationId)
+      )
+    );
+  }
+
+  const user = await q;
+
   if (!user[0]) throw new Error("User not found");
   return user[0];
 };

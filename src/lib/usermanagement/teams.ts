@@ -13,6 +13,7 @@ import {
   type TeamsInsert,
   users,
 } from "../db/schema/users";
+import { getUserOrganisations } from "./oganisations";
 
 /**
  * Create a team
@@ -113,9 +114,17 @@ export const dropUserFromTeam = async (userId: string, teamId: string) => {
  */
 export const addTeamMember = async (
   teamId: string,
+  organisationId: string,
   userId: string,
   role?: "admin" | "member"
 ) => {
+  // check if the user is part of the organisation
+  const orgs = await getUserOrganisations(userId);
+  const membership = orgs.find((org) => org.organisationId === organisationId);
+  if (!membership) {
+    throw new Error("User is not part of the organisation");
+  }
+
   const result = await getDb()
     .insert(teamMembers)
     .values({

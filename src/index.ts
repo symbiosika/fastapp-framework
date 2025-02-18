@@ -44,6 +44,7 @@ import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/worksp
 import defineWebhookRoutes from "./routes/webhooks";
 import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
 import defineAdminRoutes from "./routes/admin";
+import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
@@ -198,6 +199,7 @@ export const defineServer = (config: ServerConfig) => {
       defineTeamRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       definePermissionGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineInvitationRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      defineSearchInOrganisationRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
    * Adds collection routes

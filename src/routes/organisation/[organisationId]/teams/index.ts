@@ -97,7 +97,7 @@ export default function defineTeamRoutes(
         const { organisationId } = c.req.valid("param");
         const team = await createTeam(data);
         // assign the user to the team
-        await addTeamMember(team.id, c.get("usersId"), "admin");
+        await addTeamMember(team.id, organisationId, c.get("usersId"), "admin");
 
         return c.json(team);
       } catch (err) {
@@ -359,7 +359,12 @@ export default function defineTeamRoutes(
       try {
         const { userId, role } = await c.req.valid("json");
         const { organisationId, teamId } = c.req.valid("param");
-        const member = await addTeamMember(teamId, userId, role);
+        const member = await addTeamMember(
+          teamId,
+          organisationId,
+          userId,
+          role
+        );
         return c.json(member);
       } catch (err) {
         throw new HTTPException(500, {
