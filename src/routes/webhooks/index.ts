@@ -1,6 +1,5 @@
 import type { FastAppHono } from "../../types";
 import { HTTPException } from "hono/http-exception";
-import type { Context } from "hono";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import {
   createWebhook,
@@ -9,12 +8,19 @@ import {
   getWebhookById,
   updateWebhook,
 } from "../../lib/webhooks/crud";
-import { newWebhookSchema, webhookSchema } from "../../lib/db/schema/webhooks";
+import {
+  newWebhookSchema,
+  updateWebhookSchema,
+  webhookSchema,
+} from "../../lib/db/schema/webhooks";
 import * as v from "valibot";
 import {
   triggerWebhook,
   WebhookTriggerError,
 } from "../../lib/webhooks/trigger";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import { RESPONSES } from "../../lib/responses";
 
 export default function defineWebhookRoutes(
   app: FastAppHono,
@@ -25,14 +31,29 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/webhooks",
-
-    authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/webhooks",
+      tags: ["webhooks"],
+      summary: "Create a new webhook",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(webhookSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", newWebhookSchema),
+    validator("query", v.object({ organisationId: v.string() })),
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const organisationId = c.get("organisationId");
-        const body = await c.req.json();
-        const parsed = v.parse(newWebhookSchema, body);
+        const parsed = c.req.valid("json");
+        const { organisationId } = c.req.valid("query");
 
         const webhook = await createWebhook(userId, {
           ...parsed,
@@ -53,19 +74,28 @@ export default function defineWebhookRoutes(
    */
   app.get(
     API_BASE_PATH + "/webhooks",
-
+    describeRoute({
+      method: "get",
+      path: "/webhooks",
+      tags: ["webhooks"],
+      summary: "Get all webhooks for the user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(webhookSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("query", v.object({ organisationId: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const organisationId = c.req.query("organisationId");
-
-        if (!organisationId) {
-          throw new HTTPException(400, {
-            message: "Organisation ID is required",
-          });
-        }
-
+        const { organisationId } = c.req.valid("query");
         const webhooks = await getAllUsersWebhooks(userId, organisationId);
         return c.json(webhooks);
       } catch (err) {
@@ -81,18 +111,33 @@ export default function defineWebhookRoutes(
    */
   app.get(
     API_BASE_PATH + "/webhooks/:id",
-
+    describeRoute({
+      method: "get",
+      path: "/webhooks/:id",
+      tags: ["webhooks"],
+      summary: "Get a specific webhook by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(webhookSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("query", v.object({ organisationId: v.string() })),
+    validator("param", v.object({ id: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const webhookId = c.req.param("id");
-        const webhook = await getWebhookById(webhookId, userId);
-
+        const { id } = c.req.valid("param");
+        const webhook = await getWebhookById(id, userId);
         if (!webhook) {
           throw new HTTPException(404, { message: "Webhook not found" });
         }
-
         return c.json(webhook);
       } catch (err) {
         if (err instanceof HTTPException) throw err;
@@ -108,15 +153,31 @@ export default function defineWebhookRoutes(
    */
   app.put(
     API_BASE_PATH + "/webhooks/:id",
-
+    describeRoute({
+      method: "put",
+      path: "/webhooks/:id",
+      tags: ["webhooks"],
+      summary: "Update a webhook",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(webhookSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", updateWebhookSchema),
+    validator("param", v.object({ id: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const webhookId = c.req.param("id");
-        const body = await c.req.json();
-        const parsed = v.parse(webhookSchema, body);
-        const webhook = await updateWebhook(webhookId, parsed, userId);
+        const { id } = c.req.valid("param");
+        const parsed = c.req.valid("json");
+        const webhook = await updateWebhook(id, parsed, userId);
         if (!webhook) {
           throw new HTTPException(404, { message: "Webhook not found" });
         }
@@ -135,15 +196,26 @@ export default function defineWebhookRoutes(
    */
   app.delete(
     API_BASE_PATH + "/webhooks/:id",
-
+    describeRoute({
+      method: "delete",
+      path: "/webhooks/:id",
+      tags: ["webhooks"],
+      summary: "Delete a webhook",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("query", v.object({ organisationId: v.string() })),
+    validator("param", v.object({ id: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const webhookId = c.req.param("id");
-
-        await deleteWebhook(webhookId, userId);
-        return c.json({ success: true });
+        const { id } = c.req.valid("param");
+        await deleteWebhook(id, userId);
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error deleting webhook: " + err,
@@ -159,16 +231,37 @@ export default function defineWebhookRoutes(
   app.post(
     API_BASE_PATH + "/webhooks/register/n8n",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/webhooks/register/n8n",
+      tags: ["webhooks"],
+      summary: "Register a webhook for n8n",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({ id: v.string(), success: v.boolean() })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        name: v.string(),
+        webhookUrl: v.string(),
+        event: v.string(),
+        organisationId: v.string(),
+      })
+    ),
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const body = await c.req.json();
-
-        if (!body.name || !body.webhookUrl || !body.event) {
-          throw new HTTPException(400, {
-            message: "Name, webhookUrl and event are required",
-          });
-        }
+        const body = c.req.valid("json");
 
         // check event type
         if (body.event !== "chatOutput") {
@@ -204,17 +297,32 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/webhooks/check",
-
+    describeRoute({
+      method: "post",
+      path: "/webhooks/check",
+      tags: ["webhooks"],
+      summary: "Check if a webhook exists",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  exists: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", v.object({ webhookId: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
         const userId = c.get("usersId");
-        const body = await c.req.json();
-        const webhookId = body.webhookId;
-
-        if (!webhookId) {
-          return c.json({ exists: false });
-        }
+        const { webhookId } = c.req.valid("json");
 
         const webhook = await getWebhookById(webhookId, userId);
         return c.json({
@@ -231,21 +339,29 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/webhooks/:id/trigger",
-
+    describeRoute({
+      method: "post",
+      path: "/webhooks/:id/trigger",
+      tags: ["webhooks"],
+      summary: "Trigger a webhook",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", v.object({ payload: v.object({}) })),
+    validator("query", v.object({ organisationId: v.string() })),
+    validator("param", v.object({ id: v.string() })),
     authAndSetUsersInfo,
-    async (c: Context) => {
+    async (c) => {
       try {
-        const webhookId = c.req.param("id");
-        const organisationId = c.req.query("organisationId");
-        const body = await c.req.json().catch(() => ({}));
+        const userId = c.get("usersId");
+        const { id } = c.req.valid("param");
+        const { organisationId } = c.req.valid("query");
+        const body = c.req.valid("json");
 
-        if (!organisationId) {
-          throw new HTTPException(400, {
-            message: "Organisation ID is required",
-          });
-        }
-
-        const result = await triggerWebhook(webhookId, organisationId, {
+        const result = await triggerWebhook(id, organisationId, {
           payload: body,
         });
 

@@ -19,20 +19,18 @@ import {
   deletePlugin,
   getActivePluginByName,
   getAvailablePluginByType,
+  availablePluginsSchema,
 } from "../../../../lib/plugins";
 import { RESPONSES } from "../../../../lib/responses";
 import type { Context } from "hono";
 import { isValidUuid } from "../../../../lib/helper/uuid";
-
-const pluginConfigSchema = v.object({
-  id: v.string(),
-  organisationId: v.string(),
-  name: v.string(),
-  description: v.string(),
-  pluginType: v.string(),
-  version: v.number(),
-  meta: v.record(v.string(), v.any()),
-});
+import { resolver, validator } from "hono-openapi/valibot";
+import { describeRoute } from "hono-openapi";
+import {
+  pluginsInsertSchema,
+  pluginsSelectSchema,
+  pluginsUpdateSchema,
+} from "../../../../dbSchema";
 
 const executeEndpoint = async (
   c: Context,
@@ -83,8 +81,26 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/available",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/plugins/available",
+      tags: ["plugins"],
+      summary: "Get all available plugins",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(availablePluginsSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
+        const { organisationId } = c.req.valid("param");
         const plugins = await getAllAvailablePlugins();
         return c.json(plugins);
       } catch (error) {
@@ -102,9 +118,26 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/plugins/installed",
+      tags: ["plugins"],
+      summary: "Get all installed plugins",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(pluginsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const organisationId = c.req.param("organisationId");
+        const { organisationId } = c.req.valid("param");
         const plugins =
           await getAllInstalledPluginsByOrganisationId(organisationId);
         return c.json(plugins);
@@ -123,18 +156,33 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/plugins/installed",
+      tags: ["plugins"],
+      summary: "Register a new plugin",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pluginsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    validator("json", pluginsInsertSchema),
     async (c) => {
-      const organisationId = c.req.param("organisationId");
-      const body = await c.req.json();
-
-      if (body.organisationId !== organisationId) {
-        throw new HTTPException(400, {
-          message: "Organisation ID from URL and body does not match",
-        });
-      }
+      const { organisationId } = c.req.valid("param");
+      const data = c.req.valid("json");
 
       try {
-        const newPlugin = await createPlugin(body);
+        const newPlugin = await createPlugin({
+          ...data,
+          organisationId,
+        });
         return c.json(newPlugin);
       } catch (error) {
         throw new HTTPException(400, {
@@ -151,11 +199,29 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/plugins/installed/:idOrName",
+      tags: ["plugins"],
+      summary: "Get plugin configuration",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pluginsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), idOrName: v.string() })
+    ),
     async (c) => {
-      const idOrName = c.req.param("idOrName");
+      const { organisationId, idOrName } = c.req.valid("param");
       const isUUID = isValidUuid(idOrName);
-      const organisationId = c.req.param("organisationId");
-
       try {
         const plugin = await getPlugin({
           id: isUUID ? idOrName : undefined,
@@ -178,21 +244,39 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/plugins/installed/:idOrName",
+      tags: ["plugins"],
+      summary: "Update plugin configuration",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pluginsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), idOrName: v.string() })
+    ),
+    validator("json", pluginsUpdateSchema),
     async (c) => {
-      const idOrName = c.req.param("idOrName");
-      const isUUID = isValidUuid(idOrName);
-      const organisationId = c.req.param("organisationId");
-      const body = await c.req.json();
-
-      if (body.organisationId !== organisationId) {
-        throw new HTTPException(400, {
-          message: "Organisation ID from URL and body does not match",
-        });
-      }
-
       try {
-        const parsed = v.parse(pluginConfigSchema, body);
-        const updated = await setPluginConfig(parsed);
+        const { organisationId, idOrName } = c.req.valid("param");
+        const body = c.req.valid("json");
+
+        if (body.organisationId !== organisationId) {
+          throw new HTTPException(400, {
+            message: "Organisation ID from URL and body does not match",
+          });
+        }
+
+        const updated = await setPluginConfig(body);
         return c.json(updated);
       } catch (error) {
         throw new HTTPException(400, {
@@ -209,11 +293,25 @@ export default function definePluginRoutes(
     API_BASE_PATH + "/organisation/:organisationId/plugins/installed/:idOrName",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/plugins/installed/:idOrName",
+      tags: ["plugins"],
+      summary: "Delete a plugin configuration",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), idOrName: v.string() })
+    ),
     async (c) => {
-      const idOrName = c.req.param("idOrName");
+      const { organisationId, idOrName } = c.req.valid("param");
+      const isUUID = isValidUuid(idOrName);
       try {
-        const isUUID = isValidUuid(idOrName);
-        const organisationId = c.req.param("organisationId");
         await deletePlugin({
           id: isUUID ? idOrName : undefined,
           name: isUUID ? undefined : idOrName,
@@ -236,11 +334,28 @@ export default function definePluginRoutes(
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
+      tags: ["plugins-gateway"],
+      summary: "API Gateway for the plugin endpoints: GET",
+      responses: {
+        200: {
+          description: "Successful response. Dynamic Body from Plugin",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        pluginName: v.string(),
+        endpoint: v.string(),
+      })
+    ),
     async (c) => {
+      const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
-      const pluginName = c.req.param("pluginName");
-      const endpoint = c.req.param("endpoint");
-      const organisationId = c.req.param("organisationId");
 
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
@@ -264,11 +379,28 @@ export default function definePluginRoutes(
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
+      tags: ["plugins-gateway"],
+      summary: "API Gateway for the plugin endpoints: POST",
+      responses: {
+        200: {
+          description: "Successful response. Dynamic Body from Plugin",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        pluginName: v.string(),
+        endpoint: v.string(),
+      })
+    ),
     async (c) => {
+      const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
-      const pluginName = c.req.param("pluginName");
-      const endpoint = c.req.param("endpoint");
-      const organisationId = c.req.param("organisationId");
 
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
@@ -293,11 +425,27 @@ export default function definePluginRoutes(
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
+      tags: ["plugins-gateway"],
+      summary: "API Gateway for the plugin endpoints: DELETE",
+      responses: {
+        200: {
+          description: "Successful response. Dynamic Body from Plugin",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        pluginName: v.string(),
+        endpoint: v.string(),
+      })
+    ),
     async (c) => {
-      const pluginName = c.req.param("pluginName");
-      const endpoint = c.req.param("endpoint");
-
-      const organisationId = c.req.param("organisationId");
+      const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());
@@ -321,11 +469,28 @@ export default function definePluginRoutes(
       "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/plugins/gw/:pluginName/:endpoint",
+      tags: ["plugins-gateway"],
+      summary: "API Gateway for the plugin endpoints: PUT",
+      responses: {
+        200: {
+          description: "Successful response. Dynamic Body from Plugin",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        pluginName: v.string(),
+        endpoint: v.string(),
+      })
+    ),
     async (c) => {
       const url = new URL(c.req.url);
-      const pluginName = c.req.param("pluginName");
-      const endpoint = c.req.param("endpoint");
-      const organisationId = c.req.param("organisationId");
+      const { organisationId, pluginName, endpoint } = c.req.valid("param");
 
       // create a dict from all search params
       const searchParams = Object.fromEntries(url.searchParams.entries());

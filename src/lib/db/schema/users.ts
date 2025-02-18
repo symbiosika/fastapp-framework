@@ -28,6 +28,7 @@ import {
   createUpdateSchema,
 } from "drizzle-valibot";
 import { workspaceUsers } from "./workspaces";
+import * as v from "valibot";
 
 export const organisations = pgBaseTable(
   "organisations",
@@ -93,8 +94,13 @@ export const users = pgBaseTable(
 
 export type UsersSelect = typeof users.$inferSelect;
 export type UsersInsert = typeof users.$inferInsert;
+export type UserRestrictedSelect = Omit<UsersSelect, "password" | "salt">;
 
 export const usersSelectSchema = createSelectSchema(users);
+export const usersRestrictedSelectSchema = v.omit(usersSelectSchema, [
+  "password",
+  "salt",
+]);
 export const usersInsertSchema = createInsertSchema(users);
 export const usersUpdateSchema = createUpdateSchema(users);
 

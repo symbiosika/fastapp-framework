@@ -22,9 +22,14 @@ import {
   removeUsersFromChatSessionGroup,
 } from "../../../../lib/ai/chat-groups";
 import {
+  chatSessionGroupAssignmentsSelectSchema,
   chatSessionGroupsInsertSchema,
+  chatSessionGroupsSelectSchema,
   chatSessionGroupsUpdateSchema,
+  chatSessionsSelectSchema,
 } from "../../../../dbSchema";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
 
 // Add these validation schemas near the top with other schemas
 const addUsersToGroupValidation = v.object({
@@ -47,14 +52,36 @@ export default function defineChatGroupRoutes(
       "/organisation/:organisationId/ai/chat-groups/:groupId/history",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/chat-groups/:groupId/history",
+      tags: ["chat-groups"],
+      summary: "Get chat history for a chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(chatSessionsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        groupId: v.string(),
+      })
+    ),
     async (c) => {
-      const id = c.req.param("groupId");
-      const organisationId = c.req.param("organisationId");
+      const { organisationId, groupId } = c.req.valid("param");
       const usersId = c.get("usersId");
-      const r = await queryChatSessions(organisationId, usersId, {
-        chatSessionGroupId: id,
+      const history = await queryChatSessions(organisationId, usersId, {
+        chatSessionGroupId: groupId,
       });
-      return c.json(r);
+      return c.json(history);
     }
   );
 
@@ -65,19 +92,35 @@ export default function defineChatGroupRoutes(
     API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/chat-groups",
+      tags: ["chat-groups"],
+      summary: "Create a new chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(chatSessionGroupsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", chatSessionGroupsInsertSchema),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
+        const { organisationId } = c.req.valid("param");
+        const body = c.req.valid("json");
 
-        const parsedBody = v.parse(chatSessionGroupsInsertSchema, {
+        // Create the chat group
+        const chatGroup = await createChatSessionGroup({
           ...body,
           organisationId,
         });
-
-        // Create the chat group
-        const chatGroup = await createChatSessionGroup(parsedBody);
 
         // Assign the creating user to the chat group
         await addUserToChatSessionGroup(chatGroup.id, usersId);
@@ -98,9 +141,26 @@ export default function defineChatGroupRoutes(
     API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/chat-groups",
+      tags: ["chat-groups"],
+      summary: "Get all chat groups for the current user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(chatSessionGroupsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       const usersId = c.get("usersId");
-      const organisationId = c.req.param("organisationId");
+      const { organisationId } = c.req.valid("param");
       const chatGroups = await getChatSessionGroupsByUser(
         organisationId,
         usersId
@@ -116,18 +176,37 @@ export default function defineChatGroupRoutes(
     API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups/:groupId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/chat-groups/:groupId",
+      tags: ["chat-groups"],
+      summary: "Update a chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(chatSessionGroupsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", chatSessionGroupsUpdateSchema),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), groupId: v.string() })
+    ),
     async (c) => {
       try {
-        const body = await c.req.json();
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
-        const groupId = c.req.param("groupId");
-        const parsedBody = v.parse(chatSessionGroupsUpdateSchema, body);
+        const { organisationId, groupId } = c.req.valid("param");
+        const body = c.req.valid("json");
 
         const updatedGroup = await updateChatSessionGroup(
           groupId,
           organisationId,
-          parsedBody,
+          body,
           usersId
         );
 
@@ -153,10 +232,24 @@ export default function defineChatGroupRoutes(
     API_BASE_PATH + "/organisation/:organisationId/ai/chat-groups/:groupId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/chat-groups/:groupId",
+      tags: ["chat-groups"],
+      summary: "Delete a chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), groupId: v.string() })
+    ),
     async (c) => {
       const usersId = c.get("usersId");
-      const organisationId = c.req.param("organisationId");
-      const groupId = c.req.param("groupId");
+      const { organisationId, groupId } = c.req.valid("param");
 
       try {
         await deleteChatSessionGroup(groupId, organisationId, usersId);
@@ -177,12 +270,34 @@ export default function defineChatGroupRoutes(
       "/organisation/:organisationId/ai/chat-groups/:groupId/users",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/chat-groups/:groupId/users",
+      tags: ["chat-groups"],
+      summary: "Add users to a chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(chatSessionGroupAssignmentsSelectSchema)
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", addUsersToGroupValidation),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), groupId: v.string() })
+    ),
     async (c) => {
       try {
-        const body = await c.req.json();
+        const { organisationId, groupId } = c.req.valid("param");
+        const body = c.req.valid("json");
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
-        const groupId = c.req.param("groupId");
 
         const parsedBody = v.parse(addUsersToGroupValidation, body);
 
@@ -219,14 +334,31 @@ export default function defineChatGroupRoutes(
       "/organisation/:organisationId/ai/chat-groups/:groupId/users",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/chat-groups/:groupId/users",
+      tags: ["chat-groups"],
+      summary: "Remove users from a chat group",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", removeUsersFromGroupValidation),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        groupId: v.string(),
+        userIds: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const body = await c.req.json();
+        const { organisationId, groupId, userIds } = c.req.valid("param");
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
-        const groupId = c.req.param("groupId");
-
-        const parsedBody = v.parse(removeUsersFromGroupValidation, body);
+        const userIdsArr = userIds.split(",");
 
         // Verify the current user is a member of the group
         const groups = await getChatSessionGroupsByUser(
@@ -240,7 +372,7 @@ export default function defineChatGroupRoutes(
           });
         }
 
-        await removeUsersFromChatSessionGroup(groupId, parsedBody.userIds);
+        await removeUsersFromChatSessionGroup(groupId, userIdsArr);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, {

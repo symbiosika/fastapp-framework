@@ -4,12 +4,29 @@ import log from "../../log";
 import { basename } from "path";
 import type { WhisperResponseWithSegmentsAndWords } from "../../types/openai";
 import { nanoid } from "nanoid";
+import * as v from "valibot";
 
 /*
 This library is a wrapper for LLM APIs.
 At the moment it only supports OpenAI.
 All functions should be designed to support different providers in the future!
 */
+
+/**
+ * Define validations
+ */
+export const aiProviderValidationSchema = v.object({
+  provider: v.union([v.literal("openai"), v.literal("mistral")]),
+  model: v.string(),
+});
+
+export const aiModelsValidationSchema = v.object({
+  chat: v.array(aiProviderValidationSchema),
+  multiModal: v.array(aiProviderValidationSchema),
+  tts: v.array(aiProviderValidationSchema),
+  stt: v.array(aiProviderValidationSchema),
+  imageGeneration: v.array(aiProviderValidationSchema),
+});
 
 /**
  * Define the standards

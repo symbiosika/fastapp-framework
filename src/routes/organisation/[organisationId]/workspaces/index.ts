@@ -27,11 +27,14 @@ import type { FastAppHono } from "../../../../types";
 import {
   WorkspaceRelationsSchema,
   workspacesInsertSchema,
+  workspacesSelectSchema,
   workspacesUpdateSchema,
 } from "../../../../lib/db/schema/workspaces";
 import * as v from "valibot";
 import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
-import { eq } from "drizzle-orm";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import { RESPONSES } from "../../../../lib/responses";
 
 /**
  * Define the workspace management routes
@@ -47,14 +50,32 @@ export default function defineWorkspaceRoutes(
     API_BASE_PATH + "/organisation/:organisationId/workspaces",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces",
+      tags: ["workspaces"],
+      summary: "Get all workspaces for user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(workspacesSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("query", v.object({ parentId: v.optional(v.string()) })),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
         const userId = c.get("usersId");
-        const parentId = c.req.query("parentId");
+        const { parentId } = c.req.valid("query");
+        const { organisationId } = c.req.valid("param");
 
         // Convert "null" string to actual null value
         const parentIdFilter = parentId === "null" ? null : parentId;
-
         const workspaces = await getAllUsersWorkspaces(userId, parentIdFilter);
         return c.json(workspaces);
       } catch (error) {
@@ -72,9 +93,29 @@ export default function defineWorkspaceRoutes(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces/:workspaceId",
+      tags: ["workspaces"],
+      summary: "Get single workspace by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(workspacesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
         const workspace = await getWorkspaceById(workspaceId, userId);
         return c.json(workspace);
@@ -93,15 +134,32 @@ export default function defineWorkspaceRoutes(
     API_BASE_PATH + "/organisation/:organisationId/workspaces",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/workspaces",
+      tags: ["workspaces"],
+      summary: "Create new workspace in a specific organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(workspacesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", workspacesInsertSchema),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
+        const body = c.req.valid("json");
         const userId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
+        const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const parsed = v.parse(workspacesInsertSchema, { ...body, userId });
-        const workspace = await createWorkspace(userId, parsed);
+        const workspace = await createWorkspace(userId, { ...body, userId }); // ensure the userId to be own
         return c.json(workspace);
       } catch (error) {
         throw new HTTPException(400, {
@@ -118,16 +176,35 @@ export default function defineWorkspaceRoutes(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/workspaces/:workspaceId",
+      tags: ["workspaces"],
+      summary: "Update a workspace in a specific organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(workspacesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", workspacesUpdateSchema),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
+        const body = c.req.valid("json");
         validateOrganisationId(body, organisationId);
 
-        const parsed = v.parse(workspacesUpdateSchema, body);
-        const updated = await updateWorkspace(workspaceId, parsed, userId);
+        const updated = await updateWorkspace(workspaceId, body, userId);
         return c.json(updated);
       } catch (error) {
         throw new HTTPException(400, {
@@ -144,12 +221,27 @@ export default function defineWorkspaceRoutes(
     API_BASE_PATH + "/organisation/:organisationId/workspaces/:workspaceId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/workspaces/:workspaceId",
+      tags: ["workspaces"],
+      summary: "Delete a workspace",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
         await deleteWorkspace(workspaceId, userId);
-        return c.json({ message: "Workspace deleted" });
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(500, {
           message: "Failed to delete workspace",
@@ -166,15 +258,30 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/relations",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/relations",
+      tags: ["workspaces"],
+      summary: "Add relations to a workspace",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", WorkspaceRelationsSchema),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const relations = await c.req.json();
-        const parsed = v.parse(WorkspaceRelationsSchema, relations);
+        const parsed = c.req.valid("json");
 
         await addToWorkspace(workspaceId, parsed, userId);
-        return c.json({ message: "Relations added to workspace" });
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
@@ -191,15 +298,28 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/relations",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/relations",
+      tags: ["workspaces"],
+      summary: "Remove relations from a workspace",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator("json", WorkspaceRelationsSchema),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const relations = await c.req.json();
-        const parsed = v.parse(WorkspaceRelationsSchema, relations);
+        const relations = c.req.valid("json");
 
-        await dropFromWorkspace(workspaceId, parsed, userId);
-        return c.json({ message: "Relations removed from workspace" });
+        await dropFromWorkspace(workspaceId, relations, userId);
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
@@ -216,9 +336,36 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/members",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/members",
+      tags: ["workspaces"],
+      summary: "Get all members of a workspace",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(
+                  v.object({
+                    userId: v.string(),
+                    userEmail: v.string(),
+                  })
+                )
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
         const members = await getWorkspaceUsers(workspaceId, userId);
         return c.json(members);
@@ -238,18 +385,30 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/members",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/members",
+      tags: ["workspaces"],
+      summary: "Add members to a workspace",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", v.object({ userIds: v.array(v.string()) })),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), workspaceId: v.string() })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const { userIds } = await c.req.json();
+        const { userIds } = c.req.valid("json");
 
-        if (!Array.isArray(userIds)) {
-          throw new Error("userIds must be an array");
-        }
-
-        const members = await addUsersToWorkspace(workspaceId, userIds, userId);
-        return c.json(members);
+        await addUsersToWorkspace(workspaceId, userIds, userId);
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
@@ -266,14 +425,30 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/members/:memberId",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/members/:memberId",
+      tags: ["workspaces"],
+      summary: "Remove members from a workspace",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        workspaceId: v.string(),
+        memberId: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const workspaceId = c.req.param("workspaceId");
+        const { organisationId, workspaceId, memberId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const memberId = c.req.param("memberId");
 
         await removeUsersFromWorkspace(workspaceId, [memberId], userId);
-        return c.json({ message: "Members removed successfully" });
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
@@ -290,12 +465,35 @@ export default function defineWorkspaceRoutes(
       "/organisation/:organisationId/workspaces/:workspaceId/children",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/children",
+      tags: ["workspaces"],
+      summary: "Get all child workspaces for a parent workspace",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(workspacesSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        workspaceId: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const parentId = c.req.param("workspaceId");
+        const { organisationId, workspaceId } = c.req.valid("param");
         const userId = c.get("usersId");
 
-        const childWorkspaces = await getChildWorkspaces(parentId, userId);
+        const childWorkspaces = await getChildWorkspaces(workspaceId, userId);
         return c.json(childWorkspaces);
       } catch (error) {
         throw new HTTPException(400, {

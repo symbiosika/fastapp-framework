@@ -1,9 +1,8 @@
 import { and, eq, gt } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
-import { magicLinkSessions, users } from "../db/db-schema";
+import { magicLinkSessions, users, type UsersSelect } from "../db/db-schema";
 import { nanoid } from "nanoid";
 import { smtpService } from "../email";
-import type { UsersEntity } from "../types/shared/db/users";
 import { generateJwt } from ".";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
@@ -48,7 +47,7 @@ export const createMagicLoginLink = async (
   redirectUrl?: string
 ): Promise<string> => {
   const token = await createMagicLinkToken(email);
-  const frontendUrl = process.env.BASE_URL || "http://localhost:3000";
+  const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
   const magicLink = `${frontendUrl}/manage/#/magic-login?token=${encodeURIComponent(token)}&redirectUrl=${encodeURIComponent(redirectUrl || "")}`;
 
   return magicLink;
@@ -115,7 +114,7 @@ export const sendVerificationEmail = async (email: string) => {
   const token = await createMagicLinkToken(email);
 
   // Construct the magic link URL
-  const frontendUrl = process.env.BASE_URL || "http://localhost:3000";
+  const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
   const magicLink = `${frontendUrl}/manage/#/verify-email?token=${encodeURIComponent(token)}`;
 
   // /manage/#/verify-email?token=yXbEh56HRUJfvlC8ey9c__ITa20F-B1c&redirectUrl=
@@ -217,7 +216,7 @@ export const deleteMagicLinkToken = async (tokenId: string) => {
  */
 export const verifyMagicLink = async (
   token: string
-): Promise<{ user: UsersEntity; token: string }> => {
+): Promise<{ user: UsersSelect; token: string }> => {
   // Verify the email token
   const { user, tokenId } = await verifyEmailToken(token);
 
@@ -236,7 +235,7 @@ export const verifyMagicLink = async (
  */
 export const verifyEmail = async (
   token: string
-): Promise<{ user: UsersEntity; token: string }> => {
+): Promise<{ user: UsersSelect; token: string }> => {
   // Verify the email token
   const { user, tokenId } = await verifyEmailToken(token);
 
@@ -254,4 +253,44 @@ export const verifyEmail = async (
   await deleteMagicLinkToken(tokenId);
 
   return { user, token: sessionToken };
+};
+
+/**
+ * Creates a reset password link for the user
+ */
+export const createResetPasswordLink = async (
+  email: string
+): Promise<string> => {
+  const token = await createMagicLinkToken(email);
+  const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
+  // Example path /manage/#/reset-password?token=...
+  const resetLink = `${frontendUrl}/manage/#/reset-password?token=${encodeURIComponent(token)}`;
+  return resetLink;
+};
+
+/**
+ * Send a Reset Password Email
+ */
+export const sendResetPasswordLink = async (email: string): Promise<void> => {
+  const resetLink = await createResetPasswordLink(email);
+
+  await smtpService.sendMail({
+    sender: process.env.SMTP_FROM,
+    recipients: [email],
+    subject: "Reset Your Password " + _GLOBAL_SERVER_CONFIG.appName,
+    html: `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4a4a4a;">Reset Your Password</h2>
+            <p>Hello,</p>
+            <p>You (or someone else) requested a password reset. If this was you, please click the link below to set a new password:</p>
+            <p><a href="${resetLink}">Reset Password</a></p>
+            <p>The link expires in 15 minutes. If you did not request this, you can ignore this email.</p>
+            <p>Best regards,<br>The ${_GLOBAL_SERVER_CONFIG.appName} Team</p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
 };

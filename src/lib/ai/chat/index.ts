@@ -2,20 +2,16 @@
  * A lib to control chat flows
  */
 import * as v from "valibot";
-import type { ChatMessage, ChatSession } from "./chat-store";
+import type { ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
-import type { ChatWithTemplateReturn } from "../../../types";
 import { LLMAgent } from "../agents/llm-agent";
 import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { Agent, AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
 
-const chatInitValidation = v.object({
-  userId: v.string(),
-  organisationId: v.string(),
-
+export const chatInitInputValidation = v.object({
   chatId: v.optional(v.string()),
   chatSessionGroupId: v.optional(v.string()),
   initiateTemplate: v.optional(
@@ -43,7 +39,55 @@ const chatInitValidation = v.object({
     })
   ),
 });
+
+export const chatInitValidation = v.intersect([
+  v.object({
+    userId: v.string(),
+    organisationId: v.string(),
+  }),
+  chatInitInputValidation,
+]);
 type ChatInitInput = v.InferOutput<typeof chatInitValidation>;
+
+export const chatWithTemplateReturnValidation = v.object({
+  chatId: v.string(),
+  message: v.object({
+    role: v.union([v.literal("user"), v.literal("assistant")]),
+    content: v.string(),
+  }),
+  meta: v.any(),
+  finished: v.optional(v.boolean()),
+  render: v.optional(
+    v.union([
+      v.object({
+        type: v.literal("text"),
+      }),
+      v.object({
+        type: v.literal("image"),
+        url: v.string(),
+      }),
+      v.object({
+        type: v.literal("box"),
+        severity: v.union([
+          v.literal("info"),
+          v.literal("warning"),
+          v.literal("error"),
+        ]),
+      }),
+      v.object({
+        type: v.literal("markdown"),
+      }),
+      v.object({
+        type: v.literal("form"),
+        definition: v.array(v.any()), // GenericFormEntry[] type
+        data: v.record(v.string(), v.any()),
+      }),
+    ])
+  ),
+});
+type ChatWithTemplateReturn = v.InferOutput<
+  typeof chatWithTemplateReturnValidation
+>;
 
 // Initialize available agents
 const agents: Record<string, Agent> = {
@@ -118,6 +162,7 @@ const initChatSession = async (
     if (!session) {
       // create a new session in the db
       session = await chatStore.create({
+        chatId: query.chatId,
         messages,
         variables,
         context: {

@@ -11,6 +11,7 @@ import {
   getPlaceholdersForPromptTemplate,
   getPlainPlaceholdersForPromptTemplate,
   getPlainTemplate,
+  getPromptTemplatePlaceholderById,
   getTemplates,
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
@@ -32,9 +33,16 @@ import {
 } from "../../../../lib/utils/hono-middlewares";
 import * as v from "valibot";
 import {
+  promptSnippetsInsertSchema,
+  promptSnippetsSelectSchema,
+  promptSnippetsUpdateSchema,
   promptTemplatePlaceholdersInsertSchema,
+  promptTemplatePlaceholdersSelectSchema,
   promptTemplatesInsertSchema,
+  promptTemplatesSelectSchema,
 } from "../../../../dbSchema";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
 
 const updatePromptTemplatePlaceholderSchema = v.intersect([
   promptTemplatesInsertSchema,
@@ -45,7 +53,6 @@ const updatePromptTemplatePlaceholderSchema = v.intersect([
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
-
    * Get a plain template
    * URL params:
    * - promptId: string (optional)
@@ -54,21 +61,47 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * - organisationId: string
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/templates/:id?",
+      tags: ["ai"],
+      summary: "Get prompt templates",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(promptTemplatesSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        promptName: v.optional(v.string()),
+        promptCategory: v.optional(v.string()),
+        id: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const promptId = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
-        const promptName = c.req.query("promptName");
-        const promptCategory = c.req.query("promptCategory");
-
-        if (!organisationId) {
-          throw new HTTPException(400, {
-            message: 'Parameter "organisationId" is required',
-          });
-        }
+        const {
+          id: promptId,
+          promptName,
+          promptCategory,
+        } = c.req.valid("query");
+        const { organisationId } = c.req.valid("param");
 
         if (!promptId && !promptName && !promptCategory) {
           const r = await getTemplates(organisationId);
@@ -93,20 +126,37 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/templates",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/templates",
+      tags: ["ai"],
+      summary: "Create new prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", promptTemplatesInsertSchema),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const organisationId = c.req.param("organisationId");
-        const validatedBody = v.parse(promptTemplatesInsertSchema, body);
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
 
-        if (organisationId !== validatedBody.organisationId) {
+        if (organisationId !== body.organisationId) {
           throw new HTTPException(400, {
             message:
               'Parameter "organisationId" does not match body.organisationId',
           });
         }
 
-        const r = await addPromptTemplate({ ...validatedBody, organisationId });
+        const r = await addPromptTemplate({ ...body, organisationId });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -121,24 +171,43 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/templates/:id",
+      tags: ["ai"],
+      summary: "Update prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", updatePromptTemplatePlaceholderSchema),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        id: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
-        const body = await c.req.json();
-        const validatedBody = v.parse(
-          updatePromptTemplatePlaceholderSchema,
-          body
-        );
+        const { id, organisationId } = c.req.valid("param");
+        const body = c.req.valid("json");
 
-        if (organisationId !== validatedBody.organisationId) {
+        if (organisationId !== body.organisationId) {
           throw new HTTPException(400, {
             message:
               'Parameter "organisationId" does not match body.organisationId',
           });
         }
 
-        const r = await updatePromptTemplate(validatedBody);
+        const r = await updatePromptTemplate(body);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -153,15 +222,27 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/templates/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/templates/:id",
+      tags: ["ai"],
+      summary: "Delete prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        id: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
-        if (!organisationId) {
-          throw new HTTPException(400, {
-            message: 'Parameter "organisationId" is required',
-          });
-        }
+        const { id, organisationId } = c.req.valid("param");
         const r = await deletePromptTemplate(id, organisationId);
         return c.json(r);
       } catch (e) {
@@ -178,10 +259,52 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+      tags: ["ai"],
+      summary: "Get placeholders for prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        promptTemplateId: v.string(),
+      })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("promptTemplateId");
-        const r = await getPlainPlaceholdersForPromptTemplate(id);
+        const { promptTemplateId } = c.req.valid("param");
+        const r = await getPlainPlaceholdersForPromptTemplate(promptTemplateId);
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Get a placeholder for a prompt template by ID
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    async (c) => {
+      try {
+        const id = c.req.param("id");
+        const r = await getPromptTemplatePlaceholderById(id);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -300,26 +423,29 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * - category: string[] comma separated
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id?",
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/prompt-snippets/:id?",
+      tags: ["ai"],
+      summary: "Get prompt snippets",
+    }),
+    validator(
+      "query",
+      v.object({
+        name: v.optional(v.string()),
+        category: v.optional(v.string()),
+      })
+    ),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const organisationId = c.req.param("organisationId");
-        const id = c.req.param("id");
-        const names = parseCommaSeparatedListFromUrlParam(
-          c.req.query("name"),
-          []
-        );
-        const categories = parseCommaSeparatedListFromUrlParam(
-          c.req.query("category"),
-          []
-        );
-
-        if (id) {
-          const snippet = await getPromptSnippetById(id, organisationId);
-          return c.json(snippet);
-        }
+        const { name, category } = c.req.valid("query");
+        const { organisationId } = c.req.valid("param");
+        const names = parseCommaSeparatedListFromUrlParam(name, []);
+        const categories = parseCommaSeparatedListFromUrlParam(category, []);
 
         const snippets = await getPromptSnippets({
           names,
@@ -334,17 +460,66 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   );
 
   /**
+   * Get a prompt snippet by ID
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/prompt-snippets/:id",
+      tags: ["ai"],
+      summary: "Get prompt snippet by ID",
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        id: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const snippet = await getPromptSnippetById(id, organisationId);
+        return c.json(snippet);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
    * Add a new prompt snippet
    */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/prompt-snippets",
+      tags: ["ai"],
+      summary: "Add a new prompt snippet",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptSnippetsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", promptSnippetsInsertSchema),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
+        const body = c.req.valid("json");
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
+        const organisationId = c.req.valid("param").organisationId;
         const snippet = await addPromptSnippet({
           ...body,
           userId: usersId,
@@ -364,11 +539,31 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/prompt-snippets/:id",
+      tags: ["ai"],
+      summary: "Update a prompt snippet",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptSnippetsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", promptSnippetsUpdateSchema),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
-        const body = await c.req.json();
+        const { id, organisationId } = c.req.valid("param");
+        const body = c.req.valid("json");
         const snippet = await updatePromptSnippet(id, organisationId, {
           ...body,
         });
@@ -386,10 +581,24 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/prompt-snippets/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/prompt-snippets/:id",
+      tags: ["ai"],
+      summary: "Delete a prompt snippet",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
+        const { id, organisationId } = c.req.valid("param");
         await deletePromptSnippet(id, organisationId);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {

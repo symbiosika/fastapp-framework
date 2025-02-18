@@ -68,7 +68,7 @@ export const getTeamsByOrganisation = async (orgId: string) => {
 export const getTeamsByUser = async (userId: string, orgId: string) => {
   return await getDb()
     .select({
-      id: teams.id,
+      teamId: teams.id,
       name: teams.name,
       role: teamMembers.role,
     })

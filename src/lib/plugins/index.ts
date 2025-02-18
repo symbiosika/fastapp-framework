@@ -36,6 +36,45 @@ export const INSTALLED_PLUGINS: {
 } = {};
 
 /**
+ * Validators
+ */
+const pluginParameterDescriptionSchema = v.object({
+  category: v.string(),
+  type: v.union([
+    v.literal("string"),
+    v.literal("boolean"),
+    v.literal("number"),
+    v.literal("secret"),
+  ]),
+  name: v.string(),
+  label: v.string(),
+  description: v.string(),
+});
+
+const serverPluginConfigUiActionSchema = v.object({
+  name: v.string(),
+  label: v.string(),
+  urlPath: v.string(),
+});
+
+export const availablePluginsSchema = v.array(
+  v.object({
+    name: v.string(),
+    label: v.string(),
+    description: v.string(),
+    version: v.number(),
+    neededParameters: v.array(pluginParameterDescriptionSchema),
+    uiActions: v.optional(
+      v.object({
+        configUi: v.optional(
+          v.record(v.string(), serverPluginConfigUiActionSchema)
+        ),
+      })
+    ),
+  })
+);
+
+/**
  * Access the in-memory cache of installed plugins safely
  */
 export const getActivePluginByName = (
@@ -512,7 +551,7 @@ export const setPluginConfig = async (
 /**
  * Get all available plugins to return it to the user
  */
-export const getAllAvailablePlugins = async (): Promise<ServerPlugin[]> => {
+export const getAllAvailablePlugins = async () => {
   return Object.values(AVAILABLE_PLUGINS).map((plugin) => {
     return {
       name: plugin.name,

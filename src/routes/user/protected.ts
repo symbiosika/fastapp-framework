@@ -10,9 +10,10 @@ import type {
   FastAppHono,
 } from "../../types";
 import { HTTPException } from "hono/http-exception";
-import { users } from "../../lib/db/db-schema";
-import { eq } from "drizzle-orm";
-import { getDb } from "../../lib/db/db-connection";
+import {
+  organisationsSelectSchema,
+  usersRestrictedSelectSchema,
+} from "../../lib/db/db-schema";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import {
@@ -33,7 +34,12 @@ import * as v from "valibot";
 import { LocalAuth } from "../../lib/auth";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { getUserById, updateUser } from "../../lib/usermanagement/user";
+import {
+  getUserByEmail,
+  getUserById,
+  updateUser,
+} from "../../lib/usermanagement/user";
+import { RESPONSES } from "../../lib/responses";
 
 /**
  * Pre-register custom verification
@@ -59,16 +65,6 @@ export const registerPostRegisterAction = (
   postRegisterActions.push(action);
 };
 
-const userSchema = v.object({
-  id: v.string(),
-  email: v.string(),
-  firstname: v.string(),
-  surname: v.string(),
-  image: v.optional(v.string()),
-  meta: v.optional(v.object({})),
-  lastOrganisationId: v.optional(v.string()),
-});
-
 /**
  * Define the payment routes
  */
@@ -92,7 +88,7 @@ export function defineSecuredUserRoutes(
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(userSchema),
+              schema: resolver(usersRestrictedSelectSchema),
             },
           },
         },
@@ -128,7 +124,7 @@ export function defineSecuredUserRoutes(
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(userSchema),
+              schema: resolver(usersRestrictedSelectSchema),
             },
           },
         },
@@ -140,15 +136,18 @@ export function defineSecuredUserRoutes(
         firstname: v.optional(v.string()),
         surname: v.optional(v.string()),
         image: v.optional(v.string()),
+        lastOrganisationId: v.optional(v.nullable(v.string())),
       })
     ),
     async (c) => {
       try {
-        const { firstname, surname, image } = c.req.valid("json");
+        const { firstname, surname, image, lastOrganisationId } =
+          c.req.valid("json");
         await updateUser(c.get("usersId"), {
           firstname,
           surname,
           image,
+          lastOrganisationId,
         });
         const user = await getUserById(c.get("usersId"));
         return c.json(user);
@@ -178,15 +177,7 @@ export function defineSecuredUserRoutes(
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(
-                v.object({
-                  id: v.string(),
-                  name: v.string(),
-                  description: v.optional(v.string()),
-                  createdAt: v.string(),
-                  updatedAt: v.string(),
-                })
-              ),
+              schema: resolver(organisationsSelectSchema),
             },
           },
         },
@@ -234,7 +225,9 @@ export function defineSecuredUserRoutes(
       tags: ["user"],
       summary: "Change the own password",
       responses: {
-        200: { description: "Successful response" },
+        200: {
+          description: "Successful response",
+        },
       },
     }),
     validator(
@@ -250,7 +243,7 @@ export function defineSecuredUserRoutes(
         const { email } = await getUserById(userId);
         const { oldPassword, newPassword } = c.req.valid("json");
         await LocalAuth.changePassword(email, oldPassword, newPassword);
-        return c.json({ success: true });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error changing password: " + err,
@@ -278,7 +271,7 @@ export function defineSecuredUserRoutes(
               schema: resolver(
                 v.array(
                   v.object({
-                    id: v.string(),
+                    organisationId: v.string(),
                     name: v.string(),
                     role: v.string(),
                   })
@@ -303,7 +296,7 @@ export function defineSecuredUserRoutes(
   );
 
   /**
-   * Drop the membership of a user from an organisation
+   * Drop the membership of a user itself from an organisation
    */
   app.delete(
     API_BASE_PATH + "/user/organisation/:organisationId/membership",
@@ -312,23 +305,23 @@ export function defineSecuredUserRoutes(
       method: "delete",
       path: "/user/organisation/:organisationId/membership",
       tags: ["user", "organisations"],
-      summary: "Drop the membership of a user from an organisation",
+      summary: "Drop the membership of the user itself from an organisation",
       responses: {
         200: { description: "Successful response" },
       },
     }),
     validator(
-      "query",
+      "param",
       v.object({
         organisationId: v.string(),
       })
     ),
     async (c) => {
       const userId = c.get("usersId");
-      const organisationId = c.req.valid("query").organisationId;
+      const { organisationId } = c.req.valid("param");
       try {
         await dropUserFromOrganisation(userId, organisationId);
-        return c.json({ success: true });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error dropping user from organisation: " + err,
@@ -356,7 +349,7 @@ export function defineSecuredUserRoutes(
               schema: resolver(
                 v.array(
                   v.object({
-                    id: v.string(),
+                    teamId: v.string(),
                     name: v.string(),
                     role: v.string(),
                   })
@@ -367,19 +360,22 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+      })
+    ),
     async (c) => {
       const userId = c.get("usersId");
-      const organisationId = c.req.param("organisationId");
-      if (!organisationId) {
-        throw new HTTPException(400, { message: "organisationId is required" });
-      }
+      const { organisationId } = c.req.valid("param");
       const teams = await getTeamsByUser(userId, organisationId);
       return c.json(teams);
     }
   );
 
   /**
-   * Drop the membership of a user from a team
+   * Drop the membership of the user itself from a team
    */
   app.delete(
     API_BASE_PATH +
@@ -389,26 +385,24 @@ export function defineSecuredUserRoutes(
       method: "delete",
       path: "/user/organisation/:organisationId/teams/:teamId/membership",
       tags: ["user", "teams"],
-      summary: "Drop the membership of a user from a team",
+      summary: "Drop the membership of the user itself from a team",
       responses: {
         200: {
           description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(v.object({ success: v.boolean() })),
-            },
-          },
         },
       },
     }),
+    validator(
+      "param",
+      v.object({
+        teamId: v.string(),
+      })
+    ),
     async (c) => {
       const userId = c.get("usersId");
-      const teamId = c.req.param("teamId");
-      if (!teamId) {
-        throw new HTTPException(400, { message: "teamId is required" });
-      }
+      const { teamId } = c.req.valid("param");
       await dropUserFromTeam(userId, teamId);
-      return c.json({ success: true });
+      return c.json(RESPONSES.SUCCESS);
     }
   );
 
@@ -430,11 +424,9 @@ export function defineSecuredUserRoutes(
             "application/json": {
               schema: resolver(
                 v.object({
-                  id: v.string(),
-                  name: v.string(),
-                  description: v.optional(v.string()),
-                  createdAt: v.string(),
-                  updatedAt: v.string(),
+                  userId: v.string(),
+                  lastOrganisationId: v.string(),
+                  organisationName: v.string(),
                 })
               ),
             },
@@ -538,20 +530,20 @@ export function defineSecuredUserRoutes(
       })
     ),
     async (c) => {
-      const email = c.req.valid("query").email;
-      const u = await getDb()
-        .select()
-        .from(users)
-        .where(eq(users.email, email));
-      if (!u || u.length === 0) {
-        throw new HTTPException(404, { message: "User not found" });
+      try {
+        const email = c.req.valid("query").email;
+        const u = await getUserByEmail(email);
+        return c.json({
+          id: u.id,
+          email: u.email,
+          firstname: u.firstname,
+          surname: u.surname,
+        });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting user by email: " + err,
+        });
       }
-      return c.json({
-        id: u[0].id,
-        email: u[0].email,
-        firstname: u[0].firstname,
-        surname: u[0].surname,
-      });
     }
   );
 

@@ -10,11 +10,20 @@ import {
 } from "../../../../lib/utils/hono-middlewares";
 import { deleteSecret, getSecrets, setSecret } from "../../../../lib/crypt";
 import type { FastAppHono } from "../../../../types";
+import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
+import { describeRoute } from "hono-openapi";
+import { RESPONSES } from "../../../../lib/responses";
 
 const setSecretValidation = v.object({
   name: v.string(),
   value: v.string(),
+});
+
+const secretResponseSchema = v.object({
+  id: v.string(),
+  name: v.string(),
+  createdAt: v.string(),
 });
 
 /**
@@ -28,9 +37,26 @@ export default function defineManageSecretsRoutes(
     API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/secrets",
+      tags: ["secrets"],
+      summary: "Get all secrets for an organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(secretResponseSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const organisationId = c.req.param("organisationId");
+        const { organisationId } = c.req.valid("param");
         const value = await getSecrets(organisationId);
         return c.json(value);
       } catch (error) {
@@ -48,13 +74,34 @@ export default function defineManageSecretsRoutes(
     API_BASE_PATH + "/organisation/:organisationId/secrets",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/secrets",
+      tags: ["secrets"],
+      summary: "Add or update a backend secret",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(secretResponseSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", setSecretValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
-      const body = await c.req.json();
       try {
-        const parsed = v.parse(setSecretValidation, body);
-        const organisationId = c.req.param("organisationId");
+        const { organisationId } = c.req.valid("param");
+        const parsed = c.req.valid("json");
         const secret = await setSecret({ ...parsed, organisationId });
-        return c.json(secret);
+        return c.json({
+          id: secret.id,
+          name: secret.name,
+          createdAt: secret.createdAt,
+        });
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",
@@ -70,12 +117,26 @@ export default function defineManageSecretsRoutes(
     API_BASE_PATH + "/organisation/:organisationId/secrets/:name",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/secrets/:name",
+      tags: ["secrets"],
+      summary: "Delete a secret",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), name: v.string() })
+    ),
     async (c) => {
-      const name = c.req.param("name");
-      const organisationId = c.req.param("organisationId");
+      const { organisationId, name } = c.req.valid("param");
       try {
         await deleteSecret(name, organisationId);
-        return c.json({ message: "Secret deleted" });
+        return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(500, {
           message: "Failed to delete secret",

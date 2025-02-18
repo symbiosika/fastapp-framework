@@ -4,15 +4,13 @@ import {
   knowledgeText,
   type KnowledgeTextInsert,
 } from "../../db/schema/knowledge";
+import { RESPONSES } from "../../responses";
 
 /**
  * Create a new knowledgeText entry
  */
 export const createKnowledgeText = async (data: KnowledgeTextInsert) => {
-  const e = await getDb()
-    .insert(knowledgeText)
-    .values(data)
-    .returning();
+  const e = await getDb().insert(knowledgeText).values(data).returning();
   return e[0];
 };
 
@@ -48,7 +46,9 @@ export const readKnowledgeText = async (filters: {
   }
 
   if (filters.workspaceId) {
-    permissionConditions.push(eq(knowledgeText.workspaceId, filters.workspaceId));
+    permissionConditions.push(
+      eq(knowledgeText.workspaceId, filters.workspaceId)
+    );
   }
 
   const query = getDb()
@@ -131,7 +131,9 @@ export const updateKnowledgeText = async (
           // Team specific entries
           context.teamId ? eq(knowledgeText.teamId, context.teamId) : undefined,
           // Workspace specific entries
-          context.workspaceId ? eq(knowledgeText.workspaceId, context.workspaceId) : undefined
+          context.workspaceId
+            ? eq(knowledgeText.workspaceId, context.workspaceId)
+            : undefined
         )
       )
     );
@@ -179,7 +181,9 @@ export const deleteKnowledgeText = async (
           // Team specific entries
           context.teamId ? eq(knowledgeText.teamId, context.teamId) : undefined,
           // Workspace specific entries
-          context.workspaceId ? eq(knowledgeText.workspaceId, context.workspaceId) : undefined
+          context.workspaceId
+            ? eq(knowledgeText.workspaceId, context.workspaceId)
+            : undefined
         )
       )
     )
@@ -189,5 +193,5 @@ export const deleteKnowledgeText = async (
     throw new Error("Knowledge text not found or access denied");
   }
 
-  return { success: true };
+  return RESPONSES.SUCCESS;
 };

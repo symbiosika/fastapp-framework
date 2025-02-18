@@ -6,8 +6,8 @@ import {
   organisations,
   teamMembers,
   teams,
+  type UsersInsert,
 } from "../db/schema/users";
-import type { UsersEntity } from "../types/shared/db/users";
 
 export const getUser = async (userId: string) => {
   const user = await getDb()
@@ -37,12 +37,13 @@ export const getUserById = async (userId: string) => {
 
 export const getUserByEmail = async (email: string) => {
   const user = await getDb().select().from(users).where(eq(users.email, email));
-  return user[0] ?? undefined;
+  if (!user[0]) throw new Error("User not found");
+  return user[0];
 };
 
 export const updateUser = async (
   userId: string,
-  data: Partial<UsersEntity>
+  data: Partial<UsersInsert>
 ) => {
   await getDb().update(users).set(data).where(eq(users.id, userId));
 };

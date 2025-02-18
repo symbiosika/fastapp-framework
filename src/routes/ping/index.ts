@@ -24,6 +24,7 @@ export default function definePingRoute(app: FastAppHono, basePath: string) {
     describeRoute({
       method: "get",
       path: "/ping",
+      tags: ["admin"],
       summary: "Health check endpoint",
       responses: {
         200: {

@@ -9,13 +9,14 @@ import type {
   FastAppHono,
 } from "../../types";
 import { HTTPException } from "hono/http-exception";
-import type { Context } from "hono";
 import { LocalAuth } from "../../lib/auth";
 import log from "../../lib/log";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
+import { usersRestrictedSelectSchema, usersSelectSchema } from "../../dbSchema";
+import { RESPONSES } from "../../lib/responses";
 
 /**
  * Pre-register custom verification
@@ -56,9 +57,23 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "post",
       path: "/user/login",
+      tags: ["user"],
       summary: "Login endpoint",
       responses: {
-        200: { description: "Successful response" },
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  user: usersRestrictedSelectSchema,
+                  token: v.string(),
+                  redirectUrl: v.optional(v.string()),
+                })
+              ),
+            },
+          },
+        },
       },
     }),
     validator(
@@ -70,25 +85,21 @@ export function definePublicUserRoutes(
         redirectUrl: v.optional(v.string()),
       })
     ),
-    async (c: Context) => {
+    async (c) => {
       try {
         if (_GLOBAL_SERVER_CONFIG.authType !== "local") {
           throw new HTTPException(400, {
             message: "Local login is not enabled",
           });
         }
-        const body = await c.req.json();
-        const email = body.email;
-        const password = body.password;
-        const magicLinkToken = body.magicLinkToken;
-        const redirectUrl = body.redirectUrl;
+        const data = c.req.valid("json");
 
-        if (magicLinkToken) {
-          const r = await LocalAuth.loginWithMagicLink(magicLinkToken);
-          return c.json({ ...r, redirectUrl });
+        if (data.magicLinkToken) {
+          const r = await LocalAuth.loginWithMagicLink(data.magicLinkToken);
+          return c.json({ ...r, redirectUrl: data.redirectUrl });
         } else {
-          const r = await LocalAuth.login(email, password);
-          return c.json({ ...r, redirectUrl });
+          const r = await LocalAuth.login(data.email, data.password);
+          return c.json({ ...r, redirectUrl: data.redirectUrl });
         }
       } catch (err) {
         throw new HTTPException(401, { message: "Invalid login: " + err });
@@ -104,6 +115,7 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "get",
       path: "/user/send-magic-link",
+      tags: ["user"],
       summary: "Send a magic link to the user",
       responses: {
         200: { description: "Successful response" },
@@ -115,16 +127,14 @@ export function definePublicUserRoutes(
         email: v.string(),
       })
     ),
-    async (c: Context) => {
+    async (c) => {
       const email = c.req.query("email");
       if (!email) {
         throw new HTTPException(400, { message: "?email=... is required" });
       }
       try {
         await LocalAuth.sendMagicLink(email);
-        return c.json({
-          success: true,
-        });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error sending magic link: " + err,
@@ -141,6 +151,7 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "get",
       path: "/user/send-verification-email",
+      tags: ["user"],
       summary: "Send a verification email to the user",
       responses: {
         200: { description: "Successful response" },
@@ -152,16 +163,14 @@ export function definePublicUserRoutes(
         email: v.string(),
       })
     ),
-    async (c: Context) => {
+    async (c) => {
       const email = c.req.query("email");
       if (!email) {
         throw new HTTPException(400, { message: "?email=... is required" });
       }
       try {
         await LocalAuth.sendVerificationEmail(email);
-        return c.json({
-          success: true,
-        });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error sending verification email: " + err,
@@ -178,6 +187,7 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "get",
       path: "/user/verify-email",
+      tags: ["user"],
       summary: "Verify email endpoint",
       responses: {
         200: { description: "Successful response" },
@@ -189,12 +199,9 @@ export function definePublicUserRoutes(
         token: v.string(),
       })
     ),
-    async (c: Context) => {
-      const token = c.req.query("token");
-      if (!token) {
-        throw new HTTPException(400, { message: "?token=... is required" });
-      }
+    async (c) => {
       try {
+        const { token } = c.req.valid("query");
         const r = await LocalAuth.verifyEmail(token);
         return c.json(r);
       } catch (err) {
@@ -211,9 +218,17 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "post",
       path: "/user/register",
+      tags: ["user"],
       summary: "Register endpoint",
       responses: {
-        200: { description: "Successful response" },
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(usersRestrictedSelectSchema),
+            },
+          },
+        },
       },
     }),
     validator(
@@ -225,26 +240,18 @@ export function definePublicUserRoutes(
         meta: v.optional(v.object({})),
       })
     ),
-    async (c: Context) => {
+    async (c) => {
       try {
         if (_GLOBAL_SERVER_CONFIG.authType !== "local") {
           throw new HTTPException(400, {
             message: "Local register is not enabled",
           });
         }
-        const body = await c.req.json();
-        const email = body.email;
-        const password = body.password;
-        const sendVerificationEmail: boolean =
-          (body.sendVerificationEmail &&
-            typeof body.sendVerificationEmail === "boolean") ??
-          true;
-
-        const meta = body.meta; // optional meta data for custom verifications
+        const data = c.req.valid("json");
 
         // go through all pre-register custom verifications
         for (const verification of preRegisterCustomVerifications) {
-          const r = await verification(email, meta);
+          const r = await verification(data.email, data.meta);
           if (!r.success) {
             throw new HTTPException(400, {
               message: "Custom verification failed: " + r.message,
@@ -253,9 +260,9 @@ export function definePublicUserRoutes(
         }
 
         const user = await LocalAuth.register(
-          email,
-          password,
-          sendVerificationEmail
+          data.email,
+          data.password,
+          data.sendVerificationEmail ?? true
         );
 
         // go through all post-register actions
@@ -264,7 +271,7 @@ export function definePublicUserRoutes(
         }
 
         log.debug(`User registered: ${user.id}`);
-        return c.json(user);
+        return c.json({ ...user, password: undefined, salt: undefined });
       } catch (err) {
         log.error(err + "");
         throw new HTTPException(500, { message: err + "" });
@@ -280,6 +287,7 @@ export function definePublicUserRoutes(
     describeRoute({
       method: "post",
       path: "/user/forgot-password",
+      tags: ["user"],
       summary: "Forgot password endpoint",
       responses: {
         200: { description: "Successful response" },
@@ -291,13 +299,10 @@ export function definePublicUserRoutes(
         email: v.string(),
       })
     ),
-    async (c: Context) => {
-      const body = await c.req.json();
-      const email = body.email;
-      // const r = await LocalAuth.forgotPassword(email);
-      return c.json({
-        success: true,
-      });
+    async (c) => {
+      const { email } = c.req.valid("json");
+      await LocalAuth.forgotPasswort(email);
+      return c.json(RESPONSES.SUCCESS);
     }
   );
 }

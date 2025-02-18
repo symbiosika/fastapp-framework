@@ -64,7 +64,7 @@ export const deleteOrganisation = async (orgId: string) => {
 export const getUserOrganisations = async (userId: string) => {
   return await getDb()
     .select({
-      id: organisations.id,
+      organisationId: organisations.id,
       name: organisations.name,
       role: organisationMembers.role,
     })
@@ -110,18 +110,44 @@ export const dropUserFromOrganisation = async (
 /**
  * Get the last organisation of a user
  */
-export const getLastOrganisation = async (userId: string) => {
+export const getLastOrganisation = async (
+  userId: string
+): Promise<{
+  userId: string;
+  lastOrganisationId: undefined | string;
+  organisationName: undefined | string;
+}> => {
   const user = await getDb()
     .select({
       userId: users.id,
       lastOrganisationId: users.lastOrganisationId,
+      organisationName: organisations.name,
     })
     .from(users)
     .where(eq(users.id, userId));
 
-  if (!user[0]?.lastOrganisationId) return null;
+  if (!user[0]?.lastOrganisationId)
+    return {
+      userId,
+      lastOrganisationId: undefined,
+      organisationName: undefined,
+    };
 
-  return await getOrganisation(user[0].lastOrganisationId);
+  const org = await getDb()
+    .select({
+      lastOrganisationId: organisations.id,
+      organisationName: organisations.name,
+    })
+    .from(organisations)
+    .where(eq(organisations.id, user[0].lastOrganisationId));
+  if (!org[0])
+    return {
+      userId,
+      lastOrganisationId: undefined,
+      organisationName: undefined,
+    };
+
+  return { ...org[0], userId };
 };
 
 /**

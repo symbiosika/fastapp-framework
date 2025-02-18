@@ -5,6 +5,7 @@ import { createGzip } from "zlib";
 import { Readable } from "stream";
 import type { FastAppHono } from "../../types";
 import { describeRoute } from "hono-openapi";
+import { RESPONSES } from "../../lib/responses";
 
 export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   /**
@@ -15,6 +16,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
     describeRoute({
       method: "get",
       path: "/admin/logs/download",
+      tags: ["admin"],
       summary: "Download logs",
       responses: {
         200: {
@@ -81,6 +83,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
     describeRoute({
       method: "post",
       path: "/admin/logs/clear",
+      tags: ["admin"],
       summary: "Clear logs",
       responses: {
         200: {
@@ -94,7 +97,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
         await fs.unlink(filePath);
       }
 
-      return c.json({ message: "Logs cleared" });
+      return c.json(RESPONSES.SUCCESS);
     }
   );
 }

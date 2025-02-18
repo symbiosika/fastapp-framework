@@ -1,13 +1,13 @@
 import { eq } from "drizzle-orm";
-import { sessions, users } from "../db/db-schema";
+import { sessions, users, type UsersSelect } from "../db/db-schema";
 import { getDb } from "../db/db-connection";
 import jwt from "jsonwebtoken";
-import type { UsersEntity } from "../types/shared/db/users";
 import {
   sendMagicLink,
   sendVerificationEmail,
   verifyEmail,
   verifyMagicLink,
+  sendResetPasswordLink,
 } from "./magic-link";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 
@@ -23,7 +23,7 @@ export const saltAndHashPassword = async (
 const getUserFromDb = async (
   email: string,
   password: string
-): Promise<UsersEntity> => {
+): Promise<UsersSelect> => {
   // no-role-check necessary here
   try {
     const user = await getDb()
@@ -87,7 +87,7 @@ const setUserInDb = async (
   return user[0];
 };
 
-export const generateJwt = async (user: UsersEntity, expiresIn: number) => {
+export const generateJwt = async (user: UsersSelect, expiresIn: number) => {
   const token = jwt.sign(
     { email: user.email, sub: user.id, symbiosika: { roles: [] } },
     JWT_PRIVATE_KEY,
@@ -209,5 +209,19 @@ export const LocalAuth = {
       _GLOBAL_SERVER_CONFIG.jwtExpiresAfter
     );
     return { token, expiresAt };
+  },
+
+  async forgotPasswort(email: string) {
+    // Check if user exists in DB (optional check for clarity)
+    const user = await getDb()
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    if (!user || user.length === 0) {
+      throw "User not found";
+    }
+    // Send password-reset link
+    await sendResetPasswordLink(email);
+    return { message: "Reset password link has been sent to your email." };
   },
 };

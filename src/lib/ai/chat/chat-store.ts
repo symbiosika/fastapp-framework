@@ -42,17 +42,19 @@ export type ChatMessage = {
   };
 };
 
+export type Interview = {
+  name: string;
+  description: string;
+  guidelines: string;
+  moderator: string;
+  interviewer: string;
+  goals?: string[];
+  summary?: string;
+};
+
 export type ChatSession = ChatSessionsSelect & {
   state: ChatStoreState & {
-    interview?: {
-      name: string;
-      description: string;
-      guidelines: string;
-      moderator: string;
-      interviewer: string;
-      goals?: string[];
-      summary?: string;
-    };
+    interview?: Interview;
   };
   messages: ChatMessage[];
 };
@@ -152,6 +154,8 @@ class ChatHistoryStoreInDb {
         .set({ lastUsedAt: new Date().toISOString() })
         .where(eq(chatSessions.id, chatId))
         .returning();
+
+      if (!updatedSession) return null;
 
       return updatedSession as ChatSession;
     } catch (error) {

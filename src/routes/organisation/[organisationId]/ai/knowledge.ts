@@ -21,7 +21,6 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "../../../../lib/ai/knowledge/similarity-search";
-import log from "../../../../lib/log";
 import {
   createKnowledgeText,
   readKnowledgeText,
@@ -34,7 +33,9 @@ import {
   checkUserPermission,
 } from "../../../../lib/utils/hono-middlewares";
 import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
-import { deleteFileFromDB, saveFileToDb } from "../../../../lib/storage/db";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import { knowledgeEntrySchema } from "../../../../dbSchema";
 
 const FileSourceType = {
   DB: "db",
@@ -112,7 +113,7 @@ const createKnowledgeTextValidation = v.object({
   meta: v.optional(
     v.record(
       v.string(),
-      v.union([v.string(), v.number(), v.boolean(), v.undefined()])
+      v.optional(v.union([v.string(), v.number(), v.boolean()]))
     )
   ),
 });
@@ -127,7 +128,7 @@ const updateKnowledgeTextValidation = v.object({
   meta: v.optional(
     v.record(
       v.string(),
-      v.union([v.string(), v.number(), v.boolean(), v.undefined()])
+      v.optional(v.union([v.string(), v.number(), v.boolean()]))
     )
   ),
 });
@@ -161,18 +162,39 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/knowledge/extract-knowledge",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+      tags: ["knowledge"],
+      summary: "Extract knowledge from a document",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  ok: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", generateKnowledgeValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const parsedBody = v.parse(generateKnowledgeValidation, body);
-        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
-        const r = await extractKnowledgeFromExistingDbEntry(parsedBody);
+        const r = await extractKnowledgeFromExistingDbEntry(body);
         return c.json(r);
       } catch (e) {
-        throw new HTTPException(400, {
-          message: e + "",
-        });
+        throw new HTTPException(400, { message: e + "" });
       }
     }
   );
@@ -185,20 +207,47 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    * - teamId: string
    * - userId: string
    */
-
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/entries",
+      tags: ["knowledge"],
+      summary: "Get all knowledge entries",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(knowledgeEntrySchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        limit: v.optional(v.string()),
+        page: v.optional(v.string()),
+        teamId: v.optional(v.string()),
+        workspaceId: v.optional(v.string()),
+      })
+    ),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const organisationId = c.req.param("organisationId");
+        const {
+          limit: limitStr,
+          page: pageStr,
+          teamId,
+          workspaceId,
+        } = c.req.valid("query");
+        const { organisationId } = c.req.valid("param");
         const usersId = c.get("usersId");
-        // Url params
-        const limitStr = c.req.query("limit");
-        const pageStr = c.req.query("page");
-        const teamId = c.req.query("teamId");
-        const workspaceId = c.req.query("workspaceId");
+
         const limit = parseInt(limitStr ?? "100");
         const page = parseInt(pageStr ?? "0");
 
@@ -224,10 +273,29 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id",
+      tags: ["knowledge"],
+      summary: "Get a full source document for a knowledge entry by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
+        const { organisationId, id } = c.req.valid("param");
         const usersId = c.get("usersId");
         const r = await getFullSourceDocumentsForKnowledgeEntry(
           id,
@@ -251,10 +319,24 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id",
+      tags: ["knowledge"],
+      summary: "Delete a knowledge entry by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
+        const { organisationId, id } = c.req.valid("param");
         const usersId = c.get("usersId");
         await deleteKnowledgeEntry(id, organisationId, usersId);
         return c.json(RESPONSES.SUCCESS);
@@ -265,140 +347,55 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   );
 
   /**
-   * Search for similar documents (POST)
+   * Similarity search
    */
   app.post(
     API_BASE_PATH +
       "/organisation/:organisationId/ai/knowledge/similarity-search",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/similarity-search",
+      tags: ["knowledge"],
+      summary: "Search for similar documents",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", similaritySearchValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
         const userId = c.get("usersId");
-        const body = await c.req.json();
-        const parsedBody = v.parse(similaritySearchValidation, body);
-        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
-        if (parsedBody.fullDocument) {
+        if (body.fullDocument) {
           const r = await getFullSourceDocumentsForSimilaritySearch({
-            organisationId: parsedBody.organisationId,
-            searchText: parsedBody.searchText,
-            n: parsedBody.n,
-            filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
-            filter: parsedBody.filter,
-            filterName: parsedBody.filterName,
-            userId,
-          });
-          return c.json(r);
-        }
-        const query = {
-          organisationId: parsedBody.organisationId,
-          searchText: parsedBody.searchText,
-          n: parsedBody.n,
-          addBeforeN: parsedBody.addBeforeN,
-          addAfterN: parsedBody.addAfterN,
-          filterKnowledgeEntryIds: parsedBody.filterKnowledgeEntryIds,
-          filter: parsedBody.filter,
-          filterName: parsedBody.filterName,
-        };
-        // log.debug(`POST /knowledge/similarity-search`, query);
-
-        const r = await getNearestEmbeddings(query);
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Search for similar documents (GET)
-   * URL params:
-   * - search: string (required)
-   * - n: number
-   * - addBefore: number
-   * - addAfter: number
-   * - filterIds: string[] (comma separated)
-   * - filterName: string[] (comma separated)
-   * - fullDocument: boolean
-   * - filter[category]: string[] (comma separated) - can be multiple filter[xyz] params
-   */
-  app.get(
-    API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/similarity-search",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    async (c) => {
-      try {
-        const searchText = c.req.query("search");
-        const userId = c.get("usersId");
-        if (!searchText) {
-          throw new Error("Search text is required");
-        }
-        const n = c.req.query("n")
-          ? parseInt(c.req.query("n") ?? "3")
-          : undefined;
-        const addBefore = c.req.query("addBefore")
-          ? parseInt(c.req.query("addBefore") ?? "0")
-          : undefined;
-        const addAfter = c.req.query("addAfter")
-          ? parseInt(c.req.query("addAfter") ?? "0")
-          : undefined;
-        const filterIds = c.req.query("filterIds")
-          ? c.req.query("filterIds")?.split(",")
-          : undefined;
-        const filterName = c.req.query("filterName")
-          ? c.req.query("filterName")?.split(",")
-          : undefined;
-        const fullDocument = c.req.query("fullDocument") === "true";
-        const organisationId = c.req.param("organisationId");
-
-        if (!organisationId) {
-          throw new Error('Parameter "organisationId" is required');
-        }
-
-        // Parse dynamic filters from URL params
-        const filter: Record<string, string[]> = {};
-        for (const [key, value] of Object.entries(c.req.query())) {
-          if (key.startsWith("filter[") && key.endsWith("]")) {
-            const category = key.slice(7, -1); // Remove 'filter[' and ']'
-            filter[category] = value.split(",");
-          }
-        }
-
-        log.debug(`GET /knowledge/similarity-search`, {
-          searchText,
-          n,
-          addBefore,
-          addAfter,
-          filterIds,
-          filter,
-          filterName,
-          organisationId,
-        });
-
-        if (fullDocument) {
-          const r = await getFullSourceDocumentsForSimilaritySearch({
-            searchText,
-            n,
-            filterKnowledgeEntryIds: filterIds,
-            filter,
-            filterName,
-            organisationId,
+            organisationId: body.organisationId,
+            searchText: body.searchText,
+            n: body.n,
+            filterKnowledgeEntryIds: body.filterKnowledgeEntryIds,
+            filter: body.filter,
+            filterName: body.filterName,
             userId,
           });
           return c.json(r);
         }
 
         const r = await getNearestEmbeddings({
-          organisationId,
-          searchText,
-          n,
-          addBeforeN: addBefore,
-          addAfterN: addAfter,
-          filterKnowledgeEntryIds: filterIds,
-          filter,
-          filterName,
+          organisationId: body.organisationId,
+          searchText: body.searchText,
+          n: body.n,
+          addBeforeN: body.addBeforeN,
+          addAfterN: body.addAfterN,
+          filterKnowledgeEntryIds: body.filterKnowledgeEntryIds,
+          filter: body.filter,
+          filterName: body.filterName,
         });
         return c.json(r);
       } catch (e) {
@@ -415,13 +412,31 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/parse-document",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/parse-document",
+      tags: ["knowledge"],
+      summary: "Parse a knowledge-text entry to a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", parseDocumentValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const parsedBody = v.parse(parseDocumentValidation, body);
-        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
-        const r = await parseDocument(parsedBody);
+        const r = await parseDocument(body);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -437,13 +452,31 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-text",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/from-text",
+      tags: ["knowledge"],
+      summary: "Add a text knowledge entry from text",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", addFromTextValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const parsedBody = v.parse(addFromTextValidation, body);
-        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
-        const r = await createKnowledgeText(parsedBody);
+        const r = await createKnowledgeText(body);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -459,13 +492,31 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-url",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/from-url",
+      tags: ["knowledge"],
+      summary: "Add a text knowledge entry from URL",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", addFromUrlValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const parsedBody = v.parse(addFromUrlValidation, body);
-        validateOrganisationId(parsedBody, c.req.param("organisationId"));
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
-        const r = await addKnowledgeTextFromUrl(parsedBody);
+        const r = await addKnowledgeTextFromUrl(body);
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -480,16 +531,28 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/texts",
+      tags: ["knowledge"],
+      summary: "Create a new knowledge text entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("json", createKnowledgeTextValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const body = await c.req.json();
-        const organisationId = c.req.param("organisationId");
-        const parsedBody = v.parse(createKnowledgeTextValidation, body);
-        validateOrganisationId(parsedBody, organisationId);
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
 
         const r = await createKnowledgeText({
-          ...parsedBody,
-          workspaceId: parsedBody.workspaceId,
+          ...body,
+          workspaceId: body.workspaceId,
         });
         return c.json(r);
       } catch (e) {
@@ -505,19 +568,47 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/texts",
+      tags: ["knowledge"],
+      summary: "Read knowledge text entries",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(knowledgeEntrySchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        id: v.optional(v.string()),
+        teamId: v.optional(v.string()),
+        workspaceId: v.optional(v.string()),
+        limit: v.optional(v.string()),
+        page: v.optional(v.string()),
+      })
+    ),
+    validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
-        const id = c.req.query("id");
-        const organisationId = c.req.param("organisationId");
+        const {
+          id,
+          teamId,
+          workspaceId,
+          limit: limitStr,
+          page: pageStr,
+        } = c.req.valid("query");
+        const { organisationId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const teamId = c.req.query("teamId");
-        const workspaceId = c.req.query("workspaceId");
-        const limit = c.req.query("limit")
-          ? parseInt(c.req.query("limit") ?? "10")
-          : undefined;
-        const page = c.req.query("page")
-          ? parseInt(c.req.query("page") ?? "1")
-          : undefined;
+        const limit = limitStr ? parseInt(limitStr) : undefined;
+        const page = pageStr ? parseInt(pageStr) : undefined;
+
         const r = await readKnowledgeText({
           id,
           limit,
@@ -541,18 +632,43 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
+      tags: ["knowledge"],
+      summary: "Update a knowledge text entry",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", updateKnowledgeTextValidation),
+    validator(
+      "query",
+      v.object({
+        teamId: v.optional(v.string()),
+        workspaceId: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
+        const { teamId, workspaceId } = c.req.valid("query");
+        const { organisationId, id } = c.req.valid("param");
+        const body = c.req.valid("json");
         const userId = c.get("usersId");
-        const teamId = c.req.query("teamId");
-        const workspaceId = c.req.query("workspaceId");
-        const body = await c.req.json();
-        const parsedBody = v.parse(updateKnowledgeTextValidation, body);
-        validateOrganisationId(parsedBody, organisationId);
+        validateOrganisationId(body, organisationId);
 
-        const r = await updateKnowledgeText(id, parsedBody, {
+        const r = await updateKnowledgeText(id, body, {
           organisationId,
           userId,
           teamId,
@@ -572,13 +688,33 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
+      tags: ["knowledge"],
+      summary: "Delete a knowledge text entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        teamId: v.optional(v.string()),
+        workspaceId: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
     async (c) => {
       try {
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
+        const { teamId, workspaceId } = c.req.valid("query");
+        const { organisationId, id } = c.req.valid("param");
         const userId = c.get("usersId");
-        const teamId = c.req.query("teamId");
-        const workspaceId = c.req.query("workspaceId");
 
         await deleteKnowledgeText(id, {
           organisationId,
@@ -602,6 +738,47 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/knowledge/upload-and-learn",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/upload-and-learn",
+      tags: ["knowledge"],
+      summary: "Upload a file and extract knowledge in one step",
+      requestBody: {
+        content: {
+          "multipart/form-data": {
+            schema: resolver(
+              v.object({
+                file: v.any(),
+                teamId: v.optional(v.string()),
+                workspaceId: v.optional(v.string()),
+                filters: v.optional(v.string()),
+              })
+            ),
+          },
+          "application/json": {
+            schema: resolver(uploadAndLearnValidation),
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  ok: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+        400: {
+          description: "Bad request",
+        },
+      },
+    }),
     async (c) => {
       const organisationId = c.req.param("organisationId");
       const contentType = c.req.header("content-type");

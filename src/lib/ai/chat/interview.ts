@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { chatStore } from "./chat-store";
 import { initChatMessage } from "./get-prompt-template";
-import type { ChatSession, ChatMessage } from "./chat-store";
+import type { ChatSession, ChatMessage, Interview } from "./chat-store";
 import type { LLMOptions } from "../../db/db-schema";
 import { generateLongText } from "../standard";
 import { replaceVariables } from "./replacer";
@@ -11,7 +11,11 @@ import { replaceVariables } from "./replacer";
  * responds in an interview. Adjust fields as needed: for instance, if you
  * need "moderator" or other data in each call, you can add them here.
  */
-const interviewRespondValidation = v.object({
+
+/**
+ * Outgoing data from the interview
+ */
+export const interviewRespondInputValidation = v.object({
   userId: v.string(),
   organisationId: v.string(),
   chatId: v.string(),
@@ -27,6 +31,34 @@ const interviewRespondValidation = v.object({
       temperature: v.optional(v.number()),
     })
   ),
+});
+
+export const interviewRespondOutputValidation = v.object({
+  chatId: v.string(),
+  interview: v.object({
+    name: v.string(),
+    description: v.string(),
+    guidelines: v.string(),
+    moderator: v.string(),
+    interviewer: v.string(),
+    goals: v.optional(v.array(v.string())),
+    summary: v.optional(v.string()),
+  }),
+  lastMessage: v.object({
+    role: v.union([
+      v.literal("system"),
+      v.literal("user"),
+      v.literal("assistant"),
+    ]),
+    content: v.optional(v.any()),
+    meta: v.optional(
+      v.object({
+        model: v.optional(v.string()),
+        human: v.optional(v.boolean()),
+        timestamp: v.optional(v.string()),
+      })
+    ),
+  }),
 });
 
 /**
@@ -172,9 +204,13 @@ async function generateInterviewResponse(
 /**
  * Respond to an ongoing interview session.
  */
-export async function respondInInterview(query: unknown) {
+export async function respondInInterview(query: unknown): Promise<{
+  chatId: string;
+  interview: Interview;
+  lastMessage: ChatMessage;
+}> {
   // 1) Validate user input
-  const parsed = v.parse(interviewRespondValidation, query);
+  const parsed = v.parse(interviewRespondInputValidation, query);
 
   // 2) Retrieve the session
   const session: ChatSession | null = await chatStore.get(parsed.chatId);

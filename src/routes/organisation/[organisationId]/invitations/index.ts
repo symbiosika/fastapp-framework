@@ -5,7 +5,6 @@
 
 import type { FastAppHono } from "../../../../types";
 import { HTTPException } from "hono/http-exception";
-import type { Context } from "hono";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
@@ -20,14 +19,15 @@ import {
   declineAllPendingInvitationsForUser,
 } from "../../../../lib/usermanagement/invitations";
 import * as v from "valibot";
+import { describeRoute } from "hono-openapi";
+import { resolver, validator } from "hono-openapi/valibot";
+import {
+  organisationInvitationsInsertSchema,
+  organisationInvitationsSelectSchema,
+} from "../../../../dbSchema";
+import { RESPONSES } from "../../../../lib/responses";
 
-const invitationSchema = v.object({
-  organisationId: v.string(),
-  email: v.string(),
-  role: v.string(),
-});
-
-export default function defineUserManagementRoutes(
+export default function defineInvitationsRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
@@ -38,17 +38,33 @@ export default function defineUserManagementRoutes(
     API_BASE_PATH + "/organisation/:organisationId/invitations",
     authAndSetUsersInfo,
     checkUserPermission,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/invitations",
+      tags: ["invitations"],
+      summary: "Create a new invitation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(organisationInvitationsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", organisationInvitationsInsertSchema),
+    async (c) => {
       try {
-        const data = await c.req.json();
-        const validatedData = v.parse(invitationSchema, data);
-        if (validatedData.organisationId !== c.req.param("organisationId")) {
+        const data = c.req.valid("json");
+        if (data.organisationId !== c.req.param("organisationId")) {
           throw new HTTPException(403, {
             message:
               "You are not allowed to create invitations for the addressed organisation",
           });
         }
-        const invitation = await createOrganisationInvitation(validatedData);
+        const invitation = await createOrganisationInvitation(data);
         return c.json(invitation);
       } catch (err) {
         throw new HTTPException(500, {
@@ -65,10 +81,28 @@ export default function defineUserManagementRoutes(
     API_BASE_PATH + "/organisation/:organisationId/invitations",
     authAndSetUsersInfo,
     checkUserPermission,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/invitations",
+      tags: ["invitations"],
+      summary:
+        "Get all invitations of an organisation to manage them as an admin overview",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(organisationInvitationsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    async (c) => {
       try {
+        const { organisationId } = c.req.valid("param");
         const userId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
         const invitations = await getAllOrganisationInvitations(
           userId,
           organisationId
@@ -89,10 +123,26 @@ export default function defineUserManagementRoutes(
     API_BASE_PATH + "/organisation/:organisationId/invitations/:id",
     authAndSetUsersInfo,
     checkUserPermission,
-    async (c: Context) => {
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/invitations/:id",
+      tags: ["invitations"],
+      summary: "Drop an invitation by its ID",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
       try {
-        await dropOrganisationInvitation(c.req.param("id"));
-        return c.json({ success: true });
+        const { organisationId, id } = c.req.valid("param");
+        await dropOrganisationInvitation(id);
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error dropping invitation: " + err,
@@ -108,18 +158,32 @@ export default function defineUserManagementRoutes(
     API_BASE_PATH + "/organisation/:organisationId/invitations/:id/accept",
     authAndSetUsersInfo,
     checkUserPermission,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/invitations/:id/accept",
+      tags: ["invitations"],
+      summary: "Accept an invitation by the User himself",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
       try {
+        const { organisationId, id } = c.req.valid("param");
         const userId = c.get("usersId");
-        const id = c.req.param("id");
-        const organisationId = c.req.param("organisationId");
 
         if (id.toLowerCase() === "all") {
           await acceptAllPendingInvitationsForUser(userId, organisationId);
         } else {
           await acceptOrganisationInvitation(id, userId, organisationId);
         }
-        return c.json({ success: true });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error accepting invitation: " + err,
@@ -135,18 +199,34 @@ export default function defineUserManagementRoutes(
     API_BASE_PATH + "/organisation/:organisationId/invitations/:id/decline",
     authAndSetUsersInfo,
     checkUserPermission,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/invitations/:id/decline",
+      tags: ["invitations"],
+      summary: "Decline an invitation",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
       try {
-        if (c.req.param("id").toLowerCase() === "all") {
+        const { organisationId, id } = c.req.valid("param");
+        if (id.toLowerCase() === "all") {
           await declineAllPendingInvitationsForUser(
             c.get("usersId"),
-            c.req.param("organisationId")
+            organisationId
           );
         } else {
-          await declineOrganisationInvitation(c.req.param("id"));
+          await declineOrganisationInvitation(id);
         }
 
-        return c.json({ success: true });
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error declining invitation: " + err,

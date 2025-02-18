@@ -120,6 +120,17 @@ export const getPlainPlaceholdersForPromptTemplate = async (
 };
 
 /**
+ * Get a placeholder for a prompt template by ID
+ */
+export const getPromptTemplatePlaceholderById = async (id: string) => {
+  const placeholder = await getDb()
+    .select()
+    .from(promptTemplatePlaceholders)
+    .where(eq(promptTemplatePlaceholders.id, id));
+  return placeholder[0];
+};
+
+/**
  * Update a prompt template by ID
  */
 export const updatePromptTemplate = async (data: PromptTemplatesInsert) => {

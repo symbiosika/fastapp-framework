@@ -318,6 +318,21 @@ export const defineServer = (config: ServerConfig) => {
         })
       );
 
+      // OpenAPI Docs
+      app.get(
+        "/api/v1/openapi",
+        openAPISpecs(app, {
+          documentation: {
+            info: {
+              title: "Symbiosika Backend API",
+              version: "1.0.0",
+              description: "API for the Symbiosika AI Backend",
+            },
+          },
+        })
+      );
+      app.get("/api/v1/ui", swaggerUI({ url: "/api/v1/openapi" }));
+
       /**
        * Start job queue if needed
        * These are used to perform background tasks
@@ -337,21 +352,6 @@ export const defineServer = (config: ServerConfig) => {
 
   // Log all registered endpoints
   // logApiRoutes(app);
-
-  // OpenAPI Docs
-  app.get(
-    "/api/v1/openapi",
-    openAPISpecs(app, {
-      documentation: {
-        info: {
-          title: "Symbiosika Backend API",
-          version: "1.0.0",
-          description: "API for the Symbiosika AI Backend",
-        },
-      },
-    })
-  );
-  app.get("/api/v1/ui", swaggerUI({ url: "/api/v1/openapi" }));
 
   return {
     idleTimeout: 255,

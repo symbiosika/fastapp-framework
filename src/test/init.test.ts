@@ -2,8 +2,7 @@ import { nanoid } from "nanoid";
 import { generateJwt, saltAndHashPassword } from "../lib/auth";
 import { createDatabaseClient, getDb } from "../lib/db/db-connection";
 import { waitForDbConnection } from "../lib/db/db-connection";
-import { jobs, products, users, organisations } from "../lib/db/db-schema";
-import type { UsersEntity } from "../lib/types/shared/db/users";
+import { jobs, products, users, organisations, type UsersSelect } from "../lib/db/db-schema";
 import { eq } from "drizzle-orm";
 
 export const testProductId = "prod_RBdEBlCP5LtR3O";
@@ -48,7 +47,7 @@ export const initTests = async () => {
     {
       email: "",
       id: "00000000-0000-0000-0000-000000000000",
-    } as UsersEntity,
+    } as UsersSelect,
     86400
   );
   return {

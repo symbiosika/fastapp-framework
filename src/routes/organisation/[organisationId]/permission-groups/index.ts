@@ -6,7 +6,6 @@
 
 import type { FastAppHono } from "../../../../types";
 import { HTTPException } from "hono/http-exception";
-import type { Context } from "hono";
 import { authAndSetUsersInfo } from "../../../../lib/utils/hono-middlewares";
 import {
   createPermissionGroup,
@@ -21,8 +20,18 @@ import {
   deletePathPermission,
   removePermissionFromGroup,
 } from "../../../../lib/usermanagement/permissions";
-
-const BASE_PATH = ""; // "/usermanagement";
+import { resolver, validator } from "hono-openapi/valibot";
+import {
+  pathPermissionsInsertSchema,
+  pathPermissionsSelectSchema,
+  pathPermissionsUpdateSchema,
+  userPermissionGroupsInsertSchema,
+  userPermissionGroupsSelectSchema,
+  userPermissionGroupsUpdateSchema,
+} from "../../../../dbSchema";
+import * as v from "valibot";
+import { describeRoute } from "hono-openapi";
+import { RESPONSES } from "../../../../lib/responses";
 
 export default function definePermissionGroupRoutes(
   app: FastAppHono,
@@ -32,13 +41,28 @@ export default function definePermissionGroupRoutes(
    * Create a new permission group
    */
   app.post(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/permission-groups",
+    API_BASE_PATH + "/organisation/:organisationId/permission-groups",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/permission-groups",
+      tags: ["permission-groups"],
+      summary: "Create a new permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(userPermissionGroupsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", userPermissionGroupsInsertSchema),
+    async (c) => {
       try {
-        const data = await c.req.json();
+        const data = c.req.valid("json");
         const group = await createPermissionGroup(data);
         return c.json(group);
       } catch (err) {
@@ -53,15 +77,29 @@ export default function definePermissionGroupRoutes(
    * Get all permission groups of an organisation
    */
   app.get(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/permission-groups",
+    API_BASE_PATH + "/organisation/:organisationId/permission-groups",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/permission-groups",
+      tags: ["permission-groups"],
+      summary: "Get all permission groups of an organisation",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(userPermissionGroupsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    async (c) => {
       try {
-        const groups = await getPermissionGroupsByOrganisation(
-          c.req.param("organisationId")
-        );
+        const { organisationId } = c.req.valid("param");
+        const groups = await getPermissionGroupsByOrganisation(organisationId);
         return c.json(groups);
       } catch (err) {
         throw new HTTPException(500, {
@@ -75,12 +113,31 @@ export default function definePermissionGroupRoutes(
    * Get a single permission group
    */
   app.get(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/permission-groups/:id",
+    API_BASE_PATH + "/organisation/:organisationId/permission-groups/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      const group = await getPermissionGroup(c.req.param("id"));
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/permission-groups/:id",
+      tags: ["permission-groups"],
+      summary: "Get a single permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(userPermissionGroupsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
+      const { organisationId, id } = c.req.valid("param");
+      const group = await getPermissionGroup(id);
       return c.json(group);
     }
   );
@@ -89,14 +146,34 @@ export default function definePermissionGroupRoutes(
    * Update a permission group
    */
   app.put(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/permission-groups/:id",
+    API_BASE_PATH + "/organisation/:organisationId/permission-groups/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/permission-groups/:id",
+      tags: ["permission-groups"],
+      summary: "Update a permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(userPermissionGroupsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    validator("json", userPermissionGroupsUpdateSchema),
+    async (c) => {
       try {
-        const data = await c.req.json();
-        const group = await updatePermissionGroup(c.req.param("id"), data);
+        const { organisationId, id } = c.req.valid("param");
+        const data = c.req.valid("json");
+        const group = await updatePermissionGroup(id, data);
         return c.json(group);
       } catch (err) {
         throw new HTTPException(500, {
@@ -110,13 +187,27 @@ export default function definePermissionGroupRoutes(
    * Delete a permission group
    */
   app.delete(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/permission-groups/:id",
+    API_BASE_PATH + "/organisation/:organisationId/permission-groups/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      await deletePermissionGroup(c.req.param("id"));
-      return c.json({ success: true });
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/permission-groups/:id",
+      tags: ["permission-groups"],
+      summary: "Delete a permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
+      const { organisationId, id } = c.req.valid("param");
+      await deletePermissionGroup(id);
+      return c.json(RESPONSES.SUCCESS);
     }
   );
 
@@ -125,15 +216,41 @@ export default function definePermissionGroupRoutes(
    */
   app.post(
     API_BASE_PATH +
-      BASE_PATH +
       "/organisation/:organisationId/permission-groups/:groupId/permissions/:permissionId",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/permission-groups/:groupId/permissions/:permissionId",
+      tags: ["permission-groups"],
+      summary: "Assign a permission to a permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  groupId: v.string(),
+                  permissionId: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        groupId: v.string(),
+        permissionId: v.string(),
+      })
+    ),
+    async (c) => {
       try {
-        const result = await assignPermissionToGroup(
-          c.req.param("groupId"),
-          c.req.param("permissionId")
-        );
+        const { organisationId, groupId, permissionId } = c.req.valid("param");
+        const result = await assignPermissionToGroup(groupId, permissionId);
         return c.json(result);
       } catch (err) {
         throw new HTTPException(500, {
@@ -148,16 +265,32 @@ export default function definePermissionGroupRoutes(
    */
   app.delete(
     API_BASE_PATH +
-      BASE_PATH +
       "/organisation/:organisationId/permission-groups/:groupId/permissions/:permissionId",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/permission-groups/:groupId/permissions/:permissionId",
+      tags: ["permission-groups"],
+      summary: "Remove a permission from a permission group",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        groupId: v.string(),
+        permissionId: v.string(),
+      })
+    ),
+    async (c) => {
       try {
-        await removePermissionFromGroup(
-          c.req.param("groupId"),
-          c.req.param("permissionId")
-        );
-        return c.json({ success: true });
+        const { organisationId, groupId, permissionId } = c.req.valid("param");
+        await removePermissionFromGroup(groupId, permissionId);
+        return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error removing permission from group: " + err,
@@ -170,13 +303,28 @@ export default function definePermissionGroupRoutes(
    * Create a new path permission
    */
   app.post(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/path-permissions",
+    API_BASE_PATH + "/organisation/:organisationId/path-permissions",
     authAndSetUsersInfo,
-    async (c: Context) => {
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/path-permissions",
+      tags: ["permission-groups"],
+      summary: "Create a new path permission",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pathPermissionsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", pathPermissionsInsertSchema),
+    async (c) => {
       try {
-        const data = await c.req.json();
+        const data = c.req.valid("json");
         const permission = await createPathPermission(data);
         return c.json(permission);
       } catch (err) {
@@ -191,12 +339,31 @@ export default function definePermissionGroupRoutes(
    * Get a single path permission
    */
   app.get(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/path-permissions/:id",
+    API_BASE_PATH + "/organisation/:organisationId/path-permissions/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      const permission = await getPathPermission(c.req.param("id"));
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/path-permissions/:id",
+      tags: ["permission-groups"],
+      summary: "Get a single path permission",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pathPermissionsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
+      const { organisationId, id } = c.req.valid("param");
+      const permission = await getPathPermission(id);
       return c.json(permission);
     }
   );
@@ -205,13 +372,33 @@ export default function definePermissionGroupRoutes(
    * Update a path permission
    */
   app.put(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/path-permissions/:id",
+    API_BASE_PATH + "/organisation/:organisationId/path-permissions/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      const data = await c.req.json();
-      const permission = await updatePathPermission(c.req.param("id"), data);
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/path-permissions/:id",
+      tags: ["permission-groups"],
+      summary: "Update a path permission",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(pathPermissionsSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    validator("json", pathPermissionsUpdateSchema),
+    async (c) => {
+      const { organisationId, id } = c.req.valid("param");
+      const data = c.req.valid("json");
+      const permission = await updatePathPermission(id, data);
       return c.json(permission);
     }
   );
@@ -220,13 +407,27 @@ export default function definePermissionGroupRoutes(
    * Delete a path permission
    */
   app.delete(
-    API_BASE_PATH +
-      BASE_PATH +
-      "/organisation/:organisationId/path-permissions/:id",
+    API_BASE_PATH + "/organisation/:organisationId/path-permissions/:id",
     authAndSetUsersInfo,
-    async (c: Context) => {
-      await deletePathPermission(c.req.param("id"));
-      return c.json({ success: true });
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/path-permissions/:id",
+      tags: ["permission-groups"],
+      summary: "Delete a path permission",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    async (c) => {
+      const { organisationId, id } = c.req.valid("param");
+      await deletePathPermission(id);
+      return c.json(RESPONSES.SUCCESS);
     }
   );
 }

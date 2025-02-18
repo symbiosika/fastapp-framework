@@ -316,17 +316,11 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const { productName, discount, successUrl, cancelUrl } =
-        await c.req.json();
+      const data = c.req.valid("json");
       const userId = c.get("usersId");
       const userEmail = c.get("usersEmail");
 
-      log.debug("Creating checkout session for product", {
-        productName,
-        discount,
-        successUrl,
-        cancelUrl,
-      });
+      log.debug("Creating checkout session for product", data);
 
       let customerId = await stripeService.customerExists(userEmail);
       if (!customerId) {
@@ -336,16 +330,16 @@ export default function defineRoutes(app: FastAppHono) {
 
       const session = await stripeService.createSubscriptionSession(
         customerId,
-        productName,
-        discount ?? "",
-        successUrl ?? undefined,
-        cancelUrl ?? undefined
+        data.productName,
+        data.discount ?? "",
+        data.successUrl ?? undefined,
+        data.cancelUrl ?? undefined
       );
 
       // Store the session ID in your database, associated with the user
       await storeCheckoutSession(
         userId,
-        productName,
+        data.productName,
         session,
         session.mode as "payment" | "subscription"
       );
