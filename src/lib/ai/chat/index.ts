@@ -231,6 +231,7 @@ export const chatWithAgent = async (query: unknown) => {
     human: false,
     model: llmOptions.model,
     timestamp: new Date().toISOString(),
+    documents: result.metadata,
   });
 
   // Add the assistant's response to the messages array

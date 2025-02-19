@@ -198,7 +198,7 @@ export const userGroupMembersUpdateSchema =
 export const magicLinkPurposeEnum = pgEnum("magic_link_purpose", [
   "login",
   "email_verification",
-  "password_reset"
+  "password_reset",
 ]);
 
 export const magicLinkSessions = pgBaseTable(

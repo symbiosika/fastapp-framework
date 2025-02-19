@@ -179,6 +179,7 @@ export const initChatMessage = (
     model?: string;
     human?: boolean;
     timestamp?: string;
+    documents?: any;
   }
 ) => {
   const chatMessage: ChatMessage = {

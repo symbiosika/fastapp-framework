@@ -55,6 +55,7 @@ export const replaceCustomPlaceholders = async (
 ) => {
   const replacedMessages: ChatMessage[] = [];
   let skipThisBlock = false;
+  const addToMeta: Record<string, any> = {};
 
   for (const message of messages) {
     let replacedMessage = JSON.parse(JSON.stringify(message));
@@ -80,6 +81,10 @@ export const replaceCustomPlaceholders = async (
             match,
             replacement.content
           );
+          // Merge addToMeta data if present
+          if (replacement.addToMeta) {
+            Object.assign(addToMeta, replacement.addToMeta);
+          }
         }
       }
     }
@@ -88,5 +93,6 @@ export const replaceCustomPlaceholders = async (
   return {
     replacedMessages,
     skipThisBlock,
+    addToMeta,
   };
 };

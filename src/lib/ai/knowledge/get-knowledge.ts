@@ -12,7 +12,7 @@ import log from "../../../lib/log";
 import { deleteFileFromDB } from "../../storage/db";
 import { deleteFileFromLocalDisc } from "../../storage/local";
 import { workspaceChatGroups, workspaces } from "../../db/schema/workspaces";
-import { teamMembers } from "../../db/schema/users";
+import { teamMembers, teams } from "../../db/schema/users";
 
 type KnowledgeQuery = {
   id?: string[];
@@ -23,6 +23,7 @@ type KnowledgeQuery = {
   userId: string;
   teamId?: string;
   workspaceId?: string;
+  organisationId: string;
 };
 
 type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
@@ -83,9 +84,17 @@ const getKnowledgeWithChunksWithConditions = async (
  * Helper to validate if a user can access a knowledge entry
  * will take the knowledge id and the userid
  */
-const validateKnowledgeAccess = async (knowledgeId: string, userId: string) => {
-  const userTeams = await getUserTeamIds(userId);
-  const usersWorkspaces = await getUserWorkspaceIds(userId, userTeams);
+const validateKnowledgeAccess = async (
+  knowledgeId: string,
+  userId: string,
+  organisationId: string
+) => {
+  const userTeams = await getUserTeamIds(userId, organisationId);
+  const usersWorkspaces = await getUserWorkspaceIds(
+    userId,
+    organisationId,
+    userTeams
+  );
 
   const knowledge = await getDb().query.knowledgeEntry.findFirst({
     where: and(
@@ -112,14 +121,23 @@ const validateKnowledgeAccess = async (knowledgeId: string, userId: string) => {
 /**
  * Helper function to get all team IDs a user is a member of
  */
-const getUserTeamIds = async (userId: string): Promise<string[]> => {
+const getUserTeamIds = async (
+  userId: string,
+  organisationId: string
+): Promise<string[]> => {
   const userTeams = await getDb().query.teamMembers.findMany({
     where: eq(teamMembers.userId, userId),
     columns: {
       teamId: true,
     },
+    with: {
+      team: true,
+    },
   });
-  return userTeams.map((t) => t.teamId);
+  // Filter the teams by organisationId after fetching
+  return userTeams
+    .filter((t) => t.team.organisationId === organisationId)
+    .map((t) => t.teamId);
 };
 
 /**
@@ -130,11 +148,12 @@ const getUserTeamIds = async (userId: string): Promise<string[]> => {
  */
 const getUserWorkspaceIds = async (
   userId: string,
+  organisationId: string,
   teamIds?: string[]
 ): Promise<string[]> => {
   // Get all teams the user is a member of
   if (!teamIds) {
-    teamIds = await getUserTeamIds(userId);
+    teamIds = await getUserTeamIds(userId, organisationId);
   }
   // Get workspaces where:
   // - user is directly assigned OR
@@ -158,8 +177,12 @@ const getUserWorkspaceIds = async (
 const getKnowledge = async (
   query: KnowledgeQuery
 ): Promise<KnowledgeEntryWithChunks[]> => {
-  const userTeams = await getUserTeamIds(query.userId);
-  const usersWorkspaces = await getUserWorkspaceIds(query.userId, userTeams);
+  const userTeams = await getUserTeamIds(query.userId, query.organisationId);
+  const usersWorkspaces = await getUserWorkspaceIds(
+    query.userId,
+    query.organisationId,
+    userTeams
+  );
 
   // Updated access conditions to include NULL values
   const accessConditions = [
@@ -179,7 +202,11 @@ const getKnowledge = async (
     await log.debug(`Getting knowledge by ids: ${query.id}`);
     const entries = await Promise.all(
       query.id.map(async (id) => {
-        const hasAccess = await validateKnowledgeAccess(id, query.userId);
+        const hasAccess = await validateKnowledgeAccess(
+          id,
+          query.userId,
+          query.organisationId
+        );
         if (!hasAccess) {
           throw new Error(
             `User does not have permission to access knowledge entry ${id}`
@@ -275,6 +302,7 @@ export const getKnowledgeEntries = async (query: {
   userId: string;
   teamId?: string;
   workspaceId?: string;
+  ids?: string[];
 }): Promise<
   (KnowledgeEntrySelect & {
     filters: {
@@ -286,8 +314,12 @@ export const getKnowledgeEntries = async (query: {
     }[];
   })[]
 > => {
-  const userTeams = await getUserTeamIds(query.userId);
-  const usersWorkspaces = await getUserWorkspaceIds(query.userId, userTeams);
+  const userTeams = await getUserTeamIds(query.userId, query.organisationId);
+  const usersWorkspaces = await getUserWorkspaceIds(
+    query.userId,
+    query.organisationId,
+    userTeams
+  );
 
   // Updated access conditions to include NULL values
   const accessConditions = [
@@ -310,8 +342,11 @@ export const getKnowledgeEntries = async (query: {
   if (query.workspaceId) {
     filterConditions.push(eq(knowledgeEntry.workspaceId, query.workspaceId));
   }
+  if (query.ids?.length) {
+    filterConditions.push(inArray(knowledgeEntry.id, query.ids));
+  }
 
-  return await getDb().query.knowledgeEntry.findMany({
+  const r = await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
     where: and(
@@ -336,6 +371,8 @@ export const getKnowledgeEntries = async (query: {
       },
     },
   });
+  // filter the teams by organisationId
+  return r;
 };
 
 /**
@@ -349,7 +386,7 @@ export const deleteKnowledgeEntry = async (
   deleteSource = false
 ) => {
   // check the user permissions
-  const canDelete = await validateKnowledgeAccess(id, userId);
+  const canDelete = await validateKnowledgeAccess(id, userId, organisationId);
   if (!canDelete) {
     throw new Error(
       "User does not have permission to delete this knowledge entry"
@@ -390,7 +427,7 @@ export const getFullSourceDocumentsForKnowledgeEntry = async (
   userId: string
 ) => {
   // Check user permissions first
-  const hasAccess = await validateKnowledgeAccess(id, userId);
+  const hasAccess = await validateKnowledgeAccess(id, userId, organisationId);
   if (!hasAccess) {
     throw new Error(
       "User does not have permission to access this knowledge entry"

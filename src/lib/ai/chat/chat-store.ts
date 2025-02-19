@@ -84,6 +84,7 @@ export type PlaceholderParser = {
   ) => Promise<{
     content: string;
     skipThisBlock?: boolean;
+    addToMeta?: Record<string, any>;
   }>;
 };
 

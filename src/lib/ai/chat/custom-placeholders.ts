@@ -1,4 +1,7 @@
-import { getPlainKnowledge } from "../knowledge/get-knowledge";
+import {
+  getKnowledgeEntries,
+  getPlainKnowledge,
+} from "../knowledge/get-knowledge";
 import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
@@ -52,7 +55,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: ChatStoreVariables,
       meta: ChatSessionContext
-    ) => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
       if (!args.variable) {
         throw new Error(
           "variable parameter is required for inc_value placeholder"
@@ -76,6 +83,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
     }> => {
       let pointerName = args.pointer ? args.pointer + "" : "_chunk_offset";
 
@@ -103,6 +111,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         chunkCount,
         chunkOffset,
         userId: userId + "",
+        organisationId: meta.organisationId,
       };
 
       await log.debug("parse knowledgebase for userid", userId + "");
@@ -121,7 +130,16 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       if (chunkCount && autoIncrease) {
         variables[pointerName] = chunkOffset + chunkCount;
       }
-      return { content: knowledgebase.map((k) => k.text).join("\n") };
+      return {
+        content: knowledgebase.map((k) => k.text).join("\n"),
+        addToMeta: {
+          knowledgeEntries: await getKnowledgeEntries({
+            organisationId: meta.organisationId,
+            ids: knowledgebase.map((k) => k.knowledgeEntryId),
+            userId: meta.userId,
+          }),
+        },
+      };
     },
   },
   {
@@ -134,6 +152,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
     }> => {
       const searchForVariable = args.search_for_variable
         ? args.search_for_variable + ""
@@ -185,7 +204,16 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         return [];
       });
 
-      return { content: results.map((r) => r.text).join("\n") };
+      return {
+        content: results.map((r) => r.text).join("\n"),
+        addToMeta: {
+          knowledgeEntries: await getKnowledgeEntries({
+            organisationId: organisationId,
+            ids: results.map((r) => r.knowledgeEntryId),
+            userId: meta.userId,
+          }),
+        },
+      };
     },
   },
   {
@@ -198,6 +226,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
     }> => {
       if (!args.id) {
         throw new Error("id parameter is required for file placeholder");
@@ -237,7 +266,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         return null;
       });
 
-      return { content: document?.content ?? "" };
+      return {
+        content: document?.content ?? "",
+        addToMeta: {
+          fileIds: [id],
+        },
+      };
     },
   },
   {
@@ -250,6 +284,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
     }> => {
       if (!args.url) {
         throw new Error("url parameter is required for url placeholder");
@@ -270,7 +305,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: ChatStoreVariables,
       meta: ChatSessionContext
-    ) => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
       console.log("parse prompt_snippet placeholder", args);
       const snippet = await getPromptSnippetByNameAndCategory({
         name: args.name + "",
@@ -291,7 +330,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: ChatStoreVariables,
       meta: ChatSessionContext
-    ) => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
       const text = await getKnowledgeTextByTitle({
         title: args.title + "",
         organisationId: args.organisationId + "",
@@ -309,7 +352,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: ChatStoreVariables,
       meta: ChatSessionContext
-    ) => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
       if (!args.variable) {
         throw new Error(
           "variable parameter is required for inc_value placeholder"
@@ -330,7 +377,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       args: PlaceholderArgumentDict,
       variables: ChatStoreVariables,
       meta: ChatSessionContext
-    ) => {
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
       // get name of the array variable
       if (!args.name) {
         log.error(
@@ -374,6 +425,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
     }> => {
       if (!args.id) {
         throw new Error("id parameter is required for stt placeholder");

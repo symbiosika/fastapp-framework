@@ -44,7 +44,7 @@ export class LLMAgent implements Agent {
     const replaced = await replaceVariables(messages, inputs);
 
     // Possibly handle custom placeholders
-    const { replacedMessages } = await replaceCustomPlaceholders(
+    const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
       replaced,
       customAppPlaceholders,
       inputs,
@@ -62,12 +62,12 @@ export class LLMAgent implements Agent {
     // Then run the LLM call
     const result = await generateLongText(replacedMessages as any, llmOptions);
 
-    // Return the LLM result as "default"
+    // Return the LLM result as "default" along with metadata
     return {
       outputs: {
         default: result.text,
       },
-      metadata: {},
+      metadata: addToMeta || {},
     };
   }
 }
