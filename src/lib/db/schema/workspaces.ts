@@ -53,17 +53,6 @@ export const workspaces = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    // Ensure workspace name is unique per organisation and owner (user or team)
-    unique("workspace_name_org_user_unique").on(
-      table.name,
-      table.organisationId,
-      table.userId
-    ),
-    unique("workspace_name_org_team_unique").on(
-      table.name,
-      table.organisationId,
-      table.teamId
-    ),
     index("workspace_organisation_id_idx").on(table.organisationId),
     index("workspace_user_id_idx").on(table.userId),
     index("workspace_team_id_idx").on(table.teamId),
