@@ -21,6 +21,8 @@ import {
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
+import { files, filesSelectSchema, getDb } from "../../../../dbSchema";
+import { and, eq } from "drizzle-orm";
 
 /**
  * Define the payment routes
@@ -103,17 +105,73 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
   );
 
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/files/:type/:bucket/:id",
+    API_BASE_PATH +
+      "/organisation/:organisationId/files/:type/:bucket/:filename",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/files/:type/:bucket/:id",
+      path: "/organisation/:organisationId/files/:type/:bucket/:filename",
       tags: ["files"],
       summary: "Get a file",
       responses: {
         200: {
           description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        type: v.union([v.literal("local"), v.literal("db")]),
+        bucket: v.string(),
+        filename: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const { organisationId, type, bucket, filename } = c.req.valid("param");
+
+        // get the file
+        let f: File;
+        if (type === "db") {
+          f = await getFileFromDb(filename, bucket, organisationId);
+        } else if (type === "local") {
+          f = await getFileFromLocalDisc(filename, bucket, organisationId);
+        } else {
+          throw new HTTPException(400, { message: "Invalid type" });
+        }
+        return new Response(f, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/octet-stream",
+          },
+        });
+      } catch (err) {
+        throw new HTTPException(400, { message: err + "" });
+      }
+    }
+  );
+
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/files/:type/:bucket/:id/info",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/files/:type/:bucket/:id/info",
+      tags: ["files"],
+      summary: "Get a file info",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(filesSelectSchema),
+            },
+          },
         },
       },
     }),
@@ -130,21 +188,36 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const { organisationId, type, bucket, id } = c.req.valid("param");
 
-        // get the file
-        let f: File;
         if (type === "db") {
-          f = await getFileFromDb(id, bucket, organisationId);
-        } else if (type === "local") {
-          f = await getFileFromLocalDisc(id, bucket, organisationId);
+          const f = await getDb()
+            .select({
+              id: files.id,
+              name: files.name,
+              fileType: files.fileType,
+              extension: files.extension,
+              createdAt: files.createdAt,
+              updatedAt: files.updatedAt,
+              organisationId: files.organisationId,
+              bucket: files.bucket,
+              chatId: files.chatId,
+              workspaceId: files.workspaceId,
+              expiresAt: files.expiresAt,
+            })
+            .from(files)
+            .where(
+              and(
+                eq(files.id, id),
+                eq(files.bucket, bucket),
+                eq(files.organisationId, organisationId)
+              )
+            );
+          if (f.length === 0) {
+            throw new HTTPException(404, { message: "File not found" });
+          }
+          return c.json(f[0]);
         } else {
           throw new HTTPException(400, { message: "Invalid type" });
         }
-        return new Response(f, {
-          status: 200,
-          headers: {
-            "Content-Type": "application/octet-stream",
-          },
-        });
       } catch (err) {
         throw new HTTPException(400, { message: err + "" });
       }
