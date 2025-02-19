@@ -88,8 +88,11 @@ export const knowledgeTextSchema = createSelectSchema(knowledgeText);
 export const knowledgeTextInsertSchema = createInsertSchema(knowledgeText);
 export const knowledgeTextUpdateSchema = createUpdateSchema(knowledgeText);
 
-// Main table for all knowledge entries
+export type KnowledgeTextMeta = {
+  sourceUri?: string;
+};
 
+// Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable(
   "knowledge_entry",
   {
@@ -118,7 +121,7 @@ export const knowledgeEntry = pgBaseTable(
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     abstract: text("abstract"),
-    meta: jsonb("meta"),
+    meta: jsonb("meta").$type<KnowledgeTextMeta>().default({}),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
