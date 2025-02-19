@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
   workspaceUsers,
@@ -6,6 +6,7 @@ import {
 } from "../db/schema/workspaces";
 import { hasAccessToWorkspace } from "./index";
 import { users } from "../db/schema/users";
+import { workspaces } from "../db/schema/workspaces";
 
 /**
  * Add users to a workspace
@@ -103,4 +104,30 @@ export const getWorkspaceUsers = async (
     .from(workspaceUsers)
     .leftJoin(users, eq(workspaceUsers.userId, users.id))
     .where(eq(workspaceUsers.workspaceId, workspaceId));
+};
+
+/**
+ * Get all workspaces shared with a user (where they are a member but not the owner)
+ */
+export const getSharedWorkspaces = async (userId: string) => {
+  const db = getDb();
+
+  // First get all workspaces where the user is a member
+  const sharedWorkspaces = await db
+    .select({
+      workspace: workspaces,
+    })
+    .from(workspaceUsers)
+    .innerJoin(workspaces, eq(workspaces.id, workspaceUsers.workspaceId))
+    .where(
+      and(
+        // User is a member
+        eq(workspaceUsers.userId, userId),
+        // User is not the owner
+        ne(workspaces.userId, userId)
+      )
+    );
+
+  // Map to return only the workspace objects
+  return sharedWorkspaces.map((result) => result.workspace);
 };

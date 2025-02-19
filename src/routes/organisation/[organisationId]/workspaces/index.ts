@@ -22,6 +22,7 @@ import {
   getWorkspaceUsers,
   addUsersToWorkspace,
   removeUsersFromWorkspace,
+  getSharedWorkspaces,
 } from "../../../../lib/workspaces/users";
 import type { FastAppHono } from "../../../../types";
 import {
@@ -81,6 +82,44 @@ export default function defineWorkspaceRoutes(
       } catch (error) {
         throw new HTTPException(500, {
           message: "Failed to get workspaces",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all shared workspaces for user (where user is a member but not owner)
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/:organisationId/workspaces/shared",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces/shared",
+      tags: ["workspaces"],
+      summary: "Get all shared workspaces where user is a member but not owner",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(workspacesSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const { organisationId } = c.req.valid("param");
+        const workspaces = await getSharedWorkspaces(userId);
+        return c.json(workspaces);
+      } catch (error) {
+        throw new HTTPException(500, {
+          message: "Failed to get shared workspaces",
         });
       }
     }
