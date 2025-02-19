@@ -41,7 +41,7 @@ import defineManageSecretsRoutes from "./routes/organisation/[organisationId]/se
 import definePluginRoutes from "./routes/organisation/[organisationId]/plugins";
 import definePingRoute from "./routes/ping";
 import defineWorkspaceRoutes from "./routes/organisation/[organisationId]/workspaces";
-import defineWebhookRoutes from "./routes/webhooks";
+import defineWebhookRoutes from "./routes/organisation/[organisationId]/webhooks";
 import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
 import defineAdminRoutes from "./routes/admin";
 import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";

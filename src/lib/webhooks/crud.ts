@@ -58,8 +58,17 @@ export const getAllUsersWebhooks = async (
 };
 
 /**
- * Update webhook
+ * Get all webhooks for an organisation
+ */
+export const getAllOrganisationWebhooks = async (organisationId: string) => {
+  return await getDb().query.webhooks.findMany({
+    where: eq(webhooks.organisationId, organisationId),
+    orderBy: (webhooks) => webhooks.name,
+  });
+};
 
+/**
+ * Update webhook
  * will check if user has access to webhook
  */
 export const updateWebhook = async (

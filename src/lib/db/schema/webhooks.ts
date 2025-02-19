@@ -6,6 +6,7 @@ import {
   index,
   timestamp,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { organisations, users } from "./users";
@@ -37,6 +38,7 @@ export const webhooks = pgBaseTable(
         onDelete: "cascade",
       })
       .notNull(),
+    organisationWide: boolean("organisation_wide").notNull().default(false),
     name: text("name").notNull(),
     type: webhookTypeEnum("type").notNull(),
     event: webhookEventEnum("event").notNull(),
