@@ -85,7 +85,9 @@ export async function getNearestEmbeddings(q: {
   }
 
   const whereClause =
-    filters.length > 0 ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``;
+    filters.length > 0
+      ? sql`WHERE ${sql.join(filters, sql` AND `)} AND ${knowledgeEntry.organisationId} = ${q.organisationId}`
+      : sql`WHERE ${knowledgeEntry.organisationId} = ${q.organisationId}`;
 
   const result = await getDb().execute<KnowledgeChunk>(sql`
     SELECT
@@ -139,11 +141,12 @@ export async function getNearestEmbeddings(q: {
             ${knowledgeEntry.name} AS "knowledgeEntryName",
             ${knowledgeChunks.order}
         FROM 
-		${knowledgeChunks}
+            ${knowledgeChunks}
         JOIN 
             ${knowledgeEntry} ON ${knowledgeChunks.knowledgeEntryId} = ${knowledgeEntry.id}
         WHERE 
             ${knowledgeChunks.knowledgeEntryId} = ${e.knowledgeEntryId}
+            AND ${knowledgeEntry.organisationId} = ${q.organisationId}
             AND ${knowledgeChunks.order} >= ${e.order - q.addBeforeN}
             AND ${knowledgeChunks.order} <= ${e.order + q.addAfterN}
         `);
