@@ -25,7 +25,20 @@ export type FastAppHonoContextVariables = {
 export interface FastAppHono
   extends Hono<{ Variables: FastAppHonoContextVariables }, BlankSchema, "/"> {}
 
-export interface ServerConfig {
+type UserInfo = {
+  firstname: string;
+  surname: string;
+  email: string;
+};
+
+export type EmailTemplateFunction = (data: {
+  appName: string;
+  baseUrl: string;
+  link?: string;
+  user?: UserInfo;
+}) => Promise<{ html: string; subject: string }>;
+
+export interface ServerSpecificConfig {
   port?: number;
   basePath?: string;
   baseUrl?: string;
@@ -61,6 +74,14 @@ export interface ServerConfig {
   // Licencing
   useLicenseSystem?: boolean;
   publicKey: string;
+
+  // Email Templates
+  emailTemplates?: {
+    verifyEmail?: EmailTemplateFunction;
+    magicLink?: EmailTemplateFunction;
+    resetPassword?: EmailTemplateFunction;
+    inviteToOrganization?: EmailTemplateFunction;
+  };
 }
 
 export interface DBStandardData {

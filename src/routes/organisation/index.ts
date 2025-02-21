@@ -315,12 +315,15 @@ export default function defineOrganisationRoutes(
       try {
         const { organisationId } = c.req.valid("param");
         const { email, role = "member" } = c.req.valid("json");
-        const invitation = await createOrganisationInvitation({
-          organisationId,
-          email,
-          role,
-          status: "pending",
-        });
+        const invitation = await createOrganisationInvitation(
+          {
+            organisationId,
+            email,
+            role,
+            status: "pending",
+          },
+          true
+        );
         return c.json(invitation);
       } catch (err) {
         throw new HTTPException(500, {

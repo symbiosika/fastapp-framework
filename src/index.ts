@@ -15,7 +15,7 @@ import {
 import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 // Types
-import type { ServerConfig, FastAppHonoContextVariables } from "./types";
+import type { ServerSpecificConfig, FastAppHonoContextVariables } from "./types";
 // Utils
 import log from "./lib/log";
 import { validateAllEnvVariables } from "./lib/utils/env-validate";
@@ -93,7 +93,7 @@ import widdershins from "widdershins";
  * and start the job queue
  * start the server
  */
-export const defineServer = (config: ServerConfig) => {
+export const defineServer = (config: ServerSpecificConfig) => {
   setGlobalServerConfig(config);
   console.log("Global server config:", JSON.stringify(_GLOBAL_SERVER_CONFIG));
 

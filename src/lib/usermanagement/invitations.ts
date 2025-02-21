@@ -12,6 +12,8 @@ import {
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
 import { getUserById } from "./user";
+import { _GLOBAL_SERVER_CONFIG } from "../../store";
+import { smtpService } from "../email";
 
 /**
  * Get all organisation invitations
@@ -178,11 +180,30 @@ export const declineAllPendingInvitationsForUser = async (
  * Create a new invitation in the database
  */
 export const createOrganisationInvitation = async (
-  data: OrganisationInvitationsInsert
+  data: OrganisationInvitationsInsert,
+  sendMail = false
 ) => {
-  const result = await getDb()
+  const [result] = await getDb()
     .insert(organisationInvitations)
     .values(data)
     .returning();
-  return result[0];
+
+  // send mail
+  if (sendMail) {
+    const { html, subject } =
+      await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
+        appName: _GLOBAL_SERVER_CONFIG.appName,
+        baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+        link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true`,
+      });
+
+    await smtpService.sendMail({
+      sender: process.env.SMTP_FROM,
+      recipients: [data.email],
+      subject,
+      html,
+    });
+  }
+
+  return result;
 };

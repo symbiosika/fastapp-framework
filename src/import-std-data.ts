@@ -10,10 +10,10 @@ import {
 import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { insertStandardDataEntry } from "./lib/db/standard-data";
 import { validateAllEnvVariables } from "./lib/utils/env-validate";
-import type { DBStandardData, ServerConfig } from "./types";
+import type { DBStandardData, ServerSpecificConfig } from "./types";
 
 export const importAllStandardData = async (
-  config: ServerConfig,
+  config: ServerSpecificConfig,
   stdData: DBStandardData[],
   overwrite = false,
   deleteAllBeforeImport = false

@@ -1,4 +1,10 @@
-import type { ServerConfig } from "../types";
+import type { ServerSpecificConfig } from "../types";
+import {
+  stdTemplateInviteToOrganization,
+  stdTemplateMagicLink,
+  stdTemplatePasswordReset,
+  stdTemplateVerifyEmail,
+} from "./email-templates";
 
 /**
  * The global server config object
@@ -16,13 +22,19 @@ export const _GLOBAL_SERVER_CONFIG = {
   useConsoleLogger: true,
   useLicenseSystem: false,
   publicKey: "",
+  emailTemplates: {
+    verifyEmail: stdTemplateVerifyEmail,
+    magicLink: stdTemplateMagicLink,
+    resetPassword: stdTemplatePasswordReset,
+    inviteToOrganization: stdTemplateInviteToOrganization,
+  },
 };
 
 /**
  * Helper function to set the global server config
  * and replace the default values with the ones from the config
  */
-export const setGlobalServerConfig = (config: ServerConfig) => {
+export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   _GLOBAL_SERVER_CONFIG.port = config.port ?? 3000;
   _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
   _GLOBAL_SERVER_CONFIG.baseUrl =
@@ -50,4 +62,18 @@ export const setGlobalServerConfig = (config: ServerConfig) => {
 
   _GLOBAL_SERVER_CONFIG.useLicenseSystem = config.useLicenseSystem ?? false;
   _GLOBAL_SERVER_CONFIG.publicKey = config.publicKey ?? "";
+
+  // Email Templates
+  if (config.emailTemplates?.verifyEmail) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.verifyEmail =
+      config.emailTemplates.verifyEmail;
+  }
+  if (config.emailTemplates?.magicLink) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.magicLink =
+      config.emailTemplates.magicLink;
+  }
+  if (config.emailTemplates?.resetPassword) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword =
+      config.emailTemplates.resetPassword;
+  }
 };

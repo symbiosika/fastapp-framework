@@ -64,7 +64,7 @@ export default function defineInvitationsRoutes(
               "You are not allowed to create invitations for the addressed organisation",
           });
         }
-        const invitation = await createOrganisationInvitation(data);
+        const invitation = await createOrganisationInvitation(data, true);
         return c.json(invitation);
       } catch (err) {
         throw new HTTPException(500, {
