@@ -3,8 +3,8 @@
  */
 export const parseIntFromUnknown = (
   value: unknown,
-  defaultValue: number
-): number => {
+  defaultValue?: number
+): number | undefined => {
   if (typeof value === "number") {
     return value;
   }
@@ -14,7 +14,7 @@ export const parseIntFromUnknown = (
       return parsed;
     }
   }
-  return defaultValue;
+  return defaultValue ?? undefined;
 };
 
 /**
@@ -22,12 +22,12 @@ export const parseIntFromUnknown = (
  */
 export const parseBooleanFromUnknown = (
   value: unknown,
-  defaultValue: boolean
-): boolean => {
+  defaultValue?: boolean
+): boolean | undefined => {
   if (typeof value === "boolean") {
     return value;
   }
-  return defaultValue;
+  return defaultValue ?? undefined;
 };
 
 /**
@@ -35,7 +35,7 @@ export const parseBooleanFromUnknown = (
  */
 export const parseStringFromUnknown = (
   value: unknown,
-  defaultValue: string
-): string => {
+  defaultValue?: string
+): string | undefined => {
   return typeof value === "string" ? value : defaultValue;
 };

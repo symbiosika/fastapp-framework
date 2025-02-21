@@ -53,9 +53,9 @@ export class LLMAgent implements Agent {
 
     // Parse the options
     const llmOptions = {
-      maxTokens: parseIntFromUnknown(options.maxTokens, 1000),
-      model: parseStringFromUnknown(options.model, "openai:gpt-4o-mini"),
-      temperature: parseIntFromUnknown(options.temperature, 0),
+      maxTokens: parseIntFromUnknown(options.maxTokens),
+      model: parseStringFromUnknown(options.model),
+      temperature: parseIntFromUnknown(options.temperature),
       outputType: "text" as const,
     };
 

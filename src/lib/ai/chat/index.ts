@@ -184,6 +184,10 @@ const initChatSession = async (
   }
   // update the session in the db for existing sessions and is not empty
   else {
+    llmOptions = {
+      ...(query.llmOptions ?? {}),
+    };
+
     session = await chatStore.set(session.id, {
       state: {
         ...session.state,

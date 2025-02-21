@@ -42,6 +42,7 @@ export const IMAGE_GENERATION_MODEL = "dall-e-3";
 interface Model {
   name: string;
   label: string;
+  description?: string;
   endpoint: string;
   provider: string;
   providerName: string;
@@ -140,9 +141,31 @@ const TextModels: Provider = {
   //   endpoint: "https://api.openai.com/v1/chat/completions",
   // },
 
+  "anthropic:claude-3-5-sonnet-latest": {
+    name: "claude-3-5-sonnet-latest",
+    label: "Claude 3.5 Sonnet",
+    description: "The Top model from Anthropic",
+    provider: "anthropic",
+    providerName: "Anthropic",
+    maxTokens: 200000,
+    maxOutputTokens: 8192,
+    endpoint: "https://api.anthropic.com/v1/messages",
+  },
+  "anthropic:claude-3-5-haiku-latest": {
+    name: "claude-3-5-haiku-latest",
+    label: "Claude 3.5 Haiku",
+    description: "The fastest model from Anthropic",
+    provider: "anthropic",
+    providerName: "Anthropic",
+    maxTokens: 200000,
+    maxOutputTokens: 8192,
+    endpoint: "https://api.anthropic.com/v1/messages",
+  },
+
   "mistral:mistral-large-latest": {
     name: "mistral-large-latest",
     label: "Mistral Large",
+    description: "The Top model from Mistral",
     provider: "mistral",
     providerName: "Mistral",
     maxTokens: 128000,
@@ -152,6 +175,7 @@ const TextModels: Provider = {
   "mistral:mistral-small-latest": {
     name: "mistral-small-latest",
     label: "Mistral Small",
+    description: "The smallest model from Mistral",
     provider: "mistral",
     providerName: "Mistral",
     maxTokens: 128000,
@@ -161,6 +185,7 @@ const TextModels: Provider = {
   "mistral:ministral-8b-latest": {
     name: "ministral-8b-latest",
     label: "Mistral 8B",
+    description: "The 8B model from Mistral",
     provider: "mistral",
     providerName: "Mistral",
     maxTokens: 128000,
@@ -170,6 +195,7 @@ const TextModels: Provider = {
   "mistral:codestral-latest": {
     name: "codestral-latest",
     label: "Mistral Code",
+    description: "The Code model from Mistral",
     provider: "mistral",
     providerName: "Mistral",
     maxTokens: 128000,
@@ -182,6 +208,7 @@ const MultiModalModels: Provider = {
   "openai:gpt-4o": {
     name: "gpt-4o",
     label: "GPT-4o",
+    description: "The Top model from OpenAI",
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -190,9 +217,19 @@ const MultiModalModels: Provider = {
   "mistral:pixtral-large-latest": {
     name: "pixtral-large-latest",
     label: "Pixtral Large",
+    description: "The Top model from Mistral",
     provider: "mistral",
     providerName: "Mistral",
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+  },
+
+  "anthropic:claude-3-5-sonnet": {
+    name: "claude-3-5-sonnet-latest",
+    label: "Claude 3.5 Sonnet",
+    description: "The Top model from Anthropic",
+    provider: "anthropic",
+    providerName: "Anthropic",
+    endpoint: "https://api.anthropic.com/v1/messages",
   },
 };
 
@@ -230,6 +267,7 @@ const providerTokens: ProviderToken = {
   openai: process.env.OPENAI_API_KEY ?? "",
   mistral: process.env.MISTRAL_API_KEY ?? "",
   llama: process.env.LLAMA_CLOUD_API_KEY ?? "",
+  anthropic: process.env.ANTHROPIC_API_KEY ?? "",
 };
 
 export const openaiClient = new OpenAIClient({
@@ -266,7 +304,7 @@ export const getAllAIModels = async (): Promise<{
  */
 export const getProviderToken = (provider: string) => {
   if (!providerTokens[provider]) {
-    throw new Error(`Provider ${provider} not found`);
+    throw new Error(`Provider token for ${provider} not found`);
   }
   return providerTokens[provider];
 };
@@ -333,7 +371,7 @@ export async function generateImageDescription(
           content: [
             {
               type: "text",
-              text: "What’s in this image? Explain it in detail with as many details as possible.",
+              text: "What's in this image? Explain it in detail with as many details as possible.",
             },
             {
               type: "image_url",
@@ -371,24 +409,30 @@ export async function chatCompletion(
     const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
     const token = getProviderToken(model.provider);
     // API Call
-    const req = {
-      model: model.name,
-      temperature: options?.temperature ?? 1,
-      stream: false,
-      messages: messages,
-      max_tokens: options?.maxTokens ?? null,
-      response_format:
-        options?.outputType === "json"
-          ? { type: "json_object" }
-          : { type: "text" },
-      n: 1,
-      // top_p: 1,
-      // stop: "string",
-      // random_seed: 0,
-      // presence_penalty: 0,
-      // frequency_penalty: 0,
-      safe_prompt: false,
-    };
+    const req =
+      model.provider === "anthropic"
+        ? {
+            model: model.name,
+            max_tokens: options?.maxTokens ?? undefined,
+            messages: messages.map((msg) => ({
+              role: msg.role === "assistant" ? "assistant" : "user",
+              content: msg.content,
+            })),
+            temperature: options?.temperature ?? 1,
+          }
+        : {
+            model: model.name,
+            temperature: options?.temperature ?? 1,
+            stream: false,
+            messages: messages,
+            max_tokens: options?.maxTokens ?? undefined,
+            response_format:
+              options?.outputType === "json"
+                ? { type: "json_object" }
+                : { type: "text" },
+            n: 1,
+            safe_prompt: model.provider === "mistral" ? false : undefined,
+          };
     const r = await fetch(model.endpoint, {
       method: "POST",
       headers: {
@@ -447,43 +491,74 @@ export async function generateLongText(
     try {
       const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
       const token = getProviderToken(model.provider);
-      // API Call
-      const req = {
-        model: model.name,
-        temperature: options?.temperature ?? 1,
-        stream: false,
-        messages: currentMessages,
-        max_tokens: options?.maxTokens ?? undefined,
-        response_format:
-          options?.outputType === "json"
-            ? { type: "json_object" }
-            : { type: "text" },
-        n: 1,
-        // top_p: 1,
-        // stop: "string",
-        // random_seed: 0,
-        // presence_penalty: 0,
-        // frequency_penalty: 0,
-        safe_prompt: model.provider === "mistral" ? false : undefined,
+
+      // API Call depending on the provider
+      let req;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
       };
+
+      if (model.provider === "anthropic") {
+        req = {
+          model: model.name,
+          max_tokens: options?.maxTokens ?? 4096,
+          messages: currentMessages.map((msg) => ({
+            role: msg.role === "assistant" ? "assistant" : "user",
+            content: msg.content,
+          })),
+          temperature: options?.temperature ?? 1,
+        };
+        headers["x-api-key"] = token;
+        headers["anthropic-version"] = "2023-06-01";
+      } else if (model.provider === "mistral") {
+        req = {
+          model: model.name,
+          temperature: options?.temperature ?? 1,
+          stream: false,
+          messages: currentMessages,
+          max_tokens: options?.maxTokens ?? undefined,
+          safe_prompt: false,
+          n: 1,
+        };
+        headers["Authorization"] = `Bearer ${token}`;
+      } else if (model.provider === "openai") {
+        req = {
+          model: model.name,
+          temperature: options?.temperature ?? 1,
+          stream: false,
+          messages: currentMessages,
+          max_tokens: options?.maxTokens ?? undefined,
+          n: 1,
+        };
+        headers["Authorization"] = `Bearer ${token}`;
+      } else {
+        throw new Error(`Provider ${model.provider} not supported`);
+      }
+
       // console.log("POST", model.endpoint, req);
       const r = await fetch(model.endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify(req),
       });
       if (r.status !== 200) {
-        log.error("Error in generateLongText", await r.text());
+        const errorText = await r.text();
+        log.error("Error in generateLongText", errorText);
         log.error("Request", req);
         throw new Error(`API returned status ${r.status}`);
       }
       const completion = await r.json();
       // console.log("completion", completion);
 
-      const newText = completion.choices[0].message.content ?? "";
+      let newText = "";
+      if (model.provider === "anthropic") {
+        newText = completion.content[0].text ?? "";
+      } else if (model.provider === "mistral") {
+        newText = completion.choices[0].message.content ?? "";
+      } else if (model.provider === "openai") {
+        newText = completion.choices[0].message.content ?? "";
+      }
+
       output += newText;
 
       // Update messages to include the assistant's reply and a prompt to continue
@@ -515,7 +590,7 @@ export async function generateLongText(
       }
       if (!options?.maxRetries) {
         finished = true;
-        throw new Error("Stopped to generate text after 1 try");
+        throw new Error("Stopped to generate text after. " + error);
       }
     }
   }
