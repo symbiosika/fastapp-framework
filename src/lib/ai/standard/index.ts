@@ -32,9 +32,9 @@ export const aiModelsValidationSchema = v.object({
  * Define the standards
  */
 export const EMBEDDING_MODEL = "text-embedding-3-small";
-export const VISION_MODEL = "gpt-4-turbo";
-export const TEXT_MODEL = "mistral-large-latest"; // "gpt-4-turbo";
-export const FAST_TEXT_MODEL = "gpt-3.5-turbo";
+export const VISION_MODEL = "gpt-4o-mini";
+export const TEXT_MODEL = "gpt-4o-mini";
+export const FAST_TEXT_MODEL = "gpt-4o-mini";
 export const TTS_MODEL = "tts-1";
 export const STT_MODEL = "whisper-1";
 export const IMAGE_GENERATION_MODEL = "dall-e-3";
@@ -321,32 +321,37 @@ async function encodeImageFromFile(file: File): Promise<string> {
  */
 export async function generateImageDescription(
   image: File,
-  model: string = TEXT_MODEL
+  model: string = VISION_MODEL
 ) {
-  const base64Image = await encodeImageFromFile(image);
-  const response = await openaiClient.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "What’s in this image? Explain it in detail with as many details as possible.",
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`,
+  try {
+    const base64Image = await encodeImageFromFile(image);
+    const response = await openaiClient.chat.completions.create({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "What’s in this image? Explain it in detail with as many details as possible.",
             },
-          },
-        ],
-      },
-    ],
-    max_tokens: 2000,
-  });
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+    });
 
-  return response.choices[0].message.content ?? "";
+    return response.choices[0].message.content ?? "";
+  } catch (error) {
+    log.error(`Error in generateImageDescription: ${error}`);
+    throw new Error("Failed to generate image description");
+  }
 }
 
 /**
