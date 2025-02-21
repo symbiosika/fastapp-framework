@@ -271,7 +271,7 @@ export function definePublicUserRoutes(
           await action(user.id, user.email);
         }
 
-        log.debug(`User registered: ${user.id}`);
+        log.info(`New user registered: ${user.id}`);
         return c.json({ ...user, password: undefined, salt: undefined });
       } catch (err) {
         log.error(err + "");

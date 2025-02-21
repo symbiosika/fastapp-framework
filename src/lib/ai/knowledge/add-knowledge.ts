@@ -140,7 +140,6 @@ export const extractKnowledgeFromText = async (data: {
       })
     )
   );
-  await log.debug(`Knowledge chunks stored.`);
   return {
     id: knowledgeEntry.id,
     ok: true,

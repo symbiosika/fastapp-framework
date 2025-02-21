@@ -196,6 +196,8 @@ export const syncKnowledgeFromPlugin = async (
       externalId: item.externalId,
       status: "added",
     });
+
+    log.debug(`Added knowledge entry for externalId ${item.externalId}`);
   }
 
   // Add unchanged items to status list

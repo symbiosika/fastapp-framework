@@ -114,15 +114,27 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         organisationId: meta.organisationId,
       };
 
-      await log.debug("parse knowledgebase for userid", userId + "");
-      await log.debug("parse knowledgebase placeholder", query);
+      await log.logCustom(
+        { name: meta.chatId },
+        "parse knowledgebase for userid",
+        userId + ""
+      );
+      await log.logCustom(
+        { name: meta.chatId },
+        "parse knowledgebase placeholder",
+        query
+      );
       const knowledgebase = await getPlainKnowledge(query).catch((e) => {
         log.error("Error getting plain knowledge", e);
         return [];
       });
 
       if (knowledgebase.length === 0) {
-        await log.debug("no knowledgebase entries found", query);
+        await log.logCustom(
+          { name: meta.chatId },
+          "no knowledgebase entries found",
+          query
+        );
         return { content: "", skipThisBlock: true };
       }
 
@@ -180,16 +192,20 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const ids = args.id ? (args.id as string).split(",") : undefined;
       const organisationId = meta.organisationId;
 
-      await log.debug("parse similar_to placeholder", {
-        organisationId,
-        searchText: question,
-        count,
-        ids,
-        filters,
-        names,
-        before,
-        after,
-      });
+      await log.logCustom(
+        { name: meta.chatId },
+        "parse similar_to placeholder",
+        {
+          organisationId,
+          searchText: question,
+          count,
+          ids,
+          filters,
+          names,
+          before,
+          after,
+        }
+      );
       const results = await getNearestEmbeddings({
         organisationId: organisationId,
         searchText: String(question),
@@ -247,15 +263,19 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       } else {
         id = ids[ixValue] ?? undefined;
         incrementIndexValue(variables, indexName);
-        log.debug("read file index", ixValue);
+        log.logCustom({ name: meta.chatId }, "read file index", ixValue);
       }
 
       if (!id) {
-        log.debug("no more files to read");
+        log.logCustom({ name: meta.chatId }, "no more files to read");
         return { content: "", skipThisBlock: true };
       }
 
-      await log.debug("parse file placeholder", { fileSource, bucket, id });
+      await log.logCustom({ name: meta.chatId }, "parse file placeholder", {
+        fileSource,
+        bucket,
+        id,
+      });
       const document = await parseDocument({
         sourceType: fileSource,
         organisationId: organisationId,
@@ -290,7 +310,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         throw new Error("url parameter is required for url placeholder");
       }
       const url = args.url + "";
-      await log.debug("parse url placeholder", { url });
+      await log.logCustom({ name: meta.chatId }, "parse url placeholder", {
+        url,
+      });
       const markdown = await getMarkdownFromUrl(url).catch((e) => {
         log.error("Error getting markdown from url", e);
         return "";
@@ -401,7 +423,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
 
       const ixName = "ix_" + varName;
       const ixValue = getIndexValue(variables, ixName);
-      log.debug("iterate_array", { ixName, ixValue });
+      log.logCustom({ name: meta.chatId }, "iterate_array", {
+        ixName,
+        ixValue,
+      });
 
       // get value from array
       if (ixValue >= variables[varName].length) {

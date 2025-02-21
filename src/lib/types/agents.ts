@@ -45,6 +45,7 @@ export interface Agent {
 }
 
 export interface AgentContext {
+  chatId: string;
   userId: string;
   organisationId: string;
   chatSessionGroupId?: string;

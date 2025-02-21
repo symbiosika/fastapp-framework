@@ -213,6 +213,7 @@ export const chatWithAgent = async (query: unknown) => {
   const llmAgent = agents.llmAgent;
   const result = await llmAgent.run(
     {
+      chatId: session.id,
       userId: parsedQuery.userId,
       organisationId: parsedQuery.organisationId,
       chatSessionGroupId: parsedQuery.chatSessionGroupId,

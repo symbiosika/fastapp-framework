@@ -199,7 +199,6 @@ const getKnowledge = async (
 
   // Query based on direct ID(s)
   if (query.id) {
-    await log.debug(`Getting knowledge by ids: ${query.id}`);
     const entries = await Promise.all(
       query.id.map(async (id) => {
         const hasAccess = await validateKnowledgeAccess(
@@ -222,7 +221,6 @@ const getKnowledge = async (
   const conditions = [or(...accessConditions)]; // Add access control as first condition
 
   if (query.names?.length) {
-    await log.debug(`Getting knowledge filtered by names: ${query.names}`);
     conditions.push(inArray(knowledgeEntry.name, query.names));
   }
 

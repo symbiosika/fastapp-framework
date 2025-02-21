@@ -11,7 +11,7 @@ export const addKnowledgeTextFromUrl = async (data: {
   organisationId: string;
 }) => {
   const markdown = await getMarkdownFromUrl(data.url);
-  log.debug(`Markdown: ${markdown.slice(0, 100)}`);
+  log.debug(`Got markdown from URL: ${markdown.slice(0, 100)}`);
 
   // insert in DB as text knowledge entry
   const e = await getDb()

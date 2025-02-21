@@ -476,8 +476,8 @@ export async function generateLongText(
         body: JSON.stringify(req),
       });
       if (r.status !== 200) {
-        log.debug("Error in generateLongText", await r.text());
-        log.debug("Request", req);
+        log.error("Error in generateLongText", await r.text());
+        log.error("Request", req);
         throw new Error(`API returned status ${r.status}`);
       }
       const completion = await r.json();
@@ -508,7 +508,7 @@ export async function generateLongText(
         finished = true;
       }
     } catch (error) {
-      log.debug(`Error in chatCompletionLongText: ${error}`);
+      log.error(`chatCompletionLongText: ${error}`);
       retryCount++;
       if (options?.maxRetries && retryCount >= options.maxRetries) {
         throw new Error("Failed to generate text after maximum retries");

@@ -68,21 +68,34 @@ class Logger {
     }
   }
 
+  private async writeToCustomFile(fileName: string, message: string) {
+    const filePath = path.join(process.cwd(), "logs", fileName);
+    await fs.appendFile(filePath, message + "\n");
+  }
+
   private async log(level: string, message: string) {
     const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
     console.log(logMessage);
     await this.writeToFile(logMessage);
   }
 
-  async info(...messages: string[]) {
+  async info(...messages: (string | object | undefined | number)[]) {
     for (const message of messages) {
-      await this.log("info", message);
+      if (typeof message === "object") {
+        await this.log("info", JSON.stringify(message));
+      } else {
+        await this.log("info", message + "");
+      }
     }
   }
 
-  async error(...messages: string[]) {
+  async error(...messages: (string | object | undefined | number)[]) {
     for (const message of messages) {
-      await this.log("error", message);
+      if (typeof message === "object") {
+        await this.log("error", JSON.stringify(message));
+      } else {
+        await this.log("error", message + "");
+      }
     }
   }
 
@@ -94,6 +107,29 @@ class Logger {
         await this.log("debug", message + "");
       }
     }
+  }
+
+  async logCustom(
+    options: { name: string },
+    ...messages: (string | object | undefined | number)[]
+  ) {
+    for (const message of messages) {
+      let toLog = `[${new Date().toISOString()}] [${options.name}] `;
+      if (typeof message === "object") {
+        toLog += JSON.stringify(message);
+      } else {
+        toLog += message + "";
+      }
+      toLog += "\n";
+      await this.writeToCustomFile("custom-" + options.name, toLog);
+    }
+  }
+
+  async getCustomLogFile(name: string) {
+    return fs.readFile(
+      path.join(process.cwd(), "logs", "custom-" + name),
+      "utf8"
+    );
   }
 
   async logToDB(data: {
@@ -136,27 +172,19 @@ class Logger {
   }
 
   async logAChat(chatId: string, ...messages: ChatCompletionMessageParam[]) {
-    if (messages.length === 0) {
-      await this.debug(`(${chatId}) No messages to log.`);
-      return;
-    }
-    for (const message of messages) {
-      const content = message.content?.toString() ?? "";
-      const contentSnippet = content.substring(0, 100).replace(/\n/g, " ");
-      await this.debug(`(${chatId}) ${message.role}: ${contentSnippet}`);
-    }
+    this.logCustom({ name: chatId }, ...messages);
   }
 
   async getLogFilePaths(): Promise<string[]> {
     const logFiles: string[] = [];
-    
+
     try {
       // Add main log file if it exists
       try {
         await fs.access(this.logFilePath);
         logFiles.push(this.logFilePath);
       } catch {}
-      
+
       // Add rotated log files if they exist
       for (let i = 1; i <= this.maxFiles; i++) {
         const rotatedPath = `${this.logFilePath}.${i}`;
@@ -168,7 +196,7 @@ class Logger {
     } catch (error) {
       console.error("Error getting log file paths:", error);
     }
-    
+
     return logFiles;
   }
 }

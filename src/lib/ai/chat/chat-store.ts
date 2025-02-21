@@ -8,6 +8,13 @@ import log from "../../../lib/log";
 import { nanoid } from "nanoid";
 
 export type ChatSessionContext = {
+  chatId: string;
+  userId: string;
+  organisationId: string;
+  chatSessionGroupId?: string;
+};
+
+export type NewChatSessionContext = {
   userId: string;
   organisationId: string;
   chatSessionGroupId?: string;
@@ -106,7 +113,7 @@ class ChatHistoryStoreInDb {
   async create(options: {
     chatId?: string;
     variables?: ChatStoreVariables;
-    context: ChatSessionContext;
+    context: NewChatSessionContext;
     messages?: ChatMessage[];
     interview?: {
       name: string;
@@ -115,7 +122,8 @@ class ChatHistoryStoreInDb {
     };
   }): Promise<ChatSession> {
     const chatId = options?.chatId || nanoid(16);
-    options?.chatId && log.debug(`Create chat session ${chatId}`);
+    options?.chatId &&
+      log.logCustom({ name: chatId }, `Create chat session ${chatId}`);
 
     const session = await getDb()
       .insert(chatSessions)
@@ -174,7 +182,7 @@ class ChatHistoryStoreInDb {
     session: Partial<ChatSession>
   ): Promise<ChatSession> {
     try {
-      log.debug(`Update chat session ${chatId}`);
+      log.logCustom({ name: chatId }, `Update chat session ${chatId}`);
       const [updatedSession] = await getDb()
         .update(chatSessions)
         .set(session)
@@ -194,7 +202,10 @@ class ChatHistoryStoreInDb {
     value: VariableType,
     session?: ChatSession
   ): Promise<ChatStoreVariables> {
-    log.debug(`Update variable ${key} in chat session ${chatId}`);
+    log.logCustom(
+      { name: chatId },
+      `Update variable ${key} in chat session ${chatId}`
+    );
 
     const currentSession = session || (await this.get(chatId));
     if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
@@ -223,7 +234,10 @@ class ChatHistoryStoreInDb {
     variables: ChatStoreVariables,
     session?: ChatSession
   ): Promise<ChatStoreVariables> {
-    log.debug(`Merge variables in chat session ${chatId}`);
+    log.logCustom(
+      { name: chatId },
+      `Merge variables in chat session ${chatId}`
+    );
 
     const currentSession = session || (await this.get(chatId));
     if (!currentSession) throw new Error(`Chat session ${chatId} not found`);
@@ -247,7 +261,10 @@ class ChatHistoryStoreInDb {
   }
 
   async getVariable(chatId: string, key: string): Promise<VariableType> {
-    log.debug(`Get variable ${key} from chat session ${chatId}`);
+    log.logCustom(
+      { name: chatId },
+      `Get variable ${key} from chat session ${chatId}`
+    );
     const session = await this.get(chatId);
     if (!session) throw new Error(`Chat session ${chatId} not found`);
     return session.state.variables[key] ?? undefined;
@@ -266,8 +283,6 @@ class ChatHistoryStoreInDb {
     startFrom: string,
     meta: { organisationId: string }
   ): Promise<ChatSession[]> {
-    log.debug(`Get chat history for user ${userId}`);
-
     const result = await getDb()
       .select({
         id: chatSessions.id,
@@ -290,7 +305,7 @@ class ChatHistoryStoreInDb {
   }
 
   async getChatHistory(chatId: string): Promise<ChatMessage[]> {
-    log.debug(`Get chat history for chat ${chatId}`);
+    log.logCustom({ name: chatId }, `Get chat history for chat ${chatId}`);
     const session = await this.get(chatId);
     if (!session) throw new Error(`Chat session ${chatId} not found`);
     return session.messages as ChatMessage[];

@@ -26,6 +26,7 @@ type UserPermissionsCache = {
 let permissionsCache: UserPermissionsCache = {};
 
 export async function refreshPermissionsCache() {
+  log.debug("Permissions cache is empty, refreshing");
   const newCache: UserPermissionsCache = {};
 
   // Get all relevant data in one query with joins
@@ -79,7 +80,6 @@ export async function getUserPermissions(
   userId: string
 ): Promise<MethodPermissionsMap | null> {
   if (Object.keys(permissionsCache).length === 0) {
-    log.debug("Permissions cache is empty, refreshing");
     await refreshPermissionsCache();
   }
   return permissionsCache[userId] || null;
@@ -92,7 +92,6 @@ export async function hasPermission(
   path: string
 ): Promise<boolean> {
   if (Object.keys(permissionsCache).length === 0) {
-    log.debug("Permissions cache is empty, refreshing");
     await refreshPermissionsCache();
   }
 

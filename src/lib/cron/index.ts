@@ -11,11 +11,11 @@ class Scheduler {
   private tasks: Map<string, CronJob> = new Map();
 
   private log(message: string): void {
-    log.debug(`[CronService] Log: ${message}`);
+    log.logCustom({ name: "CronService" }, `Log: ${message}`);
   }
 
   private error(message: string): void {
-    log.debug(`[CronService] Error: ${message}`);
+    log.logCustom({ name: "CronService" }, `Error: ${message}`);
   }
 
   registerTask(name: string, schedule: string, handler: () => Promise<void>) {

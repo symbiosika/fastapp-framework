@@ -44,13 +44,13 @@ class SMTPService {
 
   private log(message: string): void {
     if (this.logEnabled) {
-      log.debug(`[SMTPService] Log: ${message}`);
+      log.logCustom({ name: "SMTPService" }, `Log: ${message}`);
     }
   }
 
   private error(message: string): void {
     if (this.logEnabled) {
-      log.error(`[SMTPService] Error: ${message}`);
+      log.logCustom({ name: "SMTPService" }, `Error: ${message}`);
     }
   }
 

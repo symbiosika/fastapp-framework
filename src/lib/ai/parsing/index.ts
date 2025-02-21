@@ -30,7 +30,6 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
   else if (file.type.startsWith("image")) {
     // the the image describe by ai
     const description = await generateImageDescription(file);
-    await log.debug(`Image description: ${description}`);
     return { text: description };
   } else {
     throw new Error(`Unsupported file type for parsing: ${file.type}`);
@@ -94,12 +93,14 @@ export const parseDocument = async (data: {
     content = dbResults[0].text;
     title = dbResults[0].title;
   } else {
+    log.error(
+      `Can´t get file. Unsupported file source type '${data.sourceType}' or missing parameters.`
+    );
     throw new Error(
       `Can´t get file. Unsupported file source type '${data.sourceType}' or missing parameters.`
     );
   }
   log.debug(`File parsed. Content length: ${content.length}`);
-  log.debug(`Original content:\n${content}`);
 
   return { content, title };
 };

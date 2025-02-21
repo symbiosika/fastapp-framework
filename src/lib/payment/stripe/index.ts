@@ -18,7 +18,10 @@ export class StripeService {
     const stripeApiKey = apiKey;
     this.logEnabled = process.env.STRIPE_DEBUG === "true";
     if (!stripeApiKey) {
-      log.debug("[StripeService] Stripe API key is not provided");
+      log.logCustom(
+        { name: "StripeService" },
+        "Stripe API key is not provided"
+      );
       return;
       // throw new Error("Stripe API key is not provided");
     }
@@ -32,13 +35,13 @@ export class StripeService {
    */
   private log(message: string): void {
     if (this.logEnabled) {
-      log.debug(`[StripeService] Log:${message}`);
+      log.logCustom({ name: "StripeService" }, `Log:${message}`);
     }
   }
 
   private error(message: string): void {
     if (this.logEnabled) {
-      log.debug(`[StripeService] Err:${message}`);
+      log.logCustom({ name: "StripeService" }, `Error:${message}`);
     }
   }
 

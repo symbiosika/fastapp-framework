@@ -27,7 +27,7 @@ async function processJob(job: Job) {
   const executor = jobHandlers[job.type];
   if (!executor) {
     try {
-      await log.debug(
+      await log.error(
         `No executor found for job type: ${job.type} and id: ${job.id}`
       );
       await getDb()

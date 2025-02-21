@@ -116,8 +116,6 @@ export const classifyFunctionMessage = async (
   // Create a system prompt that instructs the assistant on how to extract function details
   const systemPrompt = getFunctionClassifierSystemPrompt();
 
-  await log.debug("messages.length", messages.length + "");
-
   // send the system prompt only if it is the first users message
   // length 2 meand ONE system prompt and ONE user prompt until now
   const messagesToSend: ChatCompletionMessageParam[] =
@@ -170,7 +168,7 @@ export const classifyFunctionMessage = async (
   });
   const content = response?.choices[0]?.message?.content?.trim();
   if (!content) {
-    log.debug(
+    log.error(
       "Something went wrong pre-parsing the function call. Couly not parse AI response.",
       "System prompt",
       systemPrompt,

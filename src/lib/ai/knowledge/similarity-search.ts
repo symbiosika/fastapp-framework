@@ -110,7 +110,7 @@ export async function getNearestEmbeddings(q: {
   // log the knowledgeEntry.name of the chunks
   for (const chunk of result.rows) {
     log.debug(
-      `Chunk: ${chunk.knowledgeEntryName} - ${chunk.text} - ${chunk.knowledgeEntryId}`
+      `Chunk: ${chunk.knowledgeEntryName} - ${chunk.text.slice(0, 20)} - ${chunk.knowledgeEntryId}`
     );
   }
 
