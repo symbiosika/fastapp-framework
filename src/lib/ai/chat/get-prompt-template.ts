@@ -3,6 +3,7 @@ import { type LLMOptions, promptTemplates } from "../../../lib/db/db-schema";
 import { eq, and } from "drizzle-orm";
 import type { ChatMessageRole } from "./chat-store";
 import type { ChatMessage } from "./chat-store";
+import { nanoid } from "nanoid";
 
 export type AgentSystemPrompt = {
   id: string;
@@ -182,10 +183,11 @@ export const initChatMessage = (
     documents?: any;
   }
 ) => {
+  const id = nanoid(16);
   const chatMessage: ChatMessage = {
     role: role,
     content: message,
-    meta: meta,
+    meta: { ...meta, id },
   };
   return chatMessage;
 };

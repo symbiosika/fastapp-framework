@@ -31,6 +31,9 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { chatSessionsSelectSchema } from "../../../../dbSchema";
 
+// Define the roles as a type
+type ChatMessageRole = "system" | "user" | "assistant";
+
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get all available models
@@ -395,6 +398,57 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         });
 
         return c.json(result);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Update a chat message in a session
+   */
+  app.put(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/chat/:chatId/message/:messageId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/chat/:chatId/message/:messageId",
+      tags: ["ai"],
+      summary: "Update a chat message in a session",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.object({ success: v.boolean() })),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        content: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        chatId: v.string(),
+        messageId: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const { organisationId, chatId, messageId } = c.req.valid("param");
+        const { content } = c.req.valid("json");
+        // Update the chat message
+        await chatStore.updateChatMessage(chatId, messageId, { content });
+        return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

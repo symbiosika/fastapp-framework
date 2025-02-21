@@ -43,6 +43,7 @@ export type ChatMessage = {
   role: ChatMessageRole;
   content?: string | any;
   meta?: {
+    id: string;
     model?: string;
     human?: boolean;
     timestamp?: string;
@@ -309,6 +310,41 @@ class ChatHistoryStoreInDb {
     const session = await this.get(chatId);
     if (!session) throw new Error(`Chat session ${chatId} not found`);
     return session.messages as ChatMessage[];
+  }
+
+  async updateChatMessage(
+    chatId: string,
+    messageId: string,
+    newContent: Partial<ChatMessage>
+  ): Promise<void> {
+    log.logCustom(
+      { name: chatId },
+      `Update message ${messageId} in chat session ${chatId}`
+    );
+
+    const session = await this.get(chatId);
+    if (!session) throw new Error(`Chat session ${chatId} not found`);
+
+    const messageIndex = session.messages.findIndex(
+      (msg) => msg.meta?.id === messageId
+    );
+    if (messageIndex === -1 || session.messages[messageIndex].role === "system")
+      return;
+
+    // merge the message content to the existing message
+    const updatedMessage = { ...session.messages[messageIndex], ...newContent };
+    session.messages[messageIndex] = updatedMessage;
+
+    // Update the session in the database
+    await getDb()
+      .update(chatSessions)
+      .set({
+        messages: session.messages,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(chatSessions.id, chatId));
+
+    return;
   }
 }
 
