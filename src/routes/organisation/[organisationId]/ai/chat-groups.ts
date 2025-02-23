@@ -158,12 +158,14 @@ export default function defineChatGroupRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    validator("query", v.object({ workspaceId: v.optional(v.string()) })),
     async (c) => {
       const usersId = c.get("usersId");
       const { organisationId } = c.req.valid("param");
       const chatGroups = await getChatSessionGroupsByUser(
         organisationId,
-        usersId
+        usersId,
+        c.req.valid("query")
       );
       return c.json(chatGroups);
     }

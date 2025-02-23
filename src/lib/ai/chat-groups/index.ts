@@ -200,17 +200,19 @@ export async function getChatSessionGroup(
  */
 export async function getChatSessionGroupsByUser(
   organisationId: string,
-  userId: string
+  userId: string,
+  query?: {
+    workspaceId?: string;
+  }
 ): Promise<ChatSessionGroupsSelect[]> {
-  const db = getDb();
-  const groups = await db
+  const groups = getDb()
     .select()
     .from(chatSessionGroups)
     .where(
       and(
         eq(chatSessionGroups.organisationId, organisationId),
         exists(
-          db
+          getDb()
             .select()
             .from(chatSessionGroupAssignments)
             .where(
@@ -225,7 +227,12 @@ export async function getChatSessionGroupsByUser(
         )
       )
     )
-    .orderBy(desc(chatSessionGroups.createdAt));
+    .orderBy(desc(chatSessionGroups.createdAt))
+    .$dynamic();
+
+  if (query?.workspaceId) {
+    groups.where(eq(chatSessionGroups.workspaceId, query.workspaceId));
+  }
 
   return groups;
 }
