@@ -171,7 +171,15 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(chatSessionsSelectSchema),
+              schema: resolver(
+                v.object({
+                  chatId: v.string(),
+                  name: v.string(),
+                  history: v.any(),
+                  chatSessionGroupId: v.optional(v.string()),
+                  parentWorkspaceId: v.optional(v.string()),
+                })
+              ),
             },
           },
         },
@@ -189,10 +197,18 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           message: `Chat session ${id} not found`,
         });
       }
+
+      // check if the chat session is in a chat session group
+      const parentWorkspace = await chatStore.getParentWorkspaceByChatGroupId(
+        r.chatSessionGroupId
+      );
+
       return c.json({
         chatId: id,
         name: r.name,
         history: r.messages,
+        chatSessionGroupId: r.chatSessionGroupId,
+        parentWorkspaceId: parentWorkspace?.workspaceId,
       });
     }
   );
