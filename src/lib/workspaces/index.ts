@@ -28,10 +28,20 @@ export const hasAccessToWorkspace = async (
   });
   const teamIds = teams.map((t) => t.teamId);
 
+  const workspaceMembers = await getDb().query.workspaceUsers.findMany({
+    where: eq(workspaceUsers.userId, userId),
+    columns: { workspaceId: true },
+  });
+  const workspaceIds = workspaceMembers.map((w) => w.workspaceId);
+
   const workspace = await getDb().query.workspaces.findFirst({
     where: and(
       eq(workspaces.id, workspaceId),
-      or(eq(workspaces.userId, userId), inArray(workspaces.teamId, teamIds))
+      or(
+        eq(workspaces.userId, userId),
+        inArray(workspaces.teamId, teamIds),
+        inArray(workspaces.id, workspaceIds)
+      )
     ),
   });
   return !!workspace;
