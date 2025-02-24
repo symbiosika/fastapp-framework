@@ -1,5 +1,7 @@
 # Helper to create Unit Tests:
 
+## Setup
+
 You will write unit tests in JEST syntax for the given functions.
 All imports will be bun like:
 
@@ -7,6 +9,8 @@ All imports will be bun like:
 import { describe, it, expect } from "bun:test";
 import { myFunction } from ".";
 ```
+
+## Database Connection
 
 IF you are working with database data you will need to be sure you have a DB connection.
 
@@ -21,6 +25,22 @@ import {
 beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
+});
+```
+
+This is only needed if a database connection is needed.
+
+## API endpoints
+
+If you are testing API endpoints you need to setup the routes as simple Hono app like this:
+
+```ts
+describe("User API Endpoints", () => {
+  const app: FastAppHono = new Hono();
+
+  beforeAll(async () => {
+    defineMyEndpoints(app, "/api"); // "defineMyEndpoints" function comes from the file that is tested
+  });
 });
 ```
 
