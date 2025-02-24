@@ -104,6 +104,23 @@ export const getTeamMembers = async (
  * Drop the membership of a user from a team
  */
 export const dropUserFromTeam = async (userId: string, teamId: string) => {
+  // check if the team has at least one admin
+  const admins = await getDb()
+    .select()
+    .from(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.role, "admin"),
+        ne(teamMembers.userId, userId)
+      )
+    );
+  if (admins.length === 0) {
+    throw new Error(
+      "Team must have at least one admin before dropping this user"
+    );
+  }
+
   await getDb()
     .delete(teamMembers)
     .where(and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId)));

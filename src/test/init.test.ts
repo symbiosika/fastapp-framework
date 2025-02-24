@@ -2,7 +2,13 @@ import { nanoid } from "nanoid";
 import { generateJwt, saltAndHashPassword } from "../lib/auth";
 import { createDatabaseClient, getDb } from "../lib/db/db-connection";
 import { waitForDbConnection } from "../lib/db/db-connection";
-import { jobs, products, users, organisations, type UsersSelect } from "../lib/db/db-schema";
+import {
+  jobs,
+  products,
+  users,
+  organisations,
+  type UsersSelect,
+} from "../lib/db/db-schema";
 import { eq } from "drizzle-orm";
 
 export const testProductId = "prod_RBdEBlCP5LtR3O";
@@ -10,12 +16,15 @@ export const testPriceId = "price_1QJFyIISOodfhgtvh0yJbAyt";
 
 export const TEST_ORGANISATION_ID = "00000000-1111-1111-1111-000000000000";
 
+export const TEST_ADMIN_USER_EMAIL = "admin@symbiosika.com";
+export const TEST_ADMIN_USER_PASSWORD = "gFskj6Dn6gFskj6Dn6";
+
 export const initTests = async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  const randomPassword = nanoid(24);
-  const hash = await saltAndHashPassword(randomPassword);
+  // const randomPassword = nanoid(24);
+  const hash = await saltAndHashPassword(TEST_ADMIN_USER_PASSWORD);
 
   // delete old test data
   await getDb().delete(users).where(eq(users.email, "newuser@example.com"));
@@ -26,18 +35,18 @@ export const initTests = async () => {
     .insert(users)
     .values({
       id: "00000000-0000-0000-0000-000000000000",
-      email: "admin@symbiosika.com",
-      firstname: "",
-      surname: "",
+      email: TEST_ADMIN_USER_EMAIL,
+      firstname: "Joe",
+      surname: "Doe",
       emailVerified: true,
       password: hash,
     })
     .onConflictDoUpdate({
       target: [users.id],
       set: {
-        email: "admin@symbiosika.com",
-        firstname: "",
-        surname: "",
+        email: TEST_ADMIN_USER_EMAIL,
+        firstname: "Joe",
+        surname: "Doe",
         password: hash,
         emailVerified: true,
       },
@@ -45,14 +54,14 @@ export const initTests = async () => {
 
   const { token } = await generateJwt(
     {
-      email: "",
+      email: TEST_ADMIN_USER_EMAIL,
       id: "00000000-0000-0000-0000-000000000000",
     } as UsersSelect,
     86400
   );
   return {
     token,
-    password: randomPassword,
+    password: TEST_ADMIN_USER_PASSWORD,
   };
 };
 

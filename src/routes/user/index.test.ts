@@ -4,6 +4,12 @@ import { definePublicUserRoutes } from "./public";
 import { defineSecuredUserRoutes } from "./protected";
 import type { FastAppHono } from "../../types";
 import { initTests } from "../../test/init.test";
+import {
+  TEST_ADMIN_USER_EMAIL,
+  TEST_ADMIN_USER_PASSWORD,
+} from "../../test/init.test";
+
+const TEST_EMAIL_USER = "test-user@symbiosika.de";
 
 describe("User API Endpoints", () => {
   const app: FastAppHono = new Hono();
@@ -21,12 +27,15 @@ describe("User API Endpoints", () => {
   // Test user authentication
   it("should login with valid credentials", async () => {
     const loginData = {
-      email: "admin@symbiosika.com",
-      password,
+      email: TEST_ADMIN_USER_EMAIL,
+      password: TEST_ADMIN_USER_PASSWORD,
     };
 
     const response = await app.request("/api/user/login", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(loginData),
     });
 
@@ -40,13 +49,14 @@ describe("User API Endpoints", () => {
     const response = await app.request("/api/user/me", {
       method: "GET",
       headers: {
+        "Content-Type": "application/json",
         Cookie: `jwt=${jwt}`,
       },
     });
 
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.userId).toBeDefined();
+    expect(data.id).toBeDefined();
     expect(data.email).toBeDefined();
   });
 
@@ -62,23 +72,25 @@ describe("User API Endpoints", () => {
       method: "PUT",
       body: JSON.stringify(updateData),
       headers: {
+        "Content-Type": "application/json",
         Cookie: `jwt=${jwt}`,
       },
     });
 
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data[0].firstname).toBe("John");
-    expect(data[0].surname).toBe("Doe");
+    expect(data.firstname).toBe("John");
+    expect(data.surname).toBe("Doe");
   });
 
   // Test user search
   it("should search for user by email", async () => {
     const response = await app.request(
-      "/api/user/search?email=admin@symbiosika.com",
+      "/api/user/search?email=" + TEST_ADMIN_USER_EMAIL,
       {
         method: "GET",
         headers: {
+          "Content-Type": "application/json",
           Cookie: `jwt=${jwt}`,
         },
       }
@@ -87,19 +99,22 @@ describe("User API Endpoints", () => {
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.id).toBeDefined();
-    expect(data.email).toBe("admin@symbiosika.com");
+    expect(data.email).toBe(TEST_ADMIN_USER_EMAIL);
   });
 
   // Test user registration
   it("should register new user", async () => {
     const registerData = {
-      email: "newuser@example.com",
-      password: "newpassword",
+      email: TEST_EMAIL_USER,
+      password: TEST_ADMIN_USER_PASSWORD,
       sendVerificationEmail: false,
     };
 
     const response = await app.request("/api/user/register", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(registerData),
     });
 
@@ -113,8 +128,11 @@ describe("User API Endpoints", () => {
     // Test invalid login
     const invalidLoginResponse = await app.request("/api/user/login", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        email: "invalid@example.com",
+        email: TEST_EMAIL_USER,
         password: "wrongpassword",
       }),
     });
@@ -124,6 +142,7 @@ describe("User API Endpoints", () => {
     const invalidSearchResponse = await app.request("/api/user/search", {
       method: "GET",
       headers: {
+        "Content-Type": "application/json",
         Cookie: `jwt=${jwt}`,
       },
     });
@@ -132,6 +151,9 @@ describe("User API Endpoints", () => {
     // Test unauthorized access
     const unauthorizedResponse = await app.request("/api/user/me", {
       method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
     expect(unauthorizedResponse.status).toBe(401);
   });

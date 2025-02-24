@@ -141,6 +141,7 @@ export function defineSecuredUserRoutes(
     ),
     async (c) => {
       try {
+        // ensure to get only the allowed fields
         const { firstname, surname, image, lastOrganisationId } =
           c.req.valid("json");
         await updateUser(c.get("usersId"), {
@@ -193,6 +194,7 @@ export function defineSecuredUserRoutes(
       try {
         const userId = c.get("usersId");
         // check if user has an organisation
+        // with the setup-endpoint a user can only register his first organisation if he has no organisation yet
         const orgs = await getUserOrganisations(userId);
         if (orgs.length > 0) {
           return c.json({ state: "already-setup" });
@@ -367,10 +369,16 @@ export function defineSecuredUserRoutes(
       })
     ),
     async (c) => {
-      const userId = c.get("usersId");
-      const { organisationId } = c.req.valid("param");
-      const teams = await getTeamsByUser(userId, organisationId);
-      return c.json(teams);
+      try {
+        const userId = c.get("usersId");
+        const { organisationId } = c.req.valid("param");
+        const teams = await getTeamsByUser(userId, organisationId);
+        return c.json(teams);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting user teams: " + err,
+        });
+      }
     }
   );
 
@@ -399,10 +407,16 @@ export function defineSecuredUserRoutes(
       })
     ),
     async (c) => {
-      const userId = c.get("usersId");
-      const { teamId } = c.req.valid("param");
-      await dropUserFromTeam(userId, teamId);
-      return c.json(RESPONSES.SUCCESS);
+      try {
+        const userId = c.get("usersId");
+        const { teamId } = c.req.valid("param");
+        await dropUserFromTeam(userId, teamId);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error dropping user from team: " + err,
+        });
+      }
     }
   );
 
@@ -504,7 +518,7 @@ export function defineSecuredUserRoutes(
       method: "get",
       path: "/user/search",
       tags: ["user"],
-      summary: "Search for users by email address",
+      summary: "Search for users by email address in the whole Application",
       responses: {
         200: {
           description: "Successful response",
@@ -577,6 +591,7 @@ export function defineSecuredUserRoutes(
     async (c) => {
       try {
         const userId = c.get("usersId");
+        // require a new token. Only a valid logged in user can get this endpoint
         const newTokenData = await LocalAuth.refreshToken(userId);
         return c.json(newTokenData);
       } catch (error) {
