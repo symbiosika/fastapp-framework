@@ -17,6 +17,7 @@ import {
   addToWorkspace,
   dropFromWorkspace,
   getChildWorkspaces,
+  getWorkspaceOrigin,
 } from "../../../../lib/workspaces";
 import {
   getWorkspaceUsers,
@@ -534,6 +535,64 @@ export default function defineWorkspaceRoutes(
 
         const childWorkspaces = await getChildWorkspaces(workspaceId, userId);
         return c.json(childWorkspaces);
+      } catch (error) {
+        throw new HTTPException(400, {
+          message: error + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all parent workspaces for a given workspace ID
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/workspaces/:workspaceId/origin",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/workspaces/:workspaceId/origin",
+      tags: ["workspaces"],
+      summary: "Get all parent workspaces for a given workspace ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  list: v.array(
+                    v.object({
+                      id: v.string(),
+                      name: v.string(),
+                      parentId: v.optional(v.nullable(v.string())),
+                    })
+                  ),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        workspaceId: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const { organisationId, workspaceId } = c.req.valid("param");
+        const userId = c.get("usersId");
+
+        const originWorkspaces = await getWorkspaceOrigin(workspaceId, userId);
+        return c.json({
+          list: originWorkspaces,
+        });
       } catch (error) {
         throw new HTTPException(400, {
           message: error + "",

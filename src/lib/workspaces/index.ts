@@ -356,3 +356,42 @@ export const getParentWorkspace = async (
     where: eq(workspaces.id, workspaceId),
   });
 };
+
+export type WorkspaceOrigin = {
+  id: string;
+  name: string;
+  parentId: string | null;
+};
+
+/**
+ * Get all parent workspaces for a given workspace ID
+ * Will check if user has access to each workspace
+ */
+export const getWorkspaceOrigin = async (
+  workspaceId: string,
+  userId: string
+): Promise<WorkspaceOrigin[]> => {
+  const parents: WorkspaceOrigin[] = [];
+  let currentWorkspaceId: string | null = workspaceId;
+
+  while (currentWorkspaceId) {
+    const workspace = await getDb()
+      .select({
+        id: workspaces.id,
+        name: workspaces.name,
+        parentId: workspaces.parentId,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.id, currentWorkspaceId))
+      .limit(1);
+
+    if (workspace.length === 0) {
+      throw new Error("User does not have permission to access workspace");
+    }
+
+    parents.push(workspace[0]);
+    currentWorkspaceId = workspace[0].parentId;
+  }
+
+  return parents.reverse();
+};
