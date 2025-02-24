@@ -186,7 +186,16 @@ export const createOrganisationInvitation = async (
   const [result] = await getDb()
     .insert(organisationInvitations)
     .values(data)
-    .returning();
+    .returning()
+    .onConflictDoUpdate({
+      target: [
+        organisationInvitations.organisationId,
+        organisationInvitations.email,
+      ],
+      set: {
+        status: data.status,
+      },
+    });
 
   // send mail
   if (sendMail) {

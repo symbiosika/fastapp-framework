@@ -308,13 +308,14 @@ export default function defineOrganisationRoutes(
         role: v.optional(
           v.union([v.literal("owner"), v.literal("admin"), v.literal("member")])
         ),
+        sendMail: v.optional(v.boolean()),
       })
     ),
     isOrganisationAdmin, // check if user is admin or owner of the organisation
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
-        const { email, role = "member" } = c.req.valid("json");
+        const { email, role = "member", sendMail = true } = c.req.valid("json");
         const invitation = await createOrganisationInvitation(
           {
             organisationId,
@@ -322,7 +323,7 @@ export default function defineOrganisationRoutes(
             role,
             status: "pending",
           },
-          true
+          sendMail
         );
         return c.json(invitation);
       } catch (err) {

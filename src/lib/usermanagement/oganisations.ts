@@ -246,7 +246,13 @@ export const addOrganisationMember = async (
       userId,
       role,
     })
-    .returning();
+    .returning()
+    .onConflictDoUpdate({
+      target: [organisationMembers.organisationId, organisationMembers.userId],
+      set: {
+        role,
+      },
+    });
   return result[0];
 };
 
