@@ -284,7 +284,7 @@ export default function defineWorkspaceRoutes(
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
         throw new HTTPException(500, {
-          message: "Failed to delete workspace",
+          message: "Failed to delete workspace. " + error,
         });
       }
     }

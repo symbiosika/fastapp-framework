@@ -121,7 +121,7 @@ export const initTestUsers = async () => {
 export const initTestOrganisationMembers = async () => {
   await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_USER_1.id, "owner");
   await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_USER_2.id, "owner");
-  // await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_USER_3.id, "owner");
+  await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_USER_3.id, "owner");
 };
 
 export const getJwtTokenForTesting = async (userNumber: number) => {
