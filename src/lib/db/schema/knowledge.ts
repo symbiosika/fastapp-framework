@@ -90,6 +90,7 @@ export const knowledgeTextUpdateSchema = createUpdateSchema(knowledgeText);
 
 export type KnowledgeTextMeta = {
   sourceUri?: string;
+  textLength?: number;
 };
 
 // Main table for all knowledge entries

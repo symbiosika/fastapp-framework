@@ -110,6 +110,12 @@ export const extractKnowledgeFromText = async (data: {
   );
   log.debug(`Embeddings generated. Chunks: ${chunks.length}`);
 
+  // merge metadata
+  const meta = {
+    ...(data.metadata ?? {}),
+    textLength: data.text.length,
+  };
+
   // Store the main entry in the database
   await log.debug(`Store knowledge entry: ${title}`);
   const knowledgeEntry = await storeKnowledgeEntry(
@@ -118,7 +124,7 @@ export const extractKnowledgeFromText = async (data: {
       organisationId: data.organisationId,
       name: title,
       sourceType: data.sourceType || ("text" as const),
-      meta: data.metadata || {},
+      meta,
       userId: data.userId,
       teamId: data.teamId,
       workspaceId: data.workspaceId,
