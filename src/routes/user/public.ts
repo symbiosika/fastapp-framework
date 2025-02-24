@@ -15,33 +15,9 @@ import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
-import { usersRestrictedSelectSchema, usersSelectSchema } from "../../dbSchema";
+import { usersRestrictedSelectSchema } from "../../dbSchema";
 import { RESPONSES } from "../../lib/responses";
 import { verifyPasswordResetToken } from "../../lib/auth/magic-link";
-
-/**
- * Pre-register custom verification
- */
-const preRegisterCustomVerifications: CustomPreRegisterVerification[] = [];
-const postRegisterActions: CustomPostRegisterAction[] = [];
-
-/**
- * Register new verification
- */
-export const registerPreRegisterCustomVerification = (
-  verification: CustomPreRegisterVerification
-) => {
-  preRegisterCustomVerifications.push(verification);
-};
-
-/**
- * Register new post-register action
- */
-export const registerPostRegisterAction = (
-  action: CustomPostRegisterAction
-) => {
-  postRegisterActions.push(action);
-};
 
 /**
  * Define the payment routes
@@ -238,7 +214,7 @@ export function definePublicUserRoutes(
         email: v.string(),
         password: v.string(),
         sendVerificationEmail: v.optional(v.boolean()),
-        meta: v.optional(v.object({})),
+        meta: v.optional(v.any()),
       })
     ),
     async (c) => {
@@ -249,29 +225,12 @@ export function definePublicUserRoutes(
           });
         }
         const data = c.req.valid("json");
-
-        // go through all pre-register custom verifications
-        for (const verification of preRegisterCustomVerifications) {
-          const r = await verification(data.email, data.meta);
-          if (!r.success) {
-            throw new HTTPException(400, {
-              message: "Custom verification failed: " + r.message,
-            });
-          }
-        }
-
         const user = await LocalAuth.register(
           data.email,
           data.password,
-          data.sendVerificationEmail ?? true
+          data.sendVerificationEmail ?? true,
+          data.meta ?? {}
         );
-
-        // go through all post-register actions
-        for (const action of postRegisterActions) {
-          await action(user.id, user.email);
-        }
-
-        log.info(`New user registered: ${user.id}`);
         return c.json({ ...user, password: undefined, salt: undefined });
       } catch (err) {
         log.error(err + "");

@@ -1,5 +1,10 @@
-import { eq } from "drizzle-orm";
-import { sessions, users, type UsersSelect } from "../db/db-schema";
+import { eq, and, isNull } from "drizzle-orm";
+import {
+  invitationCodes,
+  sessions,
+  users,
+  type UsersSelect,
+} from "../db/db-schema";
 import { getDb } from "../db/db-connection";
 import jwt from "jsonwebtoken";
 import {
@@ -10,6 +15,8 @@ import {
   sendResetPasswordLink,
 } from "./magic-link";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
+import { preRegisterCustomVerifications, postRegisterActions } from "./actions";
+import log from "../log";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -154,6 +161,36 @@ const changePassword = async (
   }
 };
 
+/**
+ * Check if a general invitation code is valid
+ * This will check if there are any general invitation codes and if the provided code is valid
+ */
+const checkGeneralInvitationCode = async (
+  code: string | undefined
+): Promise<boolean> => {
+  const codes = await getDb()
+    .select()
+    .from(invitationCodes)
+    .where(
+      and(
+        isNull(invitationCodes.organisationId),
+        eq(invitationCodes.isActive, true)
+      )
+    );
+
+  if (codes.length === 0) {
+    return true; // no general invitation codes active, so we can register without one
+  } else if (!code) {
+    throw "No invitation code provided but is required";
+  } else {
+    const found = codes.find((c) => c.code === code);
+    if (!found) {
+      throw "Invitation code not found";
+    }
+    return true;
+  }
+};
+
 export const LocalAuth = {
   async authorize(email: string, password: string) {
     return await getUserFromDb(email, password);
@@ -162,9 +199,30 @@ export const LocalAuth = {
   async register(
     email: string,
     password: string,
-    sendVerificationEmail: boolean
+    sendVerificationEmail: boolean,
+    meta: any
   ) {
-    return await setUserInDb(email, password, sendVerificationEmail);
+    // go through all pre-register custom verifications
+    for (const verification of preRegisterCustomVerifications) {
+      const r = await verification(email, meta);
+      if (!r.success) {
+        throw "Custom verification failed: " + r.message;
+      }
+    }
+
+    // check if we can register without an invitation code
+    await checkGeneralInvitationCode(meta?.invitationCode);
+
+    // add user to db
+    const user = await setUserInDb(email, password, sendVerificationEmail);
+    log.info(`New user registered: ${user.id}`);
+
+    // go through all post-register actions
+    for (const action of postRegisterActions) {
+      await action(user.id, user.email);
+    }
+
+    return user;
   },
 
   async login(email: string, password: string) {

@@ -233,7 +233,9 @@ export const sendResetPasswordLink = async (email: string): Promise<void> => {
   });
 };
 
-// Neue Funktion zum Verifizieren eines Password-Reset-Tokens
+/**
+ * Verify a Password Reset Token
+ */
 export const verifyPasswordResetToken = async (
   token: string
 ): Promise<{ userId: string }> => {
@@ -253,7 +255,7 @@ export const verifyPasswordResetToken = async (
     throw new Error("Invalid or expired password reset token");
   }
 
-  // Token ist gültig - lösche ihn sofort, damit er nicht wiederverwendet werden kann
+  // Token is valid - delete it immediately, so it cannot be reused
   await deleteMagicLinkToken(magicLinkResult[0].id);
 
   return { userId: magicLinkResult[0].userId };

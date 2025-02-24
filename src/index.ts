@@ -15,16 +15,20 @@ import {
 import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 // Types
-import type { ServerSpecificConfig, FastAppHonoContextVariables } from "./types";
+import type {
+  ServerSpecificConfig,
+  FastAppHonoContextVariables,
+} from "./types";
 // Utils
 import log from "./lib/log";
 import { validateAllEnvVariables } from "./lib/utils/env-validate";
-// Routes
+// Registration actions
 import {
-  definePublicUserRoutes,
   registerPostRegisterAction,
   registerPreRegisterCustomVerification,
-} from "./routes/user/public";
+} from "./lib/auth/actions";
+// Routes
+import { definePublicUserRoutes } from "./routes/user/public";
 import { defineSecuredUserRoutes } from "./routes/user/protected";
 import { defineFilesRoutes } from "./routes/organisation/[organisationId]/files";
 import paymentRoutes from "./routes/payment";

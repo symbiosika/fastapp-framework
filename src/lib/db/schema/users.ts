@@ -15,6 +15,7 @@ import {
   index,
   pgEnum,
   unique,
+  integer,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -566,3 +567,38 @@ export const organisationMembersRelations = relations(
     }),
   })
 );
+
+// Invitation Codes Table
+export const invitationCodes = pgBaseTable(
+  "invitation_codes",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    isActive: boolean("is_active").notNull().default(true),
+    code: text("code").notNull(), // unique invitation code
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { mode: "string" }),
+    maxUses: integer("max_uses").notNull().default(-1),
+    usedCount: integer("used_count").notNull().default(0),
+  },
+  (invitationCodes) => [
+    uniqueIndex("unique_invitation_code").on(invitationCodes.code),
+    index("invitation_codes_organisation_id_idx").on(
+      invitationCodes.organisationId
+    ),
+    index("invitation_codes_expires_at_idx").on(invitationCodes.expiresAt),
+  ]
+);
+
+export type InvitationCodesSelect = typeof invitationCodes.$inferSelect;
+export type InvitationCodesInsert = typeof invitationCodes.$inferInsert;
+
+export const invitationCodesSelectSchema = createSelectSchema(invitationCodes);
+export const invitationCodesInsertSchema = createInsertSchema(invitationCodes);
+export const invitationCodesUpdateSchema = createUpdateSchema(invitationCodes);
