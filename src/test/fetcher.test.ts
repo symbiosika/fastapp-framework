@@ -4,18 +4,20 @@ export const testFetcher = {
   get: async (
     app: FastAppHono,
     path: string,
-    token: string
+    token: string | undefined
   ): Promise<{
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
     headers: Headers;
   }> => {
+    const headers: HeadersInit = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await app.request(path, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
 
     const textResponse = await response.text();
@@ -36,7 +38,7 @@ export const testFetcher = {
   post: async (
     app: FastAppHono,
     path: string,
-    token: string,
+    token: string | undefined,
     body: any
   ): Promise<{
     status: number;
@@ -44,12 +46,15 @@ export const testFetcher = {
     textResponse: string;
     headers: Headers;
   }> => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await app.request(path, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify(body),
     });
     const textResponse = await response.text();
@@ -70,7 +75,7 @@ export const testFetcher = {
   put: async (
     app: FastAppHono,
     path: string,
-    token: string,
+    token: string | undefined,
     body: any
   ): Promise<{
     status: number;
@@ -78,12 +83,15 @@ export const testFetcher = {
     textResponse: string;
     headers: Headers;
   }> => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await app.request(path, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify(body),
     });
     const textResponse = await response.text();
@@ -104,18 +112,22 @@ export const testFetcher = {
   delete: async (
     app: FastAppHono,
     path: string,
-    token: string
+    token: string | undefined
   ): Promise<{
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
     headers: Headers;
   }> => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await app.request(path, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
     const textResponse = await response.text();
     let jsonResponse;

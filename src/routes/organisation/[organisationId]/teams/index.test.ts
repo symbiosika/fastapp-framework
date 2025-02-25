@@ -219,6 +219,15 @@ describe("Teams API Endpoints", () => {
     // ------------------------------------------------------------
     // delete a team
     // ------------------------------------------------------------
+
+    console.log("Step 11: Delete a team with a non-admin token");
+    response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}`,
+      memberToken // Non-admin token
+    );
+    expect(response.status).toBe(403);
+
     console.log("Step 11: Delete a team");
     response = await testFetcher.delete(
       app,
@@ -226,5 +235,14 @@ describe("Teams API Endpoints", () => {
       adminToken
     );
     expect(response.status).toBe(200);
+  });
+
+  test("Unauthorized access to get all teams", async () => {
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/teams`,
+      undefined
+    );
+    expect(response.status).toBe(401);
   });
 });
