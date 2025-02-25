@@ -1,17 +1,42 @@
 import type { FastAppHono } from "../types";
 
 export const testFetcher = {
-  get: async (app: FastAppHono, path: string, token: string) => {
+  get: async (
+    app: FastAppHono,
+    path: string,
+    token: string
+  ): Promise<{
+    status: number;
+    jsonResponse: any | undefined;
+    textResponse: string;
+  }> => {
     const response = await app.request(path, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response;
+
+    const textResponse = await response.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(textResponse);
+    } catch (error) {
+      // jsonResponse remains undefined if parsing fails
+    }
+    return { status: response.status, jsonResponse, textResponse };
   },
 
-  post: async (app: FastAppHono, path: string, token: string, body: any) => {
+  post: async (
+    app: FastAppHono,
+    path: string,
+    token: string,
+    body: any
+  ): Promise<{
+    status: number;
+    jsonResponse: any | undefined;
+    textResponse: string;
+  }> => {
     const response = await app.request(path, {
       method: "POST",
       headers: {
@@ -20,10 +45,26 @@ export const testFetcher = {
       },
       body: JSON.stringify(body),
     });
-    return response;
+    const textResponse = await response.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(textResponse);
+    } catch (error) {
+      // jsonResponse remains undefined if parsing fails
+    }
+    return { status: response.status, jsonResponse, textResponse };
   },
 
-  put: async (app: FastAppHono, path: string, token: string, body: any) => {
+  put: async (
+    app: FastAppHono,
+    path: string,
+    token: string,
+    body: any
+  ): Promise<{
+    status: number;
+    jsonResponse: any | undefined;
+    textResponse: string;
+  }> => {
     const response = await app.request(path, {
       method: "PUT",
       headers: {
@@ -32,16 +73,38 @@ export const testFetcher = {
       },
       body: JSON.stringify(body),
     });
-    return response;
+    const textResponse = await response.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(textResponse);
+    } catch (error) {
+      // jsonResponse remains undefined if parsing fails
+    }
+    return { status: response.status, jsonResponse, textResponse };
   },
 
-  delete: async (app: FastAppHono, path: string, token: string) => {
+  delete: async (
+    app: FastAppHono,
+    path: string,
+    token: string
+  ): Promise<{
+    status: number;
+    jsonResponse: any | undefined;
+    textResponse: string;
+  }> => {
     const response = await app.request(path, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response;
+    const textResponse = await response.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(textResponse);
+    } catch (error) {
+      // jsonResponse remains undefined if parsing fails
+    }
+    return { status: response.status, jsonResponse, textResponse };
   },
 };

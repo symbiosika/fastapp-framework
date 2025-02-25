@@ -1,10 +1,14 @@
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne, notInArray } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
   workspaceUsers,
   type WorkspaceUsersInsert,
 } from "../db/schema/workspaces";
-import { hasAccessToWorkspace } from "./index";
+import {
+  hasAccessToWorkspace,
+  isWorkspaceOwner,
+  hasOtherMembers,
+} from "./index";
 import { users } from "../db/schema/users";
 import { workspaces } from "../db/schema/workspaces";
 
@@ -64,6 +68,16 @@ export const removeUsersFromWorkspace = async (
     throw new Error("Only workspace owner can remove users");
   }
 
+  // check if the userIds to drop are set as userId in the workspace
+  // and after dropping the workspace would have no other members
+  const isOwner = await isWorkspaceOwner(workspaceId, requestingUserId);
+  const hasOthers = await hasOtherMembers(workspaceId, userIds);
+  console.log("isOwner", isOwner);
+  console.log("hasOthers", hasOthers);
+  if (!isOwner && !hasOthers) {
+    throw new Error("Cannot remove all members from a workspace");
+  }
+
   // Delete workspace user entries
   await getDb()
     .delete(workspaceUsers)
@@ -72,6 +86,14 @@ export const removeUsersFromWorkspace = async (
         eq(workspaceUsers.workspaceId, workspaceId),
         inArray(workspaceUsers.userId, userIds)
       )
+    );
+
+  // if the userId to drop was set as userId in the workspace, set it to null
+  await getDb()
+    .update(workspaces)
+    .set({ userId: null })
+    .where(
+      and(eq(workspaces.id, workspaceId), inArray(workspaces.userId, userIds))
     );
 };
 

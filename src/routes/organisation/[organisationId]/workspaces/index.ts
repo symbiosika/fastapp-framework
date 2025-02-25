@@ -161,7 +161,7 @@ export default function defineWorkspaceRoutes(
         return c.json(workspace);
       } catch (error) {
         throw new HTTPException(500, {
-          message: "Failed to get workspace",
+          message: "Failed to get workspace. " + error,
         });
       }
     }
@@ -202,7 +202,7 @@ export default function defineWorkspaceRoutes(
         const workspace = await createWorkspace(userId, { ...body, userId }); // ensure the userId to be own
         return c.json(workspace);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -247,7 +247,7 @@ export default function defineWorkspaceRoutes(
         const updated = await updateWorkspace(workspaceId, body, userId);
         return c.json(updated);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -323,7 +323,7 @@ export default function defineWorkspaceRoutes(
         await addToWorkspace(workspaceId, parsed, userId);
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -361,7 +361,7 @@ export default function defineWorkspaceRoutes(
         await dropFromWorkspace(workspaceId, relations, userId);
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -410,7 +410,7 @@ export default function defineWorkspaceRoutes(
         const members = await getWorkspaceUsers(workspaceId, userId);
         return c.json(members);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -450,7 +450,7 @@ export default function defineWorkspaceRoutes(
         await addUsersToWorkspace(workspaceId, userIds, userId);
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -490,7 +490,7 @@ export default function defineWorkspaceRoutes(
         await removeUsersFromWorkspace(workspaceId, [memberId], userId);
         return c.json(RESPONSES.SUCCESS);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -536,7 +536,7 @@ export default function defineWorkspaceRoutes(
         const childWorkspaces = await getChildWorkspaces(workspaceId, userId);
         return c.json(childWorkspaces);
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }
@@ -594,7 +594,7 @@ export default function defineWorkspaceRoutes(
           list: originWorkspaces,
         });
       } catch (error) {
-        throw new HTTPException(400, {
+        throw new HTTPException(500, {
           message: error + "",
         });
       }

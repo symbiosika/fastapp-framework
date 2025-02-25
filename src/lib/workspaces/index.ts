@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, exists } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, exists, notInArray } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import {
   workspaces,
@@ -43,6 +43,32 @@ export const hasAccessToWorkspace = async (
         inArray(workspaces.id, workspaceIds)
       )
     ),
+  });
+  return !!workspace;
+};
+
+/**
+ * Check if workspace has other members then a given list of userIds
+ */
+export const hasOtherMembers = async (
+  workspaceId: string,
+  userIds: string[]
+) => {
+  const workspaceMembers = await getDb().query.workspaceUsers.findMany({
+    where: and(
+      eq(workspaceUsers.workspaceId, workspaceId),
+      notInArray(workspaceUsers.userId, userIds)
+    ),
+  });
+  return workspaceMembers.length > 0;
+};
+
+/**
+ * Check if a userId is the owner of a workspace
+ */
+export const isWorkspaceOwner = async (workspaceId: string, userId: string) => {
+  const workspace = await getDb().query.workspaces.findFirst({
+    where: and(eq(workspaces.id, workspaceId), eq(workspaces.userId, userId)),
   });
   return !!workspace;
 };
@@ -250,7 +276,6 @@ export const addToWorkspace = async (
  */
 export const dropFromWorkspace = async (
   workspaceId: string,
-
   relations: WorkspaceRelations,
   userId: string
 ) => {
