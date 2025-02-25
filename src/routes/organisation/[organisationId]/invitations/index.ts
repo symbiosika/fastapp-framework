@@ -26,7 +26,7 @@ import {
   organisationInvitationsSelectSchema,
 } from "../../../../dbSchema";
 import { RESPONSES } from "../../../../lib/responses";
-import { isOrganisationMember } from "../..";
+import { checkOrganisationIdInBody, isOrganisationAdmin } from "../..";
 
 export default function defineInvitationsRoutes(
   app: FastAppHono,
@@ -34,6 +34,7 @@ export default function defineInvitationsRoutes(
 ) {
   /**
    * Create a new invitation
+   * This can only be done by the organisation admin
    */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/invitations",
@@ -56,16 +57,12 @@ export default function defineInvitationsRoutes(
       },
     }),
     validator("json", organisationInvitationsInsertSchema),
-    isOrganisationMember,
+    validator("param", v.object({ organisationId: v.string() })),
+    checkOrganisationIdInBody,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const data = c.req.valid("json");
-        if (data.organisationId !== c.req.param("organisationId")) {
-          throw new HTTPException(403, {
-            message:
-              "You are not allowed to create invitations for the addressed organisation",
-          });
-        }
         const invitation = await createOrganisationInvitation(data, true);
         return c.json(invitation);
       } catch (err) {
@@ -78,6 +75,7 @@ export default function defineInvitationsRoutes(
 
   /**
    * Get all invitations of an organisation to manage them as an admin overview
+   * This path is not for a user to get his own invitations
    */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/invitations",
@@ -88,7 +86,7 @@ export default function defineInvitationsRoutes(
       path: "/organisation/:organisationId/invitations",
       tags: ["invitations"],
       summary:
-        "Get all invitations of an organisation to manage them as an admin overview",
+        "Get all invitations of an organisation to manage them as an admin overview. This path is not for a user to get his own invitations.",
       responses: {
         200: {
           description: "Successful response",
@@ -101,7 +99,7 @@ export default function defineInvitationsRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -121,6 +119,7 @@ export default function defineInvitationsRoutes(
 
   /**
    * Drop an invitation by its ID
+   * This can only be done by the organisation admin
    */
   app.delete(
     API_BASE_PATH + "/organisation/:organisationId/invitations/:id",
@@ -141,7 +140,7 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -177,7 +176,6 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
-    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -219,7 +217,6 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
-    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");

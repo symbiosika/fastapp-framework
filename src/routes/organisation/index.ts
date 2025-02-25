@@ -73,6 +73,27 @@ export const isOrganisationAdmin: MiddlewareHandler = async (c, next) => {
   }
 };
 
+/**
+ * Helper to check that an key of an object is the same as the organisationId
+ */
+export const checkOrganisationIdInBody: MiddlewareHandler = async (c, next) => {
+  const organisationId = c.req.param("organisationId");
+  // @ts-ignore
+  const json: { organisationId: string } = c.req.valid("json");
+
+  if (
+    !json.organisationId ||
+    !organisationId ||
+    json.organisationId !== organisationId
+  ) {
+    throw new HTTPException(403, {
+      message:
+        "The organisationId in the body does not match the organisationId in the path",
+    });
+  }
+  await next();
+};
+
 export default function defineOrganisationRoutes(
   app: FastAppHono,
   API_BASE_PATH: string

@@ -43,7 +43,7 @@ describe("Invitations API Endpoints", () => {
       u1Token,
       invitationData
     );
-
+    // console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(response.jsonResponse).toBeDefined();
     expect(response.jsonResponse.email).toBe(TEST_USER_3.email);
@@ -69,8 +69,11 @@ describe("Invitations API Endpoints", () => {
       u1Token,
       invitationData
     );
-
+    console.log(response.textResponse);
     expect(response.status).toBe(403);
+    expect(response.textResponse).toContain(
+      "The organisationId in the body does not match the organisationId in the path"
+    );
   });
 
   // Test getting all invitations for an organisation
@@ -80,9 +83,10 @@ describe("Invitations API Endpoints", () => {
       `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
       u1Token
     );
-
+    console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(Array.isArray(response.jsonResponse)).toBe(true);
+    expect(response.jsonResponse.length).toBe(0);
   });
 
   // Test accepting an invitation
@@ -112,6 +116,7 @@ describe("Invitations API Endpoints", () => {
       {}
     );
 
+    console.log(response.textResponse);
     expect(response.status).toBe(200);
   });
 
