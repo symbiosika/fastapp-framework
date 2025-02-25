@@ -23,9 +23,9 @@ let TEST_USER_3_TOKEN: string;
 beforeAll(async () => {
   defineWorkspaceRoutes(app, "/api");
   await initTests();
-  TEST_USER_1_TOKEN = await getJwtTokenForTesting(0);
-  TEST_USER_2_TOKEN = await getJwtTokenForTesting(1);
-  TEST_USER_3_TOKEN = await getJwtTokenForTesting(2);
+  TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
+  TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
+  TEST_USER_3_TOKEN = await getJwtTokenForTesting(3);
   getDb()
     .delete(workspaces)
     .where(

@@ -19,8 +19,8 @@ let TEST_USER_2_TOKEN: string;
 beforeAll(async () => {
   defineWebhookRoutes(app, "/api");
   await initTests();
-  TEST_USER_1_TOKEN = await getJwtTokenForTesting(0);
-  TEST_USER_2_TOKEN = await getJwtTokenForTesting(1);
+  TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
+  TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
 });
 
 describe("Webhook API Endpoints", () => {

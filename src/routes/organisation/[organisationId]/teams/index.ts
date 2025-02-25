@@ -94,10 +94,11 @@ export default function defineTeamRoutes(
     async (c) => {
       try {
         const data = c.req.valid("json");
+        const userId = c.get("usersId");
         const { organisationId } = c.req.valid("param");
         const team = await createTeam(data);
         // assign the user to the team
-        await addTeamMember(team.id, organisationId, c.get("usersId"), "admin");
+        await addTeamMember(team.id, organisationId, userId, "admin");
 
         return c.json(team);
       } catch (err) {

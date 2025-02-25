@@ -9,6 +9,7 @@ export const testFetcher = {
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
+    headers: Headers;
   }> => {
     const response = await app.request(path, {
       method: "GET",
@@ -24,7 +25,12 @@ export const testFetcher = {
     } catch (error) {
       // jsonResponse remains undefined if parsing fails
     }
-    return { status: response.status, jsonResponse, textResponse };
+    return {
+      status: response.status,
+      jsonResponse,
+      textResponse,
+      headers: response.headers,
+    };
   },
 
   post: async (
@@ -36,6 +42,7 @@ export const testFetcher = {
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
+    headers: Headers;
   }> => {
     const response = await app.request(path, {
       method: "POST",
@@ -52,7 +59,12 @@ export const testFetcher = {
     } catch (error) {
       // jsonResponse remains undefined if parsing fails
     }
-    return { status: response.status, jsonResponse, textResponse };
+    return {
+      status: response.status,
+      jsonResponse,
+      textResponse,
+      headers: response.headers,
+    };
   },
 
   put: async (
@@ -64,6 +76,7 @@ export const testFetcher = {
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
+    headers: Headers;
   }> => {
     const response = await app.request(path, {
       method: "PUT",
@@ -80,7 +93,12 @@ export const testFetcher = {
     } catch (error) {
       // jsonResponse remains undefined if parsing fails
     }
-    return { status: response.status, jsonResponse, textResponse };
+    return {
+      status: response.status,
+      jsonResponse,
+      textResponse,
+      headers: response.headers,
+    };
   },
 
   delete: async (
@@ -91,6 +109,7 @@ export const testFetcher = {
     status: number;
     jsonResponse: any | undefined;
     textResponse: string;
+    headers: Headers;
   }> => {
     const response = await app.request(path, {
       method: "DELETE",
@@ -105,6 +124,11 @@ export const testFetcher = {
     } catch (error) {
       // jsonResponse remains undefined if parsing fails
     }
-    return { status: response.status, jsonResponse, textResponse };
+    return {
+      status: response.status,
+      jsonResponse,
+      textResponse,
+      headers: response.headers,
+    };
   },
 };

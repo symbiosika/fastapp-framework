@@ -5,7 +5,7 @@ import type { FastAppHono } from "../../types";
 import { getJwtTokenForTesting } from "../../test/init.test";
 import defineAdminRoutes from "./index";
 
-const TEST_ADMIN_TOKEN = await getJwtTokenForTesting(0);
+const TEST_ADMIN_TOKEN = await getJwtTokenForTesting(1);
 
 // Initialize the app and define routes
 const app: FastAppHono = new Hono();

@@ -8,8 +8,10 @@ import {
   users,
   organisations,
   type UsersSelect,
+  teamMembers,
+  organisationMembers,
 } from "../lib/db/db-schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
 
 /**
@@ -98,6 +100,30 @@ export const initTestOrganisation = async () => {
   }
 };
 
+export const dropAllTestOrganisationMembers = async () => {
+  await getDb()
+    .delete(organisationMembers)
+    .where(
+      inArray(organisationMembers.userId, [
+        TEST_USER_1.id,
+        TEST_USER_2.id,
+        TEST_USER_3.id,
+      ])
+    );
+};
+
+export const dropAllTestTeamMembers = async () => {
+  await getDb()
+    .delete(teamMembers)
+    .where(
+      inArray(teamMembers.userId, [
+        TEST_USER_1.id,
+        TEST_USER_2.id,
+        TEST_USER_3.id,
+      ])
+    );
+};
+
 export const initTestUsers = async () => {
   for (const user of TEST_USERS) {
     const hash = await saltAndHashPassword(user.password);
@@ -119,14 +145,30 @@ export const initTestUsers = async () => {
 };
 
 export const initTestOrganisationMembers = async () => {
+  await dropAllTestOrganisationMembers();
+  await dropAllTestTeamMembers();
+
+  // delte all old memberships
+  await getDb()
+    .delete(organisationMembers)
+    .where(
+      inArray(organisationMembers.userId, [
+        TEST_USER_1.id,
+        TEST_USER_2.id,
+        TEST_USER_3.id,
+      ])
+    );
+
   await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_USER_1.id, "owner");
   await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_USER_2.id, "owner");
   await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_USER_3.id, "owner");
 };
 
 export const getJwtTokenForTesting = async (userNumber: number) => {
-  const user = TEST_USERS[userNumber];
-  const hash = await saltAndHashPassword(user.password);
+  if (userNumber < 1 || userNumber > 3) {
+    throw new Error("Invalid user number");
+  }
+  const user = TEST_USERS[userNumber - 1];
   const { token } = await generateJwt(
     {
       email: user.email,

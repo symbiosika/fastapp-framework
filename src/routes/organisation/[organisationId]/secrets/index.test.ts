@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import defineManageSecretsRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import { initTests, TEST_ORGANISATION_ID } from "../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 
 describe("Secrets API Endpoints", () => {
   const app: FastAppHono = new Hono();
@@ -17,7 +17,7 @@ describe("Secrets API Endpoints", () => {
   // Test getting secrets
   it("should get all secrets", async () => {
     const response = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "GET",
         headers: {
@@ -39,7 +39,7 @@ describe("Secrets API Endpoints", () => {
     };
 
     const response = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "POST",
         body: JSON.stringify(secretData),
@@ -63,7 +63,7 @@ describe("Secrets API Endpoints", () => {
     };
 
     const createResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "POST",
         body: JSON.stringify(secretData),
@@ -76,7 +76,7 @@ describe("Secrets API Endpoints", () => {
 
     // Now delete the secret
     const deleteResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets/SECRET_TO_DELETE`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets/SECRET_TO_DELETE`,
       {
         method: "DELETE",
         headers: {
@@ -88,7 +88,7 @@ describe("Secrets API Endpoints", () => {
 
     // Verify the secret is deleted by trying to fetch it
     const verifyResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets/SECRET_TO_DELETE`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets/SECRET_TO_DELETE`,
       {
         method: "GET",
         headers: {
@@ -103,7 +103,7 @@ describe("Secrets API Endpoints", () => {
   it("should handle invalid requests", async () => {
     // Test unauthorized access
     const unauthorizedResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "GET",
       }
@@ -112,7 +112,7 @@ describe("Secrets API Endpoints", () => {
 
     // Test invalid secret data
     const invalidSecretResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "POST",
         headers: {
@@ -127,7 +127,7 @@ describe("Secrets API Endpoints", () => {
 
     // Test invalid secret data format
     const invalidFormatResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
       {
         method: "POST",
         headers: {
@@ -143,7 +143,7 @@ describe("Secrets API Endpoints", () => {
 
     // Test deleting non-existent secret
     const nonExistentResponse = await app.request(
-      `/api/organisation/${TEST_ORGANISATION_ID}/secrets/NON_EXISTENT_SECRET`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/secrets/NON_EXISTENT_SECRET`,
       {
         method: "DELETE",
         headers: {

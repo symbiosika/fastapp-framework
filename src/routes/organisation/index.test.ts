@@ -18,9 +18,9 @@ import { organisations, type OrganisationsSelect } from "../../dbSchema";
 import { eq, or } from "drizzle-orm";
 
 let app: FastAppHono;
-const TEST_USER_1_TOKEN = await getJwtTokenForTesting(0);
-const TEST_USER_2_TOKEN = await getJwtTokenForTesting(1);
-const TEST_USER_3_TOKEN = await getJwtTokenForTesting(2);
+const TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
+const TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
+const TEST_USER_3_TOKEN = await getJwtTokenForTesting(3);
 
 beforeAll(async () => {
   await createDatabaseClient();
@@ -52,7 +52,7 @@ describe("Organisation Routes", () => {
       }
     );
     expect(response.status).toBe(200);
-    let data = await response.json();
+    let data = response.jsonResponse;
     org = data;
     console.log("Added organisation:", org);
     expect(data.name).toBe("User3 Organisation");
@@ -68,7 +68,7 @@ describe("Organisation Routes", () => {
         name: "Another Organisation",
       }
     );
-    let errorText: string | null = await response.text();
+    let errorText: string | null = response.textResponse;
     expect(errorText).toBe(
       "Error creating organisation: Error: User already has an organisation"
     );
@@ -81,7 +81,7 @@ describe("Organisation Routes", () => {
       { userId: TEST_USERS[1].id, role: "member" }
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
     expect(data.userId).toBe(TEST_USERS[1].id);
 
     console.log("Starting test: Remove a member from the organisation");
@@ -99,7 +99,7 @@ describe("Organisation Routes", () => {
       TEST_USER_3_TOKEN
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
     expect(data.name).toBe("User3 Organisation");
 
     console.log("Starting test: Get all members of an organisation");
@@ -110,7 +110,7 @@ describe("Organisation Routes", () => {
       TEST_USER_3_TOKEN
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
 
     expect.arrayContaining([
       { userEmail: TEST_USERS[1].email, role: "member" },
@@ -124,7 +124,7 @@ describe("Organisation Routes", () => {
       { name: "New Name" }
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
     expect(data.name).toBe("New Name");
 
     console.log("Starting test: Invite a user to an organisation");
@@ -135,7 +135,7 @@ describe("Organisation Routes", () => {
       { email: "invitee@example.com", role: "member", sendMail: false }
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
     expect(data.email).toBe("invitee@example.com");
 
     console.log("Starting test: Add a member directly to an organisation");
@@ -146,7 +146,7 @@ describe("Organisation Routes", () => {
       { userId: TEST_USERS[0].id, role: "member" }
     );
     expect(response.status).toBe(200);
-    data = await response.json();
+    data = response.jsonResponse;
     expect(data.userId).toBe(TEST_USERS[0].id);
 
     console.log("Starting test: Remove a member from an organisation");
@@ -155,7 +155,7 @@ describe("Organisation Routes", () => {
       `/api/organisation/${org.id}/members/${TEST_USERS[0].id}`,
       TEST_USER_3_TOKEN
     );
-    errorText = await response.text();
+    errorText = response.textResponse;
     expect(response.status).toBe(200);
 
     // Permission tests
@@ -167,7 +167,7 @@ describe("Organisation Routes", () => {
       `/api/organisation/${org.id}`,
       TEST_USER_1_TOKEN
     );
-    errorText = await response.text();
+    errorText = response.textResponse;
     expect(response.status).toBe(403);
 
     console.log("Starting test: Non-admins should not update an organisation");
@@ -177,7 +177,7 @@ describe("Organisation Routes", () => {
       TEST_USER_2_TOKEN,
       { name: "New Name" }
     );
-    errorText = await response.text();
+    errorText = response.textResponse;
     expect(response.status).toBe(403);
 
     console.log("Starting test: Non-admins should not delete an organisation");

@@ -158,6 +158,7 @@ export const checkTeamMemberRole = async (
   userId: string,
   roleToCheck: ("admin" | "member")[]
 ) => {
+  // check membership
   const member = await getDb()
     .select()
     .from(teamMembers)
