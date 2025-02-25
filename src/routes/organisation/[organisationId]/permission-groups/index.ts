@@ -136,9 +136,15 @@ export default function definePermissionGroupRoutes(
       v.object({ organisationId: v.string(), id: v.string() })
     ),
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      const group = await getPermissionGroup(id);
-      return c.json(group);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const group = await getPermissionGroup(id);
+        return c.json(group);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting permission group: " + err,
+        });
+      }
     }
   );
 
@@ -205,9 +211,15 @@ export default function definePermissionGroupRoutes(
       v.object({ organisationId: v.string(), id: v.string() })
     ),
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      await deletePermissionGroup(id);
-      return c.json(RESPONSES.SUCCESS);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        await deletePermissionGroup(id);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error deleting permission group: " + err,
+        });
+      }
     }
   );
 
@@ -362,9 +374,15 @@ export default function definePermissionGroupRoutes(
       v.object({ organisationId: v.string(), id: v.string() })
     ),
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      const permission = await getPathPermission(id);
-      return c.json(permission);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const permission = await getPathPermission(id);
+        return c.json(permission);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting path permission: " + err,
+        });
+      }
     }
   );
 
@@ -396,10 +414,16 @@ export default function definePermissionGroupRoutes(
     ),
     validator("json", pathPermissionsUpdateSchema),
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      const data = c.req.valid("json");
-      const permission = await updatePathPermission(id, data);
-      return c.json(permission);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const data = c.req.valid("json");
+        const permission = await updatePathPermission(id, data);
+        return c.json(permission);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error updating path permission: " + err,
+        });
+      }
     }
   );
 
@@ -425,9 +449,15 @@ export default function definePermissionGroupRoutes(
       v.object({ organisationId: v.string(), id: v.string() })
     ),
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      await deletePathPermission(id);
-      return c.json(RESPONSES.SUCCESS);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        await deletePathPermission(id);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error deleting path permission: " + err,
+        });
+      }
     }
   );
 }

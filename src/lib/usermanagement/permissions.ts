@@ -44,6 +44,9 @@ export const getPermissionGroup = async (groupId: string) => {
     .select()
     .from(userPermissionGroups)
     .where(eq(userPermissionGroups.id, groupId));
+  if (group.length === 0) {
+    throw new Error("Permission group not found");
+  }
   return group[0];
 };
 
@@ -97,6 +100,11 @@ export const getPathPermission = async (permissionId: string) => {
     .select()
     .from(pathPermissions)
     .where(eq(pathPermissions.id, permissionId));
+
+  if (permission.length === 0) {
+    throw new Error("Path permission not found");
+  }
+
   return permission[0];
 };
 
