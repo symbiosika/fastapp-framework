@@ -6,7 +6,7 @@ You will write unit tests in JEST syntax for the given functions.
 All imports will be bun like:
 
 ```ts
-import { describe, it, expect } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { myFunction } from ".";
 ```
 
@@ -32,7 +32,11 @@ This is only needed if a database connection is needed.
 
 ## API endpoints
 
-If you are testing API endpoints you need to setup the routes as simple Hono app like this:
+If you are testing API endpoints you need to setup the routes as simple Hono app like this.
+The testFetcher is a helper to test the API endpoints. It will always respond with the "status",
+"testResponse" and "jsonResponse" (can be undefined).
+It will take the Hono app, the path, the token and the body (can be undefined).
+Possible methods are: get, post, put, delete.
 
 ```ts
 import { testFetcher } from "../../test/fetcher.test";
@@ -46,7 +50,7 @@ describe("User API Endpoints", () => {
     defineMyEndpoints(app, "/api"); // "defineMyEndpoints" function comes from the file that is tested
   });
 
-  it("some test", async () => {
+  test("some test", async () => {
     const response = await testFetcher.post(
       app,
       "/api/users",
@@ -56,8 +60,15 @@ describe("User API Endpoints", () => {
       }
     );
   });
+  expect(response.status).toBe(200);
+  expect(response.jsonResponse?.someNum).toBe(2);
 });
 ```
 
 The test file will have the function name in kebap-case plus ".test.ts" in the same folder.
 If you are working on the database you will do CRUD operations and delete all your test data afterwards.
+
+## Sequence
+
+Test that will test CRUD etc. needs to be run in sequence.
+That means they need to be in the same "test" or "it" block.

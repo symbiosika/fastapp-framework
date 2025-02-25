@@ -32,6 +32,7 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/webhooks",
+    authAndSetUsersInfo,
     describeRoute({
       method: "post",
       path: "/organisation/:organisationId/webhooks",
@@ -59,6 +60,7 @@ export default function defineWebhookRoutes(
         const webhook = await createWebhook(userId, {
           ...parsed,
           organisationId,
+          userId,
         });
 
         return c.json(webhook);
@@ -75,6 +77,7 @@ export default function defineWebhookRoutes(
    */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/webhooks",
+    authAndSetUsersInfo,
     describeRoute({
       method: "get",
       path: "/organisation/:organisationId/webhooks",
@@ -112,6 +115,7 @@ export default function defineWebhookRoutes(
    */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/global",
+    authAndSetUsersInfo,
     describeRoute({
       method: "get",
       path: "/organisation/:organisationId/webhooks/global",
@@ -149,6 +153,7 @@ export default function defineWebhookRoutes(
    */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/:id",
+    authAndSetUsersInfo,
     describeRoute({
       method: "get",
       path: "/organisation/:organisationId/webhooks/:id",
@@ -193,6 +198,7 @@ export default function defineWebhookRoutes(
    */
   app.put(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/:id",
+    authAndSetUsersInfo,
     describeRoute({
       method: "put",
       path: "/organisation/:organisationId/webhooks/:id",
@@ -239,6 +245,7 @@ export default function defineWebhookRoutes(
    */
   app.delete(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/:id",
+    authAndSetUsersInfo,
     describeRoute({
       method: "delete",
       path: "/organisation/:organisationId/webhooks/:id",
@@ -346,6 +353,7 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/check",
+    authAndSetUsersInfo,
     describeRoute({
       method: "post",
       path: "/organisation/:organisationId/webhooks/check",
@@ -389,6 +397,7 @@ export default function defineWebhookRoutes(
    */
   app.post(
     API_BASE_PATH + "/organisation/:organisationId/webhooks/:id/trigger",
+    authAndSetUsersInfo,
     describeRoute({
       method: "post",
       path: "/organisation/:organisationId/webhooks/:id/trigger",
