@@ -2,12 +2,7 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import definePluginRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import {
-  getJwtTokenForTesting,
-  initTests,
-  TEST_ORGANISATION_1,
-  TEST_ORGANISATION_2,
-} from "../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 import { registerServerPlugin } from "../../../../lib/plugins";
 import type { ServerPlugin } from "../../../../lib/types/plugins";
 import { testFetcher } from "../../../../test/fetcher.test";
@@ -28,11 +23,10 @@ describe("Plugin Security Tests", () => {
   };
 
   beforeAll(async () => {
-    await initTests();
-    user1Token = await getJwtTokenForTesting(1);
-    user2Token = await getJwtTokenForTesting(2);
+    const { user1Token: u1Token, user2Token: u2Token } = await initTests();
+    user1Token = u1Token;
+    user2Token = u2Token;
     definePluginRoutes(app, "/api");
-    // Register the mock plugin
     registerServerPlugin(mockPlugin);
   });
 
@@ -66,7 +60,10 @@ describe("Plugin Security Tests", () => {
     rejectUnauthorized(app, [
       ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`],
       ["POST", `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`],
-      ["PUT", `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/some-id`],
+      [
+        "PUT",
+        `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/some-id`,
+      ],
       [
         "DELETE",
         `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/some-id`,

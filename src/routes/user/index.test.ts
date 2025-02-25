@@ -4,22 +4,17 @@ import { definePublicUserRoutes } from "./public";
 import { defineSecuredUserRoutes } from "./protected";
 import type { FastAppHono } from "../../types";
 import { initTests } from "../../test/init.test";
-import {
-  TEST_ADMIN_USER_EMAIL,
-  TEST_ADMIN_USER_PASSWORD,
-} from "../../test/init.test";
+import { TEST_ADMIN_USER } from "../../test/init.test";
 
 const TEST_EMAIL_USER = "test-user@symbiosika.de";
 
 describe("User API Endpoints", () => {
   const app: FastAppHono = new Hono();
   let jwt: string;
-  let password: string;
 
   beforeAll(async () => {
-    const { token, password: initPassword } = await initTests();
-    jwt = token;
-    password = initPassword;
+    const { adminToken } = await initTests();
+    jwt = adminToken;
     defineSecuredUserRoutes(app, "/api");
     definePublicUserRoutes(app, "/api");
   });
@@ -27,8 +22,8 @@ describe("User API Endpoints", () => {
   // Test user authentication
   it("should login with valid credentials", async () => {
     const loginData = {
-      email: TEST_ADMIN_USER_EMAIL,
-      password: TEST_ADMIN_USER_PASSWORD,
+      email: TEST_ADMIN_USER.email,
+      password: TEST_ADMIN_USER.password,
     };
 
     const response = await app.request("/api/user/login", {
@@ -86,7 +81,7 @@ describe("User API Endpoints", () => {
   // Test user search
   it("should search for user by email", async () => {
     const response = await app.request(
-      "/api/user/search?email=" + TEST_ADMIN_USER_EMAIL,
+      "/api/user/search?email=" + TEST_ADMIN_USER.email,
       {
         method: "GET",
         headers: {
@@ -99,14 +94,14 @@ describe("User API Endpoints", () => {
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.id).toBeDefined();
-    expect(data.email).toBe(TEST_ADMIN_USER_EMAIL);
+    expect(data.email).toBe(TEST_ADMIN_USER.email);
   });
 
   // Test user registration
   it("should register new user", async () => {
     const registerData = {
       email: TEST_EMAIL_USER,
-      password: TEST_ADMIN_USER_PASSWORD,
+      password: TEST_ADMIN_USER.password,
       sendVerificationEmail: false,
     };
 

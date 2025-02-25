@@ -2,18 +2,13 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import defineWorkspaceRoutes from "./index";
 import {
-  getJwtTokenForTesting,
   initTests,
   TEST_ORGANISATION_1,
   TEST_USER_1,
-  TEST_USER_2,
   TEST_USER_3,
 } from "../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../types";
-import { and, eq } from "drizzle-orm";
-import { getDb } from "../../../../lib/db/db-connection";
-import { workspaces } from "../../../../lib/db/db-schema";
 
 let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
 let TEST_USER_1_TOKEN: string;
@@ -22,18 +17,10 @@ let TEST_USER_3_TOKEN: string;
 
 beforeAll(async () => {
   defineWorkspaceRoutes(app, "/api");
-  await initTests();
-  TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
-  TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
-  TEST_USER_3_TOKEN = await getJwtTokenForTesting(3);
-  getDb()
-    .delete(workspaces)
-    .where(
-      and(
-        eq(workspaces.organisationId, TEST_ORGANISATION_1.id),
-        eq(workspaces.userId, TEST_USER_1_TOKEN)
-      )
-    );
+  const { user1Token, user2Token, user3Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+  TEST_USER_2_TOKEN = user2Token;
+  TEST_USER_3_TOKEN = user3Token;
 });
 
 describe("Workspace API Endpoints", () => {

@@ -1,36 +1,23 @@
-import { nanoid } from "nanoid";
 import { generateJwt, saltAndHashPassword } from "../lib/auth";
 import { createDatabaseClient, getDb } from "../lib/db/db-connection";
 import { waitForDbConnection } from "../lib/db/db-connection";
 import {
-  jobs,
-  products,
   users,
   organisations,
   type UsersSelect,
   teamMembers,
   organisationMembers,
 } from "../lib/db/db-schema";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
 
 /**
- * TEST DATA
+ * FIXED TESTING DATA
  */
+export const TEST_PRODUCT_ID = "prod_RBdEBlCP5LtR3O";
+export const TEST_PRICE_ID = "price_1QJFyIISOodfhgtvh0yJbAyt";
 
-export const testProductId = "prod_RBdEBlCP5LtR3O";
-export const testPriceId = "price_1QJFyIISOodfhgtvh0yJbAyt";
-
-export const TEST_ADMIN_USER_EMAIL = "admin@symbiosika.com";
-export const TEST_ADMIN_USER_PASSWORD = "gFskj6Dn6gFskj6Dn6";
-
-export const TEST_ADMIN_USER = {
-  id: "00000000-0000-0000-0000-000000000000",
-  email: TEST_ADMIN_USER_EMAIL,
-  firstname: "Joe",
-  surname: "Doe",
-  password: TEST_ADMIN_USER_PASSWORD,
-};
+export const TEST_PASSWORD = "gFskj6Dn6gFskj6Dn6";
 
 export const TEST_ORGANISATION_1 = {
   id: "00000000-1111-1111-1111-000000000001",
@@ -53,12 +40,20 @@ export const TEST_ORGANISATIONS = [
   TEST_ORGANISATION_3,
 ];
 
+export const TEST_ADMIN_USER = {
+  id: "00000000-0000-0000-0000-000000000000",
+  email: "admin@symbiosika.com",
+  firstname: "Joe",
+  surname: "Doe",
+  password: TEST_PASSWORD,
+};
+
 export const TEST_USER_1 = {
   id: "00000000-2222-2222-2222-000000000001",
   email: "testuser1@symbiosika.com",
   firstname: "Test",
   surname: "User 1",
-  password: "gFskj6Dn6gFskj6Dn6",
+  password: TEST_PASSWORD,
 };
 
 export const TEST_USER_2 = {
@@ -66,7 +61,7 @@ export const TEST_USER_2 = {
   email: "testuser2@symbiosika.com",
   firstname: "Test",
   surname: "User 2",
-  password: "gFskj6Dn6gFskj6Dn6",
+  password: TEST_PASSWORD,
 };
 
 export const TEST_USER_3 = {
@@ -74,56 +69,42 @@ export const TEST_USER_3 = {
   email: "testuser3@symbiosika.com",
   firstname: "Test",
   surname: "User 3",
-  password: "gFskj6Dn6gFskj6Dn6",
+  password: TEST_PASSWORD,
 };
 
-export const TEST_USERS = [TEST_USER_1, TEST_USER_2, TEST_USER_3];
+export const TEST_USERS = [
+  TEST_USER_1,
+  TEST_USER_2,
+  TEST_USER_3,
+  TEST_ADMIN_USER,
+];
 
 /**
- * Init actions
+ * Init all Test Organisations
  */
+export const initTestOrganisations = async () => {
+  // delete all old organisations and ALL their data
+  await getDb()
+    .delete(organisations)
+    .where(
+      inArray(organisations.id, [
+        TEST_ORGANISATION_1.id,
+        TEST_ORGANISATION_2.id,
+        TEST_ORGANISATION_3.id,
+      ])
+    );
 
-export const initTestOrganisation = async () => {
   for (const org of TEST_ORGANISATIONS) {
-    await getDb()
-      .insert(organisations)
-      .values({
-        id: org.id,
-        name: org.name,
-      })
-      .onConflictDoUpdate({
-        target: [organisations.id],
-        set: {
-          name: org.name,
-        },
-      });
+    await getDb().insert(organisations).values({
+      id: org.id,
+      name: org.name,
+    });
   }
 };
 
-export const dropAllTestOrganisationMembers = async () => {
-  await getDb()
-    .delete(organisationMembers)
-    .where(
-      inArray(organisationMembers.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
-      ])
-    );
-};
-
-export const dropAllTestTeamMembers = async () => {
-  await getDb()
-    .delete(teamMembers)
-    .where(
-      inArray(teamMembers.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
-      ])
-    );
-};
-
+/**
+ * Init all Test Users
+ */
 export const initTestUsers = async () => {
   for (const user of TEST_USERS) {
     const hash = await saltAndHashPassword(user.password);
@@ -144,6 +125,39 @@ export const initTestUsers = async () => {
   }
 };
 
+/**
+ * Drop all Test Organisation Members
+ */
+export const dropAllTestOrganisationMembers = async () => {
+  await getDb()
+    .delete(organisationMembers)
+    .where(
+      inArray(organisationMembers.userId, [
+        TEST_USER_1.id,
+        TEST_USER_2.id,
+        TEST_USER_3.id,
+      ])
+    );
+};
+
+/**
+ * Drop all Test Team Members
+ */
+export const dropAllTestTeamMembers = async () => {
+  await getDb()
+    .delete(teamMembers)
+    .where(
+      inArray(teamMembers.userId, [
+        TEST_USER_1.id,
+        TEST_USER_2.id,
+        TEST_USER_3.id,
+      ])
+    );
+};
+
+/**
+ * Init all Test Organisation Members
+ */
 export const initTestOrganisationMembers = async () => {
   await dropAllTestOrganisationMembers();
   await dropAllTestTeamMembers();
@@ -159,16 +173,38 @@ export const initTestOrganisationMembers = async () => {
       ])
     );
 
+  // all the users to their own organisations
   await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_USER_1.id, "owner");
   await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_USER_2.id, "owner");
   await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_USER_3.id, "owner");
+
+  // add admin to all organisations
+  await addOrganisationMember(
+    TEST_ORGANISATION_1.id,
+    TEST_ADMIN_USER.id,
+    "owner"
+  );
+  await addOrganisationMember(
+    TEST_ORGANISATION_2.id,
+    TEST_ADMIN_USER.id,
+    "owner"
+  );
+  await addOrganisationMember(
+    TEST_ORGANISATION_3.id,
+    TEST_ADMIN_USER.id,
+    "owner"
+  );
 };
 
-export const getJwtTokenForTesting = async (userNumber: number) => {
-  if (userNumber < 1 || userNumber > 3) {
-    throw new Error("Invalid user number");
+/**
+ * Get a JWT token for a test user
+ */
+const getJwtTokenForTesting = async (email: string) => {
+  const user = TEST_USERS.find((user) => user.email === email);
+  if (!user) {
+    throw new Error("User not found");
   }
-  const user = TEST_USERS[userNumber - 1];
+
   const { token } = await generateJwt(
     {
       email: user.email,
@@ -180,51 +216,19 @@ export const getJwtTokenForTesting = async (userNumber: number) => {
 };
 
 /**
- * Init global test data
+ * GLOBAL Init global test data
+ * Can be called for each test file
  */
-
 export const initTests = async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  // const randomPassword = nanoid(24);
-  const hash = await saltAndHashPassword(TEST_ADMIN_USER_PASSWORD);
+  const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);
+  const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
+  const user3Token = await getJwtTokenForTesting(TEST_USER_3.email);
+  const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
 
-  // delete old test data
-  await getDb().delete(users).where(eq(users.email, "newuser@example.com"));
-  await getDb().delete(products).where(eq(products.prodId, testProductId));
-  await getDb().delete(jobs).where(eq(jobs.type, "test-job"));
-
-  await getDb()
-    .insert(users)
-    .values({
-      id: TEST_ADMIN_USER.id,
-      email: TEST_ADMIN_USER.email,
-      firstname: TEST_ADMIN_USER.firstname,
-      surname: TEST_ADMIN_USER.surname,
-      emailVerified: true,
-      password: hash,
-    })
-    .onConflictDoUpdate({
-      target: [users.id],
-      set: {
-        email: TEST_ADMIN_USER.email,
-        firstname: TEST_ADMIN_USER.firstname,
-        surname: TEST_ADMIN_USER.surname,
-        password: hash,
-        emailVerified: true,
-      },
-    });
-
-  const { token } = await generateJwt(
-    {
-      email: TEST_ADMIN_USER.email,
-      id: TEST_ADMIN_USER.id,
-    } as UsersSelect,
-    86400
-  );
-
-  await initTestOrganisation().catch((err) => {
+  await initTestOrganisations().catch((err) => {
     console.info("Error initialising test organisation", err);
   });
   await initTestUsers().catch((err) => {
@@ -235,7 +239,10 @@ export const initTests = async () => {
   });
 
   return {
-    token,
-    password: TEST_ADMIN_USER_PASSWORD,
+    user1Token,
+    user2Token,
+    user3Token,
+    adminToken,
+    password: TEST_PASSWORD,
   };
 };

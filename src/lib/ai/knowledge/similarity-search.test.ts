@@ -5,8 +5,8 @@ import {
 } from "../../db/db-connection";
 import { getNearestEmbeddings } from "./similarity-search";
 import { extractKnowledgeFromExistingDbEntry } from "./add-knowledge";
-import { initTestOrganisation } from "../../../test/init.test";
 import { createKnowledgeText } from "./knowledge-texts";
+import { initTests } from "../../../test/init.test";
 
 const testTexts = [
   {
@@ -53,9 +53,7 @@ const testTexts = [
 
 describe("Similarity Search Test", () => {
   beforeAll(async () => {
-    await createDatabaseClient();
-    await waitForDbConnection();
-    await initTestOrganisation();
+    await initTests();
   });
 
   it("should find the most similar text through similarity search", async () => {

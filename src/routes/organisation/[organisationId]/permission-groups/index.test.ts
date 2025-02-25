@@ -2,11 +2,7 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { Hono } from "hono";
 import definePermissionGroupRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import {
-  getJwtTokenForTesting,
-  initTests,
-  TEST_ORGANISATION_1,
-} from "../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import { rejectUnauthorized } from "../../../../test/reject-unauthorized.test";
 import { getDb, groupPermissions, pathPermissions } from "../../../../dbSchema";
@@ -15,13 +11,13 @@ import { eq, or } from "drizzle-orm";
 describe("Permission Groups API Endpoints", () => {
   let createdPermissionGroup: any;
   let createdPathPermission: any;
-
   const app: FastAppHono = new Hono();
   let user1Token: string;
 
   beforeAll(async () => {
     await initTests();
-    user1Token = await getJwtTokenForTesting(1);
+    const { user1Token: u1Token } = await initTests();
+    user1Token = u1Token;
     definePermissionGroupRoutes(app, "/api");
 
     await getDb()

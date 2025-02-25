@@ -3,23 +3,23 @@ import { Hono } from "hono";
 import defineSearchInOrganisationRoutes from ".";
 import type { FastAppHono } from "../../../../types";
 import {
-  getJwtTokenForTesting,
   initTests,
   TEST_ORGANISATION_1,
-  TEST_ORGANISATION_2,
   TEST_USER_1,
-  TEST_USER_2,
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 
-const userOrg1Token = await getJwtTokenForTesting(1);
-const userOrg2Token = await getJwtTokenForTesting(2);
 const app: FastAppHono = new Hono();
+let userOrg1Token: string;
+let userOrg2Token: string;
 
 describe("Search API Endpoints", () => {
   beforeAll(async () => {
     await initTests();
     defineSearchInOrganisationRoutes(app, "/api");
+    const { user1Token, user2Token } = await initTests();
+    userOrg1Token = user1Token;
+    userOrg2Token = user2Token;
   });
 
   // Test searching for a user by email

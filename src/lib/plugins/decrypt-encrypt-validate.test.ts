@@ -15,13 +15,11 @@ import type {
   PluginParameterDescription,
 } from "../types/plugins";
 import { eq } from "drizzle-orm";
-import { initTestOrganisation } from "../../test/init.test";
+import { initTests } from "../../test/init.test";
 
 // Setup database connection
 beforeAll(async () => {
-  await createDatabaseClient();
-  await waitForDbConnection();
-  await initTestOrganisation();
+  await initTests();
 });
 
 const delTestItems = async () => {

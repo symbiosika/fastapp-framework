@@ -1,11 +1,11 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../test/fetcher.test";
 import { Hono } from "hono";
 import type { FastAppHono } from "../../types";
-import { getJwtTokenForTesting } from "../../test/init.test";
+import { initTests } from "../../test/init.test";
 import defineAdminRoutes from "./index";
 
-const TEST_ADMIN_TOKEN = await getJwtTokenForTesting(1);
+let TEST_ADMIN_TOKEN: string;
 
 // Initialize the app and define routes
 const app: FastAppHono = new Hono();
@@ -13,6 +13,11 @@ defineAdminRoutes(app, "/api");
 
 // Test suite for admin endpoints
 describe("Admin API Endpoints", () => {
+  beforeAll(async () => {
+    const { adminToken } = await initTests();
+    TEST_ADMIN_TOKEN = adminToken;
+  });
+
   it("should download logs successfully", async () => {
     const response = await testFetcher.get(
       app,

@@ -26,6 +26,7 @@ import {
   organisationInvitationsSelectSchema,
 } from "../../../../dbSchema";
 import { RESPONSES } from "../../../../lib/responses";
+import { isOrganisationMember } from "../..";
 
 export default function defineInvitationsRoutes(
   app: FastAppHono,
@@ -55,6 +56,7 @@ export default function defineInvitationsRoutes(
       },
     }),
     validator("json", organisationInvitationsInsertSchema),
+    isOrganisationMember,
     async (c) => {
       try {
         const data = c.req.valid("json");
@@ -99,6 +101,7 @@ export default function defineInvitationsRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -138,6 +141,7 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -173,6 +177,7 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -214,6 +219,7 @@ export default function defineInvitationsRoutes(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");

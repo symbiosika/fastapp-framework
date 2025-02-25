@@ -3,11 +3,9 @@ import { Hono } from "hono";
 import defineWebhookRoutes from "./index";
 import { testFetcher } from "../../../../test/fetcher.test";
 import {
-  getJwtTokenForTesting,
   initTests,
   TEST_ORGANISATION_1,
   TEST_USER_1,
-  TEST_USER_2,
 } from "../../../../test/init.test";
 import type { FastAppHonoContextVariables } from "../../../../types";
 import { createServer } from "http";
@@ -17,10 +15,11 @@ let TEST_USER_1_TOKEN: string;
 let TEST_USER_2_TOKEN: string;
 
 beforeAll(async () => {
-  defineWebhookRoutes(app, "/api");
   await initTests();
-  TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
-  TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
+  defineWebhookRoutes(app, "/api");
+  const { user1Token, user2Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+  TEST_USER_2_TOKEN = user2Token;
 });
 
 describe("Webhook API Endpoints", () => {

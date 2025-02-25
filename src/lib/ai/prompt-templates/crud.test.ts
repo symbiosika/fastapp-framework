@@ -9,16 +9,10 @@ import {
   deletePromptTemplatePlaceholder,
   getPlainPlaceholdersForPromptTemplate,
 } from "./crud";
-import {
-  createDatabaseClient,
-  waitForDbConnection,
-} from "../../../lib/db/db-connection";
-import { initTestOrganisation } from "../../../test/init.test";
+import { initTests } from "../../../test/init.test";
 
 beforeAll(async () => {
-  await createDatabaseClient();
-  await waitForDbConnection();
-  await initTestOrganisation();
+  await initTests();
 });
 
 describe("Prompt Template CRUD Operations", () => {

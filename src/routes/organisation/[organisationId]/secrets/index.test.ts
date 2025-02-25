@@ -2,17 +2,11 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import defineManageSecretsRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import {
-  getJwtTokenForTesting,
-  initTests,
-  TEST_ORGANISATION_1,
-  TEST_USER_1,
-  TEST_USER_2,
-} from "../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 
-const userOrg1Token = await getJwtTokenForTesting(1);
-const userOrg2Token = await getJwtTokenForTesting(2);
+let userOrg1Token: string;
+let userOrg2Token: string;
 const app: FastAppHono = new Hono();
 
 describe("Secrets API Endpoints", () => {
@@ -20,6 +14,9 @@ describe("Secrets API Endpoints", () => {
 
   beforeAll(async () => {
     await initTests();
+    const { user1Token, user2Token } = await initTests();
+    userOrg1Token = user1Token;
+    userOrg2Token = user2Token;
     defineManageSecretsRoutes(app, "/api");
   });
 

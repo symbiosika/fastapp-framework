@@ -12,8 +12,8 @@ describe("Files API Endpoints", () => {
   let jwt: string;
 
   beforeAll(async () => {
-    const { token } = await initTests();
-    jwt = token;
+    const { user1Token } = await initTests();
+    jwt = user1Token;
     defineFilesRoutes(app, "/api");
   });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { StripeService } from "../../payment/stripe/index";
 import { initTests } from "../../../test/init.test";
-import { testProductId, testPriceId } from "../../../test/init.test";
+import { TEST_PRODUCT_ID, TEST_PRICE_ID } from "../../../test/init.test";
 
 if (!process.env.STRIPE_TESTING_API_KEY) {
   throw new Error(
@@ -84,13 +84,13 @@ describe("StripeService.createProductAndPrice", () => {
       name: "Test Product DB Entry",
       group: "test-group",
       type: "subscription",
-      stripeProductId: testProductId,
-      stripePriceId: testPriceId,
+      stripeProductId: TEST_PRODUCT_ID,
+      stripePriceId: TEST_PRICE_ID,
     });
 
     expect(result).toBeDefined();
-    expect(result.productId).toBe(testProductId);
-    expect(result.priceId).toBe(testPriceId);
+    expect(result.productId).toBe(TEST_PRODUCT_ID);
+    expect(result.priceId).toBe(TEST_PRICE_ID);
   });
 
   it("should throw error for non-existent product", async () => {

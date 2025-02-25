@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import {
   initTests,
-  getJwtTokenForTesting,
   TEST_ORGANISATION_1,
   TEST_USER_2,
   TEST_USER_1,
@@ -21,9 +20,10 @@ let nonMemberToken: string;
 
 beforeAll(async () => {
   await initTests();
-  adminToken = await getJwtTokenForTesting(1);
-  memberToken = await getJwtTokenForTesting(2); // Assuming user 1 is a member
-  nonMemberToken = await getJwtTokenForTesting(3); // Assuming user 2 is not a member
+  const { user1Token, user2Token, user3Token } = await initTests();
+  adminToken = user1Token;
+  memberToken = user2Token; // Assuming user 1 is a member
+  nonMemberToken = user3Token; // Assuming user 2 is not a member
 
   app = new Hono();
   defineTeamRoutes(app, "/api");

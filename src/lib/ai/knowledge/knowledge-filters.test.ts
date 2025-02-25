@@ -1,41 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createDatabaseClient,
-  getDb,
-  waitForDbConnection,
-} from "../../db/db-connection";
+import { getDb } from "../../db/db-connection";
 import { upsertFilter } from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
-import { initTestOrganisation } from "../../../test/init.test";
+import { initTests } from "../../../test/init.test";
 
 describe("upsertFilter", () => {
   beforeAll(async () => {
-    await createDatabaseClient();
-    await waitForDbConnection();
-    await initTestOrganisation();
-    await getDb()
-      .delete(knowledgeFilters)
-      .where(
-        and(
-          eq(knowledgeFilters.category, "test-category"),
-          eq(knowledgeFilters.name, "test-name")
-        )
-      );
+    await initTests();
   });
-
-  // afterAll(async () => {
-  //   // Clean up test data after each test
-  //   // const db = getDb();
-  //   // await db
-  //   //   .delete(knowledgeFilters)
-  //   //   .where(
-  //   //     and(
-  //   //       eq(knowledgeFilters.category, "test-category"),
-  //   //       eq(knowledgeFilters.name, "test-name")
-  //   //     )
-  //   //   );
-  // });
 
   it("should create a new filter if it doesn't exist", async () => {
     const filterId = await upsertFilter(

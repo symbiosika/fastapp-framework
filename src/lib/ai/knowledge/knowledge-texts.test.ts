@@ -5,17 +5,11 @@ import {
   updateKnowledgeText,
   deleteKnowledgeText,
 } from "./knowledge-texts";
-import {
-  createDatabaseClient,
-  waitForDbConnection,
-} from "../../db/db-connection";
-import { initTestOrganisation } from "../../../test/init.test";
+import { initTests } from "../../../test/init.test";
 
 describe("Knowledge Texts Test", () => {
   beforeAll(async () => {
-    await createDatabaseClient();
-    await waitForDbConnection();
-    await initTestOrganisation();
+    await initTests();
   });
 
   it("should create a new knowledge text entry", async () => {
@@ -57,11 +51,13 @@ describe("Knowledge Texts Test", () => {
     };
 
     const createdText = await createKnowledgeText(newText);
-    const updatedText = await updateKnowledgeText(createdText.id, {
-      text: "Updated text",
-      title: "Updated title",
-      organisationId: createdText.organisationId,
-    },
+    const updatedText = await updateKnowledgeText(
+      createdText.id,
+      {
+        text: "Updated text",
+        title: "Updated title",
+        organisationId: createdText.organisationId,
+      },
       {
         organisationId: createdText.organisationId,
       }
@@ -79,12 +75,9 @@ describe("Knowledge Texts Test", () => {
     };
 
     const createdText = await createKnowledgeText(newText);
-    const deletedText = await deleteKnowledgeText(
-      createdText.id,
-      {
-        organisationId: createdText.organisationId,
-      }
-    );
+    const deletedText = await deleteKnowledgeText(createdText.id, {
+      organisationId: createdText.organisationId,
+    });
 
     expect(deletedText.success).toBe(true);
 

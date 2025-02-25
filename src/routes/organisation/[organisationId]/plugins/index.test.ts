@@ -2,11 +2,7 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import definePluginRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import {
-  getJwtTokenForTesting,
-  initTests,
-  TEST_ORGANISATION_1,
-} from "../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 import { registerServerPlugin } from "../../../../lib/plugins";
 import type { ServerPlugin } from "../../../../lib/types/plugins";
 import { testFetcher } from "../../../../test/fetcher.test";
@@ -15,7 +11,7 @@ describe("Plugin API Endpoints", () => {
   let createdPlugin: any;
 
   const app: FastAppHono = new Hono();
-  let user1Token: string;
+  let u1Token: string;
   // Define a mock plugin for testing
   const mockPlugin: ServerPlugin = {
     name: "test-plugin",
@@ -41,8 +37,9 @@ describe("Plugin API Endpoints", () => {
   };
 
   beforeAll(async () => {
-    await initTests();
-    user1Token = await getJwtTokenForTesting(1);
+    const { user1Token } = await initTests();
+    u1Token = user1Token;
+
     definePluginRoutes(app, "/api");
     // Register the mock plugin
     registerServerPlugin(mockPlugin);
@@ -50,7 +47,7 @@ describe("Plugin API Endpoints", () => {
     await testFetcher.delete(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/test-plugin`,
-      user1Token
+      u1Token
     );
   });
 
@@ -59,7 +56,7 @@ describe("Plugin API Endpoints", () => {
     const response = await testFetcher.get(
       app,
       "/api/organisation/" + TEST_ORGANISATION_1.id + "/plugins/available",
-      user1Token
+      u1Token
     );
     expect(response.status).toBe(200);
     expect(Array.isArray(response.jsonResponse)).toBe(true);
@@ -82,7 +79,7 @@ describe("Plugin API Endpoints", () => {
     const response = await testFetcher.post(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      user1Token,
+      u1Token,
       invalidPlugin
     );
     expect(response.status).toBe(400);
@@ -110,7 +107,7 @@ describe("Plugin API Endpoints", () => {
     const response = await testFetcher.post(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      user1Token,
+      u1Token,
       validPlugin
     );
     expect(response.status).toBe(200);
@@ -126,7 +123,7 @@ describe("Plugin API Endpoints", () => {
     const response = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      user1Token
+      u1Token
     );
     expect(response.status).toBe(200);
     expect(Array.isArray(response.jsonResponse)).toBe(true);
@@ -159,7 +156,7 @@ describe("Plugin API Endpoints", () => {
     const response = await testFetcher.put(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${createdPlugin.id}`,
-      user1Token,
+      u1Token,
       updatedConfig
     );
     expect(response.status).toBe(200);
@@ -172,14 +169,14 @@ describe("Plugin API Endpoints", () => {
     const listResponse = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      user1Token
+      u1Token
     );
     const plugins = listResponse.jsonResponse;
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      user1Token
+      u1Token
     );
     expect(response.status).toBe(200);
     expect(response.jsonResponse.name).toBe("test-plugin");
@@ -189,21 +186,21 @@ describe("Plugin API Endpoints", () => {
     const listResponse = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      user1Token
+      u1Token
     );
     const plugins = listResponse.jsonResponse;
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
     const response = await testFetcher.delete(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      user1Token
+      u1Token
     );
     expect(response.status).toBe(200);
     // Verify deletion
     const verifyResponse = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      user1Token
+      u1Token
     );
     expect(verifyResponse.status).toBe(400);
   });

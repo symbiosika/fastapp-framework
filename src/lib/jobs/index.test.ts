@@ -1,17 +1,10 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import {
-  createDatabaseClient,
-  getDb,
-  waitForDbConnection,
-} from "../db/db-connection";
 import { defineJob, createJob, getJob, startJobQueue } from ".";
-import { initTestOrganisation } from "../../test/init.test";
+import { initTests } from "../../test/init.test";
 
 describe("Job Queue System", () => {
   beforeAll(async () => {
-    await createDatabaseClient();
-    await waitForDbConnection();
-    await initTestOrganisation();
+    await initTests();
   });
 
   it("should execute a job and update the database", async () => {

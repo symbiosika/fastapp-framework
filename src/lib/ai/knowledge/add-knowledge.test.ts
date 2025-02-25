@@ -5,14 +5,12 @@ import {
 } from "../../db/db-connection";
 import { extractKnowledgeFromExistingDbEntry } from "../knowledge/add-knowledge";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
-import { initTestOrganisation } from "../../../test/init.test";
 import { createKnowledgeText } from "./knowledge-texts";
+import { initTests } from "../../../test/init.test";
 
 describe("Knowledge Text Flow", () => {
   beforeAll(async () => {
-    await createDatabaseClient();
-    await waitForDbConnection();
-    await initTestOrganisation();
+    await initTests();
   });
 
   it("should create knowledge text and extract knowledge with filters", async () => {

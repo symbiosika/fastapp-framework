@@ -1,41 +1,24 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import type { FastAppHono } from "../../types";
 import defineOrganisationRoutes from "./index";
-import {
-  createDatabaseClient,
-  getDb,
-  waitForDbConnection,
-} from "../../lib/db/db-connection";
 import { addOrganisationMember } from "../../lib/usermanagement/oganisations";
 import { Hono } from "hono";
-import {
-  getJwtTokenForTesting,
-  initTestUsers,
-  TEST_USERS,
-} from "../../test/init.test";
+import { initTests, TEST_USERS } from "../../test/init.test";
 import { testFetcher } from "../../test/fetcher.test";
-import { organisations, type OrganisationsSelect } from "../../dbSchema";
-import { eq, or } from "drizzle-orm";
+import { type OrganisationsSelect } from "../../dbSchema";
 
 let app: FastAppHono;
-const TEST_USER_1_TOKEN = await getJwtTokenForTesting(1);
-const TEST_USER_2_TOKEN = await getJwtTokenForTesting(2);
-const TEST_USER_3_TOKEN = await getJwtTokenForTesting(3);
+let TEST_USER_1_TOKEN: string;
+let TEST_USER_2_TOKEN: string;
+let TEST_USER_3_TOKEN: string;
 
 beforeAll(async () => {
-  await createDatabaseClient();
-  await waitForDbConnection();
+  const { user1Token, user2Token, user3Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+  TEST_USER_2_TOKEN = user2Token;
+  TEST_USER_3_TOKEN = user3Token;
   app = new Hono();
   defineOrganisationRoutes(app, "/api");
-  await initTestUsers();
-  await getDb()
-    .delete(organisations)
-    .where(
-      or(
-        eq(organisations.name, "User3 Organisation"),
-        eq(organisations.name, "New Name")
-      )
-    );
 });
 
 let org: OrganisationsSelect;
