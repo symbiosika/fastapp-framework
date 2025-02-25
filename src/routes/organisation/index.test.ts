@@ -3,7 +3,7 @@ import type { FastAppHono } from "../../types";
 import defineOrganisationRoutes from "./index";
 import { addOrganisationMember } from "../../lib/usermanagement/oganisations";
 import { Hono } from "hono";
-import { initTests, TEST_USERS } from "../../test/init.test";
+import { deleteTestOrganisations, initTests, TEST_USERS } from "../../test/init.test";
 import { testFetcher } from "../../test/fetcher.test";
 import { type OrganisationsSelect } from "../../dbSchema";
 
@@ -26,6 +26,9 @@ let org: OrganisationsSelect;
 describe("Organisation Routes", () => {
   it("should execute tests sequentially", async () => {
     console.log("Starting test: Create a new organisation");
+
+    await deleteTestOrganisations();
+
     let response = await testFetcher.post(
       app,
       "/api/organisation",

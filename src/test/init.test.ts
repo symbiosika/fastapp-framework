@@ -80,10 +80,9 @@ export const TEST_USERS = [
 ];
 
 /**
- * Init all Test Organisations
+ * Delete all Test Organisations
  */
-export const initTestOrganisations = async () => {
-  // delete all old organisations and ALL their data
+export const deleteTestOrganisations = async () => {
   await getDb()
     .delete(organisations)
     .where(
@@ -93,6 +92,14 @@ export const initTestOrganisations = async () => {
         TEST_ORGANISATION_3.id,
       ])
     );
+};
+
+/**
+ * Init all Test Organisations
+ */
+export const initTestOrganisations = async () => {
+  // delete all old organisations and ALL their data
+  await deleteTestOrganisations();
 
   for (const org of TEST_ORGANISATIONS) {
     await getDb().insert(organisations).values({

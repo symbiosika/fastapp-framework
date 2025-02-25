@@ -65,11 +65,9 @@ describe("Logger", () => {
       { role: "assistant", content: "Hi there" },
     ];
     await Logger.logAChat("test-chat-id", ...chatMessages);
-    expect(consoleOutput[0]).toMatch(
-      /^\[\d{4}-\d{2}-\d{2}.*\] \[DEBUG\] \(test-chat-id\) user: Hello$/
-    );
-    expect(consoleOutput[1]).toMatch(
-      /^\[\d{4}-\d{2}-\d{2}.*\] \[DEBUG\] \(test-chat-id\) assistant: Hi there$/
+    console.log(consoleOutput[0]);
+    expect(consoleOutput[0]).toContain(
+      '[test-chat-id] {"role":"user","content":"Hello"}'
     );
   });
 

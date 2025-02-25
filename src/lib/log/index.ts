@@ -121,6 +121,7 @@ class Logger {
         toLog += message + "";
       }
       toLog += "\n";
+      console.log(toLog);
       await this.writeToCustomFile("custom-" + options.name, toLog);
     }
   }

@@ -2,6 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { StripeService } from "../../payment/stripe/index";
 import { initTests } from "../../../test/init.test";
 import { TEST_PRODUCT_ID, TEST_PRICE_ID } from "../../../test/init.test";
+import { getDb } from "../../../dbSchema";
+import { products } from "../../../dbSchema";
+import { eq } from "drizzle-orm";
 
 if (!process.env.STRIPE_TESTING_API_KEY) {
   throw new Error(
@@ -79,6 +82,8 @@ describe("StripeService.createProductAndPrice", () => {
   });
 
   it("should create a database entry for existing Stripe product and price", async () => {
+    await getDb().delete(products).where(eq(products.group, "test-group"));
+
     // Now test our function
     const result = await stripeService.createProductInDb({
       name: "Test Product DB Entry",
