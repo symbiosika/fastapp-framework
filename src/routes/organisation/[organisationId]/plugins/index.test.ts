@@ -1,16 +1,21 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import definePluginRoutes from ".";
 import type { FastAppHono } from "../../../../types";
-import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
+import {
+  getJwtTokenForTesting,
+  initTests,
+  TEST_ORGANISATION_1,
+} from "../../../../test/init.test";
 import { registerServerPlugin } from "../../../../lib/plugins";
 import type { ServerPlugin } from "../../../../lib/types/plugins";
+import { testFetcher } from "../../../../test/fetcher.test";
 
 describe("Plugin API Endpoints", () => {
   let createdPlugin: any;
 
   const app: FastAppHono = new Hono();
-  let jwt: string;
+  let user1Token: string;
   // Define a mock plugin for testing
   const mockPlugin: ServerPlugin = {
     name: "test-plugin",
@@ -34,41 +39,37 @@ describe("Plugin API Endpoints", () => {
       },
     ],
   };
+
   beforeAll(async () => {
-    const { token } = await initTests();
-    jwt = token;
+    await initTests();
+    user1Token = await getJwtTokenForTesting(1);
     definePluginRoutes(app, "/api");
     // Register the mock plugin
     registerServerPlugin(mockPlugin);
 
-    await app.request(
+    await testFetcher.delete(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/test-plugin`,
-      {
-        method: "DELETE",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
   });
+
   // Test getting available plugins
-  it("should list available plugins", async () => {
-    const response = await app.request(
+  test("should list available plugins", async () => {
+    const response = await testFetcher.get(
+      app,
       "/api/organisation/" + TEST_ORGANISATION_1.id + "/plugins/available",
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
     expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.some((p: any) => p.name === "test-plugin")).toBe(true);
+    expect(Array.isArray(response.jsonResponse)).toBe(true);
+    expect(
+      response.jsonResponse.some((p: any) => p.name === "test-plugin")
+    ).toBe(true);
   });
+
   // Test plugin creation with invalid parameters
-  it("should reject invalid plugin creation", async () => {
+  test("should reject invalid plugin creation", async () => {
     const invalidPlugin = {
       name: "test-plugin",
       description: "Test plugin",
@@ -78,20 +79,17 @@ describe("Plugin API Endpoints", () => {
         // Missing required parameter
       },
     };
-    const response = await app.request(
+    const response = await testFetcher.post(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      {
-        method: "POST",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-        body: JSON.stringify(invalidPlugin),
-      }
+      user1Token,
+      invalidPlugin
     );
     expect(response.status).toBe(400);
   });
+
   // Test successful plugin creation
-  it("should create a new plugin", async () => {
+  test("should create a new plugin", async () => {
     const validPlugin = {
       organisationId: TEST_ORGANISATION_1.id,
       name: "test-plugin",
@@ -109,42 +107,36 @@ describe("Plugin API Endpoints", () => {
         },
       },
     };
-    const response = await app.request(
+    const response = await testFetcher.post(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      {
-        method: "POST",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-        body: JSON.stringify(validPlugin),
-      }
+      user1Token,
+      validPlugin
     );
     expect(response.status).toBe(200);
-    const data = await response.json();
-    createdPlugin = data;
-    expect(data.name).toBe("test-plugin");
-    expect(data.meta.testSecret).toBeDefined();
-    expect(data.meta.testSecret.id).toBeDefined();
-    return data; // Modified to return entire data object
+    createdPlugin = response.jsonResponse;
+    expect(createdPlugin.name).toBe("test-plugin");
+    expect(createdPlugin.meta.testSecret).toBeDefined();
+    expect(createdPlugin.meta.testSecret.id).toBeDefined();
+    return createdPlugin; // Modified to return entire data object
   });
+
   // Test getting installed plugins
-  it("should list installed plugins", async () => {
-    const response = await app.request(
+  test("should list installed plugins", async () => {
+    const response = await testFetcher.get(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
     expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.some((p: any) => p.name === "test-plugin")).toBe(true);
+    expect(Array.isArray(response.jsonResponse)).toBe(true);
+    expect(
+      response.jsonResponse.some((p: any) => p.name === "test-plugin")
+    ).toBe(true);
   });
+
   //   // Test updating plugin configuration
-  it("should update plugin configuration", async () => {
+  test("should update plugin configuration", async () => {
     const updatedConfig = {
       id: createdPlugin.id,
       organisationId: TEST_ORGANISATION_1.id,
@@ -164,79 +156,54 @@ describe("Plugin API Endpoints", () => {
       },
     };
 
-    const response = await app.request(
+    const response = await testFetcher.put(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${createdPlugin.id}`,
-      {
-        method: "PUT",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-        body: JSON.stringify(updatedConfig),
-      }
+      user1Token,
+      updatedConfig
     );
     expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.description).toBe("Updated description");
-    expect(data.meta.testParam.value).toBe("updated value");
+    expect(response.jsonResponse.description).toBe("Updated description");
+    expect(response.jsonResponse.meta.testParam.value).toBe("updated value");
   });
+
   // Test getting single plugin
-  it("should get single plugin by ID", async () => {
-    const listResponse = await app.request(
+  test("should get single plugin by ID", async () => {
+    const listResponse = await testFetcher.get(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
-    const plugins = await listResponse.json();
+    const plugins = listResponse.jsonResponse;
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
-    const response = await app.request(
+    const response = await testFetcher.get(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
     expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.name).toBe("test-plugin");
+    expect(response.jsonResponse.name).toBe("test-plugin");
   });
   // Test deleting plugin
-  it("should delete plugin", async () => {
-    const listResponse = await app.request(
+  test("should delete plugin", async () => {
+    const listResponse = await testFetcher.get(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
-    const plugins = await listResponse.json();
+    const plugins = listResponse.jsonResponse;
     const testPlugin = plugins.find((p: any) => p.name === "test-plugin");
-    const response = await app.request(
+    const response = await testFetcher.delete(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
     expect(response.status).toBe(200);
     // Verify deletion
-    const verifyResponse = await app.request(
+    const verifyResponse = await testFetcher.get(
+      app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/plugins/installed/${testPlugin.id}`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: `jwt=${jwt}`,
-        },
-      }
+      user1Token
     );
     expect(verifyResponse.status).toBe(400);
   });

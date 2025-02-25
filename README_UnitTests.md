@@ -72,3 +72,18 @@ If you are working on the database you will do CRUD operations and delete all yo
 
 Test that will test CRUD etc. needs to be run in sequence.
 That means they need to be in the same "test" or "it" block.
+
+## Security checks
+
+You can check the necessary rejection of unauthorized requests with the rejectUnauthorized function.
+It takes an array of [method, path] and will check if the request is rejected with a 401 status code.
+
+```ts
+import { rejectUnauthorized } from "../../test/reject-unauthorized.test";
+
+describe("Security checks", () => {
+  const app: FastAppHono = new Hono();
+  defineMyEndpoints(app, "/api");
+  rejectUnauthorized(app, [["GET", "/api/users"]]);
+});
+```

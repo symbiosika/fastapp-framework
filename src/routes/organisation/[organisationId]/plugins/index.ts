@@ -31,6 +31,7 @@ import {
   pluginsSelectSchema,
   pluginsUpdateSchema,
 } from "../../../../dbSchema";
+import { isOrganisationMember } from "../..";
 
 const executeEndpoint = async (
   c: Context,
@@ -98,6 +99,7 @@ export default function definePluginRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -135,6 +137,7 @@ export default function definePluginRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -174,6 +177,7 @@ export default function definePluginRoutes(
     }),
     validator("param", v.object({ organisationId: v.string() })),
     validator("json", pluginsInsertSchema),
+    isOrganisationMember,
     async (c) => {
       const { organisationId } = c.req.valid("param");
       const data = c.req.valid("json");
@@ -219,6 +223,7 @@ export default function definePluginRoutes(
       "param",
       v.object({ organisationId: v.string(), idOrName: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, idOrName } = c.req.valid("param");
       const isUUID = isValidUuid(idOrName);
@@ -265,6 +270,7 @@ export default function definePluginRoutes(
       v.object({ organisationId: v.string(), idOrName: v.string() })
     ),
     validator("json", pluginsUpdateSchema),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, idOrName } = c.req.valid("param");
@@ -308,6 +314,7 @@ export default function definePluginRoutes(
       "param",
       v.object({ organisationId: v.string(), idOrName: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, idOrName } = c.req.valid("param");
       const isUUID = isValidUuid(idOrName);
@@ -353,6 +360,7 @@ export default function definePluginRoutes(
         endpoint: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
@@ -398,6 +406,7 @@ export default function definePluginRoutes(
         endpoint: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
@@ -444,6 +453,7 @@ export default function definePluginRoutes(
         endpoint: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, pluginName, endpoint } = c.req.valid("param");
       const url = new URL(c.req.url);
@@ -488,6 +498,7 @@ export default function definePluginRoutes(
         endpoint: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const url = new URL(c.req.url);
       const { organisationId, pluginName, endpoint } = c.req.valid("param");
