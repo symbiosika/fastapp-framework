@@ -14,6 +14,7 @@ import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { RESPONSES } from "../../../../lib/responses";
+import { isOrganisationAdmin } from "../..";
 
 const setSecretValidation = v.object({
   name: v.string(),
@@ -54,6 +55,7 @@ export default function defineManageSecretsRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -92,6 +94,7 @@ export default function defineManageSecretsRoutes(
     }),
     validator("json", setSecretValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
@@ -132,6 +135,7 @@ export default function defineManageSecretsRoutes(
       "param",
       v.object({ organisationId: v.string(), name: v.string() })
     ),
+    isOrganisationAdmin,
     async (c) => {
       const { organisationId, name } = c.req.valid("param");
       try {
