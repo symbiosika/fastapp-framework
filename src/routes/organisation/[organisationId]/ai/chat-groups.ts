@@ -162,10 +162,13 @@ export default function defineChatGroupRoutes(
     async (c) => {
       const usersId = c.get("usersId");
       const { organisationId } = c.req.valid("param");
+      const { workspaceId } = c.req.valid("query");
       const chatGroups = await getChatSessionGroupsByUser(
         organisationId,
         usersId,
-        c.req.valid("query")
+        {
+          workspaceId,
+        }
       );
       return c.json(chatGroups);
     }
