@@ -12,7 +12,7 @@ import {
   createDatabaseClient,
   waitForDbConnection,
 } from "./lib/db/db-connection";
-import { initializeFullDbSchema } from "./lib/db/db-schema";
+import { initializeFullDbSchema, Job } from "./lib/db/db-schema";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 // Types
 import type {
@@ -52,7 +52,7 @@ import defineSearchInOrganisationRoutes from "./routes/organisation/[organisatio
 import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
 
 // Jobs
-import { defineJob, startJobQueue, createJob, getJob } from "./lib/jobs";
+import { defineJob, startJobQueue } from "./lib/jobs";
 
 import scheduler from "./lib/cron";
 // Plugins
@@ -75,6 +75,7 @@ import paymentService from "./payment-service";
 import usermanagementService from "./usermanagement-service";
 import filesService from "./files-service";
 import middlewareService from "./middleware-service";
+import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
 
 /**
@@ -412,7 +413,4 @@ export { paymentService };
 export { usermanagementService };
 export { filesService };
 export { middlewareService };
-export const jobService = {
-  createJob,
-  getJob,
-};
+export { jobService };

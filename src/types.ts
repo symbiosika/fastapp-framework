@@ -2,6 +2,24 @@
  * Exposed types for the customer app
  */
 
+export type * from "./lib/db/schema/users";
+export type * from "./lib/db/schema/secrets";
+export type * from "./lib/db/schema/files";
+export type * from "./lib/db/schema/embeddings";
+export type * from "./lib/db/schema/payment";
+export type * from "./lib/db/schema/additional-data";
+export type * from "./lib/db/schema/prompts";
+export type * from "./lib/db/schema/knowledge";
+export type * from "./lib/db/schema/jobs";
+export type * from "./lib/db/schema/plugins";
+export type * from "./lib/db/schema/chat";
+export type * from "./lib/db/schema/logs";
+export type * from "./lib/db/schema/workspaces";
+export type * from "./lib/db/schema/webhooks";
+export type * from "./lib/db/schema/server";
+
+export type * from "./lib/types/openai";
+
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";
 import Logger from "./lib/log";

@@ -50,7 +50,7 @@ interface Model {
   maxOutputTokens?: number;
 }
 
-interface Provider {
+export interface Provider {
   [key: string]: Model;
 }
 

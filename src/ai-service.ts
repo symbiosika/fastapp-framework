@@ -45,6 +45,16 @@ import {
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
 import { chatWithAgent } from "./lib/ai/chat";
+import {
+  chatCompletion,
+  generateEmbedding,
+  generateImage,
+  generateImageDescription,
+  generateLongText,
+  getAllAIModels,
+  speechToText,
+  textToSpeech,
+} from "./lib/ai/standard";
 
 export default {
   // prompt templates
@@ -83,4 +93,13 @@ export default {
   updatePromptSnippet,
   deletePromptSnippet,
   getPromptSnippetByNameAndCategory,
+  // ai standard functions
+  getAllAIModels,
+  generateEmbedding,
+  generateImageDescription,
+  chatCompletion,
+  generateLongText,
+  speechToText,
+  textToSpeech,
+  generateImage,
 };
