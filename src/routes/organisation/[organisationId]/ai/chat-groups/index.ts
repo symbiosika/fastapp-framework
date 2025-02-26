@@ -3,15 +3,15 @@
  * These routes are protected by JWT and CheckPermission middleware
  */
 
-import type { FastAppHono } from "../../../../types";
+import type { FastAppHono } from "../../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
-import { RESPONSES } from "../../../../lib/responses";
+import { RESPONSES } from "../../../../../lib/responses";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
-import { queryChatSessions } from "../../../../lib/ai/chat-groups";
+} from "../../../../../lib/utils/hono-middlewares";
+import { queryChatSessions } from "../../../../../lib/ai/chat-groups";
 import {
   createChatSessionGroup,
   getChatSessionGroupsByUser,
@@ -20,14 +20,14 @@ import {
   addUserToChatSessionGroup,
   addUsersToChatSessionGroup,
   removeUsersFromChatSessionGroup,
-} from "../../../../lib/ai/chat-groups";
+} from "../../../../../lib/ai/chat-groups";
 import {
   chatSessionGroupAssignmentsSelectSchema,
   chatSessionGroupsInsertSchema,
   chatSessionGroupsSelectSchema,
   chatSessionGroupsUpdateSchema,
   chatSessionsSelectSchema,
-} from "../../../../dbSchema";
+} from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 

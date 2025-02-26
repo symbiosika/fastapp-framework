@@ -4,7 +4,7 @@
  * These routes are protected by JWT and CheckPermission middleware
  */
 
-import type { FastAppHono } from "../../../../types";
+import type { FastAppHono } from "../../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import {
@@ -13,19 +13,19 @@ import {
   getFineTuningEntries,
   getFineTuningEntryById,
   updateFineTuningData,
-} from "../../../../lib/ai/fine-tuning";
-import { parseCommaSeparatedListFromUrlParam } from "../../../../lib/url";
-import { RESPONSES } from "../../../../lib/responses";
+} from "../../../../../lib/ai/fine-tuning";
+import { parseCommaSeparatedListFromUrlParam } from "../../../../../lib/url";
+import { RESPONSES } from "../../../../../lib/responses";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
+} from "../../../../../lib/utils/hono-middlewares";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import {
   fineTuningDataSchema,
   knowledgeEntrySchema,
-} from "../../../../dbSchema";
+} from "../../../../../dbSchema";
 
 const fineTuningDataValidation = v.object({
   organisationId: v.string(),

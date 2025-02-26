@@ -32,7 +32,7 @@ import { definePublicUserRoutes } from "./routes/user/public";
 import { defineSecuredUserRoutes } from "./routes/user/protected";
 import { defineFilesRoutes } from "./routes/organisation/[organisationId]/files";
 import paymentRoutes from "./routes/payment";
-import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templates";
+import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/template";
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
@@ -49,7 +49,7 @@ import defineWebhookRoutes from "./routes/organisation/[organisationId]/webhooks
 import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
 import defineAdminRoutes from "./routes/admin";
 import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";
-import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils/utils";
+import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";

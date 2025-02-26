@@ -3,33 +3,33 @@
  * These routes are protected by JWT and CheckPermission middleware
  */
 
-import type { FastAppHono } from "../../../../types";
+import type { FastAppHono } from "../../../../../types";
 import { HTTPException } from "hono/http-exception";
-import { RESPONSES } from "../../../../lib/responses";
+import { RESPONSES } from "../../../../../lib/responses";
 import {
   aiModelsValidationSchema,
   getAllAIModels,
-} from "../../../../lib/ai/standard";
+} from "../../../../../lib/ai/standard";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
+} from "../../../../../lib/utils/hono-middlewares";
 import {
   chatInitInputValidation,
   chatWithAgent,
   chatWithTemplateReturnValidation,
   createEmptySession,
-} from "../../../../lib/ai/chat";
+} from "../../../../../lib/ai/chat";
 import {
   interviewRespondInputValidation,
   interviewRespondOutputValidation,
   respondInInterview,
-} from "../../../../lib/ai/chat/interview";
-import { chatStore } from "../../../../lib/ai/chat/chat-store";
+} from "../../../../../lib/ai/chat/interview";
+import { chatStore } from "../../../../../lib/ai/chat/chat-store";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { chatSessionsSelectSchema } from "../../../../dbSchema";
+import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 
 // Define the roles as a type
 type ChatMessageRole = "system" | "user" | "assistant";

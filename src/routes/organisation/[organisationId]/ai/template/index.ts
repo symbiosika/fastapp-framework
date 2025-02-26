@@ -15,22 +15,22 @@ import {
   getTemplates,
   updatePromptTemplate,
   updatePromptTemplatePlaceholder,
-} from "../../../../lib/ai/prompt-templates/crud";
-import type { FastAppHono } from "../../../../types";
+} from "../../../../../lib/ai/prompt-templates/crud";
+import type { FastAppHono } from "../../../../../types";
 import { HTTPException } from "hono/http-exception";
-import { parseCommaSeparatedListFromUrlParam } from "../../../../lib/url";
-import { RESPONSES } from "../../../../lib/responses";
+import { parseCommaSeparatedListFromUrlParam } from "../../../../../lib/url";
+import { RESPONSES } from "../../../../../lib/responses";
 import {
   getPromptSnippets,
   getPromptSnippetById,
   addPromptSnippet,
   updatePromptSnippet,
   deletePromptSnippet,
-} from "../../../../lib/ai/prompt-snippets";
+} from "../../../../../lib/ai/prompt-snippets";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
+} from "../../../../../lib/utils/hono-middlewares";
 import * as v from "valibot";
 import {
   promptSnippetsInsertSchema,
@@ -40,7 +40,7 @@ import {
   promptTemplatePlaceholdersSelectSchema,
   promptTemplatesInsertSchema,
   promptTemplatesSelectSchema,
-} from "../../../../dbSchema";
+} from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 

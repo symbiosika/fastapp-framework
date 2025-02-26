@@ -3,39 +3,39 @@
  * These routes are protected by JWT and CheckPermission middleware
  */
 
-import type { FastAppHono } from "../../../../types";
+import type { FastAppHono } from "../../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import {
   extractKnowledgeFromExistingDbEntry,
   extractKnowledgeInOneStep,
-} from "../../../../lib/ai/knowledge/add-knowledge";
-import { parseDocument } from "../../../../lib/ai/parsing";
+} from "../../../../../lib/ai/knowledge/add-knowledge";
+import { parseDocument } from "../../../../../lib/ai/parsing";
 import {
   deleteKnowledgeEntry,
   getFullSourceDocumentsForKnowledgeEntry,
   getKnowledgeEntries,
-} from "../../../../lib/ai/knowledge/get-knowledge";
-import { RESPONSES } from "../../../../lib/responses";
+} from "../../../../../lib/ai/knowledge/get-knowledge";
+import { RESPONSES } from "../../../../../lib/responses";
 import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
-} from "../../../../lib/ai/knowledge/similarity-search";
+} from "../../../../../lib/ai/knowledge/similarity-search";
 import {
   createKnowledgeText,
   readKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
-} from "../../../../lib/ai/knowledge/knowledge-texts";
-import { addKnowledgeTextFromUrl } from "../../../../lib/ai/knowledge-texts";
+} from "../../../../../lib/ai/knowledge/knowledge-texts";
+import { addKnowledgeTextFromUrl } from "../../../../../lib/ai/knowledge-texts";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
-import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organisation";
+} from "../../../../../lib/utils/hono-middlewares";
+import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-organisation";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { knowledgeEntrySchema } from "../../../../dbSchema";
+import { knowledgeEntrySchema } from "../../../../../dbSchema";
 
 const FileSourceType = {
   DB: "db",
