@@ -107,7 +107,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(v.array(fineTuningDataSchema)),
+              schema: resolver(fineTuningDataSchema),
             },
           },
         },
@@ -156,7 +156,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       },
     }),
     validator("json", fineTuningDataValidation),
-    validator("query", v.object({ organisationId: v.string() })),
+    validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
       try {

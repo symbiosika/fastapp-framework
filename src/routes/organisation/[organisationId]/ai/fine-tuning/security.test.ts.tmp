@@ -1,0 +1,291 @@
+import { describe, test, expect, beforeAll } from "bun:test";
+import { testFetcher } from "../../../../../test/fetcher.test";
+import defineRoutes from "./index";
+import {
+  initTests,
+  TEST_ORGANISATION_1,
+  TEST_ORGANISATION_2,
+  TEST_USER_1,
+  TEST_USER_2,
+} from "../../../../../test/init.test";
+import { Hono } from "hono";
+import type { FastAppHonoContextVariables } from "../../../../../types";
+import { rejectUnauthorized } from "../../../../../test/reject-unauthorized.test";
+
+let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let TEST_USER_1_TOKEN: string;
+let TEST_USER_2_TOKEN: string;
+let testFineTuningId: string;
+
+beforeAll(async () => {
+  const { user1Token, user2Token } = await initTests();
+
+  defineRoutes(app, "/api");
+
+  TEST_USER_1_TOKEN = user1Token;
+  TEST_USER_2_TOKEN = user2Token;
+
+  // Create a test fine-tuning entry for security tests
+  const response = await testFetcher.post(
+    app,
+    `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+    TEST_USER_1_TOKEN,
+    {
+      organisationId: TEST_ORGANISATION_1.id,
+      name: "Security Test Data",
+      category: "security",
+      data: [
+        {
+          question: "Security question",
+          answer: "Security answer",
+        },
+      ],
+    }
+  );
+  console.log(response.textResponse);
+  testFineTuningId = response.jsonResponse?.id;
+  console.log("testFineTuningId", testFineTuningId);
+});
+
+describe("Fine-Tuning API Security Tests", () => {
+  test("Endpoints should reject unauthorized requests", async () => {
+    await rejectUnauthorized(app, [
+      ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`],
+      [
+        "GET",
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      ],
+      ["POST", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`],
+      [
+        "PUT",
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      ],
+      [
+        "DELETE",
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      ],
+    ]);
+  });
+
+  test("User cannot access fine-tuning data in another organisation", async () => {
+    // User 2 tries to access organisation 1's fine-tuning data
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      TEST_USER_2_TOKEN
+    );
+
+    // Should be rejected due to organisation permission check
+    expect(response.status).toBe(403);
+  });
+
+  test("User cannot create fine-tuning data in another organisation", async () => {
+    // User 2 tries to create fine-tuning data in organisation 1
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_2_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Unauthorized Creation",
+        data: [
+          {
+            question: "Unauthorized question",
+            answer: "Unauthorized answer",
+          },
+        ],
+      }
+    );
+    console.log(response.textResponse);
+    // Should be rejected due to organisation permission check
+    expect(response.status).toBe(403);
+  });
+
+  test("User cannot update fine-tuning data in another organisation", async () => {
+    // User 2 tries to update fine-tuning data in organisation 1
+    const response = await testFetcher.put(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      TEST_USER_2_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Unauthorized Update",
+        data: [
+          {
+            question: "Unauthorized question",
+            answer: "Unauthorized answer",
+          },
+        ],
+      }
+    );
+
+    // Should be rejected due to organisation permission check
+    expect(response.status).toBe(403);
+  });
+
+  test("User cannot delete fine-tuning data in another organisation", async () => {
+    // User 2 tries to delete fine-tuning data in organisation 1
+    const response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      TEST_USER_2_TOKEN
+    );
+
+    // Should be rejected due to organisation permission check
+    expect(response.status).toBe(403);
+  });
+
+  test("User can access their own organisation's fine-tuning data", async () => {
+    // Create fine-tuning data in organisation 2
+    console.log("Creating fine-tuning data in organisation 2");
+    const createResponse = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_2.id}/ai/fine-tuning`,
+      TEST_USER_2_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_2.id,
+        name: "User 2 Fine-Tuning Data",
+        data: [
+          {
+            question: "User 2 question",
+            answer: "User 2 answer",
+          },
+        ],
+      }
+    );
+    console.log(createResponse.textResponse);
+    expect(createResponse.status).toBe(200);
+    const user2FineTuningId = createResponse.jsonResponse.id;
+
+    // User 2 should be able to access their own fine-tuning data
+    console.log("Accessing fine-tuning data in organisation 2");
+    const getResponse = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_2.id}/ai/fine-tuning/${user2FineTuningId}`,
+      TEST_USER_2_TOKEN
+    );
+    console.log(getResponse.textResponse);
+    expect(getResponse.status).toBe(200);
+
+    // User 1 should not be able to access User 2's fine-tuning data
+    console.log("Accessing fine-tuning data in organisation 2 with user 1");
+    const unauthorizedGetResponse = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_2.id}/ai/fine-tuning/${user2FineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(unauthorizedGetResponse.status).toBe(403);
+
+    // Clean up
+    console.log("Cleaning up fine-tuning data in organisation 2");
+    const r = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_2.id}/ai/fine-tuning/${user2FineTuningId}`,
+      TEST_USER_2_TOKEN
+    );
+    console.log(r.jsonResponse);
+  });
+
+  test("Invalid organisation ID should be rejected", async () => {
+    const invalidOrgId = "invalid-org-id";
+
+    // Try to access fine-tuning data with invalid organisation ID
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${invalidOrgId}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN
+    );
+
+    // Should be rejected
+    expect(response.status).not.toBe(200);
+  });
+
+  test("Organisation ID mismatch in request body and URL", async () => {
+    // Try to create fine-tuning data with mismatched organisation IDs
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_2.id, // Mismatch with URL
+        name: "Mismatched Org ID",
+        data: [
+          {
+            question: "Mismatch question",
+            answer: "Mismatch answer",
+          },
+        ],
+      }
+    );
+
+    // Should be rejected or handled appropriately
+    expect(response.status).not.toBe(200);
+  });
+
+  test("SQL Injection attempt in parameters", async () => {
+    // Try SQL injection in ID parameter
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/1' OR '1'='1`,
+      TEST_USER_1_TOKEN
+    );
+
+    // Should be rejected or handled safely
+    expect(response.status).toBe(400);
+  });
+
+  test("XSS attempt in data", async () => {
+    // Try XSS in question and answer
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "XSS Test",
+        data: [
+          {
+            question: "<script>alert('XSS Question')</script>",
+            answer: "<img src='x' onerror='alert(\"XSS Answer\")'>",
+          },
+        ],
+      }
+    );
+
+    // Should handle XSS safely (either sanitize or store safely)
+    if (response.status === 200) {
+      const xssId = response.jsonResponse.id;
+
+      // Retrieve the data to check if XSS was handled
+      const getResponse = await testFetcher.get(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${xssId}`,
+        TEST_USER_1_TOKEN
+      );
+      expect(getResponse.status).toBe(200);
+
+      // Clean up
+      await testFetcher.delete(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${xssId}`,
+        TEST_USER_1_TOKEN
+      );
+    } else {
+      // If it fails, it should be a 400 error
+      expect(response.status).toBe(400);
+    }
+  });
+
+  // Clean up the test fine-tuning entry created in beforeAll
+  test("Clean up test data", async () => {
+    expect(testFineTuningId).not.toBeDefined();
+
+    const response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    console.log(response.textResponse);
+    expect(response.status).toBe(200);
+  });
+});

@@ -16,15 +16,10 @@ IF you are working with database data you will need to be sure you have a DB con
 
 ```ts
 import { beforeAll } from "bun:test";
-import {
-  createDatabaseClient,
-  getDb,
-  waitForDbConnection,
-} from "src/lib/db/db-connection";
+import { initTests } from "../../test/init.test";
 
 beforeAll(async () => {
-  await createDatabaseClient();
-  await waitForDbConnection();
+  await initTests();
 });
 ```
 

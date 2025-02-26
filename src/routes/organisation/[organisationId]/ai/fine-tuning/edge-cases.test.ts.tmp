@@ -1,0 +1,307 @@
+import { describe, test, expect, beforeAll } from "bun:test";
+import { testFetcher } from "../../../../../test/fetcher.test";
+import defineRoutes from "./index";
+import {
+  initTests,
+  TEST_ORGANISATION_1,
+  TEST_USER_1,
+} from "../../../../../test/init.test";
+import { Hono } from "hono";
+import type { FastAppHonoContextVariables } from "../../../../../types";
+import {
+  createDatabaseClient,
+  waitForDbConnection,
+} from "../../../../../lib/db/db-connection";
+
+let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let TEST_USER_1_TOKEN: string;
+let testFineTuningId: string;
+
+beforeAll(async () => {
+  await createDatabaseClient();
+  await waitForDbConnection();
+
+  defineRoutes(app, "/api");
+  const { user1Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+
+  // Create a test fine-tuning entry for edge case tests
+  const response = await testFetcher.post(
+    app,
+    `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+    TEST_USER_1_TOKEN,
+    {
+      organisationId: TEST_ORGANISATION_1.id,
+      name: "Edge Case Test Data",
+      category: "edge-cases",
+      data: [
+        {
+          question: "Edge case question",
+          answer: "Edge case answer",
+        },
+      ],
+    }
+  );
+  testFineTuningId = response.jsonResponse.id;
+});
+
+describe("Fine-Tuning API Edge Cases", () => {
+  test("Invalid ID for GET request", async () => {
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/invalid-id`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Invalid ID for PUT request", async () => {
+    const response = await testFetcher.put(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/invalid-id`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Updated Name",
+        data: [
+          {
+            question: "Question",
+            answer: "Answer",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Invalid ID for DELETE request", async () => {
+    const response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/invalid-id`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Missing required fields in POST request", async () => {
+    // Missing organisationId
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        name: "Missing Fields Test",
+        data: [
+          {
+            question: "Question",
+            answer: "Answer",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(400);
+
+    // Missing data array
+    response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Missing Fields Test",
+      }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Empty data array in POST request", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Empty Data Test",
+        data: [],
+      }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Missing question or answer in data items", async () => {
+    // Missing question
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Missing Question Test",
+        data: [
+          {
+            answer: "Answer without question",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(400);
+
+    // Missing answer
+    response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Missing Answer Test",
+        data: [
+          {
+            question: "Question without answer",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Very long text in question and answer", async () => {
+    // Create very long strings (5000 characters each)
+    const longQuestion = "Q".repeat(5000);
+    const longAnswer = "A".repeat(5000);
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Long Text Test",
+        data: [
+          {
+            question: longQuestion,
+            answer: longAnswer,
+          },
+        ],
+      }
+    );
+
+    // This might succeed or fail depending on database constraints
+    // Just check that we get a response and handle it appropriately
+    if (response.status === 200) {
+      // If it succeeds, clean up
+      await testFetcher.delete(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${response.jsonResponse.id}`,
+        TEST_USER_1_TOKEN
+      );
+    } else {
+      // If it fails, it should be a 400 error
+      expect(response.status).toBe(400);
+    }
+  });
+
+  test("Very large number of data items", async () => {
+    // Create an array with 100 Q/A pairs
+    const largeData = Array(100)
+      .fill(null)
+      .map((_, i) => ({
+        question: `Question ${i}`,
+        answer: `Answer ${i}`,
+      }));
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Large Data Array Test",
+        data: largeData,
+      }
+    );
+
+    // This might succeed or fail depending on database constraints
+    // Just check that we get a response and handle it appropriately
+    if (response.status === 200) {
+      // If it succeeds, clean up
+      await testFetcher.delete(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${response.jsonResponse.id}`,
+        TEST_USER_1_TOKEN
+      );
+    } else {
+      // If it fails, it should be a 400 error
+      expect(response.status).toBe(400);
+    }
+  });
+
+  test("Special characters in name and category", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Special Ch@r$!*()_+",
+        category: "Sp3c!@l-C@t3g0ry",
+        data: [
+          {
+            question: "Special characters question?",
+            answer: "Special characters answer!",
+          },
+        ],
+      }
+    );
+
+    // Should handle special characters properly
+    expect(response.status).toBe(200);
+    const specialId = response.jsonResponse.id;
+
+    // Clean up
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${specialId}`,
+      TEST_USER_1_TOKEN
+    );
+  });
+
+  test("HTML content in question and answer", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "HTML Content Test",
+        data: [
+          {
+            question: "<h1>HTML Question</h1><script>alert('xss')</script>",
+            answer:
+              "<p>HTML <strong>Answer</strong> with <a href='#'>link</a></p>",
+          },
+        ],
+      }
+    );
+
+    // Should handle HTML content properly (either sanitize or store safely)
+    expect(response.status).toBe(200);
+    const htmlId = response.jsonResponse.id;
+
+    // Clean up
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${htmlId}`,
+      TEST_USER_1_TOKEN
+    );
+  });
+
+  // Clean up the test fine-tuning entry created in beforeAll
+  test("Clean up test data", async () => {
+    const response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${testFineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+  });
+});

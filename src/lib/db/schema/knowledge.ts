@@ -47,7 +47,7 @@ export const knowledgeText = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     organisationId: uuid("organisation_id")
       .notNull()
-      .references(() => organisations.id),
+      .references(() => organisations.id, { onDelete: "cascade" }),
     // optional team id to organize knowledge entries into teams.
     // security feature to limit access to knowledge entries
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
@@ -102,7 +102,7 @@ export const knowledgeEntry = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     organisationId: uuid("organisation_id")
       .notNull()
-      .references(() => organisations.id),
+      .references(() => organisations.id, { onDelete: "cascade" }),
     // optional team id to organize knowledge entries into teams.
     // security feature to limit access to knowledge entries
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
@@ -202,7 +202,7 @@ export const fineTuningData = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     organisationId: uuid("organisation_id")
       .notNull()
-      .references(() => organisations.id),
+      .references(() => organisations.id, { onDelete: "cascade" }),
     // optional team id to organize knowledge entries into teams.
     // security feature to limit access to knowledge entries
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
@@ -253,7 +253,7 @@ export const knowledgeFilters = pgBaseTable(
       .default(sql`gen_random_uuid()`),
     organisationId: uuid("organisation_id")
       .notNull()
-      .references(() => organisations.id),
+      .references(() => organisations.id, { onDelete: "cascade" }),
     category: varchar("category", { length: 50 }).notNull(), // z.B. 'department', 'topic', 'level'
     name: varchar("name", { length: 255 }).notNull(),
     createdAt: timestamp("created_at", { mode: "string" })

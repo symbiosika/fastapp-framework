@@ -1,0 +1,237 @@
+import { describe, test, expect, beforeAll } from "bun:test";
+import { testFetcher } from "../../../../../test/fetcher.test";
+import defineRoutes from "./index";
+import {
+  initTests,
+  TEST_ORGANISATION_1,
+  TEST_USER_1,
+} from "../../../../../test/init.test";
+import { Hono } from "hono";
+import type { FastAppHonoContextVariables } from "../../../../../types";
+import {
+  createDatabaseClient,
+  waitForDbConnection,
+} from "../../../../../lib/db/db-connection";
+
+let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let TEST_USER_1_TOKEN: string;
+
+beforeAll(async () => {
+  await createDatabaseClient();
+  await waitForDbConnection();
+
+  defineRoutes(app, "/api");
+  const { user1Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+});
+
+describe("Fine-Tuning API Endpoints", () => {
+  let createdFineTuningId: string;
+
+  test("Sequential Fine-Tuning Operations", async () => {
+    console.log("Testing sequential fine-tuning operations...");
+
+    console.log("Adding new fine-tuning data...");
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Test Fine-Tuning Data",
+        category: "general",
+        data: [
+          {
+            question: "What is the capital of France?",
+            answer: "The capital of France is Paris.",
+          },
+          {
+            question: "What is the capital of Germany?",
+            answer: "The capital of Germany is Berlin.",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(200);
+    let data = response.jsonResponse;
+    createdFineTuningId = data.id;
+    console.log("Added fine-tuning data:", createdFineTuningId);
+    expect(data.name).toBe("Test Fine-Tuning Data");
+    expect(data.category).toBe("general");
+    expect(data.data.length).toBe(2);
+
+    console.log("Getting all fine-tuning entries...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(0);
+    expect(data.some((entry: any) => entry.id === createdFineTuningId)).toBe(
+      true
+    );
+
+    console.log("Getting fine-tuning entry by ID...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${createdFineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.id).toBe(createdFineTuningId);
+    expect(data.name).toBe("Test Fine-Tuning Data");
+    expect(data.category).toBe("general");
+
+    console.log("Updating fine-tuning data...");
+    response = await testFetcher.put(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${createdFineTuningId}`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Updated Fine-Tuning Data",
+        category: "geography",
+        data: [
+          {
+            question: "What is the capital of France?",
+            answer: "The capital of France is Paris.",
+          },
+          {
+            question: "What is the capital of Germany?",
+            answer: "The capital of Germany is Berlin.",
+          },
+          {
+            question: "What is the capital of Italy?",
+            answer: "The capital of Italy is Rome.",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.name).toBe("Updated Fine-Tuning Data");
+    expect(data.category).toBe("geography");
+    expect(data.data.length).toBe(3);
+
+    console.log("Getting fine-tuning entries with filter...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning?category=geography`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.some((entry: any) => entry.category === "geography")).toBe(
+      true
+    );
+
+    console.log("Deleting fine-tuning data...");
+    response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${createdFineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+
+    console.log("Verifying deletion...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${createdFineTuningId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("Filter Fine-Tuning Data by Name", async () => {
+    // Create test data
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+      TEST_USER_1_TOKEN,
+      {
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Filter Test Data",
+        category: "test-category",
+        data: [
+          {
+            question: "Test question",
+            answer: "Test answer",
+          },
+        ],
+      }
+    );
+    expect(response.status).toBe(200);
+    const filterId = response.jsonResponse.id;
+
+    // Test filtering by name
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning?name=Filter Test Data`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    const data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.some((entry: any) => entry.name === "Filter Test Data")).toBe(
+      true
+    );
+
+    // Clean up
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${filterId}`,
+      TEST_USER_1_TOKEN
+    );
+  });
+
+  test("Multiple Fine-Tuning Data Entries", async () => {
+    const entries = [];
+
+    // Create multiple entries
+    for (let i = 0; i < 3; i++) {
+      const response = await testFetcher.post(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning`,
+        TEST_USER_1_TOKEN,
+        {
+          organisationId: TEST_ORGANISATION_1.id,
+          name: `Multi Test ${i}`,
+          category: "multi-test",
+          data: [
+            {
+              question: `Multi question ${i}`,
+              answer: `Multi answer ${i}`,
+            },
+          ],
+        }
+      );
+      expect(response.status).toBe(200);
+      entries.push(response.jsonResponse.id);
+    }
+
+    // Get all entries and check if our entries are included
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning?category=multi-test`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    const data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThanOrEqual(3);
+
+    // Clean up
+    for (const id of entries) {
+      await testFetcher.delete(
+        app,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/fine-tuning/${id}`,
+        TEST_USER_1_TOKEN
+      );
+    }
+  });
+});

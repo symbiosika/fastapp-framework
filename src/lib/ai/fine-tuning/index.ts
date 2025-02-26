@@ -16,9 +16,13 @@ type FineTuningDataInput = {
  * Get one fine-tuning entry by id
  */
 export const getFineTuningEntryById = async (id: string) => {
-  return await getDb().query.fineTuningData.findFirst({
+  const data = await getDb().query.fineTuningData.findFirst({
     where: eq(fineTuningData.id, id),
   });
+  if (!data) {
+    throw "Fine-tuning data not found";
+  }
+  return data;
 };
 
 /**
@@ -86,7 +90,7 @@ export const addFineTuningData = async (input: FineTuningDataInput) => {
     )
     .returning();
 
-  return knowledgeEntryResult;
+  return knowledgeEntryResult[0];
 };
 
 /**
