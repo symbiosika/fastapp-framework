@@ -52,7 +52,7 @@ import defineSearchInOrganisationRoutes from "./routes/organisation/[organisatio
 import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
 
 // Jobs
-import { defineJob, startJobQueue } from "./lib/jobs";
+import { defineJob, startJobQueue, createJob, getJob } from "./lib/jobs";
 
 import scheduler from "./lib/cron";
 // Plugins
@@ -412,3 +412,7 @@ export { paymentService };
 export { usermanagementService };
 export { filesService };
 export { middlewareService };
+export const jobService = {
+  createJob,
+  getJob,
+};
