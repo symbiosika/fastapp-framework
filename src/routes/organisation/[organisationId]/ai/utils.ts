@@ -8,6 +8,7 @@ import {
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
+import { isOrganisationMember } from "../..";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -54,6 +55,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { text, voice } = c.req.valid("json");
@@ -126,6 +128,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         returnWords: v.optional(v.string()),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { file, returnSegments, returnWords } = c.req.valid("form");
