@@ -19,6 +19,7 @@ export type * from "./lib/db/schema/webhooks";
 export type * from "./lib/db/schema/server";
 
 export type * from "./lib/types/openai";
+export type * from "./lib/ai/standard";
 
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";

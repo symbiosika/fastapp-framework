@@ -414,3 +414,4 @@ export { usermanagementService };
 export { filesService };
 export { middlewareService };
 export { jobService };
+export const GLOBAL_SERVER_CONFIG = _GLOBAL_SERVER_CONFIG;
