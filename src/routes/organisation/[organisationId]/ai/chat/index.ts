@@ -30,6 +30,7 @@ import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { chatSessionsSelectSchema } from "../../../../../dbSchema";
+import { isOrganisationMember } from "../../..";
 
 // Define the roles as a type
 type ChatMessageRole = "system" | "user" | "assistant";
@@ -59,6 +60,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       const { organisationId } = c.req.valid("param");
       const r = await getAllAIModels();
@@ -91,6 +93,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       },
     }),
     validator("json", chatInitInputValidation),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -140,6 +143,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         startFrom: v.optional(v.string()),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const usersId = c.get("usersId");
       const { organisationId, startFrom } = c.req.valid("param");
@@ -189,6 +193,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, id } = c.req.valid("param");
       const r = await chatStore.get(id);
@@ -235,6 +240,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, id } = c.req.valid("param");
       await chatStore.drop(id);
@@ -273,6 +279,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         chatSessionGroupId: v.optional(v.string()),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const data = c.req.valid("json");
@@ -336,6 +343,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -398,6 +406,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), chatId: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -458,6 +467,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         messageId: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, chatId, messageId } = c.req.valid("param");

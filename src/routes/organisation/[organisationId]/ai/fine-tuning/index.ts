@@ -26,6 +26,7 @@ import {
   fineTuningDataSchema,
   knowledgeEntrySchema,
 } from "../../../../../dbSchema";
+import { isOrganisationMember } from "../../..";
 
 const fineTuningDataValidation = v.object({
   organisationId: v.string(),
@@ -74,6 +75,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { name, category } = c.req.valid("query");
@@ -118,6 +120,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id } = c.req.valid("param");
@@ -154,6 +157,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", fineTuningDataValidation),
     validator("query", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -196,6 +200,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id } = c.req.valid("param");
@@ -233,6 +238,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id } = c.req.valid("param");

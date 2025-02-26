@@ -38,11 +38,13 @@ import {
   promptSnippetsUpdateSchema,
   promptTemplatePlaceholdersInsertSchema,
   promptTemplatePlaceholdersSelectSchema,
+  promptTemplatePlaceholdersUpdateSchema,
   promptTemplatesInsertSchema,
   promptTemplatesSelectSchema,
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
+import { isOrganisationMember } from "../../..";
 
 const updatePromptTemplatePlaceholderSchema = v.intersect([
   promptTemplatesInsertSchema,
@@ -94,6 +96,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         organisationId: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const {
@@ -144,6 +147,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", promptTemplatesInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -195,6 +199,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
@@ -240,6 +245,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
@@ -282,6 +288,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         promptTemplateId: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
@@ -301,9 +308,34 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+      tags: ["ai"],
+      summary: "Get placeholder for prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        promptTemplateId: v.string(),
+        id: v.string(),
+      })
+    ),
+    isOrganisationMember,
     async (c) => {
       try {
-        const id = c.req.param("id");
+        const { id } = c.req.valid("param");
         const r = await getPromptTemplatePlaceholderById(id);
         return c.json(r);
       } catch (e) {
@@ -320,9 +352,34 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders",
+      tags: ["ai"],
+      summary: "Add a new placeholder to a prompt template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", promptTemplatePlaceholdersInsertSchema),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        promptTemplateId: v.string(),
+      })
+    ),
+    isOrganisationMember,
     async (c) => {
       try {
-        const promptTemplateId = c.req.param("promptTemplateId");
+        const { promptTemplateId } = c.req.valid("param");
         const body = await c.req.json();
         const validatedBody = v.parse(
           promptTemplatePlaceholdersInsertSchema,
@@ -348,11 +405,36 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+      tags: ["ai"],
+      summary: "Update a prompt-template placeholder by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", promptTemplatePlaceholdersSelectSchema),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        promptTemplateId: v.string(),
+        id: v.string(),
+      })
+    ),
+    isOrganisationMember,
     async (c) => {
       try {
-        const promptTemplateId = c.req.param("promptTemplateId");
-        const id = c.req.param("id");
-        const body = await c.req.json();
+        const { promptTemplateId, id } = c.req.valid("param");
+        const body = c.req.valid("json");
         const r = await updatePromptTemplatePlaceholder({
           ...body,
           id,
@@ -373,10 +455,29 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/placeholders/:id",
+      tags: ["ai"],
+      summary: "Delete a placeholder for a prompt template by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        promptTemplateId: v.string(),
+        id: v.string(),
+      })
+    ),
+    isOrganisationMember,
     async (c) => {
       try {
-        const promptTemplateId = c.req.param("promptTemplateId");
-        const id = c.req.param("id");
+        const { promptTemplateId, id } = c.req.valid("param");
         const r = await deletePromptTemplatePlaceholder(id, promptTemplateId);
         return c.json(r);
       } catch (e) {
@@ -397,12 +498,39 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     API_BASE_PATH + "/organisation/:organisationId/ai/templates/placeholders",
     authAndSetUsersInfo,
     checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/templates/placeholders",
+      tags: ["ai"],
+      summary:
+        "Get an object with all placeholders for a prompt template with the default values",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        promptId: v.optional(v.string()),
+        promptName: v.optional(v.string()),
+        promptCategory: v.optional(v.string()),
+        organisationId: v.optional(v.string()),
+      })
+    ),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
-        const promptId = c.req.query("promptId");
-        const promptName = c.req.query("promptName");
-        const promptCategory = c.req.query("promptCategory");
-        const organisationId = c.req.query("organisationId");
+        const { promptId, promptName, promptCategory, organisationId } =
+          c.req.valid("query");
+
         const r = await getPlaceholdersForPromptTemplate({
           promptId,
           promptName,
@@ -431,6 +559,16 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       path: "/organisation/:organisationId/ai/prompt-snippets/:id?",
       tags: ["ai"],
       summary: "Get prompt snippets",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptSnippetsSelectSchema),
+            },
+          },
+        },
+      },
     }),
     validator(
       "query",
@@ -440,6 +578,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const { name, category } = c.req.valid("query");
@@ -471,6 +610,16 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       path: "/organisation/:organisationId/ai/prompt-snippets/:id",
       tags: ["ai"],
       summary: "Get prompt snippet by ID",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptSnippetsSelectSchema),
+            },
+          },
+        },
+      },
     }),
     validator(
       "param",
@@ -479,6 +628,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -515,6 +665,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", promptSnippetsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -560,6 +711,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
@@ -596,6 +748,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");

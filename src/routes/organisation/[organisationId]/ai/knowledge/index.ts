@@ -36,6 +36,7 @@ import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-org
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { knowledgeEntrySchema } from "../../../../../dbSchema";
+import { isOrganisationMember } from "../../..";
 
 const FileSourceType = {
   DB: "db",
@@ -185,6 +186,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", generateKnowledgeValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -237,6 +239,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const {
@@ -293,6 +296,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -334,6 +338,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
@@ -367,6 +372,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", similaritySearchValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -430,6 +436,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", parseDocumentValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -470,6 +477,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", addFromTextValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -510,6 +518,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", addFromUrlValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -544,6 +553,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", createKnowledgeTextValidation),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -595,6 +605,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const {
@@ -660,6 +671,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { teamId, workspaceId } = c.req.valid("query");
@@ -710,6 +722,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { teamId, workspaceId } = c.req.valid("query");
@@ -779,6 +792,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       const organisationId = c.req.param("organisationId");
       const contentType = c.req.header("content-type");

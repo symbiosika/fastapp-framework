@@ -113,6 +113,8 @@ export type PromptTemplatePlaceholdersSelect =
   typeof promptTemplatePlaceholders.$inferSelect;
 export type PromptTemplatePlaceholdersInsert =
   typeof promptTemplatePlaceholders.$inferInsert;
+export type PromptTemplatePlaceholdersUpdate =
+  Partial<PromptTemplatePlaceholdersInsert>;
 
 export const promptTemplatePlaceholdersSelectSchema = createSelectSchema(
   promptTemplatePlaceholders

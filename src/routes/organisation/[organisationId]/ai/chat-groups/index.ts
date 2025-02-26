@@ -30,6 +30,7 @@ import {
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
+import { isOrganisationMember } from "../../..";
 
 // Add these validation schemas near the top with other schemas
 const addUsersToGroupValidation = v.object({
@@ -75,6 +76,7 @@ export default function defineChatGroupRoutes(
         groupId: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       const { organisationId, groupId } = c.req.valid("param");
       const usersId = c.get("usersId");
@@ -110,6 +112,7 @@ export default function defineChatGroupRoutes(
     }),
     validator("json", chatSessionGroupsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
     async (c) => {
       try {
         const usersId = c.get("usersId");
@@ -159,6 +162,7 @@ export default function defineChatGroupRoutes(
     }),
     validator("param", v.object({ organisationId: v.string() })),
     validator("query", v.object({ workspaceId: v.optional(v.string()) })),
+    isOrganisationMember,
     async (c) => {
       const usersId = c.get("usersId");
       const { organisationId } = c.req.valid("param");
@@ -202,6 +206,7 @@ export default function defineChatGroupRoutes(
       "param",
       v.object({ organisationId: v.string(), groupId: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const usersId = c.get("usersId");
@@ -252,6 +257,7 @@ export default function defineChatGroupRoutes(
       "param",
       v.object({ organisationId: v.string(), groupId: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       const usersId = c.get("usersId");
       const { organisationId, groupId } = c.req.valid("param");
@@ -298,6 +304,7 @@ export default function defineChatGroupRoutes(
       "param",
       v.object({ organisationId: v.string(), groupId: v.string() })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, groupId } = c.req.valid("param");
@@ -359,6 +366,7 @@ export default function defineChatGroupRoutes(
         userIds: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, groupId, userIds } = c.req.valid("param");
