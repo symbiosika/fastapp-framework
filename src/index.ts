@@ -12,7 +12,7 @@ import {
   createDatabaseClient,
   waitForDbConnection,
 } from "./lib/db/db-connection";
-import { initializeFullDbSchema, Job } from "./lib/db/db-schema";
+import { initializeFullDbSchema, type Job } from "./lib/db/db-schema";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 // Types
 import type {
@@ -50,6 +50,7 @@ import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/cha
 import defineAdminRoutes from "./routes/admin";
 import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";
 import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
+import defineJobRoutes from "./routes/organisation/[organisationId]/jobs";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
@@ -379,6 +380,11 @@ export const defineServer = (config: ServerSpecificConfig) => {
         });
         startJobQueue();
       }
+
+      /**
+       * Register job routes
+       */
+      defineJobRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
     } else {
       console.log("License check was invalid! Please check your license key.");
     }
