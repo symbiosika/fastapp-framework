@@ -1,14 +1,14 @@
-import { textToSpeech, speechToText } from "../../../../lib/ai/standard";
-import type { FastAppHono } from "../../../../types";
+import { textToSpeech, speechToText } from "../../../../../lib/ai/standard";
+import type { FastAppHono } from "../../../../../types";
 import { HTTPException } from "hono/http-exception";
 import {
   authAndSetUsersInfo,
   checkUserPermission,
-} from "../../../../lib/utils/hono-middlewares";
+} from "../../../../../lib/utils/hono-middlewares";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { isOrganisationMember } from "../..";
+import { isOrganisationMember } from "../../..";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**

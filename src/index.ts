@@ -49,7 +49,7 @@ import defineWebhookRoutes from "./routes/organisation/[organisationId]/webhooks
 import defineChatGroupRoutes from "./routes/organisation/[organisationId]/ai/chat-groups";
 import defineAdminRoutes from "./routes/admin";
 import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";
-import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
+import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils/utils";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
