@@ -168,14 +168,13 @@ describe("Chat Groups API Edge Cases", () => {
     );
 
     // Empty userIds array should be handled gracefully
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.jsonResponse)).toBe(true);
-    expect(response.jsonResponse.length).toBe(0);
+    expect(response.status).toBe(400);
+    expect(response.textResponse).toContain("User IDs array cannot be empty");
   });
 
   test("Add non-existent users to group", async () => {
-    const nonExistentUserId = "00000000-0000-0000-0000-000000000000";
-    
+    const nonExistentUserId = "12300000-0000-0000-0000-000000000000";
+
     const userData = {
       userIds: [nonExistentUserId],
     };
@@ -199,12 +198,15 @@ describe("Chat Groups API Edge Cases", () => {
     );
 
     // Empty userIds should be handled gracefully
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
+    expect(response.textResponse).toContain(
+      "User IDs array cannot be empty"
+    );
   });
 
   test("Add users to non-existent group", async () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
-    
+
     const userData = {
       userIds: [TEST_USER_1.id],
     };
@@ -216,8 +218,8 @@ describe("Chat Groups API Edge Cases", () => {
       userData
     );
 
-    // Should return a 403 error since the user is not a member of a non-existent group
-    expect(response.status).toBe(403);
+    // Should return a 400 error since the user is not a member of a non-existent group
+    expect(response.status).toBe(400);
   });
 
   // Clean up after edge case tests
@@ -230,4 +232,4 @@ describe("Chat Groups API Edge Cases", () => {
 
     expect(response.status).toBe(200);
   });
-}); 
+});

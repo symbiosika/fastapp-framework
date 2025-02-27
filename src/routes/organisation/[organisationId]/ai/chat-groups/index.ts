@@ -315,6 +315,12 @@ export default function defineChatGroupRoutes(
 
         const parsedBody = v.parse(addUsersToGroupValidation, body);
 
+        if (parsedBody.userIds.length === 0) {
+          throw new HTTPException(400, {
+            message: "User IDs array cannot be empty",
+          });
+        }
+
         // Verify the current user is a member of the group
         const groups = await getChatSessionGroupsByUser(
           organisationId,
@@ -373,7 +379,12 @@ export default function defineChatGroupRoutes(
         const { organisationId, groupId } = c.req.valid("param");
         const { userIds } = c.req.valid("query");
         const usersId = c.get("usersId");
-        const userIdsArr = userIds.split(",");
+        const userIdsArr = userIds.split(",").filter((e) => e.length > 0);
+        if (userIdsArr.length === 0) {
+          throw new HTTPException(400, {
+            message: "User IDs array cannot be empty",
+          });
+        }
 
         // Verify the current user is a member of the group
         const groups = await getChatSessionGroupsByUser(

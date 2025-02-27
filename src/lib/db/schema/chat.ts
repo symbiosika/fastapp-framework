@@ -1,4 +1,12 @@
-import { text, timestamp, jsonb, index, uuid } from "drizzle-orm/pg-core";
+import {
+  text,
+  timestamp,
+  jsonb,
+  index,
+  uuid,
+  varchar,
+  check,
+} from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations, sql } from "drizzle-orm";
 import { organisations, teams, users } from "./users";
@@ -16,7 +24,7 @@ export const chatSessions = pgBaseTable(
     id: text("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    name: text("name").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     organisationId: uuid("organisation_id").references(() => organisations.id, {
       onDelete: "cascade",
@@ -41,6 +49,7 @@ export const chatSessions = pgBaseTable(
   },
   (chatSessions) => [
     index("chat_sessions_updated_at_idx").on(chatSessions.updatedAt),
+    check("chat_sessions_name_min_length", sql`length("name") >= 1`),
   ]
 );
 
@@ -60,7 +69,7 @@ export const chatSessionGroups = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    name: text("name").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     meta: jsonb("meta"),
     organisationId: uuid("organisation_id")
       .references(() => organisations.id, {
@@ -89,6 +98,7 @@ export const chatSessionGroups = pgBaseTable(
     index("chat_session_groups_workspace_id_idx").on(
       chatSessionGroups.workspaceId
     ),
+    check("chat_session_groups_name_min_length", sql`length("name") >= 1`),
   ]
 );
 
