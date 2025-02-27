@@ -39,6 +39,8 @@ export const TTS_MODEL = "tts-1";
 export const STT_MODEL = "whisper-1";
 export const IMAGE_GENERATION_MODEL = "dall-e-3";
 
+export const DEFAULT_MODEL = "openai:gpt-4o-mini";
+
 interface Model {
   name: string;
   label: string;
@@ -313,9 +315,9 @@ export const getProviderToken = (provider: string) => {
  * A helper to get a model by its name in the format of "provider:model"
  */
 export const getChatModel = (name: string): Model => {
-  const modelInfo = TextModels[name as keyof typeof TextModels];
+  const modelInfo = TextModels[name as keyof typeof TextModels] ?? null;
   if (!modelInfo) {
-    throw new Error(`Model ${name} not found`);
+    return TextModels[DEFAULT_MODEL as keyof typeof TextModels];
   }
   return modelInfo;
 };
