@@ -30,7 +30,7 @@ import {
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { isOrganisationMember } from "../../..";
+import { checkOrganisationIdInBody, isOrganisationMember } from "../../..";
 
 // Add these validation schemas near the top with other schemas
 const addUsersToGroupValidation = v.object({
@@ -112,6 +112,7 @@ export default function defineChatGroupRoutes(
     }),
     validator("json", chatSessionGroupsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
+    checkOrganisationIdInBody,
     isOrganisationMember,
     async (c) => {
       try {
@@ -206,6 +207,7 @@ export default function defineChatGroupRoutes(
       "param",
       v.object({ organisationId: v.string(), groupId: v.string() })
     ),
+    checkOrganisationIdInBody,
     isOrganisationMember,
     async (c) => {
       try {
@@ -357,19 +359,19 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
-    validator("json", removeUsersFromGroupValidation),
+    validator("query", v.object({ userIds: v.string() })),
     validator(
       "param",
       v.object({
         organisationId: v.string(),
         groupId: v.string(),
-        userIds: v.string(),
       })
     ),
     isOrganisationMember,
     async (c) => {
       try {
-        const { organisationId, groupId, userIds } = c.req.valid("param");
+        const { organisationId, groupId } = c.req.valid("param");
+        const { userIds } = c.req.valid("query");
         const usersId = c.get("usersId");
         const userIdsArr = userIds.split(",");
 
