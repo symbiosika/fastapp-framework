@@ -32,9 +32,6 @@ import { resolver, validator } from "hono-openapi/valibot";
 import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
 
-// Define the roles as a type
-type ChatMessageRole = "system" | "user" | "assistant";
-
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get all available models
@@ -473,7 +470,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId, chatId, messageId } = c.req.valid("param");
         const { content } = c.req.valid("json");
         // Update the chat message
-        await chatStore.updateChatMessage(chatId, messageId, { content });
+        await chatStore.updateChatMessage(chatId, messageId, { content }, organisationId);
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });

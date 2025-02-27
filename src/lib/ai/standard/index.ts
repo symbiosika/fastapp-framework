@@ -489,7 +489,7 @@ export async function generateLongText(
 
   while (!finished) {
     try {
-      const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
+      const model = getChatModel(options?.model ?? "openai:gpt-4o-mini");
       const token = getProviderToken(model.provider);
 
       // API Call depending on the provider
@@ -535,12 +535,23 @@ export async function generateLongText(
         throw new Error(`Provider ${model.provider} not supported`);
       }
 
-      // console.log("POST", model.endpoint, req);
+      // Set timeout for fetch request (e.g., 30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
       const r = await fetch(model.endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify(req),
-      });
+        signal: controller.signal,
+      })
+        .catch((error: any) => {
+          throw new Error(error.message);
+        })
+        .finally(() => {
+          clearTimeout(timeoutId);
+        });
+
       if (r.status !== 200) {
         const errorText = await r.text();
         log.error("Error in generateLongText", errorText);
@@ -548,7 +559,6 @@ export async function generateLongText(
         throw new Error(`API returned status ${r.status}`);
       }
       const completion = await r.json();
-      // console.log("completion", completion);
 
       let newText = "";
       if (model.provider === "anthropic") {

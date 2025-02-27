@@ -22,52 +22,59 @@ export class LLMAgent implements Agent {
     inputs: AgentInputVariables,
     options: AgentOptions
   ): Promise<AgentOutput> {
-    // The "default" input variable is "user_input"
-    const userInput = inputs.user_input ? inputs.user_input.toString() : "";
+    try {
+      // The "default" input variable is "user_input"
+      const userInput = inputs.user_input ? inputs.user_input.toString() : "";
 
-    const messages = inputs.messages ?? [];
-    // Only add the user message if it's not already the last message in the conversation
-    if (
-      !inputs.messagesIncludeUserPrompt &&
-      (messages.length === 0 ||
-        messages[messages.length - 1].role !== "user" ||
-        messages[messages.length - 1].content !== userInput)
-    ) {
-      messages.push(
-        initChatMessage(userInput, "user", {
-          human: true,
-          timestamp: new Date().toISOString(),
-        })
+      const messages = inputs.messages ?? [];
+      // Only add the user message if it's not already the last message in the conversation
+      if (
+        !inputs.messagesIncludeUserPrompt &&
+        (messages.length === 0 ||
+          messages[messages.length - 1].role !== "user" ||
+          messages[messages.length - 1].content !== userInput)
+      ) {
+        messages.push(
+          initChatMessage(userInput, "user", {
+            human: true,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
+      const replaced = await replaceVariables(messages, inputs);
+
+      // Possibly handle custom placeholders
+      const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
+        replaced,
+        customAppPlaceholders,
+        inputs,
+        context
       );
+
+      // Parse the options
+      const llmOptions = {
+        maxTokens: parseIntFromUnknown(options.maxTokens),
+        model: parseStringFromUnknown(options.model),
+        temperature: parseIntFromUnknown(options.temperature),
+        outputType: "text" as const,
+      };
+
+      // Then run the LLM call
+      const result = await generateLongText(
+        replacedMessages as any,
+        llmOptions
+      );
+
+      // Return the LLM result as "default" along with metadata
+      return {
+        outputs: {
+          default: result.text,
+        },
+        metadata: addToMeta || {},
+      };
+    } catch (error: any) {
+      throw new Error(error.message);
     }
-
-    const replaced = await replaceVariables(messages, inputs);
-
-    // Possibly handle custom placeholders
-    const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
-      replaced,
-      customAppPlaceholders,
-      inputs,
-      context
-    );
-
-    // Parse the options
-    const llmOptions = {
-      maxTokens: parseIntFromUnknown(options.maxTokens),
-      model: parseStringFromUnknown(options.model),
-      temperature: parseIntFromUnknown(options.temperature),
-      outputType: "text" as const,
-    };
-
-    // Then run the LLM call
-    const result = await generateLongText(replacedMessages as any, llmOptions);
-
-    // Return the LLM result as "default" along with metadata
-    return {
-      outputs: {
-        default: result.text,
-      },
-      metadata: addToMeta || {},
-    };
   }
 }

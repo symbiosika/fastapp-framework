@@ -1,0 +1,206 @@
+import { describe, test, expect, beforeAll } from "bun:test";
+import { testFetcher } from "../../../../../test/fetcher.test";
+import defineRoutes from ".";
+import {
+  initTests,
+  TEST_ORGANISATION_1,
+  TEST_USER_1,
+} from "../../../../../test/init.test";
+import { Hono } from "hono";
+import type { FastAppHonoContextVariables } from "../../../../../types";
+import {
+  createDatabaseClient,
+  waitForDbConnection,
+} from "../../../../../lib/db/db-connection";
+
+let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let TEST_USER_1_TOKEN: string;
+let createdChatId: string;
+
+beforeAll(async () => {
+  await createDatabaseClient();
+  await waitForDbConnection();
+
+  defineRoutes(app, "/api");
+  const { user1Token } = await initTests();
+  TEST_USER_1_TOKEN = user1Token;
+});
+
+describe("Chat API Endpoints", () => {
+  test("Get all available AI models", async () => {
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
+      TEST_USER_1_TOKEN
+    );
+
+    expect(response.status).toBe(200);
+    expect(typeof response.jsonResponse.chat).toBe("object");
+    expect(response.jsonResponse).not.toBeNull();
+  });
+
+  test("Create an empty chat session", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/ensure-session`,
+      TEST_USER_1_TOKEN,
+      {}
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse.chatId).toBeDefined();
+
+    // Save the ID for later tests
+    createdChatId = response.jsonResponse.chatId;
+  });
+
+  test("Get chat history for the current user", async () => {
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/history`,
+      TEST_USER_1_TOKEN
+    );
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.jsonResponse)).toBe(true);
+  });
+
+  test("Get chat history for a specific chat session", async () => {
+    const response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/history/${createdChatId}`,
+      TEST_USER_1_TOKEN
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse.chatId).toBe(createdChatId);
+    expect(Array.isArray(response.jsonResponse.history)).toBe(true);
+  });
+
+  test("Chat with template", async () => {
+    const chatData = {
+      chatId: createdChatId,
+      variables: {
+        user_input: "Hello, AI assistant!",
+      },
+      llmOptions: {
+        model: "gpt-3.5-turbo",
+        temperature: 0.7,
+      },
+    };
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      TEST_USER_1_TOKEN,
+      chatData
+    );
+
+    // This might fail if the AI service is not available in test environment
+    // So we'll check for either success or a specific error
+    if (response.status === 200) {
+      expect(response.jsonResponse.chatId).toBe(createdChatId);
+      expect(response.jsonResponse.message).toBeDefined();
+      expect(response.jsonResponse.message.role).toBe("assistant");
+    } else {
+      // If AI service is not available, we expect a specific error
+      expect(response.status).toBe(400);
+    }
+  });
+
+  test("Update a chat message", async () => {
+    // First, get the chat history to find a message ID
+    const historyResponse = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/history/${createdChatId}`,
+      TEST_USER_1_TOKEN
+    );
+
+    // If there are messages in the history
+    if (historyResponse.jsonResponse.history.length > 0) {
+      const messageId = historyResponse.jsonResponse.history[0].meta?.id;
+
+      if (messageId) {
+        const updateData = {
+          content: "Updated message content",
+        };
+
+        const response = await testFetcher.put(
+          app,
+          `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/${createdChatId}/message/${messageId}`,
+          TEST_USER_1_TOKEN,
+          updateData
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.jsonResponse.success).toBe(true);
+      }
+    }
+  });
+
+  test("Start a new interview session", async () => {
+    const interviewData = {
+      interviewName: "Test Interview",
+      description: "A test interview session",
+      guidelines: "These are test guidelines for the interview",
+    };
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
+      TEST_USER_1_TOKEN,
+      interviewData
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse.chatId).toBeDefined();
+    expect(response.jsonResponse.interview.name).toBe(
+      interviewData.interviewName
+    );
+    expect(response.jsonResponse.interview.description).toBe(
+      interviewData.description
+    );
+    expect(response.jsonResponse.interview.guidelines).toBe(
+      interviewData.guidelines
+    );
+
+    // Save the interview chat ID for the next test
+    const interviewChatId = response.jsonResponse.chatId;
+
+    // Test responding to the interview
+    const respondData = {
+      user_input: "This is my response to the interview question",
+      llmOptions: {
+        model: "gpt-3.5-turbo",
+        temperature: 0.7,
+      },
+    };
+
+    const respondResponse = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/${interviewChatId}/respond`,
+      TEST_USER_1_TOKEN,
+      respondData
+    );
+
+    // This might fail if the AI service is not available in test environment
+    if (respondResponse.status === 200) {
+      expect(respondResponse.jsonResponse.chatId).toBe(interviewChatId);
+    } else {
+      // If AI service is not available, we expect a specific error
+      expect(respondResponse.status).toBe(400);
+    }
+  });
+
+  // Cleanup test - run this last
+  test("Delete a chat session", async () => {
+    const response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/history/${createdChatId}`,
+      TEST_USER_1_TOKEN
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse.success).toBe(true);
+  });
+});

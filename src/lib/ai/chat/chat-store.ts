@@ -199,6 +199,22 @@ class ChatHistoryStoreInDb {
   ): Promise<ChatSession> {
     try {
       log.logCustom({ name: chatId }, `Update chat session ${chatId}`);
+      
+      // If organisationId is being updated, verify it matches the existing session
+      if (session.organisationId) {
+        const existingSession = await this.get(chatId);
+        if (!existingSession) {
+          throw new Error(`Chat session ${chatId} not found`);
+        }
+        
+        if (existingSession.organisationId !== session.organisationId) {
+          log.error(
+            `Security violation: Attempted to change organisationId for chat session ${chatId} from ${existingSession.organisationId} to ${session.organisationId}`
+          );
+          throw new Error("Cannot change organisation ID for an existing chat session");
+        }
+      }
+      
       const [updatedSession] = await getDb()
         .update(chatSessions)
         .set(session)
@@ -330,7 +346,8 @@ class ChatHistoryStoreInDb {
   async updateChatMessage(
     chatId: string,
     messageId: string,
-    newContent: Partial<ChatMessage>
+    newContent: Partial<ChatMessage>,
+    organisationId?: string
   ): Promise<void> {
     log.logCustom(
       { name: chatId },
@@ -339,6 +356,14 @@ class ChatHistoryStoreInDb {
 
     const session = await this.get(chatId);
     if (!session) throw new Error(`Chat session ${chatId} not found`);
+
+    // If organisationId is provided, verify it matches the session's organisationId
+    if (organisationId && session.organisationId !== organisationId) {
+      log.error(
+        `Security violation: Attempted to update message in chat session ${chatId} with mismatched organisationId`
+      );
+      throw new Error("Cannot update message in a chat session from a different organisation");
+    }
 
     const messageIndex = session.messages.findIndex(
       (msg) => msg.meta?.id === messageId
