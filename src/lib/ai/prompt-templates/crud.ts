@@ -127,6 +127,10 @@ export const getPromptTemplatePlaceholderById = async (id: string) => {
     .select()
     .from(promptTemplatePlaceholders)
     .where(eq(promptTemplatePlaceholders.id, id));
+
+  if (placeholder.length === 0) {
+    throw new Error("Placeholder not found.");
+  }
   return placeholder[0];
 };
 
@@ -142,6 +146,11 @@ export const updatePromptTemplate = async (data: PromptTemplatesInsert) => {
     .set(data)
     .where(eq(promptTemplates.id, data.id))
     .returning();
+
+  if (updated.length === 0) {
+    throw new Error("Prompt template not found.");
+  }
+
   return updated[0];
 };
 
@@ -149,6 +158,14 @@ export const updatePromptTemplate = async (data: PromptTemplatesInsert) => {
  * Add a new prompt template
  */
 export const addPromptTemplate = async (data: PromptTemplatesInsert) => {
+  // check the length of the name and category
+  if (
+    data.name.length < 1 ||
+    data.name.length > 255 ||
+    (data.category && data.category.length < 1 && data.category.length > 255)
+  ) {
+    throw new Error("Name and category must be between 1 and 255 characters.");
+  }
   const added = await getDb().insert(promptTemplates).values(data).returning();
   return added[0];
 };

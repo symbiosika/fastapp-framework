@@ -57,10 +57,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Get a plain template
    * URL params:
-   * - promptId: string (optional)
-   * - promptName: string (optional)
-   * - promptCategory: string (optional)
-   * - organisationId: string
+   * - id: string (optional)
+   * - name: string (optional)
+   * - category: string (optional)
    */
   app.get(
     API_BASE_PATH + "/organisation/:organisationId/ai/templates",
@@ -68,7 +67,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/ai/templates/:id?",
+      path: "/organisation/:organisationId/ai/templates",
       tags: ["ai"],
       summary: "Get prompt templates",
       responses: {
@@ -85,8 +84,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     validator(
       "query",
       v.object({
-        promptName: v.optional(v.string()),
-        promptCategory: v.optional(v.string()),
+        name: v.optional(v.string()),
+        category: v.optional(v.string()),
         id: v.optional(v.string()),
       })
     ),
@@ -101,8 +100,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const {
           id: promptId,
-          promptName,
-          promptCategory,
+          name: promptName,
+          category: promptCategory,
         } = c.req.valid("query");
         const { organisationId } = c.req.valid("param");
 
@@ -114,6 +113,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           promptId,
           promptName,
           promptCategory,
+          organisationId,
         });
         return c.json(r);
       } catch (e) {

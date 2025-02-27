@@ -1,6 +1,7 @@
 import { getTableColumns, sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   jsonb,
   pgEnum,
@@ -34,9 +35,9 @@ export const promptTemplates = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    name: text("name").notNull(),
-    label: text("label").notNull().default(""),
-    description: text("description").notNull().default(""),
+    name: varchar("name", { length: 255 }).notNull(),
+    label: varchar("label", { length: 255 }).notNull().default(""),
+    description: varchar("description", { length: 1000 }).notNull().default(""),
     // optional type (short string) to group prompts
     category: varchar("category", { length: 255 }).notNull().default(""),
     systemPrompt: text("system_prompt").notNull(),
@@ -70,6 +71,20 @@ export const promptTemplates = pgBaseTable(
     index("prompt_templates_type_idx").on(promptTemplates.category),
     index("prompt_templates_user_id_idx").on(promptTemplates.userId),
     index("prompt_templates_lang_code_idx").on(promptTemplates.langCode),
+    check("prompt_templates_name_min_length", sql`length(name) > 0`),
+    check("prompt_templates_category_min_length", sql`length(category) > 0`),
+    check(
+      "prompt_templates_system_prompt_min_length",
+      sql`length(system_prompt) > 0`
+    ),
+    check(
+      "prompt_templates_system_prompt_max_length",
+      sql`length(system_prompt) <= 10000`
+    ),
+    check(
+      "prompt_templates_user_prompt_max_length",
+      sql`length(user_prompt) <= 10000`
+    ),
   ]
 );
 
@@ -94,9 +109,9 @@ export const promptTemplatePlaceholders = pgBaseTable(
     promptTemplateId: uuid("prompt_template_id")
       .notNull()
       .references(() => promptTemplates.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    label: text("label").notNull().default(""),
-    description: text("description").notNull().default(""),
+    name: varchar("name", { length: 255 }).notNull(),
+    label: varchar("label", { length: 255 }).notNull().default(""),
+    description: varchar("description", { length: 1000 }).notNull().default(""),
     type: promptTemplatePlaceholderTypeEnum("type").notNull().default("text"),
     requiredByUser: boolean("required_by_user").notNull().default(false),
     defaultValue: text("default_value"),
@@ -105,6 +120,18 @@ export const promptTemplatePlaceholders = pgBaseTable(
   (promptTemplatePlaceholders) => [
     index("prompt_template_id_idx").on(
       promptTemplatePlaceholders.promptTemplateId
+    ),
+    check(
+      "prompt_template_placeholders_name_min_length",
+      sql`length(name) > 0`
+    ),
+    check(
+      "prompt_template_placeholders_label_min_length",
+      sql`length(label) > 0`
+    ),
+    check(
+      "prompt_template_placeholders_description_max_length",
+      sql`length(description) <= 10000`
     ),
   ]
 );
@@ -141,6 +168,14 @@ export const promptTemplatePlaceholderExamples = pgBaseTable(
   },
   (table) => [
     index("placeholder_examples_placeholder_id_idx").on(table.placeholderId),
+    check(
+      "prompt_template_placeholder_examples_value_min_length",
+      sql`length(value) > 0`
+    ),
+    check(
+      "prompt_template_placeholder_examples_value_max_length",
+      sql`length(value) <= 10000`
+    ),
   ]
 );
 
@@ -198,7 +233,7 @@ export const promptSnippets = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    name: text("name").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     content: text("content").notNull(),
     category: varchar("category", { length: 255 }).notNull().default(""),
     userId: uuid("user_id").references(() => users.id),
@@ -222,6 +257,9 @@ export const promptSnippets = pgBaseTable(
     index("prompt_snippets_name_idx").on(promptSnippets.name),
     index("prompt_snippets_category_idx").on(promptSnippets.category),
     index("prompt_snippets_user_id_idx").on(promptSnippets.userId),
+    check("prompt_snippets_name_min_length", sql`length(name) > 0`),
+    check("prompt_snippets_content_min_length", sql`length(content) > 0`),
+    check("prompt_snippets_content_max_length", sql`length(content) <= 10000`),
   ]
 );
 
