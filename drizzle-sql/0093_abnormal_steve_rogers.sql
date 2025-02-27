@@ -8,6 +8,7 @@ ALTER TABLE "base_prompt_templates" ALTER COLUMN "name" SET DATA TYPE varchar(25
 ALTER TABLE "base_prompt_templates" ALTER COLUMN "label" SET DATA TYPE varchar(255);--> statement-breakpoint
 ALTER TABLE "base_prompt_templates" ALTER COLUMN "description" SET DATA TYPE varchar(1000);--> statement-breakpoint
 
+DELETE FROM "base_prompt_template_placeholder_examples" WHERE "value" = '' OR length("value") > 10000;--> statement-breakpoint
 DELETE FROM "base_prompt_snippets" WHERE "name" = '' OR "content" = '' OR "category" = '' OR length("content") > 10000;--> statement-breakpoint
 ALTER TABLE "base_prompt_snippets" ADD CONSTRAINT "prompt_snippets_name_min_length" CHECK (length(name) > 0);--> statement-breakpoint
 ALTER TABLE "base_prompt_snippets" ADD CONSTRAINT "prompt_snippets_content_min_length" CHECK (length(content) > 0);--> statement-breakpoint
