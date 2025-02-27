@@ -380,6 +380,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
+        if (body.searchText.length < 3) {
+          throw new Error("Search text must be at least 3 characters long");
+        }
+
         if (body.fullDocument) {
           const r = await getFullSourceDocumentsForSimilaritySearch({
             organisationId: body.organisationId,

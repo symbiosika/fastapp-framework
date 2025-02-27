@@ -11,6 +11,7 @@ import {
   index,
   uniqueIndex,
   unique,
+  check,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -60,7 +61,7 @@ export const knowledgeText = pgBaseTable(
       onDelete: "cascade",
     }),
     text: text("text").notNull(),
-    title: text("title").notNull().default(""),
+    title: varchar("title", { length: 1000 }).notNull().default(""),
     meta: jsonb("meta").notNull().default("{}"),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
@@ -78,6 +79,7 @@ export const knowledgeText = pgBaseTable(
     index("knowledge_text_team_id_idx").on(knowledgeText.teamId),
     index("knowledge_text_user_id_idx").on(knowledgeText.userId),
     index("knowledge_text_workspace_id_idx").on(knowledgeText.workspaceId),
+    check("knowledge_text_text_min_length", sql`length(text) > 3`),
   ]
 );
 
@@ -117,8 +119,8 @@ export const knowledgeEntry = pgBaseTable(
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceExternalId: varchar("source_external_id", { length: 255 }),
-    sourceFileBucket: text("source_file_bucket"),
-    sourceUrl: text("source_url"),
+    sourceFileBucket: varchar("source_file_bucket", { length: 255 }),
+    sourceUrl: varchar("source_url", { length: 1000 }),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     abstract: text("abstract"),
@@ -144,6 +146,10 @@ export const knowledgeEntry = pgBaseTable(
     index("knowledge_entry_source_external_id_idx").on(
       knowledgeEntry.sourceExternalId
     ),
+    check(
+      "knowledge_entry_description_max_length",
+      sql`length(description) <= 10000`
+    ),
   ]
 );
 
@@ -166,7 +172,7 @@ export const knowledgeChunks = pgBaseTable(
       .notNull()
       .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
-    header: text("header"),
+    header: varchar("header", { length: 1000 }),
     order: integer("order").notNull().default(0),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
@@ -232,6 +238,14 @@ export const fineTuningData = pgBaseTable(
     index("knowledge_fine_tuning_entry_team_id_idx").on(table.teamId),
     index("knowledge_fine_tuning_entry_user_id_idx").on(table.userId),
     index("knowledge_fine_tuning_entry_workspace_id_idx").on(table.workspaceId),
+    check(
+      "knowledge_fine_tuning_answer_max_length",
+      sql`length(answer) <= 10000`
+    ),
+    check(
+      "knowledge_fine_tuning_question_max_length",
+      sql`length(question) <= 10000`
+    ),
   ]
 );
 
@@ -342,7 +356,7 @@ export const knowledgeSource = pgBaseTable(
       .references(() => plugins.id),
     externalId: varchar("external_id", { length: 255 }).notNull(),
     lastSynced: timestamp("last_synced", { mode: "string" }),
-    lastHash: text("last_hash"),
+    lastHash: varchar("last_hash", { length: 1000 }),
     lastChange: timestamp("last_change", {
       mode: "string",
       withTimezone: true,
