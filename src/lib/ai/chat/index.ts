@@ -234,7 +234,7 @@ export const chatWithAgent = async (query: unknown) => {
   // Convert agent output to chat message with meta information
   const resultMessage = initChatMessage(result.outputs.default, "assistant", {
     human: false,
-    model: llmOptions.model,
+    model: result.metadata?.model ? result.metadata.model + "" : "unknown",
     timestamp: new Date().toISOString(),
     documents: result.metadata,
   });

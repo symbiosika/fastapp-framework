@@ -66,12 +66,17 @@ export class LLMAgent implements Agent {
         llmOptions
       );
 
+      const metadata = {
+        ...addToMeta,
+        model: result.meta.model,
+      };
+
       // Return the LLM result as "default" along with metadata
       return {
         outputs: {
           default: result.text,
         },
-        metadata: addToMeta || {},
+        metadata,
       };
     } catch (error: any) {
       throw new Error(error.message);

@@ -37,5 +37,5 @@ export const parseStringFromUnknown = (
   value: unknown,
   defaultValue?: string
 ): string | undefined => {
-  return typeof value === "string" ? value : defaultValue;
+  return typeof value === "string" && value.length > 0 ? value : defaultValue;
 };

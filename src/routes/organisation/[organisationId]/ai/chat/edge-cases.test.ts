@@ -225,6 +225,30 @@ describe("Chat API Edge Cases", () => {
     expect([200, 400]).toContain(response.status);
   });
 
+  test("Chat with template with empty string model", async () => {
+    const chatData = {
+      chatId: createdChatId,
+      variables: {
+        user_input: "Hello with empty model string",
+      },
+      llmOptions: {
+        model: "",
+        temperature: 0.7,
+      },
+    };
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      TEST_USER_1_TOKEN,
+      chatData
+    );
+
+    // Should either use a default model or return an error
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse.message.meta.model).toBe("gpt-4o-mini");
+  }, 30000);
+
   test("Chat with template with extreme temperature values", async () => {
     // Test with temperature = 0
     const lowTempData = {

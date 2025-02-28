@@ -314,7 +314,10 @@ export const getProviderToken = (provider: string) => {
 /**
  * A helper to get a model by its name in the format of "provider:model"
  */
-export const getChatModel = (name: string): Model => {
+export const getChatModel = (name?: string): Model => {
+  if (!name) {
+    return TextModels[DEFAULT_MODEL as keyof typeof TextModels];
+  }
   const modelInfo = TextModels[name as keyof typeof TextModels] ?? null;
   if (!modelInfo) {
     return TextModels[DEFAULT_MODEL as keyof typeof TextModels];
@@ -480,6 +483,9 @@ export async function generateLongText(
 ): Promise<{
   text: string;
   json?: any;
+  meta: {
+    model: string;
+  };
 }> {
   let output = "";
   let currentMessages = messages.map((m) => ({
@@ -489,11 +495,11 @@ export async function generateLongText(
   let retryCount = 0;
   let finished = false;
 
+  const model = getChatModel(options?.model ?? "openai:gpt-4o-mini");
+  const token = getProviderToken(model.provider);
+
   while (!finished) {
     try {
-      const model = getChatModel(options?.model ?? "openai:gpt-4o-mini");
-      const token = getProviderToken(model.provider);
-
       // API Call depending on the provider
       let req;
       const headers: Record<string, string> = {
@@ -614,6 +620,9 @@ export async function generateLongText(
       return {
         text: output,
         json: parsedJson,
+        meta: {
+          model: model.name,
+        },
       };
     } catch (error) {
       log.error(`Error parsing JSON: ${error}. Output: ${output}`);
@@ -624,6 +633,9 @@ export async function generateLongText(
   } else {
     return {
       text: output,
+      meta: {
+        model: model.name,
+      },
     };
   }
 }
