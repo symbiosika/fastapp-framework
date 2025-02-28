@@ -18,20 +18,22 @@ import { smtpService } from "../email";
 /**
  * Get all organisation invitations
  */
-export const getAllOrganisationInvitations = async (
-  userId: string,
-  organisationId: string
-) => {
+export const getAllOrganisationInvitations = async (organisationId: string) => {
+  return await getDb()
+    .select()
+    .from(organisationInvitations)
+    .where(eq(organisationInvitations.organisationId, organisationId));
+};
+
+/**
+ * Get all organisation invitations
+ */
+export const getUsersOrganisationInvitations = async (userId: string) => {
   const user = await getUserById(userId);
   return await getDb()
     .select()
     .from(organisationInvitations)
-    .where(
-      and(
-        eq(organisationInvitations.organisationId, organisationId),
-        eq(organisationInvitations.email, user.email)
-      )
-    );
+    .where(eq(organisationInvitations.email, user.email));
 };
 
 /**

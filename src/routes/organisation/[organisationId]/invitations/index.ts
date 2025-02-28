@@ -17,6 +17,7 @@ import {
   acceptAllPendingInvitationsForUser,
   dropOrganisationInvitation,
   declineAllPendingInvitationsForUser,
+  getUsersOrganisationInvitations,
 } from "../../../../lib/usermanagement/invitations";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
@@ -32,6 +33,42 @@ export default function defineInvitationsRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
+  /**
+   * Get all pending invitations for my user
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/invitations",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/invitations",
+      tags: ["invitations"],
+      summary: "Get all pending invitations for my user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(organisationInvitationsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const invitations = await getUsersOrganisationInvitations(userId);
+        return c.json(invitations);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting invitations: " + err,
+        });
+      }
+    }
+  );
+
   /**
    * Create a new invitation
    * This can only be done by the organisation admin
@@ -103,11 +140,7 @@ export default function defineInvitationsRoutes(
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
-        const userId = c.get("usersId");
-        const invitations = await getAllOrganisationInvitations(
-          userId,
-          organisationId
-        );
+        const invitations = await getAllOrganisationInvitations(organisationId);
         return c.json(invitations);
       } catch (err) {
         throw new HTTPException(500, {
