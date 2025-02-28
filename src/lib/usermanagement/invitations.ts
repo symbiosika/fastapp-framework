@@ -8,6 +8,7 @@ import {
   organisationInvitations,
   type OrganisationInvitationsInsert,
   organisationMembers,
+  organisations,
   users,
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
@@ -31,9 +32,25 @@ export const getAllOrganisationInvitations = async (organisationId: string) => {
 export const getUsersOrganisationInvitations = async (userId: string) => {
   const user = await getUserById(userId);
   return await getDb()
-    .select()
+    .select({
+      id: organisationInvitations.id,
+      organisationId: organisationInvitations.organisationId,
+      organisationName: organisations.name,
+      email: organisationInvitations.email,
+      status: organisationInvitations.status,
+      role: organisationInvitations.role,
+    })
     .from(organisationInvitations)
-    .where(eq(organisationInvitations.email, user.email));
+    .leftJoin(
+      organisations,
+      eq(organisationInvitations.organisationId, organisations.id)
+    )
+    .where(
+      and(
+        eq(organisationInvitations.email, user.email),
+        eq(organisationInvitations.status, "pending")
+      )
+    );
 };
 
 /**
@@ -191,7 +208,7 @@ export const createOrganisationInvitation = async (
     ...data,
     status: data.status || "pending",
   };
-  
+
   const [result] = await getDb()
     .insert(organisationInvitations)
     .values(dataWithStatus)

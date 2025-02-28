@@ -11,6 +11,7 @@ import type {
 } from "../../types";
 import { HTTPException } from "hono/http-exception";
 import {
+  organisationInvitationsSelectSchema,
   organisationsSelectSchema,
   usersRestrictedSelectSchema,
 } from "../../lib/db/db-schema";
@@ -39,6 +40,7 @@ import {
   getUserById,
   updateUser,
 } from "../../lib/usermanagement/user";
+import { getUsersOrganisationInvitations } from "../../lib/usermanagement/invitations";
 import { RESPONSES } from "../../lib/responses";
 
 /**
@@ -292,6 +294,41 @@ export function defineSecuredUserRoutes(
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error getting user organisations: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Get all pending invitations for my user
+   */
+  app.get(
+    API_BASE_PATH + "/user/organisations/invitations",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "get",
+      path: "/user/organisations/invitations",
+      tags: ["invitations"],
+      summary: "Get all pending invitations for my user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(v.array(organisationInvitationsSelectSchema)),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const invitations = await getUsersOrganisationInvitations(userId);
+        return c.json(invitations);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting invitations: " + err,
         });
       }
     }
