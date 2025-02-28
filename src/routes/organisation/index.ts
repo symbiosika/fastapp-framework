@@ -18,6 +18,7 @@ import {
   dropUserFromOrganisation,
   getUserOrganisations,
   getOrganisationMemberRole,
+  updateOrganisationMemberRole,
 } from "../../lib/usermanagement/oganisations";
 import { RESPONSES } from "../../lib/responses";
 import { describeRoute } from "hono-openapi";
@@ -402,6 +403,61 @@ export default function defineOrganisationRoutes(
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error adding member to organisation: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Change the role of a member
+   */
+  app.put(
+    API_BASE_PATH + "/organisation/:organisationId/members/:memberId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/members/:memberId",
+      summary: "Change the role of a member",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(organisationMembersSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        role: v.union([
+          v.literal("owner"),
+          v.literal("admin"),
+          v.literal("member"),
+        ]),
+      })
+    ),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), memberId: v.string() })
+    ),
+    isOrganisationAdmin, // check if user is admin or owner of the organisation
+    async (c) => {
+      try {
+        const { organisationId, memberId } = c.req.valid("param");
+        const { role } = c.req.valid("json");
+        const member = await updateOrganisationMemberRole(
+          organisationId,
+          memberId,
+          role
+        );
+        return c.json(member);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error changing member role: " + err,
         });
       }
     }

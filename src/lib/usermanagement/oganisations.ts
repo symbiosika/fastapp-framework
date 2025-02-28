@@ -257,6 +257,27 @@ export const addOrganisationMember = async (
 };
 
 /**
+ * Change the role of a user in an organisation
+ */
+export const updateOrganisationMemberRole = async (
+  organisationId: string,
+  userId: string,
+  role: "owner" | "admin" | "member"
+) => {
+  const result = await getDb()
+    .update(organisationMembers)
+    .set({ role })
+    .where(
+      and(
+        eq(organisationMembers.organisationId, organisationId),
+        eq(organisationMembers.userId, userId)
+      )
+    )
+    .returning();
+  return result[0];
+};
+
+/**
  * Remove a user from an organisation
  */
 export const removeOrganisationMember = async (
