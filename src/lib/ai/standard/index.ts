@@ -1,22 +1,76 @@
 import OpenAIClient from "openai";
 import fs from "fs/promises";
 import log from "../../log";
-import { basename } from "path";
 import type { WhisperResponseWithSegmentsAndWords } from "../../types/openai";
-import { nanoid } from "nanoid";
 import * as v from "valibot";
+import {
+  getProvider,
+  type TextGenerationOptions,
+  type LongTextGenerationOptions,
+  type AIProvider,
+} from "./providers";
+
+// Import all providers to ensure they are registered
+import "./providers/openai";
+import "./providers/anthropic";
+import "./providers/mistral";
+import "./providers/perplexity";
+import openaiProvider from "./providers/openai";
+import anthropicProvider from "./providers/anthropic";
+import mistralProvider from "./providers/mistral";
+import perplexityProvider from "./providers/perplexity";
 
 /*
 This library is a wrapper for LLM APIs.
-At the moment it only supports OpenAI.
-All functions should be designed to support different providers in the future!
+It supports OpenAI, Anthropic, Mistral, and Perplexity.
+All functions are designed to support different providers!
 */
+
+interface Model {
+  name: string;
+  label: string;
+  description?: string;
+  endpoint: string;
+  provider: string;
+  providerName: string;
+  maxTokens?: number;
+  maxOutputTokens?: number;
+}
+
+export interface Provider {
+  [key: string]: Model;
+}
+
+export interface MessageContent {
+  type: string;
+  text?: string;
+  image_url?: {
+    url: string;
+  };
+  audio_url?: {
+    url: string;
+  };
+}
+
+export interface Message {
+  role: "system" | "user" | "assistant";
+  content: MessageContent[] | string;
+}
+
+interface ProviderToken {
+  [key: string]: string;
+}
 
 /**
  * Define validations
  */
 export const aiProviderValidationSchema = v.object({
-  provider: v.union([v.literal("openai"), v.literal("mistral")]),
+  provider: v.union([
+    v.literal("openai"),
+    v.literal("mistral"),
+    v.literal("anthropic"),
+    v.literal("perplexity"),
+  ]),
   model: v.string(),
 });
 
@@ -40,38 +94,6 @@ export const STT_MODEL = "whisper-1";
 export const IMAGE_GENERATION_MODEL = "dall-e-3";
 
 export const DEFAULT_MODEL = "openai:gpt-4o-mini";
-
-interface Model {
-  name: string;
-  label: string;
-  description?: string;
-  endpoint: string;
-  provider: string;
-  providerName: string;
-  maxTokens?: number;
-  maxOutputTokens?: number;
-}
-
-export interface Provider {
-  [key: string]: Model;
-}
-
-interface MessageContent {
-  type: string;
-  text?: string;
-  image_url?: {
-    url: string;
-  };
-}
-
-export interface Message {
-  role: "system" | "user" | "assistant";
-  content: MessageContent[] | string;
-}
-
-interface ProviderToken {
-  [key: string]: string;
-}
 
 /**
  * All available models
@@ -204,6 +226,57 @@ const TextModels: Provider = {
     maxOutputTokens: 4096,
     endpoint: "https://api.mistral.ai/v1/chat/completions",
   },
+
+  "perplexity:sonar": {
+    name: "sonar",
+    label: "Sonar",
+    description: "The medium model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 4096,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+  },
+  "perplexity:sonar-pro": {
+    name: "sonar-pro",
+    label: "Sonar Pro",
+    description: "The pro model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 8000,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+  },
+  "perplexity:sonar-reasoning": {
+    name: "sonar-reasoning",
+    label: "Sonar Reasoning",
+    description: "The reasoning model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 8000,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+  },
+  "perplexity:sonar-reasoning-pro": {
+    name: "sonar-reasoning-pro",
+    label: "Sonar Reasoning Pro",
+    description: "The reasoning pro model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 8000,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+  },
+  "perplexity:sonar-deep-research": {
+    name: "sonar-deep-research",
+    label: "Sonar Deep Research",
+    description: "The deep research model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 8000,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+  },
 };
 
 const MultiModalModels: Provider = {
@@ -232,6 +305,15 @@ const MultiModalModels: Provider = {
     provider: "anthropic",
     providerName: "Anthropic",
     endpoint: "https://api.anthropic.com/v1/messages",
+  },
+
+  "perplexity:sonar-medium-online": {
+    name: "sonar-medium-online",
+    label: "Sonar Medium",
+    description: "The medium model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    endpoint: "https://api.perplexity.ai/chat/completions",
   },
 };
 
@@ -265,22 +347,16 @@ const ImageGenerationModels: Provider = {
   },
 };
 
-const providerTokens: ProviderToken = {
-  openai: process.env.OPENAI_API_KEY ?? "",
-  mistral: process.env.MISTRAL_API_KEY ?? "",
-  llama: process.env.LLAMA_CLOUD_API_KEY ?? "",
-  anthropic: process.env.ANTHROPIC_API_KEY ?? "",
+export const providers: Record<string, AIProvider> = {};
+
+const registerProvider = (name: string, provider: AIProvider) => {
+  providers[name] = provider;
 };
 
-export const openaiClient = new OpenAIClient({
-  baseURL: "https://api.openai.com/v1",
-  apiKey: providerTokens.openai,
-});
-
-const mistralClient = new OpenAIClient({
-  baseURL: "https://api.mistral.ai/v1",
-  apiKey: providerTokens.mistral,
-});
+registerProvider("openai", openaiProvider);
+registerProvider("mistral", mistralProvider);
+registerProvider("anthropic", anthropicProvider);
+registerProvider("perplexity", perplexityProvider);
 
 /**
  * Get all available AI models
@@ -302,16 +378,6 @@ export const getAllAIModels = async (): Promise<{
 };
 
 /**
- * Get a providers token
- */
-export const getProviderToken = (provider: string) => {
-  if (!providerTokens[provider]) {
-    throw new Error(`Provider token for ${provider} not found`);
-  }
-  return providerTokens[provider];
-};
-
-/**
  * A helper to get a model by its name in the format of "provider:model"
  */
 export const getChatModel = (name?: string): Model => {
@@ -326,20 +392,35 @@ export const getChatModel = (name?: string): Model => {
 };
 
 /**
+ * Helper to parse a model string in the format "provider:model"
+ */
+export const parseModelString = (
+  modelString: string = DEFAULT_MODEL
+): { provider: string; model: string } => {
+  const parts = modelString.split(":");
+  if (parts.length !== 2) {
+    const defaultParts = DEFAULT_MODEL.split(":");
+    return { provider: defaultParts[0], model: defaultParts[1] };
+  }
+  return { provider: parts[0], model: parts[1] };
+};
+
+/**
  * Generate an embedding for the given text
  */
 export async function generateEmbedding(
   text: string,
   embeddingModel: string = EMBEDDING_MODEL
 ) {
-  const response = await openaiClient.embeddings.create({
+  // For now, only OpenAI supports embeddings in our implementation
+  const provider = getProvider("openai");
+  const result = await provider.generateEmbedding!(text, {
     model: embeddingModel,
-    input: text,
-    encoding_format: "float",
   });
+
   return {
-    embedding: response.data[0].embedding,
-    model: EMBEDDING_MODEL,
+    embedding: result.embedding,
+    model: result.model,
   };
 }
 
@@ -364,33 +445,35 @@ async function encodeImageFromFile(file: File): Promise<string> {
  */
 export async function generateImageDescription(
   image: File,
-  model: string = VISION_MODEL
+  modelString: string = `openai:${VISION_MODEL}`
 ) {
   try {
+    const { provider, model } = parseModelString(modelString);
     const base64Image = await encodeImageFromFile(image);
-    const response = await openaiClient.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "What's in this image? Explain it in detail with as many details as possible.",
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 2000,
-    });
 
-    return response.choices[0].message.content ?? "";
+    // Create a multimodal message with the image
+    const messages: Message[] = [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "What's in this image? Explain it in detail with as many details as possible.",
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`,
+            },
+          },
+        ],
+      },
+    ];
+
+    const result = await getProvider(provider).generateText(messages, {
+      model,
+    });
+    return result.text;
   } catch (error) {
     log.error(`Error in generateImageDescription: ${error}`);
     throw new Error("Failed to generate image description");
@@ -403,67 +486,22 @@ export async function generateImageDescription(
  */
 export async function chatCompletion(
   messages: Message[],
-  options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-    outputType?: "text" | "json";
-  }
+  options?: TextGenerationOptions & { model?: string }
 ): Promise<string> {
   try {
-    const model = getChatModel(options?.model ?? "openai:gpt-4-turbo");
-    const token = getProviderToken(model.provider);
-    // API Call
-    const req =
-      model.provider === "anthropic"
-        ? {
-            model: model.name,
-            max_tokens: options?.maxTokens ?? undefined,
-            messages: messages.map((msg) => ({
-              role: msg.role === "assistant" ? "assistant" : "user",
-              content: msg.content,
-            })),
-            temperature: options?.temperature ?? 1,
-          }
-        : {
-            model: model.name,
-            temperature: options?.temperature ?? 1,
-            stream: false,
-            messages: messages,
-            max_tokens: options?.maxTokens ?? undefined,
-            response_format:
-              options?.outputType === "json"
-                ? { type: "json_object" }
-                : { type: "text" },
-            n: 1,
-            safe_prompt: model.provider === "mistral" ? false : undefined,
-          };
-    const r = await fetch(model.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(req),
-    });
-    if (r.status !== 200) {
-      throw new Error(`API returned status ${r.status}`);
-    }
-    const completion = await r.json();
+    const modelString = options?.model ?? DEFAULT_MODEL;
+    const { provider, model } = parseModelString(modelString);
 
-    const newText = completion.choices[0].message.content ?? "";
-    return newText;
+    const result = await getProvider(provider).generateText(messages, {
+      ...options,
+      model,
+    });
+
+    return result.text;
   } catch (error) {
     log.error(`Error in chatCompletion: ${error}`);
     throw new Error("Failed to generate text");
   }
-}
-
-/**
- * Helper to count all real words in a string
- */
-function countWords(text: string): number {
-  return text.split(/\s+/).filter((word) => word.length > 0).length;
 }
 
 /**
@@ -472,14 +510,7 @@ function countWords(text: string): number {
  */
 export async function generateLongText(
   messages: Message[],
-  options?: {
-    outputType?: "text" | "json";
-    desiredWords?: number;
-    maxRetries?: number;
-    model?: string;
-    maxTokens?: number;
-    temperature?: number;
-  }
+  options?: LongTextGenerationOptions & { model?: string }
 ): Promise<{
   text: string;
   json?: any;
@@ -487,156 +518,25 @@ export async function generateLongText(
     model: string;
   };
 }> {
-  let output = "";
-  let currentMessages = messages.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
-  let retryCount = 0;
-  let finished = false;
+  try {
+    const modelString = options?.model ?? DEFAULT_MODEL;
+    const { provider, model } = parseModelString(modelString);
 
-  const model = getChatModel(options?.model ?? "openai:gpt-4o-mini");
-  const token = getProviderToken(model.provider);
+    const result = await getProvider(provider).generateLongText(messages, {
+      ...options,
+      model,
+    });
 
-  while (!finished) {
-    try {
-      // API Call depending on the provider
-      let req;
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (model.provider === "anthropic") {
-        req = {
-          model: model.name,
-          max_tokens: options?.maxTokens ?? 4096,
-          messages: currentMessages.map((msg) => ({
-            role: msg.role === "assistant" ? "assistant" : "user",
-            content: msg.content,
-          })),
-          temperature: options?.temperature ?? 1,
-        };
-        headers["x-api-key"] = token;
-        headers["anthropic-version"] = "2023-06-01";
-      } else if (model.provider === "mistral") {
-        req = {
-          model: model.name,
-          temperature: options?.temperature ?? 1,
-          stream: false,
-          messages: currentMessages,
-          max_tokens: options?.maxTokens ?? undefined,
-          safe_prompt: false,
-          n: 1,
-        };
-        headers["Authorization"] = `Bearer ${token}`;
-      } else if (model.provider === "openai") {
-        req = {
-          model: model.name,
-          temperature: options?.temperature ?? 1,
-          stream: false,
-          messages: currentMessages,
-          max_tokens: options?.maxTokens ?? undefined,
-          n: 1,
-        };
-        headers["Authorization"] = `Bearer ${token}`;
-      } else {
-        throw new Error(`Provider ${model.provider} not supported`);
-      }
-
-      // Set timeout for fetch request (e.g., 30 seconds)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-      const r = await fetch(model.endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(req),
-        signal: controller.signal,
-      })
-        .catch((error: any) => {
-          throw new Error(error.message);
-        })
-        .finally(() => {
-          clearTimeout(timeoutId);
-        });
-
-      if (r.status !== 200) {
-        const errorText = await r.text();
-        log.error("Error in generateLongText", errorText);
-        log.error("Request", req);
-        throw new Error(`API returned status ${r.status}`);
-      }
-      const completion = await r.json();
-
-      let newText = "";
-      if (model.provider === "anthropic") {
-        newText = completion.content[0].text ?? "";
-      } else if (model.provider === "mistral") {
-        newText = completion.choices[0].message.content ?? "";
-      } else if (model.provider === "openai") {
-        newText = completion.choices[0].message.content ?? "";
-      }
-
-      output += newText;
-
-      // Update messages to include the assistant's reply and a prompt to continue
-      currentMessages.push({
-        role: "assistant",
-        content: newText,
-      });
-
-      // Add a user message to prompt continuation if needed
-      if (options?.desiredWords && countWords(output) < options.desiredWords) {
-        log.debug(
-          `ChatCompletionLongText: ${countWords(output)}/${options.desiredWords} words, continuing...`
-        );
-        currentMessages.push({
-          role: "user",
-          content: `You reached ${countWords(output)} of ${options.desiredWords} desired words. Please continue in the same language as the text. Don't repeat yourself.`,
-        });
-      } else {
-        log.debug(
-          `ChatCompletionLongText: finished after ${retryCount} retries`
-        );
-        finished = true;
-      }
-    } catch (error) {
-      log.error(`chatCompletionLongText: ${error}`);
-      retryCount++;
-      if (options?.maxRetries && retryCount >= options.maxRetries) {
-        throw new Error("Failed to generate text after maximum retries");
-      }
-      if (!options?.maxRetries) {
-        finished = true;
-        throw new Error("Stopped to generate text after. " + error);
-      }
-    }
-  }
-
-  let parsedJson: any;
-  if (options?.outputType === "json") {
-    try {
-      parsedJson = JSON.parse(output);
-      return {
-        text: output,
-        json: parsedJson,
-        meta: {
-          model: model.name,
-        },
-      };
-    } catch (error) {
-      log.error(`Error parsing JSON: ${error}. Output: ${output}`);
-      throw new Error(
-        `Result could not be parsed as JSON. Please check the Logs.`
-      );
-    }
-  } else {
     return {
-      text: output,
+      text: result.text,
+      json: result.json,
       meta: {
-        model: model.name,
+        model: result.meta.model,
       },
     };
+  } catch (error) {
+    log.error(`Error in generateLongText: ${error}`);
+    throw new Error("Failed to generate long text");
   }
 }
 
@@ -650,37 +550,36 @@ export const speechToText = async (
     returnSegments?: boolean;
     returnWords?: boolean;
   },
-  model: string = STT_MODEL
+  modelString: string = `openai:${STT_MODEL}`
 ) => {
-  let fileToUpload: File;
-  if (query.file) {
-    fileToUpload = query.file;
-  } else if (query.filePath) {
-    const fileBuffer = await fs.readFile(query.filePath);
-    const fileName = basename(query.filePath);
-    fileToUpload = new File([fileBuffer], fileName);
-  } else {
-    throw new Error("No file or filePath provided");
+  try {
+    const { provider, model } = parseModelString(modelString);
+
+    // Currently only OpenAI supports STT in our implementation
+    if (provider !== "openai") {
+      throw new Error(`Provider ${provider} does not support speech-to-text`);
+    }
+
+    let audioData: File | string;
+    if (query.file) {
+      audioData = query.file;
+    } else if (query.filePath) {
+      audioData = query.filePath;
+    } else {
+      throw new Error("No file or filePath provided");
+    }
+
+    const result = await getProvider(provider).speechToText!(audioData, {
+      model,
+      returnSegments: query.returnSegments,
+      returnWords: query.returnWords,
+    });
+
+    return result as unknown as WhisperResponseWithSegmentsAndWords;
+  } catch (error) {
+    log.error(`Error in speechToText: ${error}`);
+    throw new Error("Failed to convert speech to text");
   }
-
-  const createTimestampGranularities: ("segment" | "word")[] = [];
-  if (query.returnSegments) {
-    createTimestampGranularities.push("segment");
-  }
-  if (query.returnWords) {
-    createTimestampGranularities.push("word");
-  }
-
-  const transcription = await openaiClient.audio.transcriptions.create({
-    file: fileToUpload,
-    model,
-    response_format: "verbose_json",
-    timestamp_granularities: createTimestampGranularities,
-  });
-
-  const r = transcription as unknown as WhisperResponseWithSegmentsAndWords;
-
-  return r;
 };
 
 /**
@@ -689,24 +588,30 @@ export const speechToText = async (
 export const generateImage = async (
   prompt: string,
   negativePrompt: string = "",
-  model: string = IMAGE_GENERATION_MODEL,
+  modelString: string = `openai:${IMAGE_GENERATION_MODEL}`,
   width: number = 1024,
   height: number = 1024
 ) => {
-  const response = await openaiClient.images.generate({
-    model,
-    prompt: `${prompt} ${negativePrompt ? `. It contains not ${negativePrompt}` : ""}`,
-    n: 1,
-    size: `${width}x${height}` as any,
-  });
-  const image_url = response.data[0].url;
-  if (!image_url) {
-    throw new Error("No image URL returned");
+  try {
+    const { provider, model } = parseModelString(modelString);
+
+    // Currently only OpenAI supports image generation in our implementation
+    if (provider !== "openai") {
+      throw new Error(`Provider ${provider} does not support image generation`);
+    }
+
+    const result = await getProvider(provider).generateImage!(prompt, {
+      model,
+      negativePrompt,
+      width,
+      height,
+    });
+
+    return result.imageBuffer;
+  } catch (error) {
+    log.error(`Error in generateImage: ${error}`);
+    throw new Error("Failed to generate image");
   }
-  // download the image and save it to the images folder
-  // the url will be a web url, so we need to download it
-  const imageBuffer = await (await fetch(image_url)).arrayBuffer();
-  return imageBuffer;
 };
 
 /**
@@ -714,25 +619,31 @@ export const generateImage = async (
  */
 export const textToSpeech = async (
   text: string,
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy"
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
+  modelString: string = `openai:${TTS_MODEL}`
 ): Promise<{
   file: File;
   filename: string;
 }> => {
-  const mp3 = await openaiClient.audio.speech.create({
-    model: TTS_MODEL,
-    voice,
-    input: text,
-  });
+  try {
+    const { provider, model } = parseModelString(modelString);
 
-  const buffer = await mp3.arrayBuffer();
-  const id = nanoid(16);
-  const filename = `${id}.mp3`;
+    // Currently only OpenAI supports TTS in our implementation
+    if (provider !== "openai") {
+      throw new Error(`Provider ${provider} does not support text-to-speech`);
+    }
 
-  const file = new File([buffer], filename, { type: "audio/mp3" });
+    const result = await getProvider(provider).textToSpeech!(text, {
+      model,
+      voice,
+    });
 
-  return {
-    file,
-    filename,
-  };
+    return {
+      file: result.file,
+      filename: result.filename,
+    };
+  } catch (error) {
+    log.error(`Error in textToSpeech: ${error}`);
+    throw new Error("Failed to convert text to speech");
+  }
 };
