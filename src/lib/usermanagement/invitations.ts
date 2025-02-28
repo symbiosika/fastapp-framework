@@ -185,19 +185,28 @@ export const createOrganisationInvitation = async (
   data: OrganisationInvitationsInsert,
   sendMail = false
 ) => {
+  console.log(data);
+  // Ensure data has a status field, defaulting to "pending" if not provided
+  const dataWithStatus = {
+    ...data,
+    status: data.status || "pending",
+  };
+  
   const [result] = await getDb()
     .insert(organisationInvitations)
-    .values(data)
-    .returning()
+    .values(dataWithStatus)
     .onConflictDoUpdate({
       target: [
         organisationInvitations.organisationId,
         organisationInvitations.email,
       ],
       set: {
-        status: data.status,
+        status: dataWithStatus.status,
+        // Also update role if it's provided
+        ...(dataWithStatus.role ? { role: dataWithStatus.role } : {}),
       },
-    });
+    })
+    .returning();
 
   // send mail
   if (sendMail) {
@@ -210,7 +219,7 @@ export const createOrganisationInvitation = async (
 
     await smtpService.sendMail({
       sender: process.env.SMTP_FROM,
-      recipients: [data.email],
+      recipients: [dataWithStatus.email],
       subject,
       html,
     });
