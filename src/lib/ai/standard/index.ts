@@ -29,7 +29,7 @@ All functions are designed to support different providers!
 interface Model {
   name: string;
   label: string;
-  description?: string;
+  description: string;
   endpoint: string;
   provider: string;
   providerName: string;
@@ -107,6 +107,7 @@ const TextModels: Provider = {
     label: "GPT-4",
     provider: "openai",
     providerName: "OpenAI",
+    description: "A good all-rounder model",
     maxTokens: 8192, // Approximate context limit
     maxOutputTokens: 8192, // Reasonable output limit within context
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -117,6 +118,7 @@ const TextModels: Provider = {
     label: "GPT-4 Turbo",
     provider: "openai",
     providerName: "OpenAI",
+    description: "A faster version of GPT-4",
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -136,6 +138,7 @@ const TextModels: Provider = {
     label: "GPT-4o",
     provider: "openai",
     providerName: "OpenAI",
+    description: "The Top model from OpenAI",
     maxTokens: 128000,
     maxOutputTokens: 16384,
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -146,6 +149,7 @@ const TextModels: Provider = {
     label: "GPT-4o Mini",
     provider: "openai",
     providerName: "OpenAI",
+    description: "A smaller version of GPT-4o",
     maxTokens: 128000,
     maxOutputTokens: 16384,
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -156,6 +160,7 @@ const TextModels: Provider = {
   //   label: "GPT o1",
   //   provider: "openai",
   //   providerName: "OpenAI",
+  //   description: "The Top reasoning model from OpenAI",
   //   maxTokens: 200000,
   //   maxOutputTokens: 100000,
   //   endpoint: "https://api.openai.com/v1/chat/completions",
@@ -166,6 +171,7 @@ const TextModels: Provider = {
   //   label: "GPT o1 Mini",
   //   provider: "openai",
   //   providerName: "OpenAI",
+  //   description: "A smaller reasoning model of GPT o1",
   //   maxTokens: 128000,
   //   maxOutputTokens: 65536,
   //   endpoint: "https://api.openai.com/v1/chat/completions",
@@ -175,7 +181,7 @@ const TextModels: Provider = {
   "anthropic:claude-3-5-sonnet-latest": {
     name: "claude-3-5-sonnet-latest",
     label: "Claude 3.5 Sonnet",
-    description: "The Top model from Anthropic",
+    description: "The good all-rounder model from Anthropic",
     provider: "anthropic",
     providerName: "Anthropic",
     maxTokens: 200000,
@@ -343,6 +349,7 @@ const TTSModels: Provider = {
   "openai:tts-1": {
     name: "tts-1",
     label: "TTS",
+    description: "The good all-rounder model from OpenAI",
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/audio/speech",
@@ -354,6 +361,7 @@ const STTModels: Provider = {
   "openai:whisper-1": {
     name: "whisper-1",
     label: "Whisper",
+    description: "The good all-rounder model from OpenAI",
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/audio/transcriptions",
@@ -365,6 +373,7 @@ const ImageGenerationModels: Provider = {
   "openai:dall-e-3": {
     name: "dall-e-3",
     label: "Dall-E 3",
+    description: "The good all-rounder model from OpenAI",
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/images/generations",
