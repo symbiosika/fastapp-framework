@@ -35,6 +35,7 @@ interface Model {
   providerName: string;
   maxTokens?: number;
   maxOutputTokens?: number;
+  hostingOrigin?: string;
 }
 
 export interface Provider {
@@ -109,6 +110,7 @@ const TextModels: Provider = {
     maxTokens: 8192, // Approximate context limit
     maxOutputTokens: 8192, // Reasonable output limit within context
     endpoint: "https://api.openai.com/v1/chat/completions",
+    hostingOrigin: "us",
   },
   "openai:gpt-4-turbo": {
     name: "gpt-4-turbo",
@@ -118,6 +120,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.openai.com/v1/chat/completions",
+    hostingOrigin: "us",
   },
   // "openai:gpt-3.5-turbo": {
   //   name: "gpt-3.5-turbo",
@@ -136,6 +139,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 16384,
     endpoint: "https://api.openai.com/v1/chat/completions",
+    hostingOrigin: "us",
   },
   "openai:gpt-4o-mini": {
     name: "gpt-4o-mini",
@@ -145,6 +149,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 16384,
     endpoint: "https://api.openai.com/v1/chat/completions",
+    hostingOrigin: "us",
   },
   // "openai:o1": {
   //   name: "o1",
@@ -154,6 +159,7 @@ const TextModels: Provider = {
   //   maxTokens: 200000,
   //   maxOutputTokens: 100000,
   //   endpoint: "https://api.openai.com/v1/chat/completions",
+  //   hostingOrigin: "us",
   // },
   // "openai:o1-mini": {
   //   name: "o1-mini",
@@ -163,6 +169,7 @@ const TextModels: Provider = {
   //   maxTokens: 128000,
   //   maxOutputTokens: 65536,
   //   endpoint: "https://api.openai.com/v1/chat/completions",
+  //   hostingOrigin: "us",
   // },
 
   "anthropic:claude-3-5-sonnet-latest": {
@@ -174,6 +181,7 @@ const TextModels: Provider = {
     maxTokens: 200000,
     maxOutputTokens: 8192,
     endpoint: "https://api.anthropic.com/v1/messages",
+    hostingOrigin: "us",
   },
   "anthropic:claude-3-5-haiku-latest": {
     name: "claude-3-5-haiku-latest",
@@ -184,6 +192,7 @@ const TextModels: Provider = {
     maxTokens: 200000,
     maxOutputTokens: 8192,
     endpoint: "https://api.anthropic.com/v1/messages",
+    hostingOrigin: "us",
   },
 
   "mistral:mistral-large-latest": {
@@ -195,6 +204,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+    hostingOrigin: "eu",
   },
   "mistral:mistral-small-latest": {
     name: "mistral-small-latest",
@@ -205,6 +215,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+    hostingOrigin: "eu",
   },
   "mistral:ministral-8b-latest": {
     name: "ministral-8b-latest",
@@ -215,6 +226,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+    hostingOrigin: "eu",
   },
   "mistral:codestral-latest": {
     name: "codestral-latest",
@@ -225,6 +237,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+    hostingOrigin: "eu",
   },
 
   "perplexity:sonar": {
@@ -236,6 +249,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 4096,
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
   "perplexity:sonar-pro": {
     name: "sonar-pro",
@@ -246,6 +260,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 8000,
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
   "perplexity:sonar-reasoning": {
     name: "sonar-reasoning",
@@ -256,6 +271,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 8000,
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
   "perplexity:sonar-reasoning-pro": {
     name: "sonar-reasoning-pro",
@@ -266,6 +282,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 8000,
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
   "perplexity:sonar-deep-research": {
     name: "sonar-deep-research",
@@ -276,6 +293,7 @@ const TextModels: Provider = {
     maxTokens: 128000,
     maxOutputTokens: 8000,
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
 };
 
@@ -287,6 +305,7 @@ const MultiModalModels: Provider = {
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/chat/completions",
+    hostingOrigin: "us",
   },
 
   "mistral:pixtral-large-latest": {
@@ -296,6 +315,7 @@ const MultiModalModels: Provider = {
     provider: "mistral",
     providerName: "Mistral",
     endpoint: "https://api.mistral.ai/v1/chat/completions",
+    hostingOrigin: "eu",
   },
 
   "anthropic:claude-3-5-sonnet": {
@@ -305,6 +325,7 @@ const MultiModalModels: Provider = {
     provider: "anthropic",
     providerName: "Anthropic",
     endpoint: "https://api.anthropic.com/v1/messages",
+    hostingOrigin: "us",
   },
 
   "perplexity:sonar-medium-online": {
@@ -314,6 +335,7 @@ const MultiModalModels: Provider = {
     provider: "perplexity",
     providerName: "Perplexity",
     endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
   },
 };
 
@@ -324,6 +346,7 @@ const TTSModels: Provider = {
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/audio/speech",
+    hostingOrigin: "us",
   },
 };
 
@@ -334,6 +357,7 @@ const STTModels: Provider = {
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/audio/transcriptions",
+    hostingOrigin: "us",
   },
 };
 
@@ -344,6 +368,7 @@ const ImageGenerationModels: Provider = {
     provider: "openai",
     providerName: "OpenAI",
     endpoint: "https://api.openai.com/v1/images/generations",
+    hostingOrigin: "us",
   },
 };
 
