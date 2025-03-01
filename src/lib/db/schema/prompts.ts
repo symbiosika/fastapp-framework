@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
-import { organisations, users } from "./users";
+import { organisations, teams, users } from "./users";
 import { workspacePromptTemplates } from "./workspaces";
 import {
   createSelectSchema,
@@ -242,6 +242,8 @@ export const promptSnippets = pgBaseTable(
         onDelete: "cascade",
       })
       .notNull(),
+    organisationWide: boolean("organisation_wide").notNull().default(false),
+    teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),

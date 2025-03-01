@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   unique,
   check,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -49,6 +50,7 @@ export const knowledgeText = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id, { onDelete: "cascade" }),
+    organisationWide: boolean("organisation_wide").notNull().default(false),
     // optional team id to organize knowledge entries into teams.
     // security feature to limit access to knowledge entries
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),

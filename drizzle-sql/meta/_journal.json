@@ -673,6 +673,13 @@
       "when": 1740658832244,
       "tag": "0095_same_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1740822088781,
+      "tag": "0096_wild_archangel",
+      "breakpoints": true
     }
   ]
 }
