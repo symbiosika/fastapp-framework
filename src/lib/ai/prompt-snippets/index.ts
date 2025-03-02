@@ -80,6 +80,8 @@ export const addPromptSnippet = async (input: {
   organisationId: string;
   category?: string;
   userId?: string;
+  organisationWide?: boolean;
+  teamId?: string | null;
 }) => {
   const result = await getDb()
     .insert(promptSnippets)
@@ -88,6 +90,8 @@ export const addPromptSnippet = async (input: {
       content: input.content,
       category: input.category || "",
       userId: input.userId,
+      organisationWide: input.organisationWide || false,
+      teamId: input.teamId,
       organisationId: input.organisationId,
     })
     .returning();
@@ -105,6 +109,8 @@ export const updatePromptSnippet = async (
     name?: string;
     content?: string;
     category?: string;
+    organisationWide?: boolean;
+    teamId?: string | null;
   }
 ) => {
   const result = await getDb()
@@ -113,6 +119,8 @@ export const updatePromptSnippet = async (
       name: input.name,
       content: input.content,
       category: input.category,
+      organisationWide: input.organisationWide,
+      teamId: input.teamId,
       updatedAt: new Date().toISOString(),
     })
     .where(
