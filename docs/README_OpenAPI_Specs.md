@@ -455,6 +455,425 @@ Status Code **200**
 This operation does not require authentication
 </aside>
 
+## Add a user directly to an organisation
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdMembers"></a>
+
+`POST /api/v1/organisation/{organisationId}/members`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string"
+    },
+    "role": {
+      "anyOf": [
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "userId"
+  ]
+}
+```
+
+<h3 id="add-a-user-directly-to-an-organisation-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» userId|body|string|true|none|
+|» role|body|any|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ]
+    },
+    "joinedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "userId",
+    "organisationId",
+    "role",
+    "joinedAt"
+  ]
+}
+```
+
+<h3 id="add-a-user-directly-to-an-organisation-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="add-a-user-directly-to-an-organisation-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» userId|string(uuid)|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» role|any|true|none|none|
+|» joinedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|role|owner|
+|role|admin|
+|role|member|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Invite a user to an organisation by email
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdInvite"></a>
+
+`POST /api/v1/organisation/{organisationId}/invite`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "role": {
+      "anyOf": [
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ]
+    },
+    "sendMail": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}
+```
+
+<h3 id="invite-a-user-to-an-organisation-by-email-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» email|body|string(email)|true|none|
+|» role|body|any|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|» sendMail|body|boolean|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "email": {
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "email",
+    "role",
+    "organisationId",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
+<h3 id="invite-a-user-to-an-organisation-by-email-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="invite-a-user-to-an-organisation-by-email-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» email|string|true|none|none|
+|» role|any|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» status|string|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|role|owner|
+|role|admin|
+|role|member|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Change the role of a member
+
+<a id="opIdputApiV1OrganisationByOrganisationIdMembersByMemberId"></a>
+
+`PUT /api/v1/organisation/{organisationId}/members/{memberId}`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "role": {
+      "anyOf": [
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "role"
+  ]
+}
+```
+
+<h3 id="change-the-role-of-a-member-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|memberId|path|string|true|none|
+|body|body|object|false|none|
+|» role|body|any|true|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ]
+    },
+    "joinedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "userId",
+    "organisationId",
+    "role",
+    "joinedAt"
+  ]
+}
+```
+
+<h3 id="change-the-role-of-a-member-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="change-the-role-of-a-member-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» userId|string(uuid)|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» role|any|true|none|none|
+|» joinedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|role|owner|
+|role|admin|
+|role|member|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Remove a member from an organisation
+
+<a id="opIddeleteApiV1OrganisationByOrganisationIdMembersByMemberId"></a>
+
+`DELETE /api/v1/organisation/{organisationId}/members/{memberId}`
+
+<h3 id="remove-a-member-from-an-organisation-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|memberId|path|string|true|none|
+
+<h3 id="remove-a-member-from-an-organisation-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
 <h1 id="symbiosika-backend-api-admin">admin</h1>
 
 ## Health check endpoint
@@ -819,11 +1238,7 @@ This operation does not require authentication
     "sendVerificationEmail": {
       "type": "boolean"
     },
-    "meta": {
-      "type": "object",
-      "properties": {},
-      "required": []
-    }
+    "meta": {}
   },
   "required": [
     "email",
@@ -840,7 +1255,7 @@ This operation does not require authentication
 |» email|body|string|true|none|
 |» password|body|string|true|none|
 |» sendVerificationEmail|body|boolean|false|none|
-|» meta|body|object|false|none|
+|» meta|body|any|false|none|
 
 > Example responses
 
@@ -1002,6 +1417,50 @@ This operation does not require authentication
 |» email|body|string|true|none|
 
 <h3 id="forgot-password-endpoint-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Reset password with token
+
+<a id="opIdpostApiV1UserReset-password"></a>
+
+`POST /api/v1/user/reset-password`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "token",
+    "password"
+  ]
+}
+```
+
+<h3 id="reset-password-with-token-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|object|false|none|
+|» token|body|string|true|none|
+|» password|body|string|true|none|
+
+<h3 id="reset-password-with-token-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
@@ -1740,13 +2199,13 @@ Status Code **200**
 This operation does not require authentication
 </aside>
 
-## Search for users by email address
+## Search for users by email address in the whole Application
 
 <a id="opIdgetApiV1UserSearch"></a>
 
 `GET /api/v1/user/search`
 
-<h3 id="search-for-users-by-email-address-parameters">Parameters</h3>
+<h3 id="search-for-users-by-email-address-in-the-whole-application-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
@@ -1782,13 +2241,13 @@ This operation does not require authentication
 }
 ```
 
-<h3 id="search-for-users-by-email-address-responses">Responses</h3>
+<h3 id="search-for-users-by-email-address-in-the-whole-application-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
 
-<h3 id="search-for-users-by-email-address-responseschema">Response Schema</h3>
+<h3 id="search-for-users-by-email-address-in-the-whole-application-responseschema">Response Schema</h3>
 
 Status Code **200**
 
@@ -1845,6 +2304,394 @@ Status Code **200**
 |---|---|---|---|---|
 |» token|string|true|none|none|
 |» expiresAt|string|true|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+<h1 id="symbiosika-backend-api-invitations">invitations</h1>
+
+## Get all pending invitations for my user
+
+<a id="opIdgetApiV1UserOrganisationsInvitations"></a>
+
+`GET /api/v1/user/organisations/invitations`
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "email": {
+        "type": "string"
+      },
+      "role": {
+        "enum": [
+          "owner",
+          "admin",
+          "member"
+        ]
+      },
+      "organisationId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "status": {
+        "type": "string",
+        "maxLength": 50
+      },
+      "createdAt": {
+        "type": "string"
+      },
+      "updatedAt": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "email",
+      "role",
+      "organisationId",
+      "status",
+      "createdAt",
+      "updatedAt"
+    ]
+  }
+}
+```
+
+<h3 id="get-all-pending-invitations-for-my-user-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-pending-invitations-for-my-user-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» email|string|true|none|none|
+|» role|any|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» status|string|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|role|owner|
+|role|admin|
+|role|member|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Create a new invitation
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdInvitations"></a>
+
+`POST /api/v1/organisation/{organisationId}/invitations`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "email": {
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "organisationId"
+  ]
+}
+```
+
+<h3 id="create-a-new-invitation-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» id|body|string(uuid)|false|none|
+|» email|body|string|true|none|
+|» role|body|any|false|none|
+|» organisationId|body|string(uuid)|true|none|
+|» status|body|string|false|none|
+|» createdAt|body|string|false|none|
+|» updatedAt|body|string|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|» role|owner|
+|» role|admin|
+|» role|member|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "organisationId": {
+      "type": "string"
+    },
+    "organisationName": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "organisationId",
+    "organisationName",
+    "email",
+    "status",
+    "role"
+  ]
+}
+```
+
+<h3 id="create-a-new-invitation-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="create-a-new-invitation-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string|true|none|none|
+|» organisationId|string|true|none|none|
+|» organisationName|string|true|none|none|
+|» email|string|true|none|none|
+|» status|string|true|none|none|
+|» role|string|true|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get all invitations of an organisation to manage them as an admin overview. This path is not for a user to get his own invitations.
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdInvitations"></a>
+
+`GET /api/v1/organisation/{organisationId}/invitations`
+
+<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview.-this-path-is-not-for-a-user-to-get-his-own-invitations.-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "email": {
+        "type": "string"
+      },
+      "role": {
+        "enum": [
+          "owner",
+          "admin",
+          "member"
+        ]
+      },
+      "organisationId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "status": {
+        "type": "string",
+        "maxLength": 50
+      },
+      "createdAt": {
+        "type": "string"
+      },
+      "updatedAt": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "email",
+      "role",
+      "organisationId",
+      "status",
+      "createdAt",
+      "updatedAt"
+    ]
+  }
+}
+```
+
+<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview.-this-path-is-not-for-a-user-to-get-his-own-invitations.-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview.-this-path-is-not-for-a-user-to-get-his-own-invitations.-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» email|string|true|none|none|
+|» role|any|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» status|string|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|role|owner|
+|role|admin|
+|role|member|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Drop an invitation by its ID
+
+<a id="opIddeleteApiV1OrganisationByOrganisationIdInvitationsById"></a>
+
+`DELETE /api/v1/organisation/{organisationId}/invitations/{id}`
+
+<h3 id="drop-an-invitation-by-its-id-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|id|path|string|true|none|
+
+<h3 id="drop-an-invitation-by-its-id-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Accept an invitation by the User himself
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdInvitationsByIdAccept"></a>
+
+`POST /api/v1/organisation/{organisationId}/invitations/{id}/accept`
+
+<h3 id="accept-an-invitation-by-the-user-himself-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|id|path|string|true|none|
+
+<h3 id="accept-an-invitation-by-the-user-himself-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Decline an invitation
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdInvitationsByIdDecline"></a>
+
+`POST /api/v1/organisation/{organisationId}/invitations/{id}/decline`
+
+<h3 id="decline-an-invitation-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|id|path|string|true|none|
+
+<h3 id="decline-an-invitation-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
 
 <aside class="success">
 This operation does not require authentication
@@ -2168,18 +3015,18 @@ Status Code **200**
 This operation does not require authentication
 </aside>
 
-## Get a team by id
+## Get a team by its id
 
-<a id="opIdgetApiV1OrganisationByOrganisationIdTeamsById"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdTeamsByTeamId"></a>
 
-`GET /api/v1/organisation/{organisationId}/teams/{id}`
+`GET /api/v1/organisation/{organisationId}/teams/{teamId}`
 
-<h3 id="get-a-team-by-id-parameters">Parameters</h3>
+<h3 id="get-a-team-by-its-id-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
-|id|path|string|true|none|
+|teamId|path|string|true|none|
 
 > Example responses
 
@@ -2261,13 +3108,13 @@ This operation does not require authentication
 }
 ```
 
-<h3 id="get-a-team-by-id-responses">Responses</h3>
+<h3 id="get-a-team-by-its-id-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
 
-<h3 id="get-a-team-by-id-responseschema">Response Schema</h3>
+<h3 id="get-a-team-by-its-id-responseschema">Response Schema</h3>
 
 Status Code **200**
 
@@ -2287,9 +3134,9 @@ This operation does not require authentication
 
 ## Update a team
 
-<a id="opIdputApiV1OrganisationByOrganisationIdTeamsById"></a>
+<a id="opIdputApiV1OrganisationByOrganisationIdTeamsByTeamId"></a>
 
-`PUT /api/v1/organisation/{organisationId}/teams/{id}`
+`PUT /api/v1/organisation/{organisationId}/teams/{teamId}`
 
 > Body parameter
 
@@ -2369,7 +3216,7 @@ This operation does not require authentication
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
-|id|path|string|true|none|
+|teamId|path|string|true|none|
 |body|body|object|false|none|
 |» id|body|string(uuid)|false|none|
 |» name|body|string|true|none|
@@ -2485,16 +3332,16 @@ This operation does not require authentication
 
 ## Delete a team
 
-<a id="opIddeleteApiV1OrganisationByOrganisationIdTeamsById"></a>
+<a id="opIddeleteApiV1OrganisationByOrganisationIdTeamsByTeamId"></a>
 
-`DELETE /api/v1/organisation/{organisationId}/teams/{id}`
+`DELETE /api/v1/organisation/{organisationId}/teams/{teamId}`
 
 <h3 id="delete-a-team-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
-|id|path|string|true|none|
+|teamId|path|string|true|none|
 
 <h3 id="delete-a-team-responses">Responses</h3>
 
@@ -2508,16 +3355,16 @@ This operation does not require authentication
 
 ## Get all members of a team
 
-<a id="opIdgetApiV1OrganisationByOrganisationIdTeamsByIdMembers"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdTeamsByTeamIdMembers"></a>
 
-`GET /api/v1/organisation/{organisationId}/teams/{id}/members`
+`GET /api/v1/organisation/{organisationId}/teams/{teamId}/members`
 
 <h3 id="get-all-members-of-a-team-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
-|id|path|string|true|none|
+|teamId|path|string|true|none|
 
 > Example responses
 
@@ -4161,61 +5008,19 @@ This operation does not require authentication
 This operation does not require authentication
 </aside>
 
-<h1 id="symbiosika-backend-api-invitations">invitations</h1>
+<h1 id="symbiosika-backend-api-search">search</h1>
 
-## Create a new invitation
+## Search for users by email address inside an organisation
 
-<a id="opIdpostApiV1OrganisationByOrganisationIdInvitations"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdSearchUser"></a>
 
-`POST /api/v1/organisation/{organisationId}/invitations`
+`GET /api/v1/organisation/{organisationId}/search/user`
 
-> Body parameter
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "email": {
-      "type": "string"
-    },
-    "organisationId": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "status": {
-      "type": "string",
-      "maxLength": 50
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "email",
-    "organisationId"
-  ]
-}
-```
-
-<h3 id="create-a-new-invitation-parameters">Parameters</h3>
+<h3 id="search-for-users-by-email-address-inside-an-organisation-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
-|body|body|object|false|none|
-|» id|body|string(uuid)|false|none|
-|» email|body|string|true|none|
-|» organisationId|body|string(uuid)|true|none|
-|» status|body|string|false|none|
-|» createdAt|body|string|false|none|
-|» updatedAt|body|string|false|none|
 
 > Example responses
 
@@ -4226,204 +5031,43 @@ This operation does not require authentication
   "type": "object",
   "properties": {
     "id": {
-      "type": "string",
-      "format": "uuid"
+      "type": "string"
     },
     "email": {
       "type": "string"
     },
-    "organisationId": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "status": {
-      "type": "string",
-      "maxLength": 50
-    },
-    "createdAt": {
+    "firstname": {
       "type": "string"
     },
-    "updatedAt": {
+    "surname": {
       "type": "string"
     }
   },
   "required": [
     "id",
     "email",
-    "organisationId",
-    "status",
-    "createdAt",
-    "updatedAt"
+    "firstname",
+    "surname"
   ]
 }
 ```
 
-<h3 id="create-a-new-invitation-responses">Responses</h3>
+<h3 id="search-for-users-by-email-address-inside-an-organisation-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
 
-<h3 id="create-a-new-invitation-responseschema">Response Schema</h3>
+<h3 id="search-for-users-by-email-address-inside-an-organisation-responseschema">Response Schema</h3>
 
 Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» id|string(uuid)|true|none|none|
+|» id|string|true|none|none|
 |» email|string|true|none|none|
-|» organisationId|string(uuid)|true|none|none|
-|» status|string|true|none|none|
-|» createdAt|string|true|none|none|
-|» updatedAt|string|true|none|none|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## Get all invitations of an organisation to manage them as an admin overview
-
-<a id="opIdgetApiV1OrganisationByOrganisationIdInvitations"></a>
-
-`GET /api/v1/organisation/{organisationId}/invitations`
-
-<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview-parameters">Parameters</h3>
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|organisationId|path|string|true|none|
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "type": "array",
-  "items": {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "email": {
-        "type": "string"
-      },
-      "organisationId": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "status": {
-        "type": "string",
-        "maxLength": 50
-      },
-      "createdAt": {
-        "type": "string"
-      },
-      "updatedAt": {
-        "type": "string"
-      }
-    },
-    "required": [
-      "id",
-      "email",
-      "organisationId",
-      "status",
-      "createdAt",
-      "updatedAt"
-    ]
-  }
-}
-```
-
-<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
-
-<h3 id="get-all-invitations-of-an-organisation-to-manage-them-as-an-admin-overview-responseschema">Response Schema</h3>
-
-Status Code **200**
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» id|string(uuid)|true|none|none|
-|» email|string|true|none|none|
-|» organisationId|string(uuid)|true|none|none|
-|» status|string|true|none|none|
-|» createdAt|string|true|none|none|
-|» updatedAt|string|true|none|none|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## Drop an invitation by its ID
-
-<a id="opIddeleteApiV1OrganisationByOrganisationIdInvitationsById"></a>
-
-`DELETE /api/v1/organisation/{organisationId}/invitations/{id}`
-
-<h3 id="drop-an-invitation-by-its-id-parameters">Parameters</h3>
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|organisationId|path|string|true|none|
-|id|path|string|true|none|
-
-<h3 id="drop-an-invitation-by-its-id-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## Accept an invitation by the User himself
-
-<a id="opIdpostApiV1OrganisationByOrganisationIdInvitationsByIdAccept"></a>
-
-`POST /api/v1/organisation/{organisationId}/invitations/{id}/accept`
-
-<h3 id="accept-an-invitation-by-the-user-himself-parameters">Parameters</h3>
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|organisationId|path|string|true|none|
-|id|path|string|true|none|
-
-<h3 id="accept-an-invitation-by-the-user-himself-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## Decline an invitation
-
-<a id="opIdpostApiV1OrganisationByOrganisationIdInvitationsByIdDecline"></a>
-
-`POST /api/v1/organisation/{organisationId}/invitations/{id}/decline`
-
-<h3 id="decline-an-invitation-parameters">Parameters</h3>
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|organisationId|path|string|true|none|
-|id|path|string|true|none|
-
-<h3 id="decline-an-invitation-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+|» firstname|string|true|none|none|
+|» surname|string|true|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -4517,9 +5161,9 @@ This operation does not require authentication
 
 ## Get a file
 
-<a id="opIdgetApiV1OrganisationByOrganisationIdFilesByTypeByBucketById"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdFilesByTypeByBucketByFilename"></a>
 
-`GET /api/v1/organisation/{organisationId}/files/{type}/{bucket}/{id}`
+`GET /api/v1/organisation/{organisationId}/files/{type}/{bucket}/{filename}`
 
 <h3 id="get-a-file-parameters">Parameters</h3>
 
@@ -4528,13 +5172,139 @@ This operation does not require authentication
 |organisationId|path|string|true|none|
 |type|path|any|true|none|
 |bucket|path|string|true|none|
-|id|path|string|true|none|
+|filename|path|string|true|none|
 
 <h3 id="get-a-file-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get a file info
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdFilesByTypeByBucketByIdInfo"></a>
+
+`GET /api/v1/organisation/{organisationId}/files/{type}/{bucket}/{id}/info`
+
+<h3 id="get-a-file-info-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|type|path|any|true|none|
+|bucket|path|string|true|none|
+|id|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "bucket": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "fileType": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "extension": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "file": {},
+    "expiresAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "chatId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "workspaceId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "createdAt",
+    "updatedAt",
+    "organisationId",
+    "bucket",
+    "name",
+    "fileType",
+    "extension",
+    "file",
+    "expiresAt",
+    "chatId",
+    "workspaceId"
+  ]
+}
+```
+
+<h3 id="get-a-file-info-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-a-file-info-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» bucket|string|true|none|none|
+|» name|string|true|none|none|
+|» fileType|string|true|none|none|
+|» extension|string|true|none|none|
+|» file|any|true|none|none|
+|» expiresAt|string¦null|true|none|none|
+|» chatId|string¦null|true|none|none|
+|» workspaceId|string(uuid)¦null|true|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -5871,9 +6641,9 @@ This operation does not require authentication
 
 ## Create a new webhook
 
-<a id="opIdpostApiV1Webhooks"></a>
+<a id="opIdpostApiV1OrganisationByOrganisationIdWebhooks"></a>
 
-`POST /api/v1/webhooks`
+`POST /api/v1/organisation/{organisationId}/webhooks`
 
 > Body parameter
 
@@ -5892,6 +6662,9 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
     },
     "name": {
       "type": "string"
@@ -5996,11 +6769,12 @@ This operation does not require authentication
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|organisationId|query|string|true|none|
+|organisationId|path|string|true|none|
 |body|body|object|false|none|
 |» id|body|string(uuid)|false|none|
 |» userId|body|string(uuid)|true|none|
 |» organisationId|body|string(uuid)|true|none|
+|» organisationWide|body|boolean|false|none|
 |» name|body|string|true|none|
 |» type|body|string|true|none|
 |» event|body|string|true|none|
@@ -6054,6 +6828,9 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
     },
     "name": {
       "type": "string"
@@ -6147,6 +6924,7 @@ This operation does not require authentication
     "id",
     "userId",
     "organisationId",
+    "organisationWide",
     "name",
     "type",
     "event",
@@ -6176,6 +6954,7 @@ Status Code **200**
 |» id|string(uuid)|true|none|none|
 |» userId|string(uuid)|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
 |» name|string|true|none|none|
 |» type|string|true|none|none|
 |» event|string|true|none|none|
@@ -6286,15 +7065,15 @@ This operation does not require authentication
 
 ## Get all webhooks for the user
 
-<a id="opIdgetApiV1Webhooks"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdWebhooks"></a>
 
-`GET /api/v1/webhooks`
+`GET /api/v1/organisation/{organisationId}/webhooks`
 
 <h3 id="get-all-webhooks-for-the-user-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|organisationId|query|string|true|none|
+|organisationId|path|string|true|none|
 
 > Example responses
 
@@ -6317,6 +7096,9 @@ This operation does not require authentication
       "organisationId": {
         "type": "string",
         "format": "uuid"
+      },
+      "organisationWide": {
+        "type": "boolean"
       },
       "name": {
         "type": "string"
@@ -6410,6 +7192,7 @@ This operation does not require authentication
       "id",
       "userId",
       "organisationId",
+      "organisationWide",
       "name",
       "type",
       "event",
@@ -6440,6 +7223,276 @@ Status Code **200**
 |» id|string(uuid)|true|none|none|
 |» userId|string(uuid)|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
+|» name|string|true|none|none|
+|» type|string|true|none|none|
+|» event|string|true|none|none|
+|» webhookUrl|string|true|none|none|
+|» method|any|true|none|none|
+|» headers|any|true|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|number¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|boolean¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|[any]|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|object|false|none|none|
+|»»» **additionalProperties**|any|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» meta|any|true|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|number¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|boolean¦null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|[any]|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» *anonymous*|object|false|none|none|
+|»»» **additionalProperties**|any|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+|» lastUsedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|type|n8n|
+|event|chat-output|
+|method|POST|
+|method|GET|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get all organisation webhooks
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdWebhooksGlobal"></a>
+
+`GET /api/v1/organisation/{organisationId}/webhooks/global`
+
+<h3 id="get-all-organisation-webhooks-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "userId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "organisationId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "organisationWide": {
+        "type": "boolean"
+      },
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "n8n"
+        ]
+      },
+      "event": {
+        "enum": [
+          "chat-output"
+        ]
+      },
+      "webhookUrl": {
+        "type": "string"
+      },
+      "method": {
+        "enum": [
+          "POST",
+          "GET"
+        ]
+      },
+      "headers": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "type": "string",
+                "nullable": true
+              },
+              {
+                "type": "number",
+                "nullable": true
+              },
+              {
+                "type": "boolean",
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "type": "array",
+            "items": {}
+          },
+          {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        ]
+      },
+      "meta": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "type": "string",
+                "nullable": true
+              },
+              {
+                "type": "number",
+                "nullable": true
+              },
+              {
+                "type": "boolean",
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "type": "array",
+            "items": {}
+          },
+          {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        ]
+      },
+      "createdAt": {
+        "type": "string"
+      },
+      "updatedAt": {
+        "type": "string"
+      },
+      "lastUsedAt": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "userId",
+      "organisationId",
+      "organisationWide",
+      "name",
+      "type",
+      "event",
+      "webhookUrl",
+      "method",
+      "headers",
+      "meta",
+      "createdAt",
+      "updatedAt",
+      "lastUsedAt"
+    ]
+  }
+}
+```
+
+<h3 id="get-all-organisation-webhooks-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-organisation-webhooks-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» userId|string(uuid)|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
 |» name|string|true|none|none|
 |» type|string|true|none|none|
 |» event|string|true|none|none|
@@ -6550,14 +7603,15 @@ This operation does not require authentication
 
 ## Get a specific webhook by ID
 
-<a id="opIdgetApiV1WebhooksById"></a>
+<a id="opIdgetApiV1OrganisationByOrganisationIdWebhooksById"></a>
 
-`GET /api/v1/webhooks/{id}`
+`GET /api/v1/organisation/{organisationId}/webhooks/{id}`
 
 <h3 id="get-a-specific-webhook-by-id-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
+|organisationId|path|string|true|none|
 |id|path|string|true|none|
 
 > Example responses
@@ -6579,6 +7633,9 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
     },
     "name": {
       "type": "string"
@@ -6672,6 +7729,7 @@ This operation does not require authentication
     "id",
     "userId",
     "organisationId",
+    "organisationWide",
     "name",
     "type",
     "event",
@@ -6701,6 +7759,7 @@ Status Code **200**
 |» id|string(uuid)|true|none|none|
 |» userId|string(uuid)|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
 |» name|string|true|none|none|
 |» type|string|true|none|none|
 |» event|string|true|none|none|
@@ -6811,9 +7870,9 @@ This operation does not require authentication
 
 ## Update a webhook
 
-<a id="opIdputApiV1WebhooksById"></a>
+<a id="opIdputApiV1OrganisationByOrganisationIdWebhooksById"></a>
 
-`PUT /api/v1/webhooks/{id}`
+`PUT /api/v1/organisation/{organisationId}/webhooks/{id}`
 
 > Body parameter
 
@@ -6832,6 +7891,9 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
     },
     "name": {
       "type": "string"
@@ -6930,10 +7992,12 @@ This operation does not require authentication
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |id|path|string|true|none|
+|organisationId|path|string|true|none|
 |body|body|object|false|none|
 |» id|body|string(uuid)|false|none|
 |» userId|body|string(uuid)|false|none|
 |» organisationId|body|string(uuid)|false|none|
+|» organisationWide|body|boolean|false|none|
 |» name|body|string|false|none|
 |» type|body|string|false|none|
 |» event|body|string|false|none|
@@ -6987,6 +8051,9 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
     },
     "name": {
       "type": "string"
@@ -7080,6 +8147,7 @@ This operation does not require authentication
     "id",
     "userId",
     "organisationId",
+    "organisationWide",
     "name",
     "type",
     "event",
@@ -7109,6 +8177,7 @@ Status Code **200**
 |» id|string(uuid)|true|none|none|
 |» userId|string(uuid)|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
 |» name|string|true|none|none|
 |» type|string|true|none|none|
 |» event|string|true|none|none|
@@ -7219,15 +8288,16 @@ This operation does not require authentication
 
 ## Delete a webhook
 
-<a id="opIddeleteApiV1WebhooksById"></a>
+<a id="opIddeleteApiV1OrganisationByOrganisationIdWebhooksById"></a>
 
-`DELETE /api/v1/webhooks/{id}`
+`DELETE /api/v1/organisation/{organisationId}/webhooks/{id}`
 
 <h3 id="delete-a-webhook-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |id|path|string|true|none|
+|organisationId|path|string|true|none|
 
 <h3 id="delete-a-webhook-responses">Responses</h3>
 
@@ -7241,9 +8311,9 @@ This operation does not require authentication
 
 ## Register a webhook for n8n
 
-<a id="opIdpostApiV1WebhooksRegisterN8n"></a>
+<a id="opIdpostApiV1OrganisationByOrganisationIdWebhooksRegisterN8n"></a>
 
-`POST /api/v1/webhooks/register/n8n`
+`POST /api/v1/organisation/{organisationId}/webhooks/register/n8n`
 
 > Body parameter
 
@@ -7262,6 +8332,9 @@ This operation does not require authentication
     },
     "organisationId": {
       "type": "string"
+    },
+    "organisationWide": {
+      "type": "boolean"
     }
   },
   "required": [
@@ -7277,11 +8350,13 @@ This operation does not require authentication
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
+|organisationId|path|string|true|none|
 |body|body|object|false|none|
 |» name|body|string|true|none|
 |» webhookUrl|body|string|true|none|
 |» event|body|string|true|none|
 |» organisationId|body|string|true|none|
+|» organisationWide|body|boolean|false|none|
 
 > Example responses
 
@@ -7326,9 +8401,9 @@ This operation does not require authentication
 
 ## Check if a webhook exists
 
-<a id="opIdpostApiV1WebhooksCheck"></a>
+<a id="opIdpostApiV1OrganisationByOrganisationIdWebhooksCheck"></a>
 
-`POST /api/v1/webhooks/check`
+`POST /api/v1/organisation/{organisationId}/webhooks/check`
 
 > Body parameter
 
@@ -7350,6 +8425,7 @@ This operation does not require authentication
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
+|organisationId|path|string|true|none|
 |body|body|object|false|none|
 |» webhookId|body|string|true|none|
 
@@ -7391,26 +8467,14 @@ This operation does not require authentication
 
 ## Trigger a webhook
 
-<a id="opIdpostApiV1WebhooksByIdTrigger"></a>
+<a id="opIdpostApiV1OrganisationByOrganisationIdWebhooksByIdTrigger"></a>
 
-`POST /api/v1/webhooks/{id}/trigger`
+`POST /api/v1/organisation/{organisationId}/webhooks/{id}/trigger`
 
 > Body parameter
 
 ```json
-{
-  "type": "object",
-  "properties": {
-    "payload": {
-      "type": "object",
-      "properties": {},
-      "required": []
-    }
-  },
-  "required": [
-    "payload"
-  ]
-}
+{}
 ```
 
 <h3 id="trigger-a-webhook-parameters">Parameters</h3>
@@ -7418,8 +8482,8 @@ This operation does not require authentication
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |id|path|string|true|none|
-|body|body|object|false|none|
-|» payload|body|object|true|none|
+|organisationId|path|string|true|none|
+|body|body|any|false|none|
 
 <h3 id="trigger-a-webhook-responses">Responses</h3>
 
@@ -7452,87 +8516,84 @@ This operation does not require authentication
 
 ```json
 {
-  "type": "array",
-  "items": {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "organisationId": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "teamId": {
-        "anyOf": [
-          {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        ]
-      },
-      "userId": {
-        "anyOf": [
-          {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        ]
-      },
-      "workspaceId": {
-        "anyOf": [
-          {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        ]
-      },
-      "knowledgeEntryId": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "name": {
-        "anyOf": [
-          {
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          }
-        ]
-      },
-      "category": {
-        "anyOf": [
-          {
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          }
-        ]
-      },
-      "question": {
-        "type": "string"
-      },
-      "answer": {
-        "type": "string"
-      }
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
     },
-    "required": [
-      "id",
-      "organisationId",
-      "teamId",
-      "userId",
-      "workspaceId",
-      "knowledgeEntryId",
-      "name",
-      "category",
-      "question",
-      "answer"
-    ]
-  }
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "workspaceId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "knowledgeEntryId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 255,
+          "nullable": true
+        }
+      ]
+    },
+    "category": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 255,
+          "nullable": true
+        }
+      ]
+    },
+    "question": {
+      "type": "string"
+    },
+    "answer": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "organisationId",
+    "teamId",
+    "userId",
+    "workspaceId",
+    "knowledgeEntryId",
+    "name",
+    "category",
+    "question",
+    "answer"
+  ]
 }
 ```
 
@@ -7614,7 +8675,6 @@ This operation does not require authentication
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|organisationId|query|string|true|none|
 |organisationId|path|string|true|none|
 |body|body|object|false|none|
 |» organisationId|body|string|true|none|
@@ -7700,6 +8760,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -7708,6 +8769,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -8075,6 +9137,16 @@ This operation does not require authentication
                 "enum": [
                   null
                 ]
+              },
+              {
+                "enum": [
+                  null
+                ]
+              },
+              {
+                "enum": [
+                  null
+                ]
               }
             ]
           },
@@ -8095,6 +9167,16 @@ This operation does not require authentication
         "properties": {
           "provider": {
             "anyOf": [
+              {
+                "enum": [
+                  null
+                ]
+              },
+              {
+                "enum": [
+                  null
+                ]
+              },
               {
                 "enum": [
                   null
@@ -8133,6 +9215,16 @@ This operation does not require authentication
                 "enum": [
                   null
                 ]
+              },
+              {
+                "enum": [
+                  null
+                ]
+              },
+              {
+                "enum": [
+                  null
+                ]
               }
             ]
           },
@@ -8162,6 +9254,16 @@ This operation does not require authentication
                 "enum": [
                   null
                 ]
+              },
+              {
+                "enum": [
+                  null
+                ]
+              },
+              {
+                "enum": [
+                  null
+                ]
               }
             ]
           },
@@ -8182,6 +9284,16 @@ This operation does not require authentication
         "properties": {
           "provider": {
             "anyOf": [
+              {
+                "enum": [
+                  null
+                ]
+              },
+              {
+                "enum": [
+                  null
+                ]
+              },
               {
                 "enum": [
                   null
@@ -8242,6 +9354,18 @@ Status Code **200**
 |---|---|---|---|---|
 |»»» *anonymous*|object|false|none|none|
 
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
 *continued*
 
 |Name|Type|Required|Restrictions|Description|
@@ -8251,6 +9375,18 @@ Status Code **200**
 |»» provider|any|true|none|none|
 
 *anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
@@ -8282,6 +9418,18 @@ Status Code **200**
 |---|---|---|---|---|
 |»»» *anonymous*|object|false|none|none|
 
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
 *continued*
 
 |Name|Type|Required|Restrictions|Description|
@@ -8291,6 +9439,18 @@ Status Code **200**
 |»» provider|any|true|none|none|
 
 *anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
@@ -8322,6 +9482,18 @@ Status Code **200**
 |---|---|---|---|---|
 |»»» *anonymous*|object|false|none|none|
 
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
 *continued*
 
 |Name|Type|Required|Restrictions|Description|
@@ -8332,6 +9504,16 @@ Status Code **200**
 
 |Property|Value|
 |---|---|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
+|*anonymous*|null|
 |*anonymous*|null|
 |*anonymous*|null|
 |*anonymous*|null|
@@ -8752,7 +9934,8 @@ This operation does not require authentication
       "type": "string"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "userId": {
       "anyOf": [
@@ -9004,125 +10187,24 @@ This operation does not require authentication
 {
   "type": "object",
   "properties": {
-    "id": {
+    "chatId": {
       "type": "string"
     },
     "name": {
       "type": "string"
     },
-    "userId": {
-      "anyOf": [
-        {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        }
-      ]
-    },
-    "organisationId": {
-      "anyOf": [
-        {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        }
-      ]
-    },
-    "messages": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "type": "string",
-              "nullable": true
-            },
-            {
-              "type": "number",
-              "nullable": true
-            },
-            {
-              "type": "boolean",
-              "nullable": true
-            }
-          ]
-        },
-        {
-          "type": "array",
-          "items": {}
-        },
-        {
-          "type": "object",
-          "additionalProperties": {}
-        }
-      ]
-    },
-    "state": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "type": "string",
-              "nullable": true
-            },
-            {
-              "type": "number",
-              "nullable": true
-            },
-            {
-              "type": "boolean",
-              "nullable": true
-            }
-          ]
-        },
-        {
-          "type": "array",
-          "items": {}
-        },
-        {
-          "type": "object",
-          "additionalProperties": {}
-        }
-      ]
-    },
+    "history": {},
     "chatSessionGroupId": {
-      "anyOf": [
-        {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        }
-      ]
-    },
-    "deleteAt": {
-      "anyOf": [
-        {
-          "type": "string",
-          "nullable": true
-        }
-      ]
-    },
-    "createdAt": {
       "type": "string"
     },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastUsedAt": {
+    "parentWorkspaceId": {
       "type": "string"
     }
   },
   "required": [
-    "id",
+    "chatId",
     "name",
-    "userId",
-    "organisationId",
-    "messages",
-    "state",
-    "chatSessionGroupId",
-    "deleteAt",
-    "createdAt",
-    "updatedAt",
-    "lastUsedAt"
+    "history"
   ]
 }
 ```
@@ -9139,101 +10221,11 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» id|string|true|none|none|
+|» chatId|string|true|none|none|
 |» name|string|true|none|none|
-|» userId|string(uuid)¦null|true|none|none|
-|» organisationId|string(uuid)¦null|true|none|none|
-|» messages|any|true|none|none|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|any|false|none|none|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|number¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|boolean¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|[any]|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|object|false|none|none|
-|»»» **additionalProperties**|any|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» state|any|true|none|none|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|any|false|none|none|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|number¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|boolean¦null|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|[any]|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» *anonymous*|object|false|none|none|
-|»»» **additionalProperties**|any|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» chatSessionGroupId|string(uuid)¦null|true|none|none|
-|» deleteAt|string¦null|true|none|none|
-|» createdAt|string|true|none|none|
-|» updatedAt|string|true|none|none|
-|» lastUsedAt|string|true|none|none|
+|» history|any|true|none|none|
+|» chatSessionGroupId|string|false|none|none|
+|» parentWorkspaceId|string|false|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -9663,6 +10655,72 @@ Status Code **200**
 This operation does not require authentication
 </aside>
 
+## Update a chat message in a session
+
+<a id="opIdputApiV1OrganisationByOrganisationIdAiChatByChatIdMessageByMessageId"></a>
+
+`PUT /api/v1/organisation/{organisationId}/ai/chat/{chatId}/message/{messageId}`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string"
+    }
+  },
+  "required": []
+}
+```
+
+<h3 id="update-a-chat-message-in-a-session-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|chatId|path|string|true|none|
+|messageId|path|string|true|none|
+|body|body|object|false|none|
+|» content|body|string|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "success"
+  ]
+}
+```
+
+<h3 id="update-a-chat-message-in-a-session-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="update-a-chat-message-in-a-session-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» success|boolean|true|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
 ## Get prompt templates
 
 <a id="opIdgetApiV1OrganisationByOrganisationIdAiTemplates"></a>
@@ -9690,13 +10748,16 @@ This operation does not require authentication
         "format": "uuid"
       },
       "name": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 255
       },
       "label": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 255
       },
       "description": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 1000
       },
       "category": {
         "type": "string",
@@ -9851,13 +10912,16 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "label": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "category": {
       "type": "string",
@@ -9985,13 +11049,16 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "label": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "category": {
       "type": "string",
@@ -10147,13 +11214,16 @@ This operation does not require authentication
           "format": "uuid"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 255
         },
         "label": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 255
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 1000
         },
         "category": {
           "type": "string",
@@ -10280,13 +11350,16 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "label": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "category": {
       "type": "string",
@@ -10476,13 +11549,16 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "label": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "type": {
       "enum": [
@@ -10552,6 +11628,616 @@ Status Code **200**
 This operation does not require authentication
 </aside>
 
+## Add a new placeholder to a prompt template
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdAiTemplatesByPromptTemplateIdPlaceholders"></a>
+
+`POST /api/v1/organisation/{organisationId}/ai/templates/{promptTemplateId}/placeholders`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "promptTemplateId",
+    "name"
+  ]
+}
+```
+
+<h3 id="add-a-new-placeholder-to-a-prompt-template-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|promptTemplateId|path|string|true|none|
+|body|body|object|false|none|
+|» id|body|string(uuid)|false|none|
+|» promptTemplateId|body|string(uuid)|true|none|
+|» name|body|string|true|none|
+|» label|body|string|false|none|
+|» description|body|string|false|none|
+|» type|body|any|false|none|
+|» requiredByUser|body|boolean|false|none|
+|» defaultValue|body|string¦null|false|none|
+|» hidden|body|boolean|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|» type|text|
+|» type|image|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "promptTemplateId",
+    "name",
+    "label",
+    "description",
+    "type",
+    "requiredByUser",
+    "defaultValue",
+    "hidden"
+  ]
+}
+```
+
+<h3 id="add-a-new-placeholder-to-a-prompt-template-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="add-a-new-placeholder-to-a-prompt-template-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» promptTemplateId|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» label|string|true|none|none|
+|» description|string|true|none|none|
+|» type|any|true|none|none|
+|» requiredByUser|boolean|true|none|none|
+|» defaultValue|string¦null|true|none|none|
+|» hidden|boolean|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|type|text|
+|type|image|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get placeholder for prompt template
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdAiTemplatesByPromptTemplateIdPlaceholdersById"></a>
+
+`GET /api/v1/organisation/{organisationId}/ai/templates/{promptTemplateId}/placeholders/{id}`
+
+<h3 id="get-placeholder-for-prompt-template-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|promptTemplateId|path|string|true|none|
+|id|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "promptTemplateId",
+    "name",
+    "label",
+    "description",
+    "type",
+    "requiredByUser",
+    "defaultValue",
+    "hidden"
+  ]
+}
+```
+
+<h3 id="get-placeholder-for-prompt-template-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-placeholder-for-prompt-template-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» promptTemplateId|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» label|string|true|none|none|
+|» description|string|true|none|none|
+|» type|any|true|none|none|
+|» requiredByUser|boolean|true|none|none|
+|» defaultValue|string¦null|true|none|none|
+|» hidden|boolean|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|type|text|
+|type|image|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Update a prompt-template placeholder by ID
+
+<a id="opIdputApiV1OrganisationByOrganisationIdAiTemplatesByPromptTemplateIdPlaceholdersById"></a>
+
+`PUT /api/v1/organisation/{organisationId}/ai/templates/{promptTemplateId}/placeholders/{id}`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "promptTemplateId",
+    "name",
+    "label",
+    "description",
+    "type",
+    "requiredByUser",
+    "defaultValue",
+    "hidden"
+  ]
+}
+```
+
+<h3 id="update-a-prompt-template-placeholder-by-id-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|promptTemplateId|path|string|true|none|
+|id|path|string|true|none|
+|body|body|object|false|none|
+|» id|body|string(uuid)|true|none|
+|» promptTemplateId|body|string(uuid)|true|none|
+|» name|body|string|true|none|
+|» label|body|string|true|none|
+|» description|body|string|true|none|
+|» type|body|any|true|none|
+|» requiredByUser|body|boolean|true|none|
+|» defaultValue|body|string¦null|true|none|
+|» hidden|body|boolean|true|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|» type|text|
+|» type|image|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "promptTemplateId",
+    "name",
+    "label",
+    "description",
+    "type",
+    "requiredByUser",
+    "defaultValue",
+    "hidden"
+  ]
+}
+```
+
+<h3 id="update-a-prompt-template-placeholder-by-id-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="update-a-prompt-template-placeholder-by-id-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» promptTemplateId|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» label|string|true|none|none|
+|» description|string|true|none|none|
+|» type|any|true|none|none|
+|» requiredByUser|boolean|true|none|none|
+|» defaultValue|string¦null|true|none|none|
+|» hidden|boolean|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|type|text|
+|type|image|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Delete a placeholder for a prompt template by ID
+
+<a id="opIddeleteApiV1OrganisationByOrganisationIdAiTemplatesByPromptTemplateIdPlaceholdersById"></a>
+
+`DELETE /api/v1/organisation/{organisationId}/ai/templates/{promptTemplateId}/placeholders/{id}`
+
+<h3 id="delete-a-placeholder-for-a-prompt-template-by-id-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|promptTemplateId|path|string|true|none|
+|id|path|string|true|none|
+
+<h3 id="delete-a-placeholder-for-a-prompt-template-by-id-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get an object with all placeholders for a prompt template with the default values
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdAiTemplatesPlaceholders"></a>
+
+`GET /api/v1/organisation/{organisationId}/ai/templates/placeholders`
+
+<h3 id="get-an-object-with-all-placeholders-for-a-prompt-template-with-the-default-values-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "promptTemplateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "type": {
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "requiredByUser": {
+      "type": "boolean"
+    },
+    "defaultValue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "nullable": true
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "promptTemplateId",
+    "name",
+    "label",
+    "description",
+    "type",
+    "requiredByUser",
+    "defaultValue",
+    "hidden"
+  ]
+}
+```
+
+<h3 id="get-an-object-with-all-placeholders-for-a-prompt-template-with-the-default-values-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-an-object-with-all-placeholders-for-a-prompt-template-with-the-default-values-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» promptTemplateId|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» label|string|true|none|none|
+|» description|string|true|none|none|
+|» type|any|true|none|none|
+|» requiredByUser|boolean|true|none|none|
+|» defaultValue|string¦null|true|none|none|
+|» hidden|boolean|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|type|text|
+|type|image|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
 ## Get prompt snippets
 
 <a id="opIdgetApiV1OrganisationByOrganisationIdAiPrompt-snippets"></a>
@@ -10564,10 +12250,98 @@ This operation does not require authentication
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
 
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "content": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "content",
+    "category",
+    "userId",
+    "organisationId",
+    "organisationWide",
+    "teamId",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
 <h3 id="get-prompt-snippets-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-prompt-snippets-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» content|string|true|none|none|
+|» category|string|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
+|» teamId|string(uuid)¦null|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -10590,7 +12364,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "content": {
       "type": "string"
@@ -10611,6 +12386,18 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
     },
     "createdAt": {
       "type": "string"
@@ -10639,6 +12426,8 @@ This operation does not require authentication
 |» category|body|string|false|none|
 |» userId|body|string(uuid)¦null|false|none|
 |» organisationId|body|string(uuid)|true|none|
+|» organisationWide|body|boolean|false|none|
+|» teamId|body|string(uuid)¦null|false|none|
 |» createdAt|body|string|false|none|
 |» updatedAt|body|string|false|none|
 
@@ -10655,7 +12444,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "content": {
       "type": "string"
@@ -10677,6 +12467,18 @@ This operation does not require authentication
       "type": "string",
       "format": "uuid"
     },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
     "createdAt": {
       "type": "string"
     },
@@ -10691,6 +12493,8 @@ This operation does not require authentication
     "category",
     "userId",
     "organisationId",
+    "organisationWide",
+    "teamId",
     "createdAt",
     "updatedAt"
   ]
@@ -10715,6 +12519,8 @@ Status Code **200**
 |» category|string|true|none|none|
 |» userId|string(uuid)¦null|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
+|» teamId|string(uuid)¦null|true|none|none|
 |» createdAt|string|true|none|none|
 |» updatedAt|string|true|none|none|
 
@@ -10735,10 +12541,98 @@ This operation does not require authentication
 |organisationId|path|string|true|none|
 |id|path|string|true|none|
 
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "content": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "content",
+    "category",
+    "userId",
+    "organisationId",
+    "organisationWide",
+    "teamId",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
 <h3 id="get-prompt-snippet-by-id-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-prompt-snippet-by-id-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» name|string|true|none|none|
+|» content|string|true|none|none|
+|» category|string|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
+|» teamId|string(uuid)¦null|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -10761,7 +12655,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "content": {
       "type": "string"
@@ -10782,6 +12677,18 @@ This operation does not require authentication
     "organisationId": {
       "type": "string",
       "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
     },
     "createdAt": {
       "type": "string"
@@ -10807,6 +12714,8 @@ This operation does not require authentication
 |» category|body|string|false|none|
 |» userId|body|string(uuid)¦null|false|none|
 |» organisationId|body|string(uuid)|false|none|
+|» organisationWide|body|boolean|false|none|
+|» teamId|body|string(uuid)¦null|false|none|
 |» createdAt|body|string|false|none|
 |» updatedAt|body|string|false|none|
 
@@ -10823,7 +12732,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "content": {
       "type": "string"
@@ -10845,6 +12755,18 @@ This operation does not require authentication
       "type": "string",
       "format": "uuid"
     },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
     "createdAt": {
       "type": "string"
     },
@@ -10859,6 +12781,8 @@ This operation does not require authentication
     "category",
     "userId",
     "organisationId",
+    "organisationWide",
+    "teamId",
     "createdAt",
     "updatedAt"
   ]
@@ -10883,6 +12807,8 @@ Status Code **200**
 |» category|string|true|none|none|
 |» userId|string(uuid)¦null|true|none|none|
 |» organisationId|string(uuid)|true|none|none|
+|» organisationWide|boolean|true|none|none|
+|» teamId|string(uuid)¦null|true|none|none|
 |» createdAt|string|true|none|none|
 |» updatedAt|string|true|none|none|
 
@@ -11129,6 +13055,7 @@ This operation does not require authentication
         "anyOf": [
           {
             "type": "string",
+            "maxLength": 255,
             "nullable": true
           }
         ]
@@ -11137,6 +13064,7 @@ This operation does not require authentication
         "anyOf": [
           {
             "type": "string",
+            "maxLength": 1000,
             "nullable": true
           }
         ]
@@ -11357,6 +13285,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -11365,6 +13294,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -11743,6 +13673,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -11751,6 +13682,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -11992,6 +13924,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -12000,6 +13933,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -12241,6 +14175,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -12249,6 +14184,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -12391,39 +14327,84 @@ This operation does not require authentication
 {
   "type": "object",
   "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
     "organisationId": {
-      "type": "string"
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "workspaceId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
     },
     "text": {
       "type": "string"
     },
     "title": {
-      "type": "string"
-    },
-    "workspaceId": {
-      "type": "string"
-    },
-    "userId": {
-      "type": "string"
-    },
-    "teamId": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "meta": {
-      "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      }
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "string",
+              "nullable": true
+            },
+            {
+              "type": "number",
+              "nullable": true
+            },
+            {
+              "type": "boolean",
+              "nullable": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "items": {}
+        },
+        {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
     }
   },
   "required": [
@@ -12439,17 +14420,24 @@ This operation does not require authentication
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
 |body|body|object|false|none|
-|» organisationId|body|string|true|none|
+|» id|body|string(uuid)|false|none|
+|» organisationId|body|string(uuid)|true|none|
+|» organisationWide|body|boolean|false|none|
+|» teamId|body|string(uuid)¦null|false|none|
+|» userId|body|string(uuid)¦null|false|none|
+|» workspaceId|body|string(uuid)¦null|false|none|
 |» text|body|string|true|none|
 |» title|body|string|false|none|
-|» workspaceId|body|string|false|none|
-|» userId|body|string|false|none|
-|» teamId|body|string|false|none|
-|» meta|body|object|false|none|
-|»» **additionalProperties**|body|any|false|none|
-|»»» *anonymous*|body|string|false|none|
-|»»» *anonymous*|body|number|false|none|
-|»»» *anonymous*|body|boolean|false|none|
+|» meta|body|any|false|none|
+|»» *anonymous*|body|any|false|none|
+|»»» *anonymous*|body|string¦null|false|none|
+|»»» *anonymous*|body|number¦null|false|none|
+|»»» *anonymous*|body|boolean¦null|false|none|
+|»» *anonymous*|body|[any]|false|none|
+|»» *anonymous*|body|object|false|none|
+|»»» **additionalProperties**|body|any|false|none|
+|» createdAt|body|string|false|none|
+|» updatedAt|body|string|false|none|
 
 <h3 id="create-a-new-knowledge-text-entry-responses">Responses</h3>
 
@@ -12551,6 +14539,7 @@ This operation does not require authentication
         "anyOf": [
           {
             "type": "string",
+            "maxLength": 255,
             "nullable": true
           }
         ]
@@ -12559,6 +14548,7 @@ This operation does not require authentication
         "anyOf": [
           {
             "type": "string",
+            "maxLength": 1000,
             "nullable": true
           }
         ]
@@ -12702,35 +14692,87 @@ This operation does not require authentication
 {
   "type": "object",
   "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
     "organisationId": {
-      "type": "string"
+      "type": "string",
+      "format": "uuid"
+    },
+    "organisationWide": {
+      "type": "boolean"
+    },
+    "teamId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "workspaceId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
     },
     "text": {
       "type": "string"
     },
     "title": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "meta": {
-      "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      }
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "string",
+              "nullable": true
+            },
+            {
+              "type": "number",
+              "nullable": true
+            },
+            {
+              "type": "boolean",
+              "nullable": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "items": {}
+        },
+        {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
     }
   },
-  "required": [
-    "organisationId"
-  ]
+  "required": []
 }
 ```
 
@@ -12741,14 +14783,24 @@ This operation does not require authentication
 |organisationId|path|string|true|none|
 |id|path|string|true|none|
 |body|body|object|false|none|
-|» organisationId|body|string|true|none|
+|» id|body|string(uuid)|false|none|
+|» organisationId|body|string(uuid)|false|none|
+|» organisationWide|body|boolean|false|none|
+|» teamId|body|string(uuid)¦null|false|none|
+|» userId|body|string(uuid)¦null|false|none|
+|» workspaceId|body|string(uuid)¦null|false|none|
 |» text|body|string|false|none|
 |» title|body|string|false|none|
-|» meta|body|object|false|none|
-|»» **additionalProperties**|body|any|false|none|
-|»»» *anonymous*|body|string|false|none|
-|»»» *anonymous*|body|number|false|none|
-|»»» *anonymous*|body|boolean|false|none|
+|» meta|body|any|false|none|
+|»» *anonymous*|body|any|false|none|
+|»»» *anonymous*|body|string¦null|false|none|
+|»»» *anonymous*|body|number¦null|false|none|
+|»»» *anonymous*|body|boolean¦null|false|none|
+|»» *anonymous*|body|[any]|false|none|
+|»» *anonymous*|body|object|false|none|
+|»»» **additionalProperties**|body|any|false|none|
+|» createdAt|body|string|false|none|
+|» updatedAt|body|string|false|none|
 
 > Example responses
 
@@ -12826,6 +14878,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 255,
           "nullable": true
         }
       ]
@@ -12834,6 +14887,7 @@ This operation does not require authentication
       "anyOf": [
         {
           "type": "string",
+          "maxLength": 1000,
           "nullable": true
         }
       ]
@@ -13082,7 +15136,8 @@ This operation does not require authentication
         "type": "string"
       },
       "name": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 255
       },
       "userId": {
         "anyOf": [
@@ -13331,7 +15386,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "meta": {
       "anyOf": [
@@ -13430,7 +15486,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "meta": {
       "anyOf": [
@@ -13542,6 +15599,7 @@ This operation does not require authentication
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
+|workspaceId|query|string|false|none|
 |organisationId|path|string|true|none|
 
 > Example responses
@@ -13559,7 +15617,8 @@ This operation does not require authentication
         "format": "uuid"
       },
       "name": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 255
       },
       "meta": {
         "anyOf": [
@@ -13679,7 +15738,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "meta": {
       "anyOf": [
@@ -13776,7 +15836,8 @@ This operation does not require authentication
       "format": "uuid"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "meta": {
       "anyOf": [
@@ -13998,40 +16059,235 @@ This operation does not require authentication
 
 `DELETE /api/v1/organisation/{organisationId}/ai/chat-groups/{groupId}/users`
 
-> Body parameter
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "userIds": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    }
-  },
-  "required": [
-    "userIds"
-  ]
-}
-```
-
 <h3 id="remove-users-from-a-chat-group-parameters">Parameters</h3>
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |organisationId|path|string|true|none|
 |groupId|path|string|true|none|
-|userIds|param|string|true|none|
-|body|body|object|false|none|
-|» userIds|body|[string]|true|none|
 
 <h3 id="remove-users-from-a-chat-group-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+<h1 id="symbiosika-backend-api-ai-utils">ai-utils</h1>
+
+## Convert text to speech
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdAiUtilsTts"></a>
+
+`POST /api/v1/organisation/{organisationId}/ai/utils/tts`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "voice": {
+      "anyOf": [
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "text"
+  ]
+}
+```
+
+<h3 id="convert-text-to-speech-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» text|body|string|true|none|
+|» voice|body|any|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+|»» *anonymous*|body|object|false|none|
+
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+|»» *anonymous*|null|
+
+> Example responses
+
+> 200 Response
+
+<h3 id="convert-text-to-speech-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Send Audio file in MP3 format|string|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Convert speech to text
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdAiUtilsStt"></a>
+
+`POST /api/v1/organisation/{organisationId}/ai/utils/stt`
+
+> Body parameter
+
+```yaml
+type: object
+properties:
+  file: {}
+  returnSegments:
+    type: string
+  returnWords:
+    type: string
+required:
+  - file
+
+```
+
+<h3 id="convert-speech-to-text-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» file|body|any|true|none|
+|» returnSegments|body|string|false|none|
+|» returnWords|body|string|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "text"
+        ]
+      }
+    },
+    "words": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "word",
+          "start",
+          "end"
+        ]
+      }
+    }
+  },
+  "required": [
+    "text"
+  ]
+}
+```
+
+<h3 id="convert-speech-to-text-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Transcription result|Inline|
+
+<h3 id="convert-speech-to-text-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» text|string|true|none|none|
+|» segments|[object]|false|none|none|
+|»» start|number|true|none|none|
+|»» end|number|true|none|none|
+|»» text|string|true|none|none|
+|» words|[object]|false|none|none|
+|»» word|string|true|none|none|
+|»» start|number|true|none|none|
+|»» end|number|true|none|none|
 
 <aside class="success">
 This operation does not require authentication
@@ -14456,6 +16712,167 @@ This operation does not require authentication
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
 
 <h3 id="create-new-workspace-in-a-specific-organisation-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» parentId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» teamId|string(uuid)¦null|true|none|none|
+|» name|string|true|none|none|
+|» description|string¦null|true|none|none|
+|» result|any|true|none|none|
+|» finishedAt|string¦null|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get all shared workspaces where user is a member but not owner
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdWorkspacesShared"></a>
+
+`GET /api/v1/organisation/{organisationId}/workspaces/shared`
+
+<h3 id="get-all-shared-workspaces-where-user-is-a-member-but-not-owner-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "parentId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        ]
+      },
+      "organisationId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "userId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        ]
+      },
+      "teamId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        ]
+      },
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "anyOf": [
+          {
+            "type": "string",
+            "nullable": true
+          }
+        ]
+      },
+      "result": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "nullable": true
+          }
+        ]
+      },
+      "finishedAt": {
+        "anyOf": [
+          {
+            "type": "string",
+            "nullable": true
+          }
+        ]
+      },
+      "createdAt": {
+        "type": "string"
+      },
+      "updatedAt": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "parentId",
+      "organisationId",
+      "userId",
+      "teamId",
+      "name",
+      "description",
+      "result",
+      "finishedAt",
+      "createdAt",
+      "updatedAt"
+    ]
+  }
+}
+```
+
+<h3 id="get-all-shared-workspaces-where-user-is-a-member-but-not-owner-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-shared-workspaces-where-user-is-a-member-but-not-owner-responseschema">Response Schema</h3>
 
 Status Code **200**
 
@@ -15370,6 +17787,1032 @@ Status Code **200**
 |» finishedAt|string¦null|true|none|none|
 |» createdAt|string|true|none|none|
 |» updatedAt|string|true|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get all parent workspaces for a given workspace ID
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdWorkspacesByWorkspaceIdOrigin"></a>
+
+`GET /api/v1/organisation/{organisationId}/workspaces/{workspaceId}/origin`
+
+<h3 id="get-all-parent-workspaces-for-a-given-workspace-id-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|workspaceId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "nullable": true
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      }
+    }
+  },
+  "required": [
+    "list"
+  ]
+}
+```
+
+<h3 id="get-all-parent-workspaces-for-a-given-workspace-id-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-parent-workspaces-for-a-given-workspace-id-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» list|[object]|true|none|none|
+|»» id|string|true|none|none|
+|»» name|string|true|none|none|
+|»» parentId|string¦null|false|none|none|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+<h1 id="symbiosika-backend-api-jobs">jobs</h1>
+
+## Get all jobs for an organisation
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdJobs"></a>
+
+`GET /api/v1/organisation/{organisationId}/jobs`
+
+<h3 id="get-all-jobs-for-an-organisation-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|status|query|string|false|none|
+|type|query|string|false|none|
+|limit|query|string|false|none|
+|offset|query|string|false|none|
+|sortBy|query|string|false|none|
+|sortOrder|query|string|false|none|
+|organisationId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "userId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        ]
+      },
+      "organisationId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "type": {
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed"
+        ]
+      },
+      "metadata": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "nullable": true
+          }
+        ]
+      },
+      "result": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "nullable": true
+          }
+        ]
+      },
+      "error": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "nullable": true
+          }
+        ]
+      },
+      "createdAt": {
+        "type": "string"
+      },
+      "updatedAt": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "userId",
+      "organisationId",
+      "type",
+      "status",
+      "metadata",
+      "result",
+      "error",
+      "createdAt",
+      "updatedAt"
+    ]
+  }
+}
+```
+
+<h3 id="get-all-jobs-for-an-organisation-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="get-all-jobs-for-an-organisation-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» type|string|true|none|none|
+|» status|any|true|none|none|
+|» metadata|any|true|none|none|
+|» result|any|true|none|none|
+|» error|any|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|pending|
+|status|running|
+|status|completed|
+|status|failed|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Create a new job
+
+<a id="opIdpostApiV1OrganisationByOrganisationIdJobs"></a>
+
+`POST /api/v1/organisation/{organisationId}/jobs`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "metadata": {}
+  },
+  "required": [
+    "type"
+  ]
+}
+```
+
+<h3 id="create-a-new-job-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|body|body|object|false|none|
+|» type|body|string|true|none|
+|» metadata|body|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "result": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "userId",
+    "organisationId",
+    "type",
+    "status",
+    "metadata",
+    "result",
+    "error",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
+<h3 id="create-a-new-job-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+
+<h3 id="create-a-new-job-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» type|string|true|none|none|
+|» status|any|true|none|none|
+|» metadata|any|true|none|none|
+|» result|any|true|none|none|
+|» error|any|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|pending|
+|status|running|
+|status|completed|
+|status|failed|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get a specific job by ID
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdJobsByJobId"></a>
+
+`GET /api/v1/organisation/{organisationId}/jobs/{jobId}`
+
+<h3 id="get-a-specific-job-by-id-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|jobId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "result": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "userId",
+    "organisationId",
+    "type",
+    "status",
+    "metadata",
+    "result",
+    "error",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
+<h3 id="get-a-specific-job-by-id-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Job not found|None|
+
+<h3 id="get-a-specific-job-by-id-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» type|string|true|none|none|
+|» status|any|true|none|none|
+|» metadata|any|true|none|none|
+|» result|any|true|none|none|
+|» error|any|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|pending|
+|status|running|
+|status|completed|
+|status|failed|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Cancel a job
+
+<a id="opIddeleteApiV1OrganisationByOrganisationIdJobsByJobId"></a>
+
+`DELETE /api/v1/organisation/{organisationId}/jobs/{jobId}`
+
+<h3 id="cancel-a-job-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|jobId|path|string|true|none|
+
+<h3 id="cancel-a-job-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Job not found|None|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Update job progress
+
+<a id="opIdputApiV1OrganisationByOrganisationIdJobsByJobIdProgress"></a>
+
+`PUT /api/v1/organisation/{organisationId}/jobs/{jobId}/progress`
+
+> Body parameter
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "progress": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "progress"
+  ]
+}
+```
+
+<h3 id="update-job-progress-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|jobId|path|string|true|none|
+|body|body|object|false|none|
+|» progress|body|number|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "userId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      ]
+    },
+    "organisationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "result": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "nullable": true
+                },
+                {
+                  "type": "number",
+                  "nullable": true
+                },
+                {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ],
+          "nullable": true
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "userId",
+    "organisationId",
+    "type",
+    "status",
+    "metadata",
+    "result",
+    "error",
+    "createdAt",
+    "updatedAt"
+  ]
+}
+```
+
+<h3 id="update-job-progress-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Job not found|None|
+
+<h3 id="update-job-progress-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» id|string(uuid)|true|none|none|
+|» userId|string(uuid)¦null|true|none|none|
+|» organisationId|string(uuid)|true|none|none|
+|» type|string|true|none|none|
+|» status|any|true|none|none|
+|» metadata|any|true|none|none|
+|» result|any|true|none|none|
+|» error|any|true|none|none|
+|» createdAt|string|true|none|none|
+|» updatedAt|string|true|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|pending|
+|status|running|
+|status|completed|
+|status|failed|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
+## Get job status
+
+<a id="opIdgetApiV1OrganisationByOrganisationIdJobsByJobIdStatus"></a>
+
+`GET /api/v1/organisation/{organisationId}/jobs/{jobId}/status`
+
+<h3 id="get-job-status-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organisationId|path|string|true|none|
+|jobId|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string"
+    },
+    "progress": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}
+```
+
+<h3 id="get-job-status-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Job not found|None|
+
+<h3 id="get-job-status-responseschema">Response Schema</h3>
+
+Status Code **200**
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» status|string|true|none|none|
+|» progress|number|false|none|none|
 
 <aside class="success">
 This operation does not require authentication
