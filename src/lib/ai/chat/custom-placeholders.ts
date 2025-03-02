@@ -6,7 +6,10 @@ import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
 import { getNearestEmbeddings } from "../knowledge/similarity-search";
 import { getMarkdownFromUrl } from "../parsing/url";
-import { getPromptSnippetByNameAndCategory } from "../prompt-snippets";
+import {
+  getPromptSnippetById,
+  getPromptSnippetByNameAndCategory,
+} from "../prompt-snippets";
 import { getKnowledgeTextByTitle } from "../knowledge/knowledge-texts";
 import log from "../../log";
 import type {
@@ -17,32 +20,15 @@ import type {
 } from "./chat-store";
 import { speechToText } from "../standard";
 import { getFileFromDb } from "../../storage/db";
-
-const isNumber = (value: unknown): number | null | undefined => {
-  if (value && typeof value === "number" && !isNaN(value)) {
-    return value;
-  }
-  return null;
-};
-
-const getIndexValue = (variables: ChatStoreVariables, indexName: string) => {
-  if (
-    !variables[indexName] ||
-    typeof variables[indexName] !== "number" ||
-    isNaN(variables[indexName])
-  ) {
-    variables[indexName] = 0;
-  }
-  return variables[indexName];
-};
-
-const incrementIndexValue = (
-  variables: ChatStoreVariables,
-  indexName: string
-) => {
-  const ixValue = getIndexValue(variables, indexName);
-  variables[indexName] = ixValue + 1;
-};
+import {
+  getBooleanArgument,
+  getNumberArgument,
+  getStringArgument,
+  getStringArrayArgument,
+  getIndexValue,
+  incrementIndexValue,
+  isNumber,
+} from "./custom-placeholders-helper";
 
 /**
  * Custom App Placeholders
@@ -85,15 +71,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: Record<string, any>;
     }> => {
-      let pointerName = args.pointer ? args.pointer + "" : "_chunk_offset";
+      let pointerName = getStringArgument(args, "pointer", "_chunk_offset");
+      let autoIncrease = getBooleanArgument(args, "auto_increase", true);
 
-      let autoIncrease =
-        args.auto_increase && typeof args.auto_increase === "boolean"
-          ? args.auto_increase
-          : true;
-
-      let chunkOffset = isNumber(variables[pointerName]) ?? 0;
-      let chunkCount = isNumber(args.chunk_count) ?? undefined;
+      let chunkOffset = getNumberArgument(args, pointerName, 0);
+      let chunkCount = getNumberArgument(args, "chunk_count");
 
       // Parse dynamic filters
       const filters: Record<string, string[]> = {};
@@ -166,9 +148,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: Record<string, any>;
     }> => {
-      const searchForVariable = args.search_for_variable
-        ? args.search_for_variable + ""
-        : "user_input";
+      const searchForVariable = getStringArgument(
+        args,
+        "search_for_variable",
+        "user_input"
+      );
       const question = variables[searchForVariable];
 
       // Parse dynamic filters
@@ -180,16 +164,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         }
       });
 
-      const names = args.names ? String(args.names).split(",") : undefined;
-      const count =
-        args.count && typeof args.count === "number" ? args.count : undefined;
-      const before =
-        args.before && typeof args.before === "number"
-          ? args.before
-          : undefined;
-      const after =
-        args.after && typeof args.after === "number" ? args.after : undefined;
-      const ids = args.id ? (args.id as string).split(",") : undefined;
+      const names = getStringArrayArgument(args, "names");
+      const count = getNumberArgument(args, "count");
+      const before = getNumberArgument(args, "before");
+      const after = getNumberArgument(args, "after");
+      const ids = getStringArrayArgument(args, "id");
+      const workspaceId = getStringArgument(args, "workspace_id");
       const organisationId = meta.organisationId;
 
       await log.logCustom(
@@ -197,6 +177,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         "parse similar_to placeholder",
         {
           organisationId,
+          workspaceId,
           searchText: question,
           count,
           ids,
@@ -208,6 +189,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       );
       const results = await getNearestEmbeddings({
         organisationId: organisationId,
+        workspaceId,
         searchText: String(question),
         n: count,
         filterKnowledgeEntryIds: ids,
@@ -249,9 +231,9 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
 
       const fileSource = (args.source || "db") as FileSourceType;
-      const bucket = args.bucket ? args.bucket + "" : "default";
-      const ids = args.id ? (args.id as string).split(",") : [];
-      const indexName = args.index ? args.index + "" : "ix_file_id";
+      const bucket = getStringArgument(args, "bucket", "default");
+      const ids = getStringArrayArgument(args, "id", []);
+      const indexName = getStringArgument(args, "index", "ix_file_id");
       const organisationId = meta.organisationId;
 
       let id = "";
@@ -306,10 +288,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: Record<string, any>;
     }> => {
-      if (!args.url) {
+      const url = getStringArgument(args, "url");
+      if (!url) {
         throw new Error("url parameter is required for url placeholder");
       }
-      const url = args.url + "";
       await log.logCustom({ name: meta.chatId }, "parse url placeholder", {
         url,
       });
@@ -332,17 +314,34 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: Record<string, any>;
     }> => {
-      console.log("parse prompt_snippet placeholder", args);
-      const snippet = await getPromptSnippetByNameAndCategory({
-        name: args.name + "",
-        category: args.category + "",
-        organisationId: args.organisationId + "",
-      }).catch((e) => {
-        log.error("Error getting prompt snippet", e);
-        return null;
-      });
-      console.log("snippet", snippet);
-      return { content: snippet?.content ?? "" };
+      const name = getStringArgument(args, "name");
+      const category = getStringArgument(args, "category");
+      const organisationId = meta.organisationId;
+      const id = getStringArgument(args, "id");
+
+      if (name && category) {
+        const snippet = await getPromptSnippetByNameAndCategory({
+          name,
+          category,
+          organisationId,
+        }).catch((e) => {
+          log.error("Error getting prompt snippet", e);
+          return null;
+        });
+        return { content: snippet?.content ?? "" };
+      } else if (id) {
+        const snippet = await getPromptSnippetById(id, organisationId).catch(
+          (e) => {
+            log.error("Error getting prompt snippet", e);
+            return null;
+          }
+        );
+        return { content: snippet?.content ?? "" };
+      } else {
+        throw new Error(
+          "name, category or id parameter is required for prompt_snippet placeholder"
+        );
+      }
     },
   },
   {
@@ -357,9 +356,18 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: Record<string, any>;
     }> => {
+      const title = getStringArgument(args, "title");
+      const organisationId = meta.organisationId;
+
+      if (!title) {
+        throw new Error(
+          "title parameter is required for knowledge_text placeholder"
+        );
+      }
+
       const text = await getKnowledgeTextByTitle({
-        title: args.title + "",
-        organisationId: args.organisationId + "",
+        title,
+        organisationId,
       }).catch((e) => {
         log.error("Error getting knowledge text", e);
         return null;
@@ -384,62 +392,20 @@ export const customAppPlaceholders: PlaceholderParser[] = [
           "variable parameter is required for inc_value placeholder"
         );
       }
-      const varName = args.variable + "";
+      const varName = getStringArgument(args, "variable");
+      if (!varName) {
+        throw new Error(
+          "variable parameter is required for inc_value placeholder"
+        );
+      }
       const actualValue = getIndexValue(variables, varName);
-      const increaseBy: number = isNumber(args.increase) ?? 1;
+      const increaseBy: number = getNumberArgument(args, "increase", 1);
 
       variables[varName] = actualValue + increaseBy;
       return { content: "" };
     },
   },
-  {
-    name: "iterate_array",
-    replacerFunction: async (
-      match: string,
-      args: PlaceholderArgumentDict,
-      variables: ChatStoreVariables,
-      meta: ChatSessionContext
-    ): Promise<{
-      content: string;
-      skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
-    }> => {
-      // get name of the array variable
-      if (!args.name) {
-        log.error(
-          "parsing iterate_array placeholder: name parameter is required"
-        );
-        return { content: "" };
-      }
-      const varName = args.name + "";
 
-      if (!variables[varName] || !Array.isArray(variables[varName])) {
-        log.error(
-          "parsing iterate_array placeholder: variable not found",
-          varName
-        );
-        return { content: "" };
-      }
-
-      const ixName = "ix_" + varName;
-      const ixValue = getIndexValue(variables, ixName);
-      log.logCustom({ name: meta.chatId }, "iterate_array", {
-        ixName,
-        ixValue,
-      });
-
-      // get value from array
-      if (ixValue >= variables[varName].length) {
-        return { content: "", skipThisBlock: true };
-      }
-
-      // read value
-      const val = variables[varName][ixValue];
-      // increment index
-      incrementIndexValue(variables, ixName);
-      return { content: val + "" };
-    },
-  },
   {
     name: "stt",
     replacerFunction: async (
@@ -495,6 +461,55 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
 
       return { content: transcription.text };
+    },
+  },
+
+  {
+    name: "iterate_array",
+    replacerFunction: async (
+      match: string,
+      args: PlaceholderArgumentDict,
+      variables: ChatStoreVariables,
+      meta: ChatSessionContext
+    ): Promise<{
+      content: string;
+      skipThisBlock?: boolean;
+      addToMeta?: Record<string, any>;
+    }> => {
+      // get name of the array variable
+      if (!args.name) {
+        log.error(
+          "parsing iterate_array placeholder: name parameter is required"
+        );
+        return { content: "" };
+      }
+      const varName = args.name + "";
+
+      if (!variables[varName] || !Array.isArray(variables[varName])) {
+        log.error(
+          "parsing iterate_array placeholder: variable not found",
+          varName
+        );
+        return { content: "" };
+      }
+
+      const ixName = "ix_" + varName;
+      const ixValue = getIndexValue(variables, ixName);
+      log.logCustom({ name: meta.chatId }, "iterate_array", {
+        ixName,
+        ixValue,
+      });
+
+      // get value from array
+      if (ixValue >= variables[varName].length) {
+        return { content: "", skipThisBlock: true };
+      }
+
+      // read value
+      const val = variables[varName][ixValue];
+      // increment index
+      incrementIndexValue(variables, ixName);
+      return { content: val + "" };
     },
   },
 ];

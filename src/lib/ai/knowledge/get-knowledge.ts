@@ -343,6 +343,9 @@ export const getKnowledgeEntries = async (query: {
   if (query.ids?.length) {
     filterConditions.push(inArray(knowledgeEntry.id, query.ids));
   }
+  if (!query.workspaceId) {
+    filterConditions.push(isNull(knowledgeEntry.workspaceId));
+  }
 
   const r = await getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,

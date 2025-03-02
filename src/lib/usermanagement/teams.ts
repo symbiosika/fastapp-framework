@@ -165,11 +165,11 @@ export const checkTeamMemberRole = async (
     .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
   if (member.length === 0) {
-    throw new Error("You are not allowed to remove team members");
+    throw new Error("User has not the required role");
   } else if (roleToCheck.includes(member[0].role)) {
     return true;
   } else {
-    throw new Error("You are not allowed to remove team members");
+    throw new Error("User has not the required role");
   }
 };
 

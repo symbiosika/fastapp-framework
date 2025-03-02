@@ -24,7 +24,7 @@ import {
 
 import {
   createKnowledgeText,
-  readKnowledgeText,
+  getKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
   getKnowledgeTextByTitle,
@@ -76,7 +76,7 @@ export default {
   getFullSourceDocumentsForSimilaritySearch,
   // knowledge texts
   createKnowledgeText,
-  readKnowledgeText,
+  getKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
   getKnowledgeTextByTitle,

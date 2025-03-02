@@ -44,8 +44,9 @@ export const promptTemplates = pgBaseTable(
     userPrompt: text("user_prompt"),
     langCode: varchar("lang_code", { length: 2 }),
     // optional user id of the creator
-    userId: uuid("user_id").references(() => users.id),
-
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
     organisationId: uuid("organisation_id")
       .references(() => organisations.id, {
         onDelete: "cascade",
@@ -236,7 +237,9 @@ export const promptSnippets = pgBaseTable(
     name: varchar("name", { length: 255 }).notNull(),
     content: text("content").notNull(),
     category: varchar("category", { length: 255 }).notNull().default(""),
-    userId: uuid("user_id").references(() => users.id),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
     organisationId: uuid("organisation_id")
       .references(() => organisations.id, {
         onDelete: "cascade",

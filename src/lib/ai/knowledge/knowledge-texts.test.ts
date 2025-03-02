@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import {
   createKnowledgeText,
-  readKnowledgeText,
+  getKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
 } from "./knowledge-texts";
@@ -33,7 +33,7 @@ describe("Knowledge Texts Test", () => {
     };
 
     const createdText = await createKnowledgeText(newText);
-    const readText = await readKnowledgeText({
+    const readText = await getKnowledgeText({
       id: createdText.id,
       organisationId: createdText.organisationId,
     });
@@ -81,7 +81,7 @@ describe("Knowledge Texts Test", () => {
 
     expect(deletedText.success).toBe(true);
 
-    const readText = await readKnowledgeText({
+    const readText = await getKnowledgeText({
       id: createdText.id,
       organisationId: createdText.organisationId,
     });

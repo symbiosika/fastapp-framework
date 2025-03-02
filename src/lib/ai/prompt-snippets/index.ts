@@ -1,42 +1,74 @@
-import { and, eq, inArray } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  inArray,
+  isNull,
+  or,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
 import { promptSnippets } from "../../db/schema/prompts";
+import { teamMembers } from "../../db/schema/users";
+import { checkTeamMemberRole } from "../../usermanagement/teams";
+import { checkOrganisationMemberRole } from "../../usermanagement/oganisations";
 
 /**
  * Get all prompt snippets
  * Optionally filtered by name and category
  */
 export const getPromptSnippets = async (query: {
+  userId: string;
   organisationId: string;
   names?: string[];
   categories?: string[];
+  teamId?: string | null;
 }) => {
-  let where;
-  if (query?.names && query.names.length > 0) {
-    where = inArray(promptSnippets.name, query.names);
-  } else if (query?.categories && query.categories.length > 0) {
-    where = inArray(promptSnippets.category, query.categories);
-  } else if (
-    query?.names &&
-    query.names.length > 0 &&
-    query?.categories &&
-    query.categories.length > 0
-  ) {
-    where = and(
-      inArray(promptSnippets.name, query.names),
-      inArray(promptSnippets.category, query.categories)
-    );
+  const filters: SQLWrapper[] = [
+    or(
+      and(
+        eq(promptSnippets.userId, query.userId),
+        eq(promptSnippets.organisationId, query.organisationId)
+      ),
+      and(
+        eq(promptSnippets.organisationWide, true),
+        eq(promptSnippets.organisationId, query.organisationId)
+      ),
+      exists(
+        getDb()
+          .select()
+          .from(teamMembers)
+          .where(
+            and(
+              eq(teamMembers.userId, query.userId),
+              eq(teamMembers.teamId, promptSnippets.teamId)
+            )
+          )
+      )
+    )!,
+  ];
+
+  // set names filter
+  if (query.names && query.names.length > 0) {
+    filters.push(inArray(promptSnippets.name, query.names));
   }
 
-  if (where) {
-    where = and(where, eq(promptSnippets.organisationId, query.organisationId));
-  } else {
-    where = eq(promptSnippets.organisationId, query.organisationId);
+  // set categories filter
+  if (query.categories && query.categories.length > 0) {
+    filters.push(inArray(promptSnippets.category, query.categories));
   }
 
-  return await getDb().query.promptSnippets.findMany({
-    where,
-  });
+  // set teamId filter
+  if (query.teamId) {
+    // check permissions
+    await checkTeamMemberRole(query.teamId, query.userId, ["admin", "member"]);
+    filters.push(eq(promptSnippets.teamId, query.teamId));
+  }
+
+  return await getDb()
+    .select()
+    .from(promptSnippets)
+    .where(and(...filters));
 };
 
 /**
@@ -44,14 +76,42 @@ export const getPromptSnippets = async (query: {
  */
 export const getPromptSnippetById = async (
   id: string,
-  organisationId: string
+  organisationId: string,
+  userId?: string
 ) => {
-  return await getDb().query.promptSnippets.findFirst({
-    where: and(
-      eq(promptSnippets.id, id),
-      eq(promptSnippets.organisationId, organisationId)
-    ),
-  });
+  const filters: SQLWrapper[] = [
+    eq(promptSnippets.id, id),
+    eq(promptSnippets.organisationId, organisationId),
+  ];
+
+  if (userId) {
+    filters.push(
+      or(
+        eq(promptSnippets.userId, userId),
+        eq(promptSnippets.organisationWide, true),
+        exists(
+          getDb()
+            .select()
+            .from(teamMembers)
+            .where(
+              and(
+                eq(teamMembers.userId, userId),
+                eq(teamMembers.teamId, promptSnippets.teamId)
+              )
+            )
+        )
+      )!
+    );
+  }
+  const result = await getDb()
+    .select()
+    .from(promptSnippets)
+    .where(and(...filters));
+
+  if (!result[0]) {
+    throw "Prompt snippet not found";
+  }
+  return result[0];
 };
 
 /**
@@ -83,6 +143,16 @@ export const addPromptSnippet = async (input: {
   organisationWide?: boolean;
   teamId?: string | null;
 }) => {
+  // check permissions
+  if (input.userId && input.teamId) {
+    await checkTeamMemberRole(input.teamId, input.userId, ["admin"]);
+  } else if (input.userId && input.organisationWide) {
+    await checkOrganisationMemberRole(input.organisationId, input.userId, [
+      "admin",
+      "owner",
+    ]);
+  }
+
   const result = await getDb()
     .insert(promptSnippets)
     .values({
@@ -111,8 +181,22 @@ export const updatePromptSnippet = async (
     category?: string;
     organisationWide?: boolean;
     teamId?: string | null;
-  }
+  },
+  userId?: string
 ) => {
+  // get current item
+  const item = await getPromptSnippetById(id, organisationId, userId);
+
+  // check permissions on current item
+  if (userId && item.teamId) {
+    await checkTeamMemberRole(item.teamId, userId, ["admin"]);
+  } else if (userId && item.organisationWide) {
+    await checkOrganisationMemberRole(organisationId, userId, [
+      "admin",
+      "owner",
+    ]);
+  }
+
   const result = await getDb()
     .update(promptSnippets)
     .set({
@@ -139,15 +223,24 @@ export const updatePromptSnippet = async (
  */
 export const deletePromptSnippet = async (
   id: string,
-  organisationId: string
-) => {
-  return await getDb()
+  organisationId: string,
+  userId?: string
+): Promise<void> => {
+  const item = await getPromptSnippetById(id, organisationId, userId);
+
+  // check permissions if a user is provided
+  if (userId && item.teamId) {
+    await checkTeamMemberRole(item.teamId, userId, ["admin"]);
+  } else if (userId && item.organisationWide) {
+    await checkOrganisationMemberRole(organisationId, userId, [
+      "admin",
+      "owner",
+    ]);
+  }
+
+  await getDb()
     .delete(promptSnippets)
-    .where(
-      and(
-        eq(promptSnippets.id, id),
-        eq(promptSnippets.organisationId, organisationId)
-      )
-    )
-    .returning();
+    .where(and(eq(promptSnippets.id, id)));
+
+  return;
 };

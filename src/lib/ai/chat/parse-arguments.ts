@@ -43,7 +43,13 @@ export const parseArgumentsWithoutLimits = (
     const [key, value] = argument.split("=");
     // Remove quotes if present
     const cleanValue = value.replace(/^["']|["']$/g, "");
-    acc[key] = parseBoolOrNumberOrString(cleanValue);
+
+    // all snake_case keys are converted to camelCase
+    const camelCaseKey = key.replace(/_([a-z])/g, (_, letter) =>
+      letter.toUpperCase()
+    );
+
+    acc[camelCaseKey] = parseBoolOrNumberOrString(cleanValue);
     return acc;
   }, {});
 };

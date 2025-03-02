@@ -32,7 +32,9 @@ export const jobs = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    userId: uuid("user_id").references(() => users.id),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
     organisationId: uuid("organisation_id")
       .references(() => organisations.id, {
         onDelete: "cascade",

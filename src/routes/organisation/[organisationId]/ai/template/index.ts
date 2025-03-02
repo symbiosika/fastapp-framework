@@ -587,6 +587,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const categories = parseCommaSeparatedListFromUrlParam(category, []);
 
         const snippets = await getPromptSnippets({
+          userId: c.get("usersId"),
           names,
           categories,
           organisationId,
@@ -632,7 +633,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { organisationId, id } = c.req.valid("param");
-        const snippet = await getPromptSnippetById(id, organisationId);
+        const snippet = await getPromptSnippetById(
+          id,
+          organisationId,
+          c.get("usersId")
+        );
         return c.json(snippet);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -716,9 +721,14 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const { id, organisationId } = c.req.valid("param");
         const body = c.req.valid("json");
-        const snippet = await updatePromptSnippet(id, organisationId, {
-          ...body,
-        });
+        const snippet = await updatePromptSnippet(
+          id,
+          organisationId,
+          {
+            ...body,
+          },
+          c.get("usersId")
+        );
         return c.json(snippet);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -752,7 +762,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
-        await deletePromptSnippet(id, organisationId);
+        await deletePromptSnippet(id, organisationId, c.get("usersId"));
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });

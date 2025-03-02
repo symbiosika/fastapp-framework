@@ -23,7 +23,7 @@ import {
 } from "../../../../../lib/ai/knowledge/similarity-search";
 import {
   createKnowledgeText,
-  readKnowledgeText,
+  getKnowledgeText,
   updateKnowledgeText,
   deleteKnowledgeText,
 } from "../../../../../lib/ai/knowledge/knowledge-texts";
@@ -35,7 +35,11 @@ import {
 import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-organisation";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { knowledgeEntrySchema } from "../../../../../dbSchema";
+import {
+  knowledgeEntrySchema,
+  knowledgeTextInsertSchema,
+  knowledgeTextUpdateSchema,
+} from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
 
 const FileSourceType = {
@@ -90,53 +94,16 @@ const similaritySearchValidation = v.object({
   filterName: v.optional(v.array(v.string())),
   fullDocument: v.optional(v.boolean()),
 });
-type SimilaritySearchInput = v.InferOutput<typeof similaritySearchValidation>;
 
 const addFromTextValidation = v.object({
   organisationId: v.string(),
   text: v.string(),
 });
-type AddFromTextInput = v.InferOutput<typeof addFromTextValidation>;
 
 const addFromUrlValidation = v.object({
   organisationId: v.string(),
   url: v.string(),
 });
-type AddFromUrlInput = v.InferOutput<typeof addFromUrlValidation>;
-
-const createKnowledgeTextValidation = v.object({
-  organisationId: v.string(),
-  text: v.string(),
-  title: v.optional(v.string()),
-  workspaceId: v.optional(v.string()),
-  organisationWide: v.optional(v.boolean()),
-  userId: v.optional(v.string()),
-  teamId: v.optional(v.string()),
-  meta: v.optional(
-    v.record(
-      v.string(),
-      v.optional(v.union([v.string(), v.number(), v.boolean()]))
-    )
-  ),
-});
-type CreateKnowledgeTextInput = v.InferOutput<
-  typeof createKnowledgeTextValidation
->;
-
-const updateKnowledgeTextValidation = v.object({
-  organisationId: v.string(),
-  text: v.optional(v.string()),
-  title: v.optional(v.string()),
-  meta: v.optional(
-    v.record(
-      v.string(),
-      v.optional(v.union([v.string(), v.number(), v.boolean()]))
-    )
-  ),
-});
-type UpdateKnowledgeTextInput = v.InferOutput<
-  typeof updateKnowledgeTextValidation
->;
 
 const uploadAndLearnValidation = v.object({
   organisationId: v.string(),
@@ -152,7 +119,6 @@ const uploadAndLearnValidation = v.object({
     })
   ),
 });
-type UploadAndLearnInput = v.InferOutput<typeof uploadAndLearnValidation>;
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -489,8 +455,18 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await createKnowledgeText(body);
-        return c.json(r);
+        const r = await createKnowledgeText({
+          ...body,
+          userId: c.get("usersId"),
+        });
+
+        const parsed = await parseDocument({
+          sourceType: "text",
+          sourceId: r.id,
+          organisationId,
+        });
+
+        return c.json(parsed);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }
@@ -556,7 +532,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validator("json", createKnowledgeTextValidation),
+    validator("json", knowledgeTextInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -567,6 +543,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
 
         const r = await createKnowledgeText({
           ...body,
+          userId: c.get("usersId"),
         });
         return c.json(r);
       } catch (e) {
@@ -624,7 +601,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const limit = limitStr ? parseInt(limitStr) : undefined;
         const page = pageStr ? parseInt(pageStr) : undefined;
 
-        const r = await readKnowledgeText({
+        const r = await getKnowledgeText({
           id,
           limit,
           page,
@@ -663,7 +640,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validator("json", updateKnowledgeTextValidation),
+    validator("json", knowledgeTextUpdateSchema),
     validator(
       "query",
       v.object({

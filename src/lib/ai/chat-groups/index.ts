@@ -4,7 +4,17 @@ import {
   chatSessions,
   chatSessionGroups,
 } from "../../db/schema/chat";
-import { eq, and, desc, gte, lte, or, exists, inArray } from "drizzle-orm";
+import {
+  eq,
+  and,
+  desc,
+  gte,
+  lte,
+  or,
+  exists,
+  inArray,
+  type SQLWrapper,
+} from "drizzle-orm";
 import type {
   ChatSessionsInsert,
   ChatSessionsUpdate,
@@ -118,48 +128,46 @@ export async function queryChatSessions(
   userId: string,
   filters: QueryFilters
 ): Promise<ChatSessionsSelect[]> {
-  const db = getDb();
-  let query = db
-    .select()
-    .from(chatSessions)
-    .where(
-      and(
-        eq(chatSessions.organisationId, organisationId),
-        or(
-          eq(chatSessions.userId, userId),
-          exists(
-            db
-              .select()
-              .from(chatSessionGroupAssignments)
-              .where(
-                and(
-                  eq(chatSessionGroupAssignments.userId, userId),
+  const where: SQLWrapper[] = [
+    and(
+      eq(chatSessions.organisationId, organisationId),
+      or(
+        eq(chatSessions.userId, userId),
+        exists(
+          getDb()
+            .select()
+            .from(chatSessionGroupAssignments)
+            .where(
+              and(
+                eq(chatSessionGroupAssignments.userId, userId),
 
-                  eq(
-                    chatSessionGroupAssignments.chatSessionGroupId,
-                    chatSessions.chatSessionGroupId
-                  )
+                eq(
+                  chatSessionGroupAssignments.chatSessionGroupId,
+                  chatSessions.chatSessionGroupId
                 )
               )
-          )
+            )
         )
       )
-    )
-    .$dynamic();
+    )!,
+  ];
 
   if (filters.chatSessionGroupId) {
-    query = query.where(
-      eq(chatSessions.chatSessionGroupId, filters.chatSessionGroupId)
-    );
+    where.push(eq(chatSessions.chatSessionGroupId, filters.chatSessionGroupId));
   }
 
   if (filters.startDate) {
-    query = query.where(gte(chatSessions.createdAt, filters.startDate));
+    where.push(gte(chatSessions.createdAt, filters.startDate));
   }
 
   if (filters.endDate) {
-    query = query.where(lte(chatSessions.createdAt, filters.endDate));
+    where.push(lte(chatSessions.createdAt, filters.endDate));
   }
+
+  let query = getDb()
+    .select()
+    .from(chatSessions)
+    .where(and(...where));
 
   return await query.orderBy(desc(chatSessions.createdAt));
 }
@@ -205,34 +213,35 @@ export async function getChatSessionGroupsByUser(
     workspaceId?: string;
   }
 ): Promise<ChatSessionGroupsSelect[]> {
+  const filters: SQLWrapper[] = [
+    and(
+      eq(chatSessionGroups.organisationId, organisationId),
+      exists(
+        getDb()
+          .select()
+          .from(chatSessionGroupAssignments)
+          .where(
+            and(
+              eq(
+                chatSessionGroupAssignments.chatSessionGroupId,
+                chatSessionGroups.id
+              ),
+              eq(chatSessionGroupAssignments.userId, userId)
+            )
+          )
+      )
+    )!,
+  ];
+
+  if (query?.workspaceId) {
+    filters.push(eq(chatSessionGroups.workspaceId, query.workspaceId));
+  }
+
   const groups = getDb()
     .select()
     .from(chatSessionGroups)
-    .where(
-      and(
-        eq(chatSessionGroups.organisationId, organisationId),
-        exists(
-          getDb()
-            .select()
-            .from(chatSessionGroupAssignments)
-            .where(
-              and(
-                eq(
-                  chatSessionGroupAssignments.chatSessionGroupId,
-                  chatSessionGroups.id
-                ),
-                eq(chatSessionGroupAssignments.userId, userId)
-              )
-            )
-        )
-      )
-    )
-    .orderBy(desc(chatSessionGroups.createdAt))
-    .$dynamic();
-
-  if (query?.workspaceId) {
-    groups.where(eq(chatSessionGroups.workspaceId, query.workspaceId));
-  }
+    .where(and(...filters))
+    .orderBy(desc(chatSessionGroups.createdAt));
 
   return groups;
 }

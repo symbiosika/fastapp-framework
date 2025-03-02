@@ -1,15 +1,28 @@
-import { and, asc, eq, or, isNull } from "drizzle-orm";
+import { and, asc, eq, or, isNull, type SQLWrapper, exists } from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
 import {
   knowledgeText,
   type KnowledgeTextInsert,
 } from "../../db/schema/knowledge";
 import { RESPONSES } from "../../responses";
+import { teamMembers } from "../../db/schema/users";
+import { checkOrganisationMemberRole } from "../../usermanagement/oganisations";
+import { checkTeamMemberRole } from "../../usermanagement/teams";
 
 /**
  * Create a new knowledgeText entry
  */
 export const createKnowledgeText = async (data: KnowledgeTextInsert) => {
+  // check permission
+  if (data.userId && data.teamId) {
+    await checkTeamMemberRole(data.teamId, data.userId, ["admin"]);
+  } else if (data.userId && data.organisationWide) {
+    await checkOrganisationMemberRole(data.organisationId, data.userId, [
+      "admin",
+      "owner",
+    ]);
+  }
+
   const e = await getDb().insert(knowledgeText).values(data).returning();
   return e[0];
 };
@@ -17,7 +30,7 @@ export const createKnowledgeText = async (data: KnowledgeTextInsert) => {
 /**
  * Read all knowledgeText entries or a specific entry by ID
  */
-export const readKnowledgeText = async (filters: {
+export const getKnowledgeText = async (filters: {
   id?: string;
   organisationId: string;
   teamId?: string;
@@ -26,23 +39,33 @@ export const readKnowledgeText = async (filters: {
   limit?: number;
   page?: number;
 }) => {
-  const permissionConditions = [];
-  if (!filters.workspaceId) {
-    permissionConditions.push(
-      and(
-        isNull(knowledgeText.userId),
-        isNull(knowledgeText.teamId),
-        isNull(knowledgeText.workspaceId)
-      )
-    );
-  }
+  const permissionConditions: SQLWrapper[] = [
+    eq(knowledgeText.organisationId, filters.organisationId),
+  ];
 
   if (filters.userId) {
-    permissionConditions.push(eq(knowledgeText.userId, filters.userId));
-  }
-
-  if (filters.teamId) {
-    permissionConditions.push(eq(knowledgeText.teamId, filters.teamId));
+    permissionConditions.push(
+      or(
+        // User specific entries
+        eq(knowledgeText.userId, filters.userId),
+        // Team specific entries (only if user is a member of the team)
+        and(
+          isNull(knowledgeText.teamId),
+          eq(knowledgeText.organisationWide, true)
+        ),
+        exists(
+          getDb()
+            .select()
+            .from(teamMembers)
+            .where(
+              and(
+                eq(teamMembers.userId, filters.userId),
+                eq(teamMembers.teamId, knowledgeText.teamId)
+              )
+            )
+        )
+      )!
+    );
   }
 
   if (filters.workspaceId) {
@@ -51,21 +74,20 @@ export const readKnowledgeText = async (filters: {
     );
   }
 
+  if (filters.teamId) {
+    permissionConditions.push(eq(knowledgeText.teamId, filters.teamId));
+  }
+
+  if (filters.id) {
+    permissionConditions.push(eq(knowledgeText.id, filters.id));
+  }
+
   const query = getDb()
     .select()
     .from(knowledgeText)
     .orderBy(asc(knowledgeText.createdAt))
-    .where(
-      and(
-        eq(knowledgeText.organisationId, filters.organisationId),
-        or(...permissionConditions)
-      )
-    )
+    .where(and(...permissionConditions))
     .$dynamic();
-
-  if (filters.id) {
-    query.where(eq(knowledgeText.id, filters.id));
-  }
 
   if (filters.limit) {
     query.limit(filters.limit);
@@ -112,36 +134,31 @@ export const updateKnowledgeText = async (
   }
 ) => {
   // First check if user has permission to update this entry
-  const existing = await getDb()
-    .select()
-    .from(knowledgeText)
-    .where(
-      and(
-        eq(knowledgeText.id, id),
-        eq(knowledgeText.organisationId, context.organisationId),
-        or(
-          // Public entries
-          and(
-            isNull(knowledgeText.userId),
-            isNull(knowledgeText.teamId),
-            isNull(knowledgeText.workspaceId)
-          ),
-          // User specific entries
-          context.userId ? eq(knowledgeText.userId, context.userId) : undefined,
-          // Team specific entries
-          context.teamId ? eq(knowledgeText.teamId, context.teamId) : undefined,
-          // Workspace specific entries
-          context.workspaceId
-            ? eq(knowledgeText.workspaceId, context.workspaceId)
-            : undefined
-        )
-      )
-    );
+  const existing = await getKnowledgeText({
+    id,
+    organisationId: context.organisationId,
+    userId: context.userId,
+    teamId: context.teamId,
+    workspaceId: context.workspaceId,
+  });
 
-  if (!existing.length) {
+  // check permission
+  if (context.userId && existing.length === 0) {
     throw new Error("Knowledge text not found or access denied");
+  } else if (context.userId) {
+    const item = existing[0];
+    if (item.organisationWide) {
+      await checkOrganisationMemberRole(
+        context.organisationId,
+        context.userId,
+        ["admin", "owner"]
+      );
+    } else if (item.teamId) {
+      await checkTeamMemberRole(item.teamId, context.userId, ["admin"]);
+    }
   }
 
+  // update
   const e = await getDb()
     .update(knowledgeText)
     .set({ ...data })
@@ -163,35 +180,30 @@ export const deleteKnowledgeText = async (
     workspaceId?: string;
   }
 ) => {
-  const e = await getDb()
-    .delete(knowledgeText)
-    .where(
-      and(
-        eq(knowledgeText.id, id),
-        eq(knowledgeText.organisationId, context.organisationId),
-        or(
-          // Public entries
-          and(
-            isNull(knowledgeText.userId),
-            isNull(knowledgeText.teamId),
-            isNull(knowledgeText.workspaceId)
-          ),
-          // User specific entries
-          context.userId ? eq(knowledgeText.userId, context.userId) : undefined,
-          // Team specific entries
-          context.teamId ? eq(knowledgeText.teamId, context.teamId) : undefined,
-          // Workspace specific entries
-          context.workspaceId
-            ? eq(knowledgeText.workspaceId, context.workspaceId)
-            : undefined
-        )
-      )
-    )
-    .returning();
+  const e = await getKnowledgeText({
+    id,
+    organisationId: context.organisationId,
+    userId: context.userId,
+    teamId: context.teamId,
+    workspaceId: context.workspaceId,
+  });
 
-  if (!e.length) {
+  if (context.userId && e.length === 0) {
     throw new Error("Knowledge text not found or access denied");
+  } else if (context.userId) {
+    const item = e[0];
+    if (item.organisationWide) {
+      await checkOrganisationMemberRole(
+        context.organisationId,
+        context.userId,
+        ["admin", "owner"]
+      );
+    } else if (item.teamId) {
+      await checkTeamMemberRole(item.teamId, context.userId, ["admin"]);
+    }
   }
+
+  await getDb().delete(knowledgeText).where(eq(knowledgeText.id, id));
 
   return RESPONSES.SUCCESS;
 };

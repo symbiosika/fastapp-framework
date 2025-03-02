@@ -12,7 +12,7 @@ import {
   users,
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
-import { getUserById } from "./user";
+import { getUserByEmail, getUserById } from "./user";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { smtpService } from "../email";
 
@@ -227,19 +227,41 @@ export const createOrganisationInvitation = async (
 
   // send mail
   if (sendMail) {
-    const { html, subject } =
-      await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
-        appName: _GLOBAL_SERVER_CONFIG.appName,
-        baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
-        link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true`,
-      });
+    // check if user exists
+    const user = await getUserByEmail(dataWithStatus.email);
 
-    await smtpService.sendMail({
-      sender: process.env.SMTP_FROM,
-      recipients: [dataWithStatus.email],
-      subject,
-      html,
-    });
+    // when the user is existing send only invite to organisation
+    if (user) {
+      const { html, subject } =
+        await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganizationWhenUserExists(
+          {
+            appName: _GLOBAL_SERVER_CONFIG.appName,
+            baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+            link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/static/app/#/shared/organisations`,
+          }
+        );
+      await smtpService.sendMail({
+        sender: process.env.SMTP_FROM,
+        recipients: [dataWithStatus.email],
+        subject,
+        html,
+      });
+    }
+    // when user is not existing send mail to invite user to register
+    else {
+      const { html, subject } =
+        await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
+          appName: _GLOBAL_SERVER_CONFIG.appName,
+          baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+          link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true`,
+        });
+      await smtpService.sendMail({
+        sender: process.env.SMTP_FROM,
+        recipients: [dataWithStatus.email],
+        subject,
+        html,
+      });
+    }
   }
 
   return result;

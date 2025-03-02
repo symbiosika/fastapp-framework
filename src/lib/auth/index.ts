@@ -1,6 +1,7 @@
 import { eq, and, isNull } from "drizzle-orm";
 import {
   invitationCodes,
+  organisationMembers,
   sessions,
   users,
   type UsersSelect,
@@ -17,6 +18,8 @@ import {
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { preRegisterCustomVerifications, postRegisterActions } from "./actions";
 import log from "../log";
+import { addOrganisationMember } from "../usermanagement/oganisations";
+import { updateUser } from "../usermanagement/user";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -164,22 +167,22 @@ const changePassword = async (
 /**
  * Check if a general invitation code is valid
  * This will check if there are any general invitation codes and if the provided code is valid
+ * If the code is valid, it will return the organisationId to set if a organisation is provided
  */
 const checkGeneralInvitationCode = async (
   code: string | undefined
-): Promise<boolean> => {
+): Promise<{
+  usedInvitationCode: boolean;
+  check: boolean;
+  setOrganisationId: string | null;
+}> => {
   const codes = await getDb()
     .select()
     .from(invitationCodes)
-    .where(
-      and(
-        isNull(invitationCodes.organisationId),
-        eq(invitationCodes.isActive, true)
-      )
-    );
+    .where(eq(invitationCodes.isActive, true));
 
   if (codes.length === 0) {
-    return true; // no general invitation codes active, so we can register without one
+    return { usedInvitationCode: false, check: true, setOrganisationId: null }; // no general invitation codes active, so we can register without one
   } else if (!code) {
     throw "No invitation code provided but is required";
   } else {
@@ -187,7 +190,11 @@ const checkGeneralInvitationCode = async (
     if (!found) {
       throw "Invitation code not found";
     }
-    return true;
+    return {
+      usedInvitationCode: true,
+      check: true,
+      setOrganisationId: found.organisationId,
+    };
   }
 };
 
@@ -211,11 +218,30 @@ export const LocalAuth = {
     }
 
     // check if we can register without an invitation code
-    await checkGeneralInvitationCode(meta?.invitationCode);
+    const { usedInvitationCode, setOrganisationId } =
+      await checkGeneralInvitationCode(meta?.invitationCode);
 
     // add user to db
     const user = await setUserInDb(email, password, sendVerificationEmail);
     log.info(`New user registered: ${user.id}`);
+
+    // check if an organisation was provided via invitation code
+    if (setOrganisationId) {
+      // check if the organisation has already members
+      const members = await getDb()
+        .select()
+        .from(organisationMembers)
+        .where(eq(organisationMembers.organisationId, setOrganisationId));
+
+      let role: "member" | "owner" = "member";
+      if (members.length === 0) {
+        role = "owner";
+      }
+      await addOrganisationMember(setOrganisationId, user.id, role);
+      await updateUser(user.id, {
+        lastOrganisationId: setOrganisationId,
+      });
+    }
 
     // go through all post-register actions
     for (const action of postRegisterActions) {

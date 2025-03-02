@@ -1,6 +1,7 @@
 import type { ServerSpecificConfig } from "../types";
 import {
   stdTemplateInviteToOrganization,
+  stdTemplateInviteToOrganizationWhenUserExists,
   stdTemplateMagicLink,
   stdTemplatePasswordReset,
   stdTemplateVerifyEmail,
@@ -27,6 +28,8 @@ export const _GLOBAL_SERVER_CONFIG = {
     magicLink: stdTemplateMagicLink,
     resetPassword: stdTemplatePasswordReset,
     inviteToOrganization: stdTemplateInviteToOrganization,
+    inviteToOrganizationWhenUserExists:
+      stdTemplateInviteToOrganizationWhenUserExists,
   },
 };
 
@@ -75,5 +78,13 @@ export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   if (config.emailTemplates?.resetPassword) {
     _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword =
       config.emailTemplates.resetPassword;
+  }
+  if (config.emailTemplates?.inviteToOrganization) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization =
+      config.emailTemplates.inviteToOrganization;
+  }
+  if (config.emailTemplates?.inviteToOrganizationWhenUserExists) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganizationWhenUserExists =
+      config.emailTemplates.inviteToOrganizationWhenUserExists;
   }
 };

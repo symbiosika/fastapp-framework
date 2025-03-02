@@ -62,6 +62,32 @@ export const isTeamAdmin: MiddlewareHandler = async (c, next) => {
   }
 };
 
+/**
+ * Middleware to check if the user is Admin of the Team with the given teamId in the Body of the request
+ */
+export const isTeamAdminForPayload: MiddlewareHandler = async (c, next) => {
+  const userId = c.get("usersId");
+  const teamId = (await c.req.json())?.teamId;
+  if (!teamId || teamId == null || teamId === "") {
+    return await next();
+  }
+  await checkTeamMemberRole(teamId, userId, ["admin"]);
+  await next();
+};
+
+/**
+ * Middleware to check if the user is at least member of the Team with the given teamId in the Body of the request
+ */
+export const isTeamMemberForPayload: MiddlewareHandler = async (c, next) => {
+  const userId = c.get("usersId");
+  const teamId = (await c.req.json())?.teamId;
+  if (!teamId || teamId == null || teamId === "") {
+    return await next();
+  }
+  await checkTeamMemberRole(teamId, userId, ["admin", "member"]);
+  await next();
+};
+
 export default function defineTeamRoutes(
   app: FastAppHono,
   API_BASE_PATH: string

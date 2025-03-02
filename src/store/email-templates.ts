@@ -149,3 +149,47 @@ export const stdTemplateInviteToOrganization: EmailTemplateFunction = async (
     subject: `Invitation to Join ${data.appName}`,
   };
 };
+
+export const stdTemplateInviteToOrganizationWhenUserExists: EmailTemplateFunction =
+  async (data) => {
+    return {
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #4a4a4a;">You've Been Invited to Join an organisation</h2>
+              <p>Hello,</p>
+              <p>You have been invited to join an organisation on ${data.appName}. Click the button below to accept the invitation:</p>
+              <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td align="center" valign="middle" style="border-radius: 5px; background-color: #007bff;">
+                    <a
+                      href="${data.link}"
+                      role="button"
+                      style="
+                        display: inline-block;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #ffffff;
+                        text-decoration: none;
+                        padding: 12px 25px;
+                        border: 1px solid #007bff;
+                        border-radius: 5px;
+                        background-color: #007bff;
+                      "
+                    >
+                      Accept Invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p>If you did not expect this invitation, you can safely ignore this email.</p>
+              <p>This invitation link will expire in 7 days.</p>
+              <p>Best regards,<br>The ${data.appName} Team</p>
+            </div>
+          </body>
+        </html>
+      `,
+      subject: `Invitation to Join an organisation on ${data.appName}`,
+    };
+  };

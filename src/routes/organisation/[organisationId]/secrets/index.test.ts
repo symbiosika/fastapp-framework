@@ -128,8 +128,8 @@ describe("Secrets API Endpoints", () => {
 });
 
 describe("Security checks for Secrets API Endpoints", () => {
-  // Test unauthorized access to another organization's secrets
-  test("should not allow user from another organization to get secrets", async () => {
+  // Test unauthorized access to another organisation's secrets
+  test("should not allow user from another organisation to get secrets", async () => {
     const response = await testFetcher.get(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/secrets`,
@@ -139,7 +139,7 @@ describe("Security checks for Secrets API Endpoints", () => {
     expect(response.status).toBe(403); // Assuming 403 Forbidden for unauthorized access
   });
 
-  test("should not allow user from another organization to set a secret", async () => {
+  test("should not allow user from another organisation to set a secret", async () => {
     const secretData = {
       name: "UNAUTHORIZED_SECRET",
       value: "unauthorized_value",
@@ -155,7 +155,7 @@ describe("Security checks for Secrets API Endpoints", () => {
     expect(response.status).toBe(403);
   });
 
-  test("should not allow user from another organization to delete a secret", async () => {
+  test("should not allow user from another organisation to delete a secret", async () => {
     const response = await testFetcher.delete(
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/secrets/SECRET_TO_DELETE`,
