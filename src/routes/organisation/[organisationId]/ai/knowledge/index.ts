@@ -109,6 +109,7 @@ const createKnowledgeTextValidation = v.object({
   text: v.string(),
   title: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  organisationWide: v.optional(v.boolean()),
   userId: v.optional(v.string()),
   teamId: v.optional(v.string()),
   meta: v.optional(
@@ -566,7 +567,6 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
 
         const r = await createKnowledgeText({
           ...body,
-          workspaceId: body.workspaceId,
         });
         return c.json(r);
       } catch (e) {
