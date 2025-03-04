@@ -146,3 +146,51 @@ export const removeUserFromTeam = async (userId: string, teamId: string) => {
     .delete(teamMembers)
     .where(and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId)));
 };
+
+export const setUsersLastOrganisation = async (
+  userId: string,
+  organisationId?: string
+) => {
+  const usersOrganisations = await getUserOrganisations(userId);
+
+  if (
+    organisationId &&
+    usersOrganisations.some((org) => org.organisationId === organisationId)
+  ) {
+    await getDb()
+      .update(users)
+      .set({ lastOrganisationId: organisationId })
+      .where(eq(users.id, userId));
+  } else {
+    if (usersOrganisations.length > 0) {
+      await getDb()
+        .update(users)
+        .set({ lastOrganisationId: usersOrganisations[0].organisationId })
+        .where(eq(users.id, userId));
+    } else {
+      await getDb()
+        .update(users)
+        .set({ lastOrganisationId: null })
+        .where(eq(users.id, userId));
+    }
+  }
+};
+
+export const setAnotherOrganisationAsLast = async (
+  userId: string,
+  organisationIdThatCannotBeLast: string
+) => {
+  const usersLastOrganisation = await getDb()
+    .select({
+      lastOrganisationId: users.lastOrganisationId,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (
+    usersLastOrganisation[0]?.lastOrganisationId ===
+    organisationIdThatCannotBeLast
+  ) {
+    await setUsersLastOrganisation(userId);
+  }
+};

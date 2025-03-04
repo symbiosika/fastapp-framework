@@ -12,7 +12,7 @@ import {
   users,
 } from "../db/schema/users";
 import { getDb } from "../db/db-connection";
-import { getUserByEmail, getUserById } from "./user";
+import { getUserByEmail, getUserById, setUsersLastOrganisation } from "./user";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { smtpService } from "../email";
 
@@ -107,6 +107,8 @@ export const acceptOrganisationInvitation = async (
       role: "member",
     });
   });
+
+  await setUsersLastOrganisation(userId, invitation.organisationId);
 };
 
 /**
@@ -155,6 +157,8 @@ export const acceptAllPendingInvitationsForUser = async (
       });
     }
   });
+
+  await setUsersLastOrganisation(userId);
 };
 
 /**

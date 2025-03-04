@@ -16,6 +16,7 @@ import {
   users,
   organisationMembers,
 } from "../db/schema/users";
+import { setAnotherOrganisationAsLast } from "./user";
 
 /**
  * Create an organisation
@@ -128,6 +129,9 @@ export const dropUserFromOrganisation = async (
         )
       )
     );
+
+  // set the last organisation of the user
+  await setAnotherOrganisationAsLast(userId, organisationId);
 };
 
 /**
