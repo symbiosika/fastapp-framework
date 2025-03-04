@@ -18,6 +18,7 @@ import * as v from "valibot";
 import { usersRestrictedSelectSchema } from "../../dbSchema";
 import { RESPONSES } from "../../lib/responses";
 import { verifyPasswordResetToken } from "../../lib/auth/magic-link";
+import { checkIfInvitationCodeIsNeededToRegister } from "../../lib/usermanagement/invitations";
 
 /**
  * Define the payment routes
@@ -26,6 +27,42 @@ export function definePublicUserRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
 ) {
+  /**
+   * Check if an invitation code is needed to register
+   */
+  app.get(
+    API_BASE_PATH + "/user/invitation-code-needed",
+    describeRoute({
+      method: "get",
+      path: "/user/invitation-code-needed",
+      tags: ["user"],
+      summary: "Check if an invitation code is needed to register",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: v.object({
+                invitationCodeNeeded: v.boolean(),
+              }),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        const invitationCodeNeeded =
+          await checkIfInvitationCodeIsNeededToRegister();
+        return c.json({ invitationCodeNeeded });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error checking if invitation code is needed: " + err,
+        });
+      }
+    }
+  );
+
   /**
    * Login endpoint
    */

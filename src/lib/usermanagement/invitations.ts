@@ -5,6 +5,7 @@
 
 import { eq, and } from "drizzle-orm";
 import {
+  invitationCodes,
   organisationInvitations,
   type OrganisationInvitationsInsert,
   organisationMembers,
@@ -232,7 +233,7 @@ export const createOrganisationInvitation = async (
   // send mail
   if (sendMail) {
     // check if user exists
-    const user = await getUserByEmail(dataWithStatus.email);
+    const user = await getUserByEmail(dataWithStatus.email).catch(() => {});
 
     // when the user is existing send only invite to organisation
     if (user) {
@@ -269,4 +270,16 @@ export const createOrganisationInvitation = async (
   }
 
   return result;
+};
+
+/**
+ * A check function is an inviation code is needed to register
+ */
+export const checkIfInvitationCodeIsNeededToRegister = async () => {
+  const codes = await getDb()
+    .select()
+    .from(invitationCodes)
+    .where(eq(invitationCodes.isActive, true));
+
+  return codes.length > 0;
 };
