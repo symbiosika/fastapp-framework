@@ -1,5 +1,9 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { type LLMOptions, promptTemplates } from "../../../lib/db/db-schema";
+import {
+  type KnowledgeEntrySelect,
+  type LLMOptions,
+  promptTemplates,
+} from "../../../lib/db/db-schema";
 import { eq, and } from "drizzle-orm";
 import type { ChatMessageRole } from "./chat-store";
 import type { ChatMessage } from "./chat-store";
@@ -177,10 +181,15 @@ export const initChatMessage = (
   message: string,
   role: ChatMessageRole = "system",
   meta?: {
+    provider?: string;
     model?: string;
     human?: boolean;
     timestamp?: string;
-    documents?: any;
+    documents?: {
+      knowledgeEntries?: KnowledgeEntrySelect[];
+    };
+    thinkings?: string[];
+    citations?: string[];
   }
 ) => {
   const id = nanoid(16);

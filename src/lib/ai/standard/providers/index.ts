@@ -49,6 +49,8 @@ export interface TextGenerationResponse {
   meta: {
     model: string;
     provider: string;
+    thinkings?: string[];
+    citations?: string[];
   };
 }
 

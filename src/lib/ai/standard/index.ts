@@ -103,7 +103,7 @@ export const DEFAULT_MODEL = "openai:gpt-4o-mini";
  */
 const TextModels: Provider = {
   // "openai:gpt-4": {
-  //   name: "gpt-4",
+  //   name: "openai:gpt-4",
   //   label: "GPT-4",
   //   provider: "openai",
   //   providerName: "OpenAI",
@@ -114,7 +114,7 @@ const TextModels: Provider = {
   //   hostingOrigin: "us",
   // },
   // "openai:gpt-4-turbo": {
-  //   name: "gpt-4-turbo",
+  //   name: "openai:gpt-4-turbo",
   //   label: "GPT-4 Turbo",
   //   provider: "openai",
   //   providerName: "OpenAI",
@@ -125,7 +125,7 @@ const TextModels: Provider = {
   //   hostingOrigin: "us",
   // },
   // "openai:gpt-3.5-turbo": {
-  //   name: "gpt-3.5-turbo",
+  //   name: "openai:gpt-3.5-turbo",
   //   label: "GPT-3.5 Turbo",
   //   provider: "openai",
   //   providerName: "OpenAI",
@@ -134,7 +134,7 @@ const TextModels: Provider = {
   //   endpoint: "https://api.openai.com/v1/chat/completions",
   // },
   "openai:gpt-4o": {
-    name: "gpt-4o",
+    name: "openai:gpt-4o",
     label: "GPT-4o",
     provider: "openai",
     providerName: "OpenAI",
@@ -145,7 +145,7 @@ const TextModels: Provider = {
     hostingOrigin: "us",
   },
   "openai:gpt-4o-mini": {
-    name: "gpt-4o-mini",
+    name: "openai:gpt-4o-mini",
     label: "GPT-4o Mini",
     provider: "openai",
     providerName: "OpenAI",
@@ -156,7 +156,7 @@ const TextModels: Provider = {
     hostingOrigin: "us",
   },
   // "openai:o1": {
-  //   name: "o1",
+  //   name: "openai:o1",
   //   label: "GPT o1",
   //   provider: "openai",
   //   providerName: "OpenAI",
@@ -167,7 +167,7 @@ const TextModels: Provider = {
   //   hostingOrigin: "us",
   // },
   // "openai:o1-mini": {
-  //   name: "o1-mini",
+  //   name: "openai:o1-mini",
   //   label: "GPT o1 Mini",
   //   provider: "openai",
   //   providerName: "OpenAI",
@@ -179,7 +179,7 @@ const TextModels: Provider = {
   // },
 
   "anthropic:claude-3-7-sonnet-latest": {
-    name: "claude-3-7-sonnet-latest",
+    name: "anthropic:claude-3-7-sonnet-latest",
     label: "Claude 3.7 Sonnet",
     description: "High-End Model from Anthropic.",
     provider: "anthropic",
@@ -190,7 +190,7 @@ const TextModels: Provider = {
     hostingOrigin: "us",
   },
   "anthropic:claude-3-5-haiku-latest": {
-    name: "claude-3-5-haiku-latest",
+    name: "anthropic:claude-3-5-haiku-latest",
     label: "Claude 3.5 Haiku",
     description: "Anthropic's All-Rounder Model.",
     provider: "anthropic",
@@ -202,7 +202,7 @@ const TextModels: Provider = {
   },
 
   "mistral:mistral-large-latest": {
-    name: "mistral-large-latest",
+    name: "mistral:mistral-large-latest",
     label: "Mistral Large",
     description: "Mistral's Top model. Hosted in Europe.",
     provider: "mistral",
@@ -224,7 +224,7 @@ const TextModels: Provider = {
   //   hostingOrigin: "eu",
   // },
   "mistral:ministral-8b-latest": {
-    name: "ministral-8b-latest",
+    name: "mistral:ministral-8b-latest",
     label: "Mistral 8B",
     description: "Very fast model from Mistral. Hosted in Europe.",
     provider: "mistral",
@@ -235,7 +235,7 @@ const TextModels: Provider = {
     hostingOrigin: "eu",
   },
   // "mistral:codestral-latest": {
-  //   name: "codestral-latest",
+  //   name: "mistral:codestral-latest",
   //   label: "Mistral Code",
   //   description: "The Code model from Mistral",
   //   provider: "mistral",
@@ -247,7 +247,7 @@ const TextModels: Provider = {
   // },
 
   // "perplexity:sonar": {
-  //   name: "sonar",
+  //   name: "perplexity:sonar",
   //   label: "Sonar",
   //   description: "The medium model from Perplexity",
   //   provider: "perplexity",
@@ -257,19 +257,19 @@ const TextModels: Provider = {
   //   endpoint: "https://api.perplexity.ai/chat/completions",
   //   hostingOrigin: "us",
   // },
-  // "perplexity:sonar-pro": {
-  //   name: "sonar-pro",
-  //   label: "Sonar Pro",
-  //   description: "The pro model from Perplexity",
-  //   provider: "perplexity",
-  //   providerName: "Perplexity",
-  //   maxTokens: 128000,
-  //   maxOutputTokens: 8000,
-  //   endpoint: "https://api.perplexity.ai/chat/completions",
-  //   hostingOrigin: "us",
-  // },
+  "perplexity:sonar-pro": {
+    name: "perplexity:sonar-pro",
+    label: "Sonar Pro",
+    description: "The pro model from Perplexity",
+    provider: "perplexity",
+    providerName: "Perplexity",
+    maxTokens: 128000,
+    maxOutputTokens: 8000,
+    endpoint: "https://api.perplexity.ai/chat/completions",
+    hostingOrigin: "us",
+  },
   // "perplexity:sonar-reasoning": {
-  //   name: "sonar-reasoning",
+  //   name: "perplexity:sonar-reasoning",
   //   label: "Sonar Reasoning",
   //   description: "The reasoning model from Perplexity",
   //   provider: "perplexity",
@@ -280,7 +280,7 @@ const TextModels: Provider = {
   //   hostingOrigin: "us",
   // },
   "perplexity:sonar-reasoning-pro": {
-    name: "sonar-reasoning-pro",
+    name: "perplexity:sonar-reasoning-pro",
     label: "Sonar Reasoning Pro",
     description: "Perplexity's reasoning pro model.",
     provider: "perplexity",
@@ -291,7 +291,7 @@ const TextModels: Provider = {
     hostingOrigin: "us",
   },
   "perplexity:sonar-deep-research": {
-    name: "sonar-deep-research",
+    name: "perplexity:sonar-deep-research",
     label: "Sonar Deep Research",
     description: "Deep internet research by Perplexity.",
     provider: "perplexity",
@@ -305,7 +305,7 @@ const TextModels: Provider = {
 
 const MultiModalModels: Provider = {
   "openai:gpt-4o": {
-    name: "gpt-4o",
+    name: "openai:gpt-4o",
     label: "GPT-4o",
     description: "The Top model from OpenAI",
     provider: "openai",
@@ -315,7 +315,7 @@ const MultiModalModels: Provider = {
   },
 
   "mistral:pixtral-large-latest": {
-    name: "pixtral-large-latest",
+    name: "mistral:pixtral-large-latest",
     label: "Pixtral Large",
     description: "The Top model from Mistral",
     provider: "mistral",
@@ -325,7 +325,7 @@ const MultiModalModels: Provider = {
   },
 
   "anthropic:claude-3-5-sonnet": {
-    name: "claude-3-5-sonnet-latest",
+    name: "anthropic:claude-3-5-sonnet",
     label: "Claude 3.5 Sonnet",
     description: "The Top model from Anthropic",
     provider: "anthropic",
@@ -335,7 +335,7 @@ const MultiModalModels: Provider = {
   },
 
   "perplexity:sonar-medium-online": {
-    name: "sonar-medium-online",
+    name: "perplexity:sonar-medium-online",
     label: "Sonar Medium",
     description: "The medium model from Perplexity",
     provider: "perplexity",
@@ -347,7 +347,7 @@ const MultiModalModels: Provider = {
 
 const TTSModels: Provider = {
   "openai:tts-1": {
-    name: "tts-1",
+    name: "openai:tts-1",
     label: "TTS",
     description: "The good all-rounder model from OpenAI",
     provider: "openai",
@@ -359,7 +359,7 @@ const TTSModels: Provider = {
 
 const STTModels: Provider = {
   "openai:whisper-1": {
-    name: "whisper-1",
+    name: "openai:whisper-1",
     label: "Whisper",
     description: "The good all-rounder model from OpenAI",
     provider: "openai",
@@ -371,7 +371,7 @@ const STTModels: Provider = {
 
 const ImageGenerationModels: Provider = {
   "openai:dall-e-3": {
-    name: "dall-e-3",
+    name: "openai:dall-e-3",
     label: "Dall-E 3",
     description: "The good all-rounder model from OpenAI",
     provider: "openai",
@@ -550,6 +550,9 @@ export async function generateLongText(
   json?: any;
   meta: {
     model: string;
+    provider: string;
+    thinkings?: string[];
+    citations?: string[];
   };
 }> {
   try {
@@ -565,7 +568,7 @@ export async function generateLongText(
       text: result.text,
       json: result.json,
       meta: {
-        model: result.meta.model,
+        ...result.meta,
       },
     };
   } catch (error) {

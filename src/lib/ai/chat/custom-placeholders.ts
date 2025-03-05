@@ -127,11 +127,13 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       return {
         content: knowledgebase.map((k) => k.text).join("\n"),
         addToMeta: {
-          knowledgeEntries: await getKnowledgeEntries({
-            organisationId: meta.organisationId,
-            ids: knowledgebase.map((k) => k.knowledgeEntryId),
-            userId: meta.userId,
-          }),
+          documents: {
+            knowledgeEntries: await getKnowledgeEntries({
+              organisationId: meta.organisationId,
+              ids: knowledgebase.map((k) => k.knowledgeEntryId),
+              userId: meta.userId,
+            }),
+          },
         },
       };
     },
@@ -205,11 +207,13 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       return {
         content: results.map((r) => r.text).join("\n"),
         addToMeta: {
-          knowledgeEntries: await getKnowledgeEntries({
-            organisationId: organisationId,
-            ids: results.map((r) => r.knowledgeEntryId),
-            userId: meta.userId,
-          }),
+          documents: {
+            knowledgeEntries: await getKnowledgeEntries({
+              organisationId: organisationId,
+              ids: results.map((r) => r.knowledgeEntryId),
+              userId: meta.userId,
+            }),
+          },
         },
       };
     },

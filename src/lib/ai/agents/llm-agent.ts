@@ -68,7 +68,7 @@ export class LLMAgent implements Agent {
 
       const metadata = {
         ...addToMeta,
-        model: result.meta.model,
+        ...result.meta,
       };
 
       // Return the LLM result as "default" along with metadata

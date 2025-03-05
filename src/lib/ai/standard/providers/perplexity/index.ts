@@ -8,7 +8,7 @@ import {
   MAXIMUM_EXTERNAL_CALL_TIMEOUT,
 } from "../";
 import type { Message } from "../../index";
-import { countWords } from "../../utils";
+import { countWords, extractThinkingsAndContent } from "../../utils";
 
 // Default models
 const DEFAULT_TEXT_MODEL = "sonar";
@@ -85,6 +85,9 @@ export class PerplexityProvider implements AIProvider {
     let currentMessages = [...messages];
     let retryCount = 0;
     let finished = false;
+    const thinkings: string[] = [];
+    const citations: string[] = [];
+
     const model = options?.model || DEFAULT_TEXT_MODEL;
 
     while (!finished) {
@@ -121,13 +124,37 @@ export class PerplexityProvider implements AIProvider {
         }
 
         const result = await response.json();
-        const newText = result.choices[0].message.content;
-        output += newText;
+        // log.debug(result);
+        /*
+        Optional:
+        result.choices[0].message.content = `<think>...</think>...`
+
+        result.usage.prompt_tokens
+        result.usage.completion_tokens
+        result.usage.total_tokens
+        result.usage.citation_tokens
+        result.usage.num_search_queries
+        result.usage.reasoning_tokens
+        result.choices[0].finish_reason === "stop", if result was OK
+
+        result.citations = string[]        
+        */
+        const content: string = result.choices[0].message.content;
+
+        const extraced = extractThinkingsAndContent(content);
+        thinkings.push(...extraced.thinkings);
+
+        output += extraced.content;
+
+        // check if the response has some citations
+        if (result.citations && Array.isArray(result.citations)) {
+          citations.push(...result.citations);
+        }
 
         // Update messages to include the assistant's reply
         currentMessages.push({
           role: "assistant",
-          content: newText,
+          content: extraced.content,
         });
 
         // Add a user message to prompt continuation if needed
@@ -178,6 +205,8 @@ export class PerplexityProvider implements AIProvider {
       meta: {
         model,
         provider: "perplexity",
+        thinkings,
+        citations,
       },
     };
   }
