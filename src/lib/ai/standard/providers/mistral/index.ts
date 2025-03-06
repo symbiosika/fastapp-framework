@@ -30,6 +30,12 @@ export class MistralProvider implements AIProvider {
     try {
       const model = options?.model || DEFAULT_TEXT_MODEL;
 
+      // Clean messages to remove meta fields that Mistral doesn't accept
+      const cleanedMessages = messages.map(({ role, content }) => ({
+        role,
+        content,
+      }));
+
       const response = await fetch(`${this.baseURL}/chat/completions`, {
         method: "POST",
         headers: {
@@ -39,7 +45,7 @@ export class MistralProvider implements AIProvider {
         body: JSON.stringify({
           model,
           temperature: options?.temperature ?? 1,
-          messages,
+          messages: cleanedMessages,
           max_tokens: options?.maxTokens,
           safe_prompt: false,
           response_format:
@@ -85,7 +91,11 @@ export class MistralProvider implements AIProvider {
     options?: LongTextGenerationOptions
   ): Promise<LongTextGenerationResponse> {
     let output = "";
-    let currentMessages = [...messages];
+    // Clean messages to remove meta fields that Mistral doesn't accept
+    let currentMessages = messages.map(({ role, content }) => ({
+      role,
+      content,
+    }));
     let retryCount = 0;
     let finished = false;
     const model = options?.model || DEFAULT_TEXT_MODEL;
@@ -126,7 +136,7 @@ export class MistralProvider implements AIProvider {
         const newText = result.choices[0].message.content;
         output += newText;
 
-        // Update messages to include the assistant's reply
+        // Update messages to include the assistant's reply, ensuring we only keep role and content
         currentMessages.push({
           role: "assistant",
           content: newText,
