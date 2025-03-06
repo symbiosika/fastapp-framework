@@ -127,6 +127,7 @@ export const knowledgeEntry = pgBaseTable(
     description: text("description"),
     abstract: text("abstract"),
     meta: jsonb("meta").$type<KnowledgeTextMeta>().default({}),
+    hidden: boolean("hidden").notNull().default(false),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),

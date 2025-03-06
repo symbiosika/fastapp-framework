@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_entry" ADD COLUMN "hidden" boolean DEFAULT false NOT NULL;
