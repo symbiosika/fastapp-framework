@@ -126,7 +126,7 @@ class Logger {
     }
   }
 
-  async getCustomLogFile(name: string) {
+  async getCustomLogFileContent(name: string) {
     return fs.readFile(
       path.join(process.cwd(), "logs", "custom-" + name + ".log"),
       "utf8"

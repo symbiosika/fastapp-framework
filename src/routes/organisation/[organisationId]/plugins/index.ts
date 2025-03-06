@@ -362,20 +362,26 @@ export default function definePluginRoutes(
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, pluginName, endpoint } = c.req.valid("param");
-      const url = new URL(c.req.url);
+      try {
+        const { organisationId, pluginName, endpoint } = c.req.valid("param");
+        const url = new URL(c.req.url);
 
-      // create a dict from all search params
-      const searchParams = Object.fromEntries(url.searchParams.entries());
-      return executeEndpoint(
-        c,
-        organisationId,
-        pluginName,
-        endpoint,
-        "GET",
-        undefined,
-        searchParams
-      );
+        // create a dict from all search params
+        const searchParams = Object.fromEntries(url.searchParams.entries());
+        return executeEndpoint(
+          c,
+          organisationId,
+          pluginName,
+          endpoint,
+          "GET",
+          undefined,
+          searchParams
+        );
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error executing plugin endpoint: " + err,
+        });
+      }
     }
   );
 
@@ -408,21 +414,27 @@ export default function definePluginRoutes(
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, pluginName, endpoint } = c.req.valid("param");
-      const url = new URL(c.req.url);
+      try {
+        const { organisationId, pluginName, endpoint } = c.req.valid("param");
+        const url = new URL(c.req.url);
 
-      // create a dict from all search params
-      const searchParams = Object.fromEntries(url.searchParams.entries());
-      const body = await c.req.json();
-      return executeEndpoint(
-        c,
-        organisationId,
-        pluginName,
-        endpoint,
-        "POST",
-        body,
-        searchParams
-      );
+        // create a dict from all search params
+        const searchParams = Object.fromEntries(url.searchParams.entries());
+        const body = await c.req.json();
+        return executeEndpoint(
+          c,
+          organisationId,
+          pluginName,
+          endpoint,
+          "POST",
+          body,
+          searchParams
+        );
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error executing plugin endpoint: " + err,
+        });
+      }
     }
   );
 
@@ -455,19 +467,25 @@ export default function definePluginRoutes(
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, pluginName, endpoint } = c.req.valid("param");
-      const url = new URL(c.req.url);
-      // create a dict from all search params
-      const searchParams = Object.fromEntries(url.searchParams.entries());
-      return executeEndpoint(
-        c,
-        organisationId,
-        pluginName,
-        endpoint,
-        "DELETE",
-        undefined,
-        searchParams
-      );
+      try {
+        const { organisationId, pluginName, endpoint } = c.req.valid("param");
+        const url = new URL(c.req.url);
+        // create a dict from all search params
+        const searchParams = Object.fromEntries(url.searchParams.entries());
+        return executeEndpoint(
+          c,
+          organisationId,
+          pluginName,
+          endpoint,
+          "DELETE",
+          undefined,
+          searchParams
+        );
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error executing plugin endpoint: " + err,
+        });
+      }
     }
   );
 
@@ -500,21 +518,27 @@ export default function definePluginRoutes(
     ),
     isOrganisationMember,
     async (c) => {
-      const url = new URL(c.req.url);
-      const { organisationId, pluginName, endpoint } = c.req.valid("param");
+      try {
+        const url = new URL(c.req.url);
+        const { organisationId, pluginName, endpoint } = c.req.valid("param");
 
-      // create a dict from all search params
-      const searchParams = Object.fromEntries(url.searchParams.entries());
-      const body = await c.req.json();
-      return executeEndpoint(
-        c,
-        organisationId,
-        pluginName,
-        endpoint,
-        "PUT",
-        body,
-        searchParams
-      );
+        // create a dict from all search params
+        const searchParams = Object.fromEntries(url.searchParams.entries());
+        const body = await c.req.json();
+        return executeEndpoint(
+          c,
+          organisationId,
+          pluginName,
+          endpoint,
+          "PUT",
+          body,
+          searchParams
+        );
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error executing plugin endpoint: " + err,
+        });
+      }
     }
   );
 }

@@ -448,17 +448,23 @@ export default function defineTeamRoutes(
     ),
     isTeamAdmin, // check if user is an admin of the team
     async (c) => {
-      const userId = c.get("usersId");
-      const { role } = c.req.valid("json");
-      const { organisationId, teamId, destinationUserId } =
-        c.req.valid("param");
+      try {
+        const userId = c.get("usersId");
+        const { role } = c.req.valid("json");
+        const { organisationId, teamId, destinationUserId } =
+          c.req.valid("param");
 
-      const member = await updateTeamMemberRole(
-        teamId,
-        destinationUserId,
-        role
-      );
-      return c.json(member);
+        const member = await updateTeamMemberRole(
+          teamId,
+          destinationUserId,
+          role
+        );
+        return c.json(member);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error updating team member role: " + err,
+        });
+      }
     }
   );
 

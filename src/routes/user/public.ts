@@ -297,9 +297,15 @@ export function definePublicUserRoutes(
       })
     ),
     async (c) => {
-      const { email } = c.req.valid("json");
-      await LocalAuth.forgotPasswort(email);
-      return c.json(RESPONSES.SUCCESS);
+      try {
+        const { email } = c.req.valid("json");
+        await LocalAuth.forgotPasswort(email);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error sending forgot password email: " + err,
+        });
+      }
     }
   );
 

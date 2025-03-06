@@ -3,9 +3,13 @@ import fs from "fs/promises";
 import path from "path";
 import { createGzip } from "zlib";
 import { Readable } from "stream";
-import type { FastAppHono } from "../../types";
+import { HTTPException, type FastAppHono } from "../../types";
 import { describeRoute } from "hono-openapi";
 import { RESPONSES } from "../../lib/responses";
+import { chatStore } from "../../lib/ai/chat/chat-store";
+import { validator } from "hono-openapi/valibot";
+import * as v from "valibot";
+import log from "../../lib/log";
 
 export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   /**
@@ -15,7 +19,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
     basePath + "/admin/logs/download",
     describeRoute({
       method: "get",
-      path: "/admin/logs/download",
+      path: "/admin/logs/download/:id?",
       tags: ["admin"],
       summary: "Download logs",
       responses: {
@@ -34,6 +38,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
     }),
     async (c) => {
       try {
+        const id = c.req.param("id");
         const logFiles = await logger.getLogFilePaths();
         if (logFiles.length === 0) {
           return c.json({ error: "No log files found" }, 404);
@@ -76,6 +81,45 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   );
 
   /**
+   * Download all logs
+   */
+  app.get(
+    basePath + "/admin/logs/chat/:id",
+    describeRoute({
+      method: "get",
+      path: "/admin/logs/chat/:id",
+      tags: ["admin"],
+      summary: "Download logs for a chat session",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator("param", v.object({ id: v.string() })),
+    async (c) => {
+      try {
+        const { id } = c.req.valid("param");
+        const chat = await chatStore.get(id);
+        if (!chat) {
+          throw new HTTPException(404, { message: "Chat session not found" });
+        }
+        const logContent = await log
+          .getCustomLogFileContent(id)
+          .catch(() => "");
+
+        return c.json({
+          chat,
+          log: logContent,
+        });
+      } catch (error) {
+        console.error("Error creating log archive:", error);
+        return c.json({ error: "Failed to create log archive" }, 500);
+      }
+    }
+  );
+
+  /**
    * Clear logs
    */
   app.post(
@@ -92,12 +136,15 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
       },
     }),
     async (c) => {
-      const logFiles = await logger.getLogFilePaths();
-      for (const filePath of logFiles) {
-        await fs.unlink(filePath);
+      try {
+        const logFiles = await logger.getLogFilePaths();
+        for (const filePath of logFiles) {
+          await fs.unlink(filePath);
+        }
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(500, { message: e + "" });
       }
-
-      return c.json(RESPONSES.SUCCESS);
     }
   );
 }

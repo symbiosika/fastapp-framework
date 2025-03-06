@@ -78,12 +78,18 @@ export default function defineChatGroupRoutes(
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, groupId } = c.req.valid("param");
-      const usersId = c.get("usersId");
-      const history = await queryChatSessions(organisationId, usersId, {
-        chatSessionGroupId: groupId,
-      });
-      return c.json(history);
+      try {
+        const { organisationId, groupId } = c.req.valid("param");
+        const usersId = c.get("usersId");
+        const history = await queryChatSessions(organisationId, usersId, {
+          chatSessionGroupId: groupId,
+        });
+        return c.json(history);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error querying chat history: " + err,
+        });
+      }
     }
   );
 
@@ -165,17 +171,23 @@ export default function defineChatGroupRoutes(
     validator("query", v.object({ workspaceId: v.optional(v.string()) })),
     isOrganisationMember,
     async (c) => {
-      const usersId = c.get("usersId");
-      const { organisationId } = c.req.valid("param");
-      const { workspaceId } = c.req.valid("query");
-      const chatGroups = await getChatSessionGroupsByUser(
-        organisationId,
-        usersId,
-        {
-          workspaceId,
-        }
-      );
-      return c.json(chatGroups);
+      try {
+        const usersId = c.get("usersId");
+        const { organisationId } = c.req.valid("param");
+        const { workspaceId } = c.req.valid("query");
+        const chatGroups = await getChatSessionGroupsByUser(
+          organisationId,
+          usersId,
+          {
+            workspaceId,
+          }
+        );
+        return c.json(chatGroups);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting chat groups: " + err,
+        });
+      }
     }
   );
 

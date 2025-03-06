@@ -106,26 +106,32 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const group = c.req.query("group");
-      const type = c.req.query("type");
-      if (!group)
-        throw new HTTPException(400, { message: "Group is required" });
-      if (type && type !== "subscription" && type !== "payment")
-        throw new HTTPException(400, {
-          message: "Type must be 'subscription' or 'payment'",
-        });
+      try {
+        const group = c.req.query("group");
+        const type = c.req.query("type");
+        if (!group)
+          throw new HTTPException(400, { message: "Group is required" });
+        if (type && type !== "subscription" && type !== "payment")
+          throw new HTTPException(400, {
+            message: "Type must be 'subscription' or 'payment'",
+          });
 
-      const products: StripeDetailedItem[] = await stripeService
-        .getProductsByGroupAndType(
-          group,
-          type as "subscription" | "payment" | undefined
-        )
-        .catch((e) => {
-          log.error(e);
-          throw new HTTPException(500, { message: e });
-        });
+        const products: StripeDetailedItem[] = await stripeService
+          .getProductsByGroupAndType(
+            group,
+            type as "subscription" | "payment" | undefined
+          )
+          .catch((e) => {
+            log.error(e);
+            throw new HTTPException(500, { message: e });
+          });
 
-      return c.json(products);
+        return c.json(products);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error getting products: " + err,
+        });
+      }
     }
   );
 
@@ -149,18 +155,25 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const userId = c.get("usersId");
-      const planName = c.req.query("planName");
-      log.debug("Checking user subscription", userId, planName);
-      const subscription = await checkUserSubscription(userId, planName).catch(
-        (e) => {
+      try {
+        const userId = c.get("usersId");
+        const planName = c.req.query("planName");
+        log.debug("Checking user subscription", userId, planName);
+        const subscription = await checkUserSubscription(
+          userId,
+          planName
+        ).catch((e) => {
           log.error(e);
           throw new HTTPException(500, {
             message: "Error checking user subscription. " + e,
           });
-        }
-      );
-      return c.json(subscription);
+        });
+        return c.json(subscription);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error checking user subscription. " + err,
+        });
+      }
     }
   );
 
@@ -184,50 +197,58 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const userId = c.get("usersId");
-      const planName = c.req.query("planName");
+      try {
+        const userId = c.get("usersId");
+        const planName = c.req.query("planName");
 
-      const entries = await getDb()
-        .select()
-        .from(activeSubscriptions)
-        .where(
-          and(
-            eq(activeSubscriptions.userId, userId),
-            eq(activeSubscriptions.planName, planName!)
-          )
+        const entries = await getDb()
+          .select()
+          .from(activeSubscriptions)
+          .where(
+            and(
+              eq(activeSubscriptions.userId, userId),
+              eq(activeSubscriptions.planName, planName!)
+            )
+          );
+
+        if (entries.length === 0) {
+          throw new HTTPException(404, {
+            message: "No active subscription found",
+          });
+        }
+        const cancelledSubscription = await stripeService.cancelSubscription(
+          entries[0].stripeCustomerId,
+          entries[0].stripeSubscriptionId
         );
 
-      if (entries.length === 0) {
-        throw new HTTPException(404, {
-          message: "No active subscription found",
+        // Update local database
+        await getDb()
+          .update(activeSubscriptions)
+          .set({
+            status: "canceled",
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: new Date(
+              cancelledSubscription.current_period_end
+            ),
+            updatedAt: new Date().toISOString(),
+            metadata: cancelledSubscription,
+          })
+          .where(
+            and(
+              eq(activeSubscriptions.userId, userId),
+              eq(activeSubscriptions.planName, planName!)
+            )
+          );
+
+        return c.json({
+          message: "Subscription cancelled successfully",
+          cancelledSubscription,
+        });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error cancelling subscription. " + err,
         });
       }
-      const cancelledSubscription = await stripeService.cancelSubscription(
-        entries[0].stripeCustomerId,
-        entries[0].stripeSubscriptionId
-      );
-
-      // Update local database
-      await getDb()
-        .update(activeSubscriptions)
-        .set({
-          status: "canceled",
-          cancelAtPeriodEnd: true,
-          currentPeriodEnd: new Date(cancelledSubscription.current_period_end),
-          updatedAt: new Date().toISOString(),
-          metadata: cancelledSubscription,
-        })
-        .where(
-          and(
-            eq(activeSubscriptions.userId, userId),
-            eq(activeSubscriptions.planName, planName!)
-          )
-        );
-
-      return c.json({
-        message: "Subscription cancelled successfully",
-        cancelledSubscription,
-      });
     }
   );
 
@@ -252,12 +273,12 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const userId = c.get("usersId");
-      const planName = c.req.query("planName")!;
-      const returnUrl = c.req.query("returnUrl")!;
-      log.debug("Getting account link for user", userId);
-
       try {
+        const userId = c.get("usersId");
+        const planName = c.req.query("planName")!;
+        const returnUrl = c.req.query("returnUrl")!;
+        log.debug("Getting account link for user", userId);
+
         const subscriptions = await getDb()
           .select()
           .from(activeSubscriptions)
@@ -316,35 +337,44 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const data = c.req.valid("json");
-      const userId = c.get("usersId");
-      const userEmail = c.get("usersEmail");
+      try {
+        const data = c.req.valid("json");
+        const userId = c.get("usersId");
+        const userEmail = c.get("usersEmail");
 
-      log.debug("Creating checkout session for product", data);
+        log.debug("Creating checkout session for product", data);
 
-      let customerId = await stripeService.customerExists(userEmail);
-      if (!customerId) {
-        const customer = await stripeService.createCustomer(userEmail, userId);
-        customerId = customer.id;
+        let customerId = await stripeService.customerExists(userEmail);
+        if (!customerId) {
+          const customer = await stripeService.createCustomer(
+            userEmail,
+            userId
+          );
+          customerId = customer.id;
+        }
+
+        const session = await stripeService.createSubscriptionSession(
+          customerId,
+          data.productName,
+          data.discount ?? "",
+          data.successUrl ?? undefined,
+          data.cancelUrl ?? undefined
+        );
+
+        // Store the session ID in your database, associated with the user
+        await storeCheckoutSession(
+          userId,
+          data.productName,
+          session,
+          session.mode as "payment" | "subscription"
+        );
+
+        return c.json({ checkoutUrl: session.url });
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error creating checkout session. " + err,
+        });
       }
-
-      const session = await stripeService.createSubscriptionSession(
-        customerId,
-        data.productName,
-        data.discount ?? "",
-        data.successUrl ?? undefined,
-        data.cancelUrl ?? undefined
-      );
-
-      // Store the session ID in your database, associated with the user
-      await storeCheckoutSession(
-        userId,
-        data.productName,
-        session,
-        session.mode as "payment" | "subscription"
-      );
-
-      return c.json({ checkoutUrl: session.url });
     }
   );
 
@@ -367,14 +397,14 @@ export default function defineRoutes(app: FastAppHono) {
       })
     ),
     async (c) => {
-      const sessionId = c.req.query("session_id");
-      log.debug("Finished session ID:", sessionId);
-
-      if (!sessionId) {
-        throw new HTTPException(400, { message: "Session ID is required" });
-      }
-
       try {
+        const sessionId = c.req.query("session_id");
+        log.debug("Finished session ID:", sessionId);
+
+        if (!sessionId) {
+          throw new HTTPException(400, { message: "Session ID is required" });
+        }
+
         // Verify the session and update the database
         const session = await stripeService.retrieveCheckoutSession(sessionId);
         // log.debug("Success Session", session);

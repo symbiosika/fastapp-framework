@@ -142,16 +142,20 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     ),
     isOrganisationMember,
     async (c) => {
-      const usersId = c.get("usersId");
-      const { organisationId, startFrom } = c.req.valid("param");
-      const r = await chatStore.getHistoryByUserId(
-        usersId,
-        startFrom ?? "2000-01-01",
-        {
-          organisationId,
-        }
-      );
-      return c.json(r);
+      try {
+        const usersId = c.get("usersId");
+        const { organisationId, startFrom } = c.req.valid("param");
+        const r = await chatStore.getHistoryByUserId(
+          usersId,
+          startFrom ?? "2000-01-01",
+          {
+            organisationId,
+          }
+        );
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
   );
 
@@ -192,26 +196,30 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      const r = await chatStore.get(id);
-      if (!r) {
-        throw new HTTPException(404, {
-          message: `Chat session ${id} not found`,
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const r = await chatStore.get(id);
+        if (!r) {
+          throw new HTTPException(404, {
+            message: `Chat session ${id} not found`,
+          });
+        }
+
+        // check if the chat session is in a chat session group
+        const parentWorkspace = await chatStore.getParentWorkspaceByChatGroupId(
+          r.chatSessionGroupId
+        );
+
+        return c.json({
+          chatId: id,
+          name: r.name,
+          history: r.messages,
+          chatSessionGroupId: r.chatSessionGroupId,
+          parentWorkspaceId: parentWorkspace?.workspaceId,
         });
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
       }
-
-      // check if the chat session is in a chat session group
-      const parentWorkspace = await chatStore.getParentWorkspaceByChatGroupId(
-        r.chatSessionGroupId
-      );
-
-      return c.json({
-        chatId: id,
-        name: r.name,
-        history: r.messages,
-        chatSessionGroupId: r.chatSessionGroupId,
-        parentWorkspaceId: parentWorkspace?.workspaceId,
-      });
     }
   );
 
@@ -239,9 +247,13 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     ),
     isOrganisationMember,
     async (c) => {
-      const { organisationId, id } = c.req.valid("param");
-      await chatStore.drop(id);
-      return c.json(RESPONSES.SUCCESS);
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        await chatStore.drop(id);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
     }
   );
 
@@ -470,7 +482,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId, chatId, messageId } = c.req.valid("param");
         const { content } = c.req.valid("json");
         // Update the chat message
-        await chatStore.updateChatMessage(chatId, messageId, { content }, organisationId);
+        await chatStore.updateChatMessage(
+          chatId,
+          messageId,
+          { content },
+          organisationId
+        );
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
