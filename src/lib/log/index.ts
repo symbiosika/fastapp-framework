@@ -122,13 +122,13 @@ class Logger {
       }
       toLog += "\n";
       console.log(toLog);
-      await this.writeToCustomFile("custom-" + options.name, toLog);
+      await this.writeToCustomFile("custom-" + options.name + ".log", toLog);
     }
   }
 
   async getCustomLogFile(name: string) {
     return fs.readFile(
-      path.join(process.cwd(), "logs", "custom-" + name),
+      path.join(process.cwd(), "logs", "custom-" + name + ".log"),
       "utf8"
     );
   }
