@@ -17,8 +17,8 @@ export const parseFile = async (file: File): Promise<{ text: string }> => {
   // PDF
   if (file.type === "application/pdf") {
     // try tp parse the content
-    const markdown = await parsePdfFileAsMardown(file);
-    return { text: markdown };
+    const { text } = await parsePdfFileAsMardown(file);
+    return { text };
   }
 
   // TXT file
