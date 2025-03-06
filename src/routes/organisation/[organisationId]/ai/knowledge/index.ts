@@ -8,6 +8,7 @@ import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
 import {
   extractKnowledgeFromExistingDbEntry,
+  extractKnowledgeFromText,
   extractKnowledgeInOneStep,
 } from "../../../../../lib/ai/knowledge/add-knowledge";
 import { parseDocument } from "../../../../../lib/ai/parsing";
@@ -98,6 +99,17 @@ const similaritySearchValidation = v.object({
 const addFromTextValidation = v.object({
   organisationId: v.string(),
   text: v.string(),
+  title: v.string(),
+  filters: v.optional(v.record(v.string(), v.string())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  meta: v.optional(
+    v.object({
+      sourceUri: v.string(),
+      sourceId: v.string(),
+    })
+  ),
 });
 
 const addFromUrlValidation = v.object({
@@ -451,22 +463,24 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     isOrganisationMember,
     async (c) => {
       try {
-        const body = c.req.valid("json");
+        const data = c.req.valid("json");
         const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
+        validateOrganisationId(data, organisationId);
 
-        const r = await createKnowledgeText({
-          ...body,
-          userId: c.get("usersId"),
+        const r = await extractKnowledgeFromText({
+          organisationId: data.organisationId,
+          title: data.title,
+          text: data.text,
+          filters: data.filters,
+          teamId: data.teamId,
+          workspaceId: data.workspaceId,
+          sourceExternalId: data.meta?.sourceId ?? data.title,
+          sourceType: "external",
+          sourceFileBucket: "default",
+          sourceUrl: data.meta?.sourceUri ?? data.title,
         });
 
-        const parsed = await parseDocument({
-          sourceType: "text",
-          sourceId: r.id,
-          organisationId,
-        });
-
-        return c.json(parsed);
+        return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

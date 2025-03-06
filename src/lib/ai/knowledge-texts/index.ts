@@ -1,6 +1,5 @@
-import { getDb } from "../../db/db-connection";
-import { knowledgeText } from "../../db/db-schema";
 import log from "../../log";
+import { extractKnowledgeFromText } from "../knowledge/add-knowledge";
 import { getMarkdownFromUrl } from "../parsing/url";
 
 /**
@@ -13,19 +12,12 @@ export const addKnowledgeTextFromUrl = async (data: {
   const markdown = await getMarkdownFromUrl(data.url);
   log.debug(`Got markdown from URL: ${markdown.slice(0, 100)}`);
 
-  // insert in DB as text knowledge entry
-  const e = await getDb()
-    .insert(knowledgeText)
-    .values({
-      text: markdown,
-      title: data.url,
-      organisationId: data.organisationId,
-    })
-    .returning({
-      id: knowledgeText.id,
-      title: knowledgeText.title,
-      createdAt: knowledgeText.createdAt,
-    });
-
-  return e[0];
+  return extractKnowledgeFromText({
+    organisationId: data.organisationId,
+    title: data.url,
+    text: markdown,
+    sourceType: "external",
+    sourceFileBucket: "default",
+    sourceUrl: data.url,
+  });
 };
