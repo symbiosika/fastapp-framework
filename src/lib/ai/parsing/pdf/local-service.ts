@@ -5,6 +5,39 @@ const LOCAL_API_BASE_URL =
   process.env.LOCAL_PDF_PARSER_BASE_URL ??
   "https://document-services.perlecto.de";
 
+// Define interfaces for the API response structure
+interface PdfParserPage {
+  page: number;
+  text: string;
+}
+
+interface PdfParserRawContent {
+  num_pages: number;
+  content: PdfParserPage[];
+}
+
+interface PdfParserChunkMetadata {
+  source: string;
+  chunk_index: number;
+}
+
+interface PdfParserChunk {
+  id: string;
+  text: string;
+  metadata: PdfParserChunkMetadata;
+}
+
+interface PdfParserResult {
+  job_id: string;
+  original_filename: string;
+  num_pages: number;
+  num_chunks: number;
+  raw_content: PdfParserRawContent;
+  chunked_content: PdfParserChunk[];
+  markdown?: string;
+  text?: string;
+}
+
 /**
  * Parse a PDF file as markdown using the local PDF parsing service
  */
@@ -85,9 +118,13 @@ export const parsePdfFileAsMardownLocal = async (
   }
 
   log.debug("Result retrieved successfully.");
-  const result = await resultResponse.json();
+  const result = (await resultResponse.json()) as PdfParserResult;
+
+  // Extract content from raw_content and join all page texts
+  const extractedText =
+    result.raw_content?.content?.map((page) => page.text).join("\n") || "";
 
   return {
-    text: result.markdown || result.text || "",
+    text: extractedText || "",
   };
 };
