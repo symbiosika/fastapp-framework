@@ -7,7 +7,7 @@ test("Scheduler", async () => {
 
   // Register a test task
   scheduler.registerTask("test-task", "* * * * * *", async () => {
-    console.log("test-task runs");
+    // console.log("test-task runs");
     taskExecuted = true;
     scheduler.stopTask("test-task"); // Cleanup after execution
   });

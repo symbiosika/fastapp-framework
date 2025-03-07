@@ -15043,9 +15043,9 @@ This operation does not require authentication
 
 ## Upload a file and extract knowledge in one step
 
-<a id="opIdpostApiV1OrganisationByOrganisationIdAiKnowledgeUpload-and-learn"></a>
+<a id="opIdpostApiV1OrganisationByOrganisationIdAiKnowledgeUpload-and-extract"></a>
 
-`POST /api/v1/organisation/{organisationId}/ai/knowledge/upload-and-learn`
+`POST /api/v1/organisation/{organisationId}/ai/knowledge/upload-and-extract`
 
 > Body parameter
 

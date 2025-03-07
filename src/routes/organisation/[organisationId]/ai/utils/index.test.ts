@@ -4,7 +4,6 @@ import defineRoutes from ".";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
@@ -85,7 +84,6 @@ describe("AI Utils API Endpoints", () => {
       TEST_USER_1_TOKEN,
       formData
     );
-    console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(response.jsonResponse).toBeDefined();
     expect(response.jsonResponse.text).toContain("Hello, this is a test");
@@ -130,7 +128,6 @@ describe("AI Utils API Endpoints", () => {
     //   ],
     // };
 
-    console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(response.jsonResponse).toBeDefined();
     expect(response.jsonResponse.text).toContain("Hello, this is a test");

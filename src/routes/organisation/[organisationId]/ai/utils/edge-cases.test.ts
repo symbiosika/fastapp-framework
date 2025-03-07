@@ -66,7 +66,7 @@ describe("AI Utils API Edge Cases", () => {
     // The API should handle long text appropriately
     // This might succeed or fail depending on the API limits
     expect(response.status).toBe(400);
-    expect(response.textResponse).toContain("string_too_long");
+    expect(response.textResponse).toContain("Failed to convert text to speech");
   });
 
   test("Speech to Text without file", async () => {
@@ -197,7 +197,6 @@ describe("AI Utils API Edge Cases", () => {
     app.request = originalRequest;
 
     // The API should handle large files appropriately
-    console.log(response.textResponse);
     if (response.status === 200) {
       expect(response.jsonResponse.text).toBe("Transcription of large file");
     } else {

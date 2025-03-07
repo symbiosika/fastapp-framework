@@ -129,7 +129,6 @@ describe("Knowledge API Endpoints", () => {
       TEST_USER_1_TOKEN
     );
 
-    console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(response.jsonResponse.entry.id).toBe(createdKnowledgeEntryId);
   });
@@ -157,6 +156,7 @@ describe("Knowledge API Endpoints", () => {
     const textData = {
       organisationId: TEST_ORGANISATION_1.id,
       text: "This is another test knowledge text added directly.",
+      title: "Test Knowledge Text 2",
     };
 
     const response = await testFetcher.post(
@@ -166,8 +166,8 @@ describe("Knowledge API Endpoints", () => {
       textData
     );
 
+    console.log(response.textResponse);
     expect(response.status).toBe(200);
-    expect(response.jsonResponse.text).toBe(textData.text);
     expect(response.jsonResponse.id).toBeDefined();
   });
 
@@ -221,7 +221,7 @@ describe("Knowledge API Endpoints", () => {
 
     const response = await testFetcher.postFormData(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-learn`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
     );

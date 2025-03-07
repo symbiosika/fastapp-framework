@@ -284,8 +284,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     validator(
       "json",
       v.object({
-        chatId: v.optional(v.string()),
-        chatSessionGroupId: v.optional(v.string()),
+        chatId: v.optional(v.nullable(v.string())),
+        chatSessionGroupId: v.optional(v.nullable(v.string())),
       })
     ),
     isOrganisationMember,
@@ -298,8 +298,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const session = await createEmptySession({
           userId: usersId,
           organisationId,
-          chatId: data.chatId,
-          chatSessionGroupId: data.chatSessionGroupId,
+          chatId: data.chatId ?? undefined,
+          chatSessionGroupId: data.chatSessionGroupId ?? undefined,
         });
         return c.json(session);
       } catch (e) {

@@ -68,7 +68,6 @@ describe("AI Utils API Security Tests", () => {
     );
 
     // Should be rejected due to organisation permission check
-    console.log(response.textResponse);
     expect(response.status).toBe(403);
   });
 

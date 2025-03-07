@@ -9,52 +9,41 @@ const MAX_WORDS_PER_CHUNK = 500;
  * - Split blocks that are too long
  */
 export const splitTextIntoSectionsOrChunks = (text: string): Chunk[] => {
-  // Try to split by headings
-  const headingRegex = /^(#{1,6}\s.*$)/gm;
-  const sections = text.split(headingRegex).filter(Boolean);
+  // Zähle die Wörter im Text
+  const totalWords = text.trim().split(/\s+/).length;
 
-  let blocks: Chunk[] = [];
+  // Wenn der Text kurz genug ist, gib ihn als einen Chunk zurück
+  if (totalWords <= MAX_WORDS_PER_CHUNK) {
+    return [{ text, header: undefined, order: 0 }];
+  }
 
-  // HACK. only split by max words for now
-  blocks.push({ text, header: undefined, order: 0 });
-
+  // Teile den Text in Chunks auf
   const chunks: Chunk[] = [];
+  const words = text.split(/\s+/);
+  let currentChunkWords: string[] = [];
   let order = 0;
 
-  blocks.forEach((block) => {
-    const lines = block.text.split("\n");
-    let currentChunk = "";
-    let currentWordCount = 0;
+  for (const word of words) {
+    currentChunkWords.push(word);
 
-    for (const line of lines) {
-      const lineWordCount = line.trim().split(/\s+/).length;
-
-      if (currentWordCount + lineWordCount <= MAX_WORDS_PER_CHUNK) {
-        currentChunk += (currentChunk ? "\n" : "") + line;
-        currentWordCount += lineWordCount;
-      } else {
-        if (currentChunk) {
-          chunks.push({
-            text: currentChunk,
-            header: block.header,
-            order,
-          });
-          order++;
-        }
-        currentChunk = line;
-        currentWordCount = lineWordCount;
-      }
-    }
-
-    if (currentChunk) {
+    if (currentChunkWords.length >= MAX_WORDS_PER_CHUNK) {
       chunks.push({
-        text: currentChunk,
-        header: block.header,
-        order,
+        text: currentChunkWords.join(" "),
+        header: undefined,
+        order: order++,
       });
-      order++;
+      currentChunkWords = [];
     }
-  });
+  }
+
+  // Füge den letzten Chunk hinzu, wenn er nicht leer ist
+  if (currentChunkWords.length > 0) {
+    chunks.push({
+      text: currentChunkWords.join(" "),
+      header: undefined,
+      order: order,
+    });
+  }
 
   return chunks;
 };

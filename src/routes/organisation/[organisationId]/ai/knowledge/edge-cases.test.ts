@@ -279,12 +279,13 @@ describe("Knowledge API Edge Cases", () => {
 
     const response = await testFetcher.postFormData(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-learn`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
     );
 
     // Empty form data should be rejected
+    // console.log("A", response.textResponse);
     expect(response.status).toBe(400);
   });
 
@@ -299,7 +300,7 @@ describe("Knowledge API Edge Cases", () => {
     
     const response = await testFetcher.postFormData(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-learn`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
     );

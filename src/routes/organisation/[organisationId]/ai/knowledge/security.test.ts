@@ -112,7 +112,7 @@ describe("Knowledge API Security Tests", () => {
       ],
       [
         "POST",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-learn`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       ],
     ]);
   });
@@ -213,6 +213,7 @@ describe("Knowledge API Security Tests", () => {
     const textData = {
       organisationId: TEST_ORGANISATION_1.id,
       text: "This is a test knowledge text from an unauthorized user.",
+      title: "Unauthorized Knowledge Text",
     };
 
     // User 2 tries to add knowledge from text in organisation 1

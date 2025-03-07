@@ -7,6 +7,7 @@ import {
   type UsersSelect,
   teamMembers,
   organisationMembers,
+  invitationCodes,
 } from "../lib/db/db-schema";
 import { inArray } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
@@ -204,6 +205,13 @@ export const initTestOrganisationMembers = async () => {
 };
 
 /**
+ * Drop all invitations codes
+ */
+export const dropAllInvitationsCodes = async () => {
+  await getDb().delete(invitationCodes);
+};
+
+/**
  * Get a JWT token for a test user
  */
 const getJwtTokenForTesting = async (email: string) => {
@@ -234,6 +242,8 @@ export const initTests = async () => {
   const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
   const user3Token = await getJwtTokenForTesting(TEST_USER_3.email);
   const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
+
+  await dropAllInvitationsCodes();
 
   await initTestOrganisations().catch((err) => {
     console.info("Error initialising test organisation", err);

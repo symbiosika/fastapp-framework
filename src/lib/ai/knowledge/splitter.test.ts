@@ -4,10 +4,10 @@ import { splitTextIntoSectionsOrChunks } from "./splitter";
 describe("splitTextIntoSectionsOrChunks", () => {
   it("should split text into chunks when exceeding MAX_WORDS_PER_CHUNK", () => {
     // Create a text with more than 500 words
-    const words = Array(600).fill("word").join(" ");
+    const words = Array(1500).fill("word").join(" ");
     const chunks = splitTextIntoSectionsOrChunks(words);
 
-    expect(chunks).toHaveLength(2);
+    expect(chunks).toHaveLength(3);
     expect(chunks[0].order).toBe(0);
     expect(chunks[1].order).toBe(1);
     expect(chunks[0].text.split(" ").length).toBeLessThanOrEqual(500);

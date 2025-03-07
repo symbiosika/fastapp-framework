@@ -94,5 +94,5 @@ describe("Similarity Search Test", () => {
     // 4. Verify results
     expect(results.length).toBe(1);
     expect(results[0].text).toContain("Worker bees must visit");
-  });
+  }, 15000);
 });

@@ -448,8 +448,7 @@ export async function generateEmbedding(
   embeddingModel: string = EMBEDDING_MODEL
 ) {
   const { provider, model } = parseModelString(embeddingModel);
-  console.log("provider", provider);
-  console.log("model", model);
+  
   // For now, only OpenAI supports embeddings in our implementation
   const result = await getProvider(provider).generateEmbedding!(text, {
     model,
@@ -590,7 +589,7 @@ export const speechToText = async (
     returnSegments?: boolean;
     returnWords?: boolean;
   },
-  modelString: string = `openai:${STT_MODEL}`
+  modelString: string = STT_MODEL
 ) => {
   try {
     const { provider, model } = parseModelString(modelString);
@@ -660,7 +659,7 @@ export const generateImage = async (
 export const textToSpeech = async (
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
-  modelString: string = `openai:${TTS_MODEL}`
+  modelString: string = TTS_MODEL
 ): Promise<{
   file: File;
   filename: string;
