@@ -11,8 +11,8 @@ import {
 import log from "../../../lib/log";
 import { deleteFileFromDB } from "../../storage/db";
 import { deleteFileFromLocalDisc } from "../../storage/local";
-import { workspaceChatGroups, workspaces } from "../../db/schema/workspaces";
-import { teamMembers, teams } from "../../db/schema/users";
+import { workspaces } from "../../db/schema/workspaces";
+import { teamMembers } from "../../db/schema/users";
 
 type KnowledgeQuery = {
   id?: string[];

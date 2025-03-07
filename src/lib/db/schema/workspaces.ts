@@ -43,6 +43,12 @@ export const workspaces = pgBaseTable(
       success?: boolean;
       error?: string;
       text?: string;
+      entries: {
+        createdAt: string;
+        title: string;
+        text: string;
+        userName: string;
+      }[];
     }>(),
     finishedAt: timestamp("finished_at", { mode: "string" }),
     createdAt: timestamp("created_at", { mode: "string" })
