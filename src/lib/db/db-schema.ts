@@ -17,6 +17,7 @@ import * as logs from "./schema/logs";
 import * as workspaces from "./schema/workspaces";
 import * as webhooks from "./schema/webhooks";
 import * as server from "./schema/server";
+import * as models from "./schema/models";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -34,6 +35,7 @@ export * from "./schema/logs";
 export * from "./schema/workspaces";
 export * from "./schema/webhooks";
 export * from "./schema/server";
+export * from "./schema/models";
 
 const baseDbSchema = {
   ...userTables,
@@ -51,6 +53,7 @@ const baseDbSchema = {
   ...workspaces,
   ...webhooks,
   ...server,
+  ...models,
 };
 
 let validTableNames: string[] = [];

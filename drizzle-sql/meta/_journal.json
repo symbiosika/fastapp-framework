@@ -701,6 +701,13 @@
       "when": 1741266776552,
       "tag": "0099_chilly_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1741370813388,
+      "tag": "0100_rapid_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }
