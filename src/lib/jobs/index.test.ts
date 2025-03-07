@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { defineJob, createJob, getJob, startJobQueue } from ".";
-import { initTests } from "../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../test/init.test";
 
 describe("Job Queue System", () => {
   beforeAll(async () => {
@@ -22,7 +22,7 @@ describe("Job Queue System", () => {
     const job = await createJob(
       "test-job",
       { test: true },
-      "00000000-1111-1111-1111-000000000000"
+      TEST_ORGANISATION_1.id
     );
 
     // Wait for job to complete (slightly longer than CHECK_CYCLE_MS)

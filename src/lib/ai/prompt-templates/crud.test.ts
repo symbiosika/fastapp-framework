@@ -9,7 +9,7 @@ import {
   deletePromptTemplatePlaceholder,
   getPlainPlaceholdersForPromptTemplate,
 } from "./crud";
-import { initTests } from "../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 beforeAll(async () => {
   await initTests();
@@ -17,7 +17,7 @@ beforeAll(async () => {
 
 describe("Prompt Template CRUD Operations", () => {
   const testTemplate = {
-    organisationId: "00000000-1111-1111-1111-000000000000",
+    organisationId: TEST_ORGANISATION_1.id,
     name: "Test Template",
     category: "test",
     prompt: "This is a test prompt",
@@ -73,7 +73,7 @@ describe("Prompt Template CRUD Operations", () => {
 
 describe("Prompt Template Placeholders CRUD Operations", () => {
   const testTemplate = {
-    organisationId: "00000000-1111-1111-1111-000000000000",
+    organisationId: TEST_ORGANISATION_1.id,
     name: "Test Template",
     category: "test",
     prompt: "Test prompt",

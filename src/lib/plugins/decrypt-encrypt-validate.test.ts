@@ -16,6 +16,7 @@ import type {
 } from "../types/plugins";
 import { eq } from "drizzle-orm";
 import { initTests } from "../../test/init.test";
+import { TEST_ORGANISATION_1 } from "../../test/init.test";
 
 // Setup database connection
 beforeAll(async () => {
@@ -37,7 +38,7 @@ const basePluginConfig: PluginConfigurationWithoutSecrets = {
   meta: {},
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  organisationId: "00000000-1111-1111-1111-000000000000",
+  organisationId: TEST_ORGANISATION_1.id,
 };
 
 const demoPluginConfig: PluginConfigurationWithoutSecrets = {

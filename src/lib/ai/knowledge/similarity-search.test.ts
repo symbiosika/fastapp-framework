@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import {
-  createDatabaseClient,
-  waitForDbConnection,
-} from "../../db/db-connection";
 import { getNearestEmbeddings } from "./similarity-search";
 import { extractKnowledgeFromExistingDbEntry } from "./add-knowledge";
 import { createKnowledgeText } from "./knowledge-texts";
-import { initTests } from "../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 const testTexts = [
   {
@@ -63,7 +59,7 @@ describe("Similarity Search Test", () => {
         createKnowledgeText({
           text: text.text,
           title: text.title,
-          organisationId: "00000000-1111-1111-1111-000000000000",
+          organisationId: TEST_ORGANISATION_1.id,
         })
       )
     );
@@ -72,7 +68,7 @@ describe("Similarity Search Test", () => {
     await Promise.all(
       addedTexts.map((text) =>
         extractKnowledgeFromExistingDbEntry({
-          organisationId: "00000000-1111-1111-1111-000000000000",
+          organisationId: TEST_ORGANISATION_1.id,
           sourceType: "text",
           sourceId: text.id,
           filters: {
@@ -87,7 +83,7 @@ describe("Similarity Search Test", () => {
       "How do bees make honey and how many flowers do they need to visit?";
 
     const results = await getNearestEmbeddings({
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
       searchText: searchQuery,
       n: 1,
       filter: {

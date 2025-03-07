@@ -3,7 +3,7 @@ import { getDb } from "../../db/db-connection";
 import { upsertFilter } from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
-import { initTests } from "../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 describe("upsertFilter", () => {
   beforeAll(async () => {
@@ -14,7 +14,7 @@ describe("upsertFilter", () => {
     const filterId = await upsertFilter(
       "test-category",
       "test-name",
-      "00000000-1111-1111-1111-000000000000"
+      TEST_ORGANISATION_1.id
     );
 
     // Verify the filter was created
@@ -40,14 +40,14 @@ describe("upsertFilter", () => {
     const firstId = await upsertFilter(
       "test-category",
       "test-name",
-      "00000000-1111-1111-1111-000000000000"
+      TEST_ORGANISATION_1.id
     );
 
     // Second insertion with same values
     const secondId = await upsertFilter(
       "test-category",
       "test-name",
-      "00000000-1111-1111-1111-000000000000"
+      TEST_ORGANISATION_1.id
     );
 
     // Verify both IDs are the same

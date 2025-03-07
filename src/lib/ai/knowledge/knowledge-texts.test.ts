@@ -5,7 +5,7 @@ import {
   updateKnowledgeText,
   deleteKnowledgeText,
 } from "./knowledge-texts";
-import { initTests } from "../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 describe("Knowledge Texts Test", () => {
   beforeAll(async () => {
@@ -16,7 +16,7 @@ describe("Knowledge Texts Test", () => {
     const newText = {
       text: "Test knowledge text",
       title: "Test Title",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
     };
 
     const createdText = await createKnowledgeText(newText);
@@ -29,7 +29,7 @@ describe("Knowledge Texts Test", () => {
     const newText = {
       text: "Another test knowledge text",
       title: "Another Test Title",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
     };
 
     const createdText = await createKnowledgeText(newText);
@@ -47,7 +47,7 @@ describe("Knowledge Texts Test", () => {
     const newText = {
       text: "Text to be updated",
       title: "Title to be updated",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
     };
 
     const createdText = await createKnowledgeText(newText);
@@ -71,7 +71,7 @@ describe("Knowledge Texts Test", () => {
     const newText = {
       text: "Text to be deleted",
       title: "Title to be deleted",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
     };
 
     const createdText = await createKnowledgeText(newText);

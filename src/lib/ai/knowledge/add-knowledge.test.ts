@@ -1,12 +1,9 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import {
-  createDatabaseClient,
-  waitForDbConnection,
-} from "../../db/db-connection";
 import { extractKnowledgeFromExistingDbEntry } from "../knowledge/add-knowledge";
 import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import { createKnowledgeText } from "./knowledge-texts";
 import { initTests } from "../../../test/init.test";
+import { TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 describe("Knowledge Text Flow", () => {
   beforeAll(async () => {
@@ -20,13 +17,13 @@ describe("Knowledge Text Flow", () => {
     const knowledgeText = await createKnowledgeText({
       text: testText,
       title: "Test Document",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
     });
     expect(knowledgeText.id).toBeDefined();
 
     // 2. Extract knowledge with filters
     const result = await extractKnowledgeFromExistingDbEntry({
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      organisationId: TEST_ORGANISATION_1.id,
       sourceType: "text",
       sourceId: knowledgeText.id,
       filters: {
@@ -41,8 +38,8 @@ describe("Knowledge Text Flow", () => {
       filters: {
         "test-case": ["test-1"],
       },
-      userId: "00000000-1111-1111-1111-000000000000",
-      organisationId: "00000000-1111-1111-1111-000000000000",
+      userId: TEST_ORGANISATION_1.id,
+      organisationId: TEST_ORGANISATION_1.id,
     });
     expect(foundKnowledge).toBeDefined();
     expect(foundKnowledge.length).toBeGreaterThan(0);

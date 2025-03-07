@@ -448,9 +448,11 @@ export async function generateEmbedding(
   embeddingModel: string = EMBEDDING_MODEL
 ) {
   const { provider, model } = parseModelString(embeddingModel);
+  console.log("provider", provider);
+  console.log("model", model);
   // For now, only OpenAI supports embeddings in our implementation
   const result = await getProvider(provider).generateEmbedding!(text, {
-    model: embeddingModel,
+    model,
   });
 
   return {
