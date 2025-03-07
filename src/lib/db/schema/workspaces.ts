@@ -44,7 +44,7 @@ export const workspaces = pgBaseTable(
       error?: string;
       text?: string;
       entries: {
-        createdAt: string;
+        updatedAt: string;
         title: string;
         text: string;
         userName: string;
