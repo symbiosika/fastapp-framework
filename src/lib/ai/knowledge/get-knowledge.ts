@@ -420,6 +420,33 @@ export const deleteKnowledgeEntry = async (
 };
 
 /**
+ * Update a knowledge entry by ID
+ * Only the name can be updated
+ */
+export const updateKnowledgeEntry = async (
+  id: string,
+  organisationId: string,
+  userId: string,
+  data: {
+    name: string;
+  }
+) => {
+  const canUpdate = await validateKnowledgeAccess(id, userId, organisationId);
+  if (!canUpdate) {
+    throw new Error(
+      "User does not have permission to update this knowledge entry"
+    );
+  }
+  const r = await getDb()
+    .update(knowledgeEntry)
+    .set(data)
+    .where(eq(knowledgeEntry.id, id))
+    .returning();
+
+  return r[0];
+};
+
+/**
  * Get the full plain source text/documents for a knowledge entry id
  */
 export const getFullSourceDocumentsForKnowledgeEntry = async (

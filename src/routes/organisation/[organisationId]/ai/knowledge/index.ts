@@ -16,6 +16,7 @@ import {
   deleteKnowledgeEntry,
   getFullSourceDocumentsForKnowledgeEntry,
   getKnowledgeEntries,
+  updateKnowledgeEntry,
 } from "../../../../../lib/ai/knowledge/get-knowledge";
 import { RESPONSES } from "../../../../../lib/responses";
 import {
@@ -41,7 +42,7 @@ import {
   knowledgeTextInsertSchema,
   knowledgeTextUpdateSchema,
 } from "../../../../../dbSchema";
-import { isOrganisationMember } from "../../..";
+import { isOrganisationAdmin, isOrganisationMember } from "../../..";
 
 const FileSourceType = {
   DB: "db",
@@ -285,6 +286,51 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
           usersId
         );
+
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Update a knowledge entry by ID
+   * Only the name can be updated
+   */
+  app.put(
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "put",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id",
+      tags: ["knowledge"],
+      summary: "Update a knowledge entry by ID. Only the name can be updated.",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    validator("json", v.object({ name: v.string() })),
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const usersId = c.get("usersId");
+        const data = c.req.valid("json");
+
+        const r = await updateKnowledgeEntry(id, organisationId, usersId, data);
 
         return c.json(r);
       } catch (e) {
