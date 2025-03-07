@@ -23,277 +23,277 @@ describe("Mistral Provider", () => {
     expect(provider).toBeDefined();
   });
 
-  // // Test the constructor with custom base URL
-  // test("Constructor should initialize with custom base URL", () => {
-  //   const provider = new MistralProvider(
-  //     "test-api-key",
-  //     "https://custom-api.mistral.ai/v1"
-  //   );
-  //   expect(provider).toBeDefined();
-  // });
+  // Test the constructor with custom base URL
+  test("Constructor should initialize with custom base URL", () => {
+    const provider = new MistralProvider(
+      "test-api-key",
+      "https://custom-api.mistral.ai/v1"
+    );
+    expect(provider).toBeDefined();
+  });
 
-  // // Test the generateText method
-  // conditionalTest("generateText should return a valid response", async () => {
-  //   const messages: Message[] = [
-  //     {
-  //       role: "user",
-  //       content: "Hello, can you tell me what is the capital of France?",
-  //     },
-  //   ];
+  // Test the generateText method
+  conditionalTest("generateText should return a valid response", async () => {
+    const messages: Message[] = [
+      {
+        role: "user",
+        content: "Hello, can you tell me what is the capital of France?",
+      },
+    ];
 
-  //   const response = await mistralProvider.generateText(messages);
+    const response = await mistralProvider.generateText(messages);
 
-  //   expect(response).toBeDefined();
-  //   expect(response.text).toBeDefined();
-  //   expect(typeof response.text).toBe("string");
-  //   expect(response.text.length).toBeGreaterThan(0);
-  //   expect(response.meta).toBeDefined();
-  //   expect(response.meta.provider).toBe("mistral");
-  //   expect(response.meta.model).toBeDefined();
-  // });
+    expect(response).toBeDefined();
+    expect(response.text).toBeDefined();
+    expect(typeof response.text).toBe("string");
+    expect(response.text.length).toBeGreaterThan(0);
+    expect(response.meta).toBeDefined();
+    expect(response.meta.provider).toBe("mistral");
+    expect(response.meta.model).toBeDefined();
+  });
 
-  // // Test the generateText method with JSON output
-  // conditionalTest(
-  //   "generateText should return valid JSON when outputType is json",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content:
-  //           "Return a JSON object with the following structure: { name: 'Paris', country: 'France', population: 2161000 }",
-  //       },
-  //     ];
+  // Test the generateText method with JSON output
+  conditionalTest(
+    "generateText should return valid JSON when outputType is json",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content:
+            "Return a JSON object with the following structure: { name: 'Paris', country: 'France', population: 2161000 }",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateText(messages, {
-  //       outputType: "json",
-  //     });
+      const response = await mistralProvider.generateText(messages, {
+        outputType: "json",
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.json).toBeDefined();
-  //     expect(typeof response.json).toBe("object");
-  //     expect(response.json.name).toBeDefined();
-  //     expect(response.json.country).toBeDefined();
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.json).toBeDefined();
+      expect(typeof response.json).toBe("object");
+      expect(response.json.name).toBeDefined();
+      expect(response.json.country).toBeDefined();
+    }
+  );
 
-  // // Test the generateText method with system message
-  // conditionalTest(
-  //   "generateText should handle system messages correctly",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "system",
-  //         content:
-  //           "You are a helpful assistant that only responds with 'Yes' or 'No'.",
-  //       },
-  //       {
-  //         role: "user",
-  //         content: "Is Paris the capital of France?",
-  //       },
-  //     ];
+  // Test the generateText method with system message
+  conditionalTest(
+    "generateText should handle system messages correctly",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that only responds with 'Yes' or 'No'.",
+        },
+        {
+          role: "user",
+          content: "Is Paris the capital of France?",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateText(messages);
+      const response = await mistralProvider.generateText(messages);
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(
-  //       ["Yes", "No"].some((answer) => response.text.includes(answer))
-  //     ).toBe(true);
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(
+        ["Yes", "No"].some((answer) => response.text.includes(answer))
+      ).toBe(true);
+    }
+  );
 
-  // // Test the generateText method with temperature parameter
-  // conditionalTest(
-  //   "generateText should accept temperature parameter",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a short poem about the moon.",
-  //       },
-  //     ];
+  // Test the generateText method with temperature parameter
+  conditionalTest(
+    "generateText should accept temperature parameter",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a short poem about the moon.",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateText(messages, {
-  //       temperature: 0.2,
-  //     });
+      const response = await mistralProvider.generateText(messages, {
+        temperature: 0.2,
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
-  //     expect(response.text.length).toBeGreaterThan(0);
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+    }
+  );
 
-  // // Test the generateText method with maxTokens parameter
-  // conditionalTest(
-  //   "generateText should accept maxTokens parameter",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a paragraph about artificial intelligence.",
-  //       },
-  //     ];
+  // Test the generateText method with maxTokens parameter
+  conditionalTest(
+    "generateText should accept maxTokens parameter",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a paragraph about artificial intelligence.",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateText(messages, {
-  //       maxTokens: 50,
-  //     });
+      const response = await mistralProvider.generateText(messages, {
+        maxTokens: 50,
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
-  //     expect(response.text.length).toBeGreaterThan(0);
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+    }
+  );
 
-  // // Test the generateText method with custom model
-  // conditionalTest(
-  //   "generateText should accept custom model parameter",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Hello, how are you?",
-  //       },
-  //     ];
+  // Test the generateText method with custom model
+  conditionalTest(
+    "generateText should accept custom model parameter",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Hello, how are you?",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateText(messages, {
-  //       model: "mistral-small-latest",
-  //     });
+      const response = await mistralProvider.generateText(messages, {
+        model: "mistral-small-latest",
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
-  //     expect(response.text.length).toBeGreaterThan(0);
-  //     expect(response.meta.model).toBe("mistral-small-latest");
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+      expect(response.meta.model).toBe("mistral-small-latest");
+    }
+  );
 
-  // // Test the generateLongText method
-  // conditionalTest(
-  //   "generateLongText should return a response with desired word count",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a short story about a space explorer.",
-  //       },
-  //     ];
+  // Test the generateLongText method
+  conditionalTest(
+    "generateLongText should return a response with desired word count",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a short story about a space explorer.",
+        },
+      ];
 
-  //     const desiredWords = 200;
-  //     const response = await mistralProvider.generateLongText(messages, {
-  //       desiredWords,
-  //     });
+      const desiredWords = 200;
+      const response = await mistralProvider.generateLongText(messages, {
+        desiredWords,
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
 
-  //     // Count words in the response
-  //     const wordCount = response.text
-  //       .split(/\s+/)
-  //       .filter((word) => word.length > 0).length;
-  //     expect(wordCount).toBeGreaterThanOrEqual(desiredWords * 0.8); // Allow some flexibility
-  //   },
-  //   30000
-  // );
+      // Count words in the response
+      const wordCount = response.text
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      expect(wordCount).toBeGreaterThanOrEqual(desiredWords * 0.8); // Allow some flexibility
+    },
+    30000
+  );
 
-  // // Test the generateLongText method with maxRetries
-  // conditionalTest(
-  //   "generateLongText should respect maxRetries parameter",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a short paragraph about artificial intelligence.",
-  //       },
-  //     ];
+  // Test the generateLongText method with maxRetries
+  conditionalTest(
+    "generateLongText should respect maxRetries parameter",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a short paragraph about artificial intelligence.",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateLongText(messages, {
-  //       maxRetries: 1,
-  //     });
+      const response = await mistralProvider.generateLongText(messages, {
+        maxRetries: 1,
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
-  //     expect(response.text.length).toBeGreaterThan(0);
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+    }
+  );
 
-  // // Test the generateLongText method with custom model
-  // conditionalTest(
-  //   "generateLongText should accept custom model parameter",
-  //   async () => {
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a short paragraph about climate change.",
-  //       },
-  //     ];
+  // Test the generateLongText method with custom model
+  conditionalTest(
+    "generateLongText should accept custom model parameter",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a short paragraph about climate change.",
+        },
+      ];
 
-  //     const response = await mistralProvider.generateLongText(messages, {
-  //       model: "mistral-small-latest",
-  //     });
+      const response = await mistralProvider.generateLongText(messages, {
+        model: "mistral-small-latest",
+      });
 
-  //     expect(response).toBeDefined();
-  //     expect(response.text).toBeDefined();
-  //     expect(typeof response.text).toBe("string");
-  //     expect(response.meta.model).toBe("mistral-small-latest");
-  //   }
-  // );
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.meta.model).toBe("mistral-small-latest");
+    }
+  );
 
-  // // Test error handling in generateText
-  // conditionalTest(
-  //   "generateText should handle API errors gracefully",
-  //   async () => {
-  //     // Create a provider with an invalid API key
-  //     const invalidProvider = new MistralProvider("invalid-api-key");
+  // Test error handling in generateText
+  conditionalTest(
+    "generateText should handle API errors gracefully",
+    async () => {
+      // Create a provider with an invalid API key
+      const invalidProvider = new MistralProvider("invalid-api-key");
 
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Hello, how are you?",
-  //       },
-  //     ];
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Hello, how are you?",
+        },
+      ];
 
-  //     try {
-  //       await invalidProvider.generateText(messages);
-  //       // If we reach here, the test should fail
-  //       expect(true).toBe(false);
-  //     } catch (error) {
-  //       expect(error).toBeDefined();
-  //       expect(error instanceof Error).toBe(true);
-  //       expect((error as Error).message).toContain(
-  //         "Failed to generate text with Mistral"
-  //       );
-  //     }
-  //   }
-  // );
+      try {
+        await invalidProvider.generateText(messages);
+        // If we reach here, the test should fail
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error instanceof Error).toBe(true);
+        expect((error as Error).message).toContain(
+          "Failed to generate text with Mistral"
+        );
+      }
+    }
+  );
 
-  // // Test error handling in generateLongText
-  // conditionalTest(
-  //   "generateLongText should handle API errors gracefully",
-  //   async () => {
-  //     // Create a provider with an invalid API key
-  //     const invalidProvider = new MistralProvider("invalid-api-key");
+  // Test error handling in generateLongText
+  conditionalTest(
+    "generateLongText should handle API errors gracefully",
+    async () => {
+      // Create a provider with an invalid API key
+      const invalidProvider = new MistralProvider("invalid-api-key");
 
-  //     const messages: Message[] = [
-  //       {
-  //         role: "user",
-  //         content: "Write a short story.",
-  //       },
-  //     ];
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Write a short story.",
+        },
+      ];
 
-  //     try {
-  //       await invalidProvider.generateLongText(messages);
-  //       // If we reach here, the test should fail
-  //       expect(true).toBe(false);
-  //     } catch (error) {
-  //       expect(error).toBeDefined();
-  //       expect(error instanceof Error).toBe(true);
-  //     }
-  //   }
-  // );
+      try {
+        await invalidProvider.generateLongText(messages);
+        // If we reach here, the test should fail
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error instanceof Error).toBe(true);
+      }
+    }
+  );
 
   // Test embedding generation
   conditionalTest(
