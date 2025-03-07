@@ -1,14 +1,8 @@
-import OpenAIClient from "openai";
 import fs from "fs/promises";
 import log from "../../log";
 import type { WhisperResponseWithSegmentsAndWords } from "../../types/openai";
 import * as v from "valibot";
-import {
-  getProvider,
-  type TextGenerationOptions,
-  type LongTextGenerationOptions,
-  type AIProvider,
-} from "./providers";
+import { getProvider } from "./providers";
 
 // Import all providers to ensure they are registered
 import "./providers/openai";
@@ -19,49 +13,20 @@ import openaiProvider from "./providers/openai";
 import anthropicProvider from "./providers/anthropic";
 import mistralProvider from "./providers/mistral";
 import perplexityProvider from "./providers/perplexity";
+import type {
+  Provider,
+  Model,
+  Message,
+  AIProvider,
+  TextGenerationOptions,
+  LongTextGenerationOptions,
+} from "./types";
 
 /*
 This library is a wrapper for LLM APIs.
 It supports OpenAI, Anthropic, Mistral, and Perplexity.
 All functions are designed to support different providers!
 */
-
-interface Model {
-  name: string;
-  label: string;
-  description: string;
-  endpoint: string;
-  provider: string;
-  providerName: string;
-  maxTokens: number;
-  maxOutputTokens: number;
-  hostingOrigin: string;
-  usesInternet: boolean;
-}
-
-export interface Provider {
-  [key: string]: Model;
-}
-
-export interface MessageContent {
-  type: string;
-  text?: string;
-  image_url?: {
-    url: string;
-  };
-  audio_url?: {
-    url: string;
-  };
-}
-
-export interface Message {
-  role: "system" | "user" | "assistant";
-  content: MessageContent[] | string;
-}
-
-interface ProviderToken {
-  [key: string]: string;
-}
 
 /**
  * Define validations
@@ -87,14 +52,13 @@ export const aiModelsValidationSchema = v.object({
 /**
  * Define the standards
  */
-export const EMBEDDING_MODEL = "text-embedding-3-small";
-export const VISION_MODEL = "gpt-4o-mini";
-export const TEXT_MODEL = "gpt-4o-mini";
-export const FAST_TEXT_MODEL = "gpt-4o-mini";
-export const TTS_MODEL = "tts-1";
-export const STT_MODEL = "whisper-1";
-export const IMAGE_GENERATION_MODEL = "dall-e-3";
-
+export const EMBEDDING_MODEL = "openai:text-embedding-3-small";
+export const VISION_MODEL = "openai:gpt-4o-mini";
+export const TEXT_MODEL = "openai:gpt-4o-mini";
+export const FAST_TEXT_MODEL = "openai:gpt-4o-mini";
+export const TTS_MODEL = "openai:tts-1";
+export const STT_MODEL = "openai:whisper-1";
+export const IMAGE_GENERATION_MODEL = "openai:dall-e-3";
 export const DEFAULT_MODEL = "openai:gpt-4o-mini";
 
 /**
@@ -483,9 +447,9 @@ export async function generateEmbedding(
   text: string,
   embeddingModel: string = EMBEDDING_MODEL
 ) {
+  const { provider, model } = parseModelString(embeddingModel);
   // For now, only OpenAI supports embeddings in our implementation
-  const provider = getProvider("openai");
-  const result = await provider.generateEmbedding!(text, {
+  const result = await getProvider(provider).generateEmbedding!(text, {
     model: embeddingModel,
   });
 

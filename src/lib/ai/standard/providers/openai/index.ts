@@ -3,29 +3,26 @@ import fs from "fs/promises";
 import log from "../../../../log";
 import { basename } from "path";
 import { nanoid } from "nanoid";
-import {
-  type AIProvider,
-  type TextGenerationOptions,
-  type TextGenerationResponse,
-  type LongTextGenerationOptions,
-  type LongTextGenerationResponse,
-  type EmbeddingOptions,
-  type EmbeddingResponse,
-  type ImageGenerationOptions,
-  type ImageGenerationResponse,
-  type SpeechToTextOptions,
-  type SpeechToTextResponse,
-  type TextToSpeechOptions,
-  type TextToSpeechResponse,
-  MAXIMUM_EXTERNAL_CALL_TIMEOUT,
-} from "../";
-import {
-  EMBEDDING_MODEL,
-  IMAGE_GENERATION_MODEL,
-  type Message,
-} from "../../index";
+import type {
+  AIProvider,
+  TextGenerationOptions,
+  TextGenerationResponse,
+  LongTextGenerationOptions,
+  LongTextGenerationResponse,
+  EmbeddingOptions,
+  EmbeddingResponse,
+  ImageGenerationOptions,
+  ImageGenerationResponse,
+  SpeechToTextOptions,
+  SpeechToTextResponse,
+  TextToSpeechOptions,
+  TextToSpeechResponse,
+} from "../../types";
+import { EMBEDDING_MODEL } from "../../index";
+import type { Message } from "../../types";
 import type { WhisperResponseWithSegmentsAndWords } from "../../../../types/openai";
 import { countWords } from "../../utils";
+import { MAXIMUM_EXTERNAL_CALL_TIMEOUT } from "../../standards";
 
 // Default models
 const DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small";

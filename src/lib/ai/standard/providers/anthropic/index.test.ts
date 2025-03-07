@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { AnthropicProvider } from "./index";
-import type { Message } from "../../index";
+import type { Message } from "../../types";
 
 // Check if API key is available
 const apiKey = process.env.ANTHROPIC_API_KEY;

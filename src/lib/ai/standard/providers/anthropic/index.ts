@@ -1,13 +1,13 @@
 import log from "../../../../log";
-import {
-  type AIProvider,
-  type TextGenerationOptions,
-  type TextGenerationResponse,
-  type LongTextGenerationOptions,
-  type LongTextGenerationResponse,
-  MAXIMUM_EXTERNAL_CALL_TIMEOUT,
-} from "../";
-import type { Message } from "../../index";
+import type {
+  AIProvider,
+  TextGenerationOptions,
+  TextGenerationResponse,
+  LongTextGenerationOptions,
+  LongTextGenerationResponse,
+  Message,
+} from "../../types";
+import { MAXIMUM_EXTERNAL_CALL_TIMEOUT } from "../../standards";
 import { countWords } from "../../utils";
 
 // Default models

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { PerplexityProvider } from "./index";
-import type { Message } from "../../index";
+import type { Message } from "../../types";
 
 // Check if API key is available
 const apiKey = process.env.PERPLEXITY_API_KEY;

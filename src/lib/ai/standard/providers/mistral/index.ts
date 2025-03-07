@@ -1,26 +1,55 @@
 import log from "../../../../log";
-import {
-  type AIProvider,
-  type TextGenerationOptions,
-  type TextGenerationResponse,
-  type LongTextGenerationOptions,
-  type LongTextGenerationResponse,
-  MAXIMUM_EXTERNAL_CALL_TIMEOUT,
-} from "../";
-import type { Message } from "../../index";
+import { MAXIMUM_EXTERNAL_CALL_TIMEOUT } from "../../standards";
 import { countWords } from "../../utils";
+import OpenAIClient from "openai";
+import type {
+  Message,
+  AIProvider,
+  TextGenerationOptions,
+  TextGenerationResponse,
+  LongTextGenerationOptions,
+  LongTextGenerationResponse,
+  EmbeddingResponse,
+  EmbeddingOptions,
+} from "../../types";
 
 // Default models
 const DEFAULT_TEXT_MODEL = "mistral-large-latest";
 const DEFAULT_VISION_MODEL = "pixtral-large-latest";
+const EMBEDDING_MODEL = "mistral-embed";
 
 export class MistralProvider implements AIProvider {
   private apiKey: string;
   private baseURL: string;
+  private client: OpenAIClient;
 
   constructor(apiKey: string, baseURL: string = "https://api.mistral.ai/v1") {
     this.apiKey = apiKey;
     this.baseURL = baseURL;
+
+    this.client = new OpenAIClient({
+      baseURL,
+      apiKey,
+    });
+  }
+
+  async generateEmbedding(
+    text: string,
+    options?: EmbeddingOptions
+  ): Promise<EmbeddingResponse> {
+    const model = options?.model || EMBEDDING_MODEL;
+
+    const response = await this.client.embeddings.create({
+      model,
+      input: text,
+      encoding_format: "float",
+    });
+
+    return {
+      embedding: response.data[0].embedding,
+      model,
+      provider: "mistral",
+    };
   }
 
   async generateText(
