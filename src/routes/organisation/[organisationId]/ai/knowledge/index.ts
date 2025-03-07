@@ -789,12 +789,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.post(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/upload-and-learn",
+      "/organisation/:organisationId/ai/knowledge/upload-and-extract",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/upload-and-learn",
+      path: "/organisation/:organisationId/ai/knowledge/upload-and-extract",
       tags: ["knowledge"],
       summary: "Upload a file and extract knowledge in one step",
       requestBody: {
