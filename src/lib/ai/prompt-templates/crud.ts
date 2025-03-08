@@ -4,7 +4,7 @@ import {
   promptTemplatePlaceholders,
   promptTemplates,
   promptTemplatePlaceholderExamples,
-  PromptTemplatePlaceholdersUpdate,
+  type PromptTemplatePlaceholdersUpdate,
   type PromptTemplatePlaceholdersInsert,
   type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesInsert,

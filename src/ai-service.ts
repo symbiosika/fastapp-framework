@@ -51,7 +51,6 @@ import {
   generateImage,
   generateImageDescription,
   generateLongText,
-  getAllAIModels,
   speechToText,
   textToSpeech,
 } from "./lib/ai/standard";
@@ -94,7 +93,6 @@ export default {
   deletePromptSnippet,
   getPromptSnippetByNameAndCategory,
   // ai standard functions
-  getAllAIModels,
   generateEmbedding,
   generateImageDescription,
   chatCompletion,
