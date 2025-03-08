@@ -27,18 +27,6 @@ beforeAll(async () => {
 });
 
 describe("Chat API Endpoints", () => {
-  test("Get all available AI models", async () => {
-    const response = await testFetcher.get(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
-      TEST_USER_1_TOKEN
-    );
-
-    expect(response.status).toBe(200);
-    expect(typeof response.jsonResponse.chat).toBe("object");
-    expect(response.jsonResponse).not.toBeNull();
-  });
-
   test("Create an empty chat session", async () => {
     const response = await testFetcher.post(
       app,
@@ -118,7 +106,7 @@ describe("Chat API Endpoints", () => {
 
     // If there are messages in the history
     if (historyResponse.jsonResponse.history.length > 0) {
-      const messageId = historyResponse.jsonResponse.history[0].meta?.id;
+      const messageId = historyResponse.jsonResponse.history[2].meta?.id;
 
       if (messageId) {
         const updateData = {

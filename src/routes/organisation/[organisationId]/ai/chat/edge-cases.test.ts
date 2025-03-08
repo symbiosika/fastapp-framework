@@ -86,7 +86,7 @@ describe("Chat API Edge Cases", () => {
     // This might fail if the AI service is not available in test environment
     // So we'll check for either success or a specific error
     expect([200, 400]).toContain(response.status);
-  });
+  }, 15000);
 
   test("Chat with template with very long user input", async () => {
     // Create a very long user input (10000 characters)

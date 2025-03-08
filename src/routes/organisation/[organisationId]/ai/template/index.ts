@@ -45,7 +45,7 @@ import {
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { isOrganisationMember } from "../../..";
+import { isOrganisationMember, isOrganisationAdmin } from "../../..";
 
 const placeholdersSelectWithSuggestionsSchema = v.intersect([
   promptTemplatePlaceholdersSelectSchema,
@@ -163,7 +163,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", promptTemplatesInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const body = c.req.valid("json");
@@ -215,7 +215,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
@@ -261,7 +261,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { id, organisationId } = c.req.valid("param");
@@ -394,7 +394,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         promptTemplateId: v.string(),
       })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
@@ -445,7 +445,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId, id } = c.req.valid("param");
@@ -490,7 +490,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
-    isOrganisationMember,
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId, id } = c.req.valid("param");

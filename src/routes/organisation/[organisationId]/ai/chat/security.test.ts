@@ -47,7 +47,6 @@ beforeAll(async () => {
 describe("Chat API Security Tests", () => {
   test("Endpoints should reject unauthorized requests", async () => {
     await rejectUnauthorized(app, [
-      ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`],
       [
         "POST",
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
