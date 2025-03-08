@@ -105,7 +105,7 @@ export const acceptOrganisationInvitation = async (
     await trx.insert(organisationMembers).values({
       userId,
       organisationId: invitation.organisationId,
-      role: "member",
+      role: invitation.role,
     });
   });
 
