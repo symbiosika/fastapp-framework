@@ -57,13 +57,14 @@ jobs:
 
           # JWT
           JWT_PUBLIC_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
+          JWT_PRIVATE_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
 
           # Perplexity
           PERPLEXITY_API_KEY=${{ secrets.FASTAPP_UNITTEST_PERPLEXITY_API_KEY }}
 
           # Cron
           CRON_LOG=false
-
+          ZYTE_API_KEY=not-needed
           EOL
 
       - name: Setup Bun
