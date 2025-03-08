@@ -1,0 +1,79 @@
+name: Unit tests for fastapp-framework
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main    
+
+      - name: Create .env file
+        run: |
+          cat > .env << 'EOL'
+          # Webserver
+          BASE_URL=http://localhost:3000
+          WRITE_DEBUG_FILES=true
+
+          # Database
+          POSTGRES_HOST=${{ secrets.FASTAPP_UNITTEST_DB_HOST }}
+          POSTGRES_PORT=${{ secrets.FASTAPP_UNITTEST_DB_PORT }}
+          POSTGRES_USER=${{ secrets.FASTAPP_UNITTEST_DB_USER }}
+          POSTGRES_PASSWORD=${{ secrets.FASTAPP_UNITTEST_DB_PASSWORD }}
+          POSTGRES_DB=${{ secrets.FASTAPP_UNITTEST_DB }}
+          POSTGRES_CA='${{ secrets.FASTAPP_UNITTEST_DB_CERT }}'
+
+          # OpenAI for Chat,Embeddings and Text Features
+          OPENAI_API_KEY=${{ secrets.FASTAPP_UNITTEST_OPENAI_API_KEY }}
+
+          # Mistral for Chat and MultiModal
+          MISTRAL_API_KEY=${{ secrets.FASTAPP_UNITTEST_MISTRAL_API_KEY }}
+
+          # Anthropic for Chat
+          ANTHROPIC_API_KEY=${{ secrets.FASTAPP_UNITTEST_ANTHROPIC_API_KEY }}
+
+          # Webserver Settings
+          ALLOWED_ORIGINS="*"
+
+          # Parsing
+          PDF_PARSER_SERVICE="local"
+          LOCAL_PDF_PARSER_API_KEY="${{ secrets.FASTAPP_UNITTEST_PDF_PARSER_API_KEY }}"
+          LOCAL_PDF_PARSER_BASE_URL="${{ secrets.FASTAPP_UNITTEST_PDF_PARSER_BASE_URL }}"
+
+          AUTH_SECRET='${{ secrets.FASTAPP_UNITTEST_AUTH_SECRET }}'
+
+          # Encryption
+          SECRETS_AES_KEY=${{ secrets.FASTAPP_UNITTEST_SECRETS_AES_KEY }}
+          SECRETS_AES_IV=${{ secrets.FASTAPP_UNITTEST_SECRETS_AES_IV }}
+
+          # JWT
+          JWT_PUBLIC_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
+
+          # Perplexity
+          PERPLEXITY_API_KEY=${{ secrets.FASTAPP_UNITTEST_PERPLEXITY_API_KEY }}
+
+          # Cron
+          CRON_LOG=false
+
+          EOL
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@master
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test src/test/init.test.ts
