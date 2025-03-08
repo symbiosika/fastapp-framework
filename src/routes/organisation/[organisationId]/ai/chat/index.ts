@@ -7,10 +7,6 @@ import type { FastAppHono } from "../../../../../types";
 import { HTTPException } from "hono/http-exception";
 import { RESPONSES } from "../../../../../lib/responses";
 import {
-  aiModelsValidationSchema,
-  getAllAIModels,
-} from "../../../../../lib/ai/standard";
-import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../../lib/utils/hono-middlewares";
@@ -33,38 +29,6 @@ import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
-  /**
-   * Get all available models
-   */
-  app.get(
-    API_BASE_PATH + "/organisation/:organisationId/ai/models",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "get",
-      path: "/organisation/:organisationId/ai/models",
-      tags: ["ai"],
-      summary: "Get all available models",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(aiModelsValidationSchema),
-            },
-          },
-        },
-      },
-    }),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      const { organisationId } = c.req.valid("param");
-      const r = await getAllAIModels();
-      return c.json(r);
-    }
-  );
-
   /**
    * Main CHAT Route. Can handle simple and complex chats.
    * Chat with a Prompt Template

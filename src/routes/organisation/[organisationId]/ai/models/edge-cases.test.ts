@@ -43,7 +43,7 @@ beforeAll(async () => {
 
   const response = await testFetcher.post(
     app,
-    `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+    `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
     TEST_USER_1_TOKEN,
     modelData
   );
@@ -76,7 +76,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       modelData
     );
@@ -91,7 +91,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${invalidId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${invalidId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -122,7 +122,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       duplicateModelData
     );
@@ -132,7 +132,7 @@ describe("AI Models API Edge Cases", () => {
     if (response.status === 200) {
       await testFetcher.delete(
         app,
-        `/api/organisation/${TEST_ORGANISATION_1.id}/models/${response.jsonResponse.id}`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${response.jsonResponse.id}`,
         TEST_USER_1_TOKEN
       );
     }
@@ -160,7 +160,7 @@ describe("AI Models API Edge Cases", () => {
 
     const createResponse = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       modelData
     );
@@ -170,7 +170,7 @@ describe("AI Models API Edge Cases", () => {
     // Delete the model first time
     const firstDeleteResponse = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${modelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${modelId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -179,7 +179,7 @@ describe("AI Models API Edge Cases", () => {
     // Try to delete the same model again
     const secondDeleteResponse = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${modelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${modelId}`,
       TEST_USER_1_TOKEN
     );
 

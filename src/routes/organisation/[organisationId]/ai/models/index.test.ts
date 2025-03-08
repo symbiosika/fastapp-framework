@@ -57,7 +57,7 @@ describe("AI Models API Endpoints", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       modelData
     );
@@ -78,7 +78,7 @@ describe("AI Models API Endpoints", () => {
   test("Get all AI provider models for an organisation", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN
     );
 
@@ -97,7 +97,7 @@ describe("AI Models API Endpoints", () => {
   test("Get a single AI provider model by ID", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${testModelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${testModelId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -117,7 +117,7 @@ describe("AI Models API Endpoints", () => {
 
     const response = await testFetcher.put(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${testModelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${testModelId}`,
       TEST_USER_1_TOKEN,
       updateData
     );
@@ -133,7 +133,7 @@ describe("AI Models API Endpoints", () => {
   test("Delete an AI provider model", async () => {
     const response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${testModelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${testModelId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -159,7 +159,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       incompleteModelData
     );
@@ -172,7 +172,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${nonExistentId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -189,7 +189,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.put(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${nonExistentId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${nonExistentId}`,
       TEST_USER_1_TOKEN,
       updateData
     );
@@ -205,7 +205,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${nonExistentId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -236,7 +236,7 @@ describe("AI Models API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       mismatchedOrgData
     );
@@ -262,7 +262,7 @@ describe("AI Models API Security Tests", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_1_TOKEN,
       modelData
     );
@@ -272,19 +272,19 @@ describe("AI Models API Security Tests", () => {
 
   test("Endpoints should reject unauthorized requests", async () => {
     await rejectUnauthorized(app, [
-      ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/models`],
+      ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`],
       [
         "GET",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/models/${securityTestModelId}`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${securityTestModelId}`,
       ],
-      ["POST", `/api/organisation/${TEST_ORGANISATION_1.id}/models`],
+      ["POST", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`],
       [
         "PUT",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/models/${securityTestModelId}`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${securityTestModelId}`,
       ],
       [
         "DELETE",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/models/${securityTestModelId}`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${securityTestModelId}`,
       ],
     ]);
   });
@@ -293,7 +293,7 @@ describe("AI Models API Security Tests", () => {
     // User 2 tries to access organisation 1's models
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_2_TOKEN
     );
 
@@ -323,7 +323,7 @@ describe("AI Models API Security Tests", () => {
     // User 2 tries to create a model in organisation 1
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models`,
       TEST_USER_2_TOKEN,
       modelData
     );
@@ -343,7 +343,7 @@ describe("AI Models API Security Tests", () => {
     // User 2 tries to update a model in organisation 1
     const response = await testFetcher.put(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${securityTestModelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${securityTestModelId}`,
       TEST_USER_2_TOKEN,
       updateData
     );
@@ -356,7 +356,7 @@ describe("AI Models API Security Tests", () => {
     // User 2 tries to delete a model in organisation 1
     const response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/models/${securityTestModelId}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${securityTestModelId}`,
       TEST_USER_2_TOKEN
     );
 
@@ -370,7 +370,7 @@ describe("AI Models API Security Tests", () => {
     // Try to access models with invalid organisation ID
     const getResponse = await testFetcher.get(
       app,
-      `/api/organisation/${invalidOrgId}/models`,
+      `/api/organisation/${invalidOrgId}/ai/models`,
       TEST_USER_1_TOKEN
     );
 

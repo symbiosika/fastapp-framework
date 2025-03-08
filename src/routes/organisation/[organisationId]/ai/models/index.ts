@@ -40,12 +40,12 @@ export default function defineModelRoutes(
    * Get all AI provider models for an organisation
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/models",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/models",
+      path: "/organisation/:organisationId/ai/models",
       tags: ["models"],
       summary: "Get all AI provider models for an organisation",
       responses: {
@@ -82,12 +82,12 @@ export default function defineModelRoutes(
    * Get a single AI provider model by ID
    */
   app.get(
-    API_BASE_PATH + "/organisation/:organisationId/models/:modelId",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models/:modelId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "get",
-      path: "/organisation/:organisationId/models/:modelId",
+      path: "/organisation/:organisationId/ai/models/:modelId",
       tags: ["models"],
       summary: "Get a single AI provider model by ID",
       responses: {
@@ -135,12 +135,12 @@ export default function defineModelRoutes(
    * Requires organisation admin rights
    */
   app.post(
-    API_BASE_PATH + "/organisation/:organisationId/models",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "post",
-      path: "/organisation/:organisationId/models",
+      path: "/organisation/:organisationId/ai/models",
       tags: ["models"],
       summary: "Create a new AI provider model",
       responses: {
@@ -183,12 +183,12 @@ export default function defineModelRoutes(
    * Requires organisation admin rights
    */
   app.put(
-    API_BASE_PATH + "/organisation/:organisationId/models/:modelId",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models/:modelId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "put",
-      path: "/organisation/:organisationId/models/:modelId",
+      path: "/organisation/:organisationId/ai/models/:modelId",
       tags: ["models"],
       summary: "Update an AI provider model",
       responses: {
@@ -247,12 +247,12 @@ export default function defineModelRoutes(
    * Requires organisation admin rights
    */
   app.delete(
-    API_BASE_PATH + "/organisation/:organisationId/models/:modelId",
+    API_BASE_PATH + "/organisation/:organisationId/ai/models/:modelId",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "delete",
-      path: "/organisation/:organisationId/models/:modelId",
+      path: "/organisation/:organisationId/ai/models/:modelId",
       tags: ["models"],
       summary: "Delete an AI provider model",
       responses: {
