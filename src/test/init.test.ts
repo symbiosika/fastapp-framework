@@ -8,6 +8,7 @@ import {
   teamMembers,
   organisationMembers,
   invitationCodes,
+  aiProviderModels,
 } from "../lib/db/db-schema";
 import { inArray } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
@@ -164,6 +165,21 @@ export const dropAllTestTeamMembers = async () => {
 };
 
 /**
+ * Drop all Test AI Provider Models
+ */
+export const dropAllTestAiProviderModels = async () => {
+  await getDb()
+    .delete(aiProviderModels)
+    .where(
+      inArray(aiProviderModels.organisationId, [
+        TEST_ORGANISATION_1.id,
+        TEST_ORGANISATION_2.id,
+        TEST_ORGANISATION_3.id,
+      ])
+    );
+};
+
+/**
  * Init all Test Organisation Members
  */
 export const initTestOrganisationMembers = async () => {
@@ -236,7 +252,7 @@ const getJwtTokenForTesting = async (email: string) => {
  */
 export const initTests = async () => {
   await createDatabaseClient();
-  await waitForDbConnection();
+  await waitForDbConnection();  
 
   const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);
   const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
@@ -244,6 +260,7 @@ export const initTests = async () => {
   const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
 
   await dropAllInvitationsCodes();
+  await dropAllTestAiProviderModels();
 
   await initTestOrganisations().catch((err) => {
     console.info("Error initialising test organisation", err);

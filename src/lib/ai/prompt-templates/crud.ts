@@ -3,10 +3,12 @@ import { getDb } from "../../../lib/db/db-connection";
 import {
   promptTemplatePlaceholders,
   promptTemplates,
+  promptTemplatePlaceholderExamples,
+  PromptTemplatePlaceholdersUpdate,
   type PromptTemplatePlaceholdersInsert,
   type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesInsert,
-  promptTemplatePlaceholderExamples,
+  type PromptTemplatesSelect,
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
@@ -101,19 +103,20 @@ export const getPlainPlaceholdersForPromptTemplate = async (
       )
     );
 
-  const result: PromptTemplatePlaceholdersSelect[] = await Promise.all(
-    placeholders.map(async (placeholder) => ({
-      ...placeholder,
-      suggestions: (
-        await getDb()
-          .select()
-          .from(promptTemplatePlaceholderExamples)
-          .where(
-            eq(promptTemplatePlaceholderExamples.placeholderId, placeholder.id)
-          )
-          .orderBy(promptTemplatePlaceholderExamples.value)
-      ).map((e) => e.value),
-    }))
+  const result = await Promise.all(
+    placeholders.map(async (placeholder) => {
+      const suggestions = await getDb()
+        .select()
+        .from(promptTemplatePlaceholderExamples)
+        .where(
+          eq(promptTemplatePlaceholderExamples.placeholderId, placeholder.id)
+        );
+
+      return {
+        ...placeholder,
+        suggestions: suggestions.map((s) => s.value),
+      };
+    })
   );
 
   return result;
@@ -131,13 +134,25 @@ export const getPromptTemplatePlaceholderById = async (id: string) => {
   if (placeholder.length === 0) {
     throw new Error("Placeholder not found.");
   }
-  return placeholder[0];
+
+  // Get suggestions for this placeholder
+  const suggestions = await getDb()
+    .select()
+    .from(promptTemplatePlaceholderExamples)
+    .where(eq(promptTemplatePlaceholderExamples.placeholderId, id));
+
+  return {
+    ...placeholder[0],
+    suggestions: suggestions.map((s) => s.value),
+  };
 };
 
 /**
  * Update a prompt template by ID
  */
-export const updatePromptTemplate = async (data: PromptTemplatesInsert) => {
+export const updatePromptTemplate = async (
+  data: Partial<PromptTemplatesSelect>
+) => {
   if (!data.id || data.id === "") {
     throw new Error("A valid prompt template ID is required.");
   }
@@ -210,7 +225,10 @@ export const addPromptTemplatePlaceholder = async (
       );
     }
 
-    return placeholder[0];
+    return {
+      ...placeholder[0],
+      suggestions: suggestions || [],
+    };
   });
   return added;
 };
@@ -219,10 +237,12 @@ export const addPromptTemplatePlaceholder = async (
  * Update a placeholder entry by ID
  */
 export const updatePromptTemplatePlaceholder = async (
-  data: PromptTemplatePlaceholdersSelect & { suggestions?: string[] }
+  data: PromptTemplatePlaceholdersUpdate & { suggestions?: string[] }
 ) => {
-  if (!data.id || data.id === "") {
-    throw new Error("A valid placeholder ID is required.");
+  if (data.id == null || data.id === "" || data.promptTemplateId == null) {
+    throw new Error(
+      "A valid placeholder ID and prompt template ID are required."
+    );
   }
   const { suggestions, ...placeholderData } = data;
 
@@ -232,30 +252,42 @@ export const updatePromptTemplatePlaceholder = async (
       .set(placeholderData)
       .where(
         and(
-          eq(promptTemplatePlaceholders.id, data.id),
-          eq(promptTemplatePlaceholders.promptTemplateId, data.promptTemplateId)
+          eq(promptTemplatePlaceholders.id, data.id!),
+          eq(
+            promptTemplatePlaceholders.promptTemplateId,
+            data.promptTemplateId!
+          )
         )
       )
       .returning();
 
+    if (placeholder.length === 0) {
+      throw new Error("Placeholder not found.");
+    }
+
     // Delete existing suggestions
     await tx
       .delete(promptTemplatePlaceholderExamples)
-      .where(eq(promptTemplatePlaceholderExamples.placeholderId, data.id));
+      .where(eq(promptTemplatePlaceholderExamples.placeholderId, data.id!));
 
+    let updatedSuggestions: string[] = [];
     if (suggestions != null) {
       // Add new suggestions if any
       if (suggestions.length > 0) {
         await tx.insert(promptTemplatePlaceholderExamples).values(
           suggestions.map((value) => ({
-            placeholderId: data.id,
+            placeholderId: data.id!,
             value,
           }))
         );
+        updatedSuggestions = suggestions;
       }
     }
 
-    return placeholder[0];
+    return {
+      ...placeholder[0],
+      suggestions: updatedSuggestions,
+    };
   });
 
   return updated;

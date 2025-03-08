@@ -125,6 +125,7 @@ describe("Prompt Templates API Endpoints", () => {
       requiredByUser: true,
       defaultValue: "What can you help me with?",
       promptTemplateId: createdTemplateId,
+      suggestions: ["Are you there?", "What is your name?"],
     };
 
     const response = await testFetcher.post(
@@ -135,11 +136,18 @@ describe("Prompt Templates API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.jsonResponse.name).toBe(placeholderData.name);
-    expect(response.jsonResponse.promptTemplateId).toBe(createdTemplateId);
 
     // Save the placeholder ID for later tests
     createdPlaceholderId = response.jsonResponse.id;
+
+    // check the response
+    expect(response.jsonResponse.name).toBe(placeholderData.name);
+    expect(response.jsonResponse.promptTemplateId).toBe(createdTemplateId);
+    expect(response.jsonResponse.suggestions).toBeDefined();
+    expect(Array.isArray(response.jsonResponse.suggestions)).toBe(true);
+    expect(response.jsonResponse.suggestions).toEqual(
+      placeholderData.suggestions
+    );
   });
 
   test("Get placeholders for a template", async () => {
@@ -162,6 +170,7 @@ describe("Prompt Templates API Endpoints", () => {
       TEST_USER_1_TOKEN
     );
 
+    console.log(response.textResponse);
     expect(response.status).toBe(200);
     expect(response.jsonResponse.id).toBe(createdPlaceholderId);
     expect(response.jsonResponse.name).toBe("query");
@@ -192,6 +201,11 @@ describe("Prompt Templates API Endpoints", () => {
     expect(response.jsonResponse.label).toBe(updatedPlaceholder.label);
     expect(response.jsonResponse.defaultValue).toBe(
       updatedPlaceholder.defaultValue
+    );
+    expect(response.jsonResponse.suggestions).toBeDefined();
+    expect(Array.isArray(response.jsonResponse.suggestions)).toBe(true);
+    expect(response.jsonResponse.suggestions).toEqual(
+      updatedPlaceholder.suggestions
     );
   });
 
@@ -294,6 +308,7 @@ describe("Prompt Templates API Endpoints", () => {
       TEST_USER_1_TOKEN
     );
 
+    console.log(response.textResponse);
     expect(response.status).toBe(200);
   });
 

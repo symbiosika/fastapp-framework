@@ -41,15 +41,31 @@ import {
   promptTemplatePlaceholdersUpdateSchema,
   promptTemplatesInsertSchema,
   promptTemplatesSelectSchema,
+  promptTemplatesUpdateSchema,
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationMember } from "../../..";
 
-const updatePromptTemplatePlaceholderSchema = v.intersect([
-  promptTemplatesInsertSchema,
+const placeholdersSelectWithSuggestionsSchema = v.intersect([
+  promptTemplatePlaceholdersSelectSchema,
   v.object({
-    id: v.string(),
+    suggestions: v.optional(v.array(v.string())),
+  }),
+]);
+
+const placeholdersInsertWithSuggestionsSchema = v.intersect([
+  promptTemplatePlaceholdersInsertSchema,
+  v.object({
+    id: v.optional(v.string()),
+    suggestions: v.optional(v.array(v.string())),
+  }),
+]);
+
+const placeholdersUpdateWithSuggestionsSchema = v.intersect([
+  promptTemplatePlaceholdersUpdateSchema,
+  v.object({
+    suggestions: v.optional(v.array(v.string())),
   }),
 ]);
 
@@ -191,7 +207,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validator("json", updatePromptTemplatePlaceholderSchema),
+    validator("json", promptTemplatesUpdateSchema),
     validator(
       "param",
       v.object({
@@ -275,7 +291,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+              schema: resolver(
+                v.array(placeholdersSelectWithSuggestionsSchema)
+              ),
             },
           },
         },
@@ -318,7 +336,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+              schema: resolver(placeholdersSelectWithSuggestionsSchema),
             },
           },
         },
@@ -362,13 +380,13 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+              schema: resolver(placeholdersSelectWithSuggestionsSchema),
             },
           },
         },
       },
     }),
-    validator("json", promptTemplatePlaceholdersInsertSchema),
+    validator("json", placeholdersInsertWithSuggestionsSchema),
     validator(
       "param",
       v.object({
@@ -380,13 +398,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
-        const body = await c.req.json();
-        const validatedBody = v.parse(
-          promptTemplatePlaceholdersInsertSchema,
-          body
-        );
+        const body = await c.req.valid("json");
+
         const r = await addPromptTemplatePlaceholder({
-          ...validatedBody,
+          ...body,
           promptTemplateId,
         });
 
@@ -415,13 +430,13 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+              schema: resolver(placeholdersSelectWithSuggestionsSchema),
             },
           },
         },
       },
     }),
-    validator("json", promptTemplatePlaceholdersSelectSchema),
+    validator("json", placeholdersUpdateWithSuggestionsSchema),
     validator(
       "param",
       v.object({
@@ -435,9 +450,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const { promptTemplateId, id } = c.req.valid("param");
         const body = c.req.valid("json");
+
         const r = await updatePromptTemplatePlaceholder({
           ...body,
-          id,
+          id: body.id ?? id,
           promptTemplateId: promptTemplateId,
         });
         return c.json(r);
@@ -509,7 +525,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(promptTemplatePlaceholdersSelectSchema),
+              schema: resolver(placeholdersSelectWithSuggestionsSchema),
             },
           },
         },

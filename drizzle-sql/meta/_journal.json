@@ -708,6 +708,13 @@
       "when": 1741370813388,
       "tag": "0100_rapid_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1741422316527,
+      "tag": "0101_stale_vulture",
+      "breakpoints": true
     }
   ]
 }

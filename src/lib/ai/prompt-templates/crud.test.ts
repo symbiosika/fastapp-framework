@@ -29,6 +29,13 @@ describe("Prompt Template CRUD Operations", () => {
     needsInitialCall: false,
     llmOptions: {},
   };
+  const testPlaceholder = {
+    name: "test_placeholder",
+    label: "test_placeholder",
+    description: "Test placeholder",
+    defaultValue: "default",
+    hidden: false,
+  };
   let createdTemplateId: string;
 
   it("should create a new prompt template", async () => {
@@ -151,6 +158,114 @@ describe("Prompt Template Placeholders CRUD Operations", () => {
 
   // Cleanup: Delete the test template
   it("should cleanup test data", async () => {
+    await deletePromptTemplate(templateId, testTemplate.organisationId);
+  });
+});
+
+describe("Prompt Template Placeholder Suggestions", () => {
+  const testTemplate = {
+    organisationId: TEST_ORGANISATION_1.id,
+    name: "Suggestions Test Template",
+    category: "test",
+    prompt: "Test prompt with suggestions",
+    systemPrompt: "Test prompt with suggestions",
+    userPrompt: null,
+    langCode: "en",
+    needsInitialCall: false,
+    llmOptions: {},
+    hidden: false,
+  };
+  const testPlaceholder = {
+    name: "test_placeholder",
+    label: "test_placeholder",
+    description: "Test placeholder",
+    defaultValue: "default",
+    hidden: false,
+    requiredByUser: true,
+    type: "text" as const,
+  };
+  let templateId: string;
+  let placeholderId: string;
+
+  // Setup: Create a template first
+  it("should setup test template", async () => {
+    const result = await addPromptTemplate(testTemplate);
+    templateId = result.id;
+  });
+
+  it("should create a placeholder with suggestions", async () => {
+    const placeholder = {
+      name: "placeholder_with_suggestions",
+      label: "Placeholder with suggestions",
+      description: "Test placeholder with suggestions",
+      defaultValue: "default value",
+      hidden: false,
+      type: "text" as const,
+      requiredByUser: true,
+      promptTemplateId: templateId,
+      suggestions: ["Suggestion 1", "Suggestion 2", "Suggestion 3"],
+    };
+
+    const result = await addPromptTemplatePlaceholder(placeholder);
+    expect(result.name).toBe(placeholder.name);
+    expect(result.id).toBeDefined();
+    placeholderId = result.id;
+
+    // We can't directly verify suggestions here as they're stored in a separate table
+    // and the function doesn't return them
+  });
+
+  it("should update a placeholder with new suggestions", async () => {
+    const updatedPlaceholder = {
+      id: placeholderId,
+      promptTemplateId: templateId,
+      name: "updated_placeholder_with_suggestions",
+      label: "Updated placeholder with suggestions",
+      description: "Updated test placeholder with suggestions",
+      defaultValue: "updated default",
+      hidden: false,
+      type: "text" as const,
+      requiredByUser: true,
+      suggestions: [
+        "Updated Suggestion 1",
+        "Updated Suggestion 2",
+        "Updated Suggestion 3",
+        "New Suggestion 4",
+      ],
+    };
+
+    const result = await updatePromptTemplatePlaceholder(updatedPlaceholder);
+    expect(result.name).toBe(updatedPlaceholder.name);
+  });
+
+  it("should update a placeholder to remove all suggestions", async () => {
+    const updatedPlaceholder = {
+      ...testPlaceholder,
+      id: placeholderId,
+      promptTemplateId: templateId,
+      name: "updated_placeholder_no_suggestions",
+      suggestions: [], // Empty array to remove all suggestions
+    };
+
+    const result = await updatePromptTemplatePlaceholder(updatedPlaceholder);
+    expect(result.name).toBe(updatedPlaceholder.name);
+  });
+
+  it("should update a placeholder to add new suggestions after removing them", async () => {
+    const updatedPlaceholder = {
+      ...testPlaceholder,
+      id: placeholderId,
+      promptTemplateId: templateId,
+      suggestions: ["New suggestion after removal"],
+    };
+
+    const result = await updatePromptTemplatePlaceholder(updatedPlaceholder);
+    expect(result.id).toBe(placeholderId);
+  });
+
+  // Cleanup: Delete the placeholder and template
+  it("should cleanup test data", async () => {
+    await deletePromptTemplatePlaceholder(placeholderId, templateId);
     await deletePromptTemplate(templateId, testTemplate.organisationId);
   });
 });
