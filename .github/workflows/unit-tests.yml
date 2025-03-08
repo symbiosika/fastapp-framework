@@ -75,5 +75,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: run migrations
+        run: npm run fastapp:migrate
+
       - name: Run tests
-        run: bun test src/test/init.test.ts
+        run: bun test src/test/check-connection.test.ts
