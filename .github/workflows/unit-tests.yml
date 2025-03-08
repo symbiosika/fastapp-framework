@@ -78,5 +78,8 @@ jobs:
       - name: run migrations
         run: npm run migrate
 
-      - name: Run tests
+      - name: Check connection
         run: bun test src/test/check-connection.test.ts
+
+      - name: Run tests
+        run: bun test
