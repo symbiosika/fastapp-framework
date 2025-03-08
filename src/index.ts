@@ -35,6 +35,7 @@ import paymentRoutes from "./routes/payment";
 import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/template";
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
+import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
 import defineOrganisationRoutes from "./routes/organisation";
 import defineTeamRoutes from "./routes/organisation/[organisationId]/teams";
@@ -273,6 +274,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineAiUtilsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
        * Adds workspace routes
