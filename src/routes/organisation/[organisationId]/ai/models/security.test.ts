@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineModelRoutes from ".";
 import {
@@ -20,6 +20,13 @@ beforeAll(async () => {
   const { user1Token, user2Token } = await initTests();
   TEST_USER_1_TOKEN = user1Token;
   TEST_USER_2_TOKEN = user2Token;
+
+  // Delete any existing test model
+  await testFetcher.delete(
+    app,
+    `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${testModelId}`,
+    TEST_USER_1_TOKEN
+  );
 
   // Create a test model for security tests
   const modelData = {
@@ -233,13 +240,4 @@ describe("AI Models API Security Tests", () => {
       );
     }
   });
-});
-
-// Clean up the test model
-afterAll(async () => {
-  await testFetcher.delete(
-    app,
-    `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/${testModelId}`,
-    TEST_USER_1_TOKEN
-  );
 });

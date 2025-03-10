@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll } from "bun:test";
 import { getDb } from "../../db/db-connection";
 import { upsertFilter } from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";

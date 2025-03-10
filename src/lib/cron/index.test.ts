@@ -1,4 +1,4 @@
-import { test, it, expect, afterAll } from "bun:test";
+import { test, expect } from "bun:test";
 import scheduler from ".";
 
 test("Scheduler", async () => {
@@ -20,9 +20,4 @@ test("Scheduler", async () => {
   if (!taskExecuted) {
     scheduler.stopTask("test-task");
   }
-
-  // Cleanup
-  afterAll(() => {
-    scheduler.stopAllTasks();
-  });
 }, 20000);

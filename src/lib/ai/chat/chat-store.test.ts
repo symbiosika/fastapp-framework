@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { chatStore } from "./chat-store";
 import {
   createDatabaseClient,

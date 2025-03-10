@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll } from "bun:test";
 import { LocalAuth } from "./index";
 import {
   createDatabaseClient,
@@ -29,13 +29,6 @@ beforeAll(async () => {
       target: [invitationCodes.code],
       set: { isActive: true },
     });
-});
-
-afterAll(async () => {
-  await getDb().delete(users).where(eq(users.email, TEST_EMAIL));
-  await getDb()
-    .delete(invitationCodes)
-    .where(eq(invitationCodes.code, TEST_INVITATION_CODE));
 });
 
 describe("LocalAuth", async () => {

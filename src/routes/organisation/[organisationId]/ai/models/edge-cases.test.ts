@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineModelRoutes from ".";
 import { initTests, TEST_ORGANISATION_1 } from "../../../../../test/init.test";

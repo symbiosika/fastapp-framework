@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
 import definePermissionGroupRoutes from ".";
 import type { FastAppHono } from "../../../../types";
@@ -24,8 +24,6 @@ describe("Permission Groups API Endpoints", () => {
       .delete(pathPermissions)
       .where(eq(pathPermissions.organisationId, TEST_ORGANISATION_1.id));
   });
-
-  afterAll(async () => {});
 
   // Security checks
   test("should reject unauthorized requests", async () => {
