@@ -16,6 +16,7 @@ import {
   pgEnum,
   unique,
   integer,
+  customType,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -56,6 +57,15 @@ export const organisationsSelectSchema = createSelectSchema(organisations);
 export const organisationsInsertSchema = createInsertSchema(organisations);
 export const organisationsUpdateSchema = createUpdateSchema(organisations);
 
+const bytea = customType<{
+  data: Buffer;
+  default: false;
+}>({
+  dataType() {
+    return "bytea";
+  },
+});
+
 export const users = pgBaseTable(
   "users",
   {
@@ -77,6 +87,9 @@ export const users = pgBaseTable(
       .defaultNow(),
     extUserId: text("ext_user_id").notNull().default(""),
     meta: jsonb("meta"),
+    profileImage: bytea("profile_image"),
+    profileImageName: varchar("profile_image_name", { length: 255 }),
+    profileImageContentType: varchar("profile_image_content_type", { length: 255 }),
     lastOrganisationId: uuid("last_organisation_id").references(
       () => organisations.id,
       {
@@ -96,6 +109,12 @@ export const users = pgBaseTable(
 export type UsersSelect = typeof users.$inferSelect;
 export type UsersInsert = typeof users.$inferInsert;
 export type UserRestrictedSelect = Omit<UsersSelect, "password" | "salt">;
+export type UserSelectBasic = {
+  id: string;
+  email: string;
+  firstname: string;
+  surname: string;
+};
 
 export const usersSelectSchema = createSelectSchema(users);
 export const usersRestrictedSelectSchema = v.omit(usersSelectSchema, [

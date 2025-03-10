@@ -11,7 +11,9 @@ import {
 
 export const getUser = async (userId: string) => {
   const user = await getDb()
-    .select()
+    .select({
+      id: users.id,
+    })
     .from(users)
     .where(eq(users.extUserId, userId));
   return user[0] ?? undefined;
@@ -24,7 +26,7 @@ export const getUserById = async (userId: string) => {
       extUserId: users.extUserId,
       email: users.email,
       emailVerified: users.emailVerified,
-      image: users.image,
+      profileImageName: users.profileImageName,
       firstname: users.firstname,
       surname: users.surname,
       meta: users.meta,

@@ -4,7 +4,7 @@ import {
   organisationMembers,
   sessions,
   users,
-  type UsersSelect,
+  type UserSelectBasic,
 } from "../db/db-schema";
 import { getDb } from "../db/db-connection";
 import jwt from "jsonwebtoken";
@@ -39,11 +39,25 @@ export const saltAndHashPassword = async (
 const getUserFromDb = async (
   email: string,
   password: string
-): Promise<UsersSelect> => {
+): Promise<{
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  password: string | null;
+  firstname: string;
+  surname: string;
+}> => {
   // no-role-check necessary here
   try {
     const user = await getDb()
-      .select()
+      .select({
+        id: users.id,
+        email: users.email,
+        emailVerified: users.emailVerified,
+        password: users.password,
+        firstname: users.firstname,
+        surname: users.surname,
+      })
       .from(users)
       .where(eq(users.email, email));
 
@@ -110,7 +124,12 @@ const setUserInDb = async (
  * Generates a JWT for a user
  */
 export const generateJwt = async (
-  user: UsersSelect,
+  user: {
+    id: string;
+    email: string;
+    firstname: string;
+    surname: string;
+  },
   expiresIn: number,
   additionalClaims?: Record<string, any>
 ) => {
@@ -316,7 +335,15 @@ export const LocalAuth = {
   },
 
   async refreshToken(userId: string) {
-    const user = await getDb().select().from(users).where(eq(users.id, userId));
+    const user = await getDb()
+      .select({
+        id: users.id,
+        email: users.email,
+        firstname: users.firstname,
+        surname: users.surname,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
     if (!user || user.length === 0) {
       throw "User not found";
     }
@@ -330,7 +357,10 @@ export const LocalAuth = {
   async forgotPasswort(email: string) {
     // Check if user exists in DB (optional check for clarity)
     const user = await getDb()
-      .select()
+      .select({
+        id: users.id,
+        email: users.email,
+      })
       .from(users)
       .where(eq(users.email, email));
     if (!user || user.length === 0) {

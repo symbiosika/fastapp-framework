@@ -87,7 +87,10 @@ export const acceptOrganisationInvitation = async (
   }
 
   const userRes = await getDb()
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+    })
     .from(users)
     .where(eq(users.id, userId));
   const user = userRes[0] || undefined;
@@ -120,7 +123,10 @@ export const acceptAllPendingInvitationsForUser = async (
   organisationId: string
 ) => {
   const userRes = await getDb()
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+    })
     .from(users)
     .where(eq(users.id, userId));
   const user = userRes[0] || undefined;
@@ -180,7 +186,10 @@ export const declineAllPendingInvitationsForUser = async (
   organisationId: string
 ) => {
   const userRes = await getDb()
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+    })
     .from(users)
     .where(eq(users.id, userId));
   const user = userRes[0] || undefined;

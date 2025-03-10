@@ -23,6 +23,10 @@ import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { files, filesSelectSchema, getDb } from "../../../../dbSchema";
 import { and, eq } from "drizzle-orm";
+import {
+  isOrganisationAdmin,
+  isOrganisationMember,
+} from "../../../organisation/index";
 
 /**
  * Define the payment routes
@@ -71,6 +75,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         workspaceId: v.optional(v.string()),
       })
     ),
+    isOrganisationAdmin,
     async (c) => {
       try {
         const { organisationId, type, bucket } = c.req.valid("param");
@@ -129,6 +134,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         filename: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, type, bucket, filename } = c.req.valid("param");
@@ -184,6 +190,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, type, bucket, id } = c.req.valid("param");
@@ -248,6 +255,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         id: v.string(),
       })
     ),
+    isOrganisationMember,
     async (c) => {
       try {
         const { organisationId, type, bucket, id } = c.req.valid("param");

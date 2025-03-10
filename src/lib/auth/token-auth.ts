@@ -110,7 +110,12 @@ export const verifyApiTokenAndGetJwt = async (
 
   // Get the associated user
   const user = await getDb()
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      firstname: users.firstname,
+      surname: users.surname,
+    })
     .from(users)
     .where(eq(users.id, tokenRecord.userId));
 

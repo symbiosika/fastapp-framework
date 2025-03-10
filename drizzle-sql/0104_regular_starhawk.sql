@@ -1,0 +1,1 @@
+ALTER TABLE "base_users" ADD COLUMN "profile_image_content_type" varchar(255);

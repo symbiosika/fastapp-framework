@@ -15,7 +15,10 @@ import {
   organisationsSelectSchema,
   usersRestrictedSelectSchema,
 } from "../../lib/db/db-schema";
-import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
+import {
+  authAndSetUsersInfo,
+  checkUserPermission,
+} from "../../lib/utils/hono-middlewares";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import {
   addOrganisationMember,
@@ -48,6 +51,10 @@ import {
   listApiTokensForUser,
   revokeApiToken,
 } from "../../lib/auth/token-auth";
+import {
+  getUserProfileImage,
+  upsertUserProfileImage,
+} from "../../lib/usermanagement/profile-image";
 
 /**
  * Pre-register custom verification
@@ -164,6 +171,96 @@ export function defineSecuredUserRoutes(
         throw new HTTPException(500, {
           message: "Error updating user: " + err,
         });
+      }
+    }
+  );
+
+  /**
+   * Upload/Update profile image
+   */
+  app.post(
+    API_BASE_PATH + "/user/profile-image",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/users/profile-image",
+      tags: ["users"],
+      summary: "Upload or update user profile image",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  success: v.boolean(),
+                  message: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "form",
+      v.object({
+        file: v.any(),
+      })
+    ),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const form = c.req.valid("form");
+        const file = form.file;
+
+        if (!file) {
+          throw new HTTPException(400, { message: "No file provided" });
+        }
+        await upsertUserProfileImage(userId, file);
+
+        return c.json({
+          success: true,
+          message: "Profile image set successfully",
+        });
+      } catch (err) {
+        throw new HTTPException(400, { message: err + "" });
+      }
+    }
+  );
+
+  /**
+   * Get user profile image
+   */
+  app.get(
+    API_BASE_PATH + "/user/profile-image",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/users/profile-image",
+      tags: ["users"],
+      summary: "Get user profile image",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        // Get the profile image from database
+        const image = await getUserProfileImage(userId);
+        return new Response(image.file, {
+          status: 200,
+          headers: {
+            "Content-Type": image.contentType,
+          },
+        });
+      } catch (err) {
+        throw new HTTPException(400, { message: err + "" });
       }
     }
   );

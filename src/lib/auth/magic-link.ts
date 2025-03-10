@@ -1,6 +1,10 @@
 import { and, eq, gt } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
-import { magicLinkSessions, users, type UsersSelect } from "../db/db-schema";
+import {
+  magicLinkSessions,
+  users,
+  type UserSelectBasic,
+} from "../db/db-schema";
 import { nanoid } from "nanoid";
 import { smtpService } from "../email";
 import { generateJwt } from ".";
@@ -17,7 +21,12 @@ export const createMagicLinkToken = async (
 ): Promise<string> => {
   // Check if user exists
   const userResult = await getDb()
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      firstname: users.firstname,
+      surname: users.surname,
+    })
     .from(users)
     .where(eq(users.email, email));
 
@@ -128,7 +137,16 @@ export const verifyEmailToken = async (token: string) => {
   }
   const userId = magicLinkResult[0].userId;
 
-  const user = await getDb().select().from(users).where(eq(users.id, userId));
+  const user = await getDb()
+    .select({
+      id: users.id,
+      email: users.email,
+      firstname: users.firstname,
+      surname: users.surname,
+      emailVerified: users.emailVerified,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
   if (user.length === 0) {
     throw new Error("User not found");
   }
@@ -160,7 +178,7 @@ export const deleteMagicLinkToken = async (tokenId: string) => {
  */
 export const verifyMagicLink = async (
   token: string
-): Promise<{ user: UsersSelect; token: string }> => {
+): Promise<{ user: UserSelectBasic; token: string }> => {
   // Verify the email token
   const { user, tokenId } = await verifyEmailToken(token);
 
@@ -179,7 +197,7 @@ export const verifyMagicLink = async (
  */
 export const verifyEmail = async (
   token: string
-): Promise<{ user: UsersSelect; token: string }> => {
+): Promise<{ user: UserSelectBasic; token: string }> => {
   // Verify the email token
   const { user, tokenId } = await verifyEmailToken(token);
 
