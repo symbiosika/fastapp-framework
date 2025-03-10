@@ -5,6 +5,8 @@ import { defineSecuredUserRoutes } from "./protected";
 import type { FastAppHono } from "../../types";
 import { initTests } from "../../test/init.test";
 import { TEST_ADMIN_USER } from "../../test/init.test";
+import { getDb, users } from "../../dbSchema";
+import { eq } from "drizzle-orm";
 
 const TEST_EMAIL_USER = "test-user@symbiosika.de";
 
@@ -15,6 +17,10 @@ describe("User API Endpoints", () => {
   beforeAll(async () => {
     const { adminToken } = await initTests();
     jwt = adminToken;
+
+    // Delete any existing test user
+    await getDb().delete(users).where(eq(users.email, TEST_EMAIL_USER));
+
     defineSecuredUserRoutes(app, "/api");
     definePublicUserRoutes(app, "/api");
   });
