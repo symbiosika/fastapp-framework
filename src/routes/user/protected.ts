@@ -21,6 +21,7 @@ import {
   addOrganisationMember,
   createOrganisation,
   dropUserFromOrganisation,
+  getOrganisationMemberRole,
   getUserOrganisations,
 } from "../../lib/usermanagement/oganisations";
 import {
@@ -42,6 +43,11 @@ import {
 } from "../../lib/usermanagement/user";
 import { getUsersOrganisationInvitations } from "../../lib/usermanagement/invitations";
 import { RESPONSES } from "../../lib/responses";
+import {
+  createApiToken,
+  listApiTokensForUser,
+  revokeApiToken,
+} from "../../lib/auth/token-auth";
 
 /**
  * Pre-register custom verification
@@ -634,6 +640,151 @@ export function defineSecuredUserRoutes(
       } catch (error) {
         throw new HTTPException(401, {
           message: "Token-Refresh fehlgeschlagen: " + error,
+        });
+      }
+    }
+  );
+
+  /**
+   * Create a new API token
+   */
+  app.post(
+    API_BASE_PATH + "/user/api-tokens",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "post",
+      path: "/user/api-tokens",
+      tags: ["user", "api-tokens"],
+      summary: "Create a new API token for the authenticated user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  token: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        name: v.string(),
+        scopes: v.array(v.string()),
+        expiresIn: v.optional(v.number()),
+        organisationId: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const { name, scopes, expiresIn, organisationId } = c.req.valid("json");
+
+        // check if user is part of that organisation. would throw an error if not
+        await getOrganisationMemberRole(organisationId, userId);
+
+        const result = await createApiToken({
+          name,
+          userId,
+          organisationId,
+          scopes,
+          expiresIn,
+        });
+
+        return c.json(result);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: err + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * List all API tokens for the authenticated user
+   */
+  app.get(
+    API_BASE_PATH + "/user/api-tokens",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "get",
+      path: "/user/api-tokens",
+      tags: ["user", "api-tokens"],
+      summary: "List all API tokens for the authenticated user",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(
+                  v.object({
+                    id: v.string(),
+                    name: v.string(),
+                    scopes: v.array(v.string()),
+                    lastUsed: v.optional(v.string()),
+                    expiresAt: v.optional(v.string()),
+                    createdAt: v.string(),
+                    organisationId: v.string(),
+                  })
+                )
+              ),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const tokens = await listApiTokensForUser(userId);
+        return c.json(tokens);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error listing API tokens: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Revoke (delete) an API token
+   */
+  app.delete(
+    API_BASE_PATH + "/user/api-tokens/:tokenId",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "delete",
+      path: "/user/api-tokens/:tokenId",
+      tags: ["user", "api-tokens"],
+      summary: "Revoke (delete) an API token",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        tokenId: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const { tokenId } = c.req.valid("param");
+
+        await revokeApiToken(tokenId, userId);
+        return c.json(RESPONSES.SUCCESS);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error revoking API token: " + err,
         });
       }
     }

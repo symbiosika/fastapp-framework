@@ -2,12 +2,7 @@
  * Routes to register and login a user.
  * These routes are not secured and public.
  */
-
-import type {
-  CustomPostRegisterAction,
-  CustomPreRegisterVerification,
-  FastAppHono,
-} from "../../types";
+import type { FastAppHono } from "../../types";
 import { HTTPException } from "hono/http-exception";
 import { LocalAuth } from "../../lib/auth";
 import log from "../../lib/log";
@@ -19,6 +14,7 @@ import { usersRestrictedSelectSchema } from "../../dbSchema";
 import { RESPONSES } from "../../lib/responses";
 import { verifyPasswordResetToken } from "../../lib/auth/magic-link";
 import { checkIfInvitationCodeIsNeededToRegister } from "../../lib/usermanagement/invitations";
+import { verifyApiTokenAndGetJwt } from "../../lib/auth/token-auth";
 
 /**
  * Define the payment routes
@@ -339,6 +335,55 @@ export function definePublicUserRoutes(
         return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(401, { message: "Invalid token: " + err });
+      }
+    }
+  );
+
+  /**
+   * API Token Exchange endpoint
+   * Allows exchanging a long-lived API token for a short-lived JWT with specific scopes
+   */
+  app.post(
+    API_BASE_PATH + "/user/token-exchange",
+    describeRoute({
+      method: "post",
+      path: "/user/token-exchange",
+      tags: ["user"],
+      summary: "Exchange API token for a short-lived JWT",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: v.object({
+                token: v.string(),
+                expiresAt: v.string(),
+              }),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "json",
+      v.object({
+        token: v.string(),
+        scopes: v.optional(v.array(v.string())),
+      })
+    ),
+    async (c) => {
+      try {
+        const { token, scopes } = c.req.valid("json");
+        const jwt = await verifyApiTokenAndGetJwt(token, scopes);
+
+        return c.json({
+          token: jwt.token,
+          expiresAt: jwt.expiresAt.toISOString(),
+        });
+      } catch (err) {
+        throw new HTTPException(401, {
+          message: err + "",
+        });
       }
     }
   );

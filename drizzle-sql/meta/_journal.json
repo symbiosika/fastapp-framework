@@ -715,6 +715,13 @@
       "when": 1741422316527,
       "tag": "0101_stale_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1741628080565,
+      "tag": "0102_happy_exiles",
+      "breakpoints": true
     }
   ]
 }

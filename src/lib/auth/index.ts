@@ -23,6 +23,9 @@ import { updateUser } from "../usermanagement/user";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
+/**
+ * Hashes a password
+ */
 export const saltAndHashPassword = async (
   password: string
 ): Promise<string> => {
@@ -30,6 +33,9 @@ export const saltAndHashPassword = async (
   return hash;
 };
 
+/**
+ * Gets a user from the database
+ */
 const getUserFromDb = async (
   email: string,
   password: string
@@ -64,6 +70,9 @@ const getUserFromDb = async (
   }
 };
 
+/**
+ * Sets a user in the database
+ */
 const setUserInDb = async (
   email: string,
   password: string,
@@ -97,18 +106,32 @@ const setUserInDb = async (
   return user[0];
 };
 
-export const generateJwt = async (user: UsersSelect, expiresIn: number) => {
-  const token = jwt.sign(
-    { email: user.email, sub: user.id, symbiosika: { roles: [] } },
-    JWT_PRIVATE_KEY,
-    { expiresIn }
-  );
+/**
+ * Generates a JWT for a user
+ */
+export const generateJwt = async (
+  user: UsersSelect,
+  expiresIn: number,
+  additionalClaims?: Record<string, any>
+) => {
+  const claims = {
+    email: user.email,
+    sub: user.id,
+    symbiosika: { roles: [] },
+    ...additionalClaims,
+  };
+
+  const token = jwt.sign(claims, JWT_PRIVATE_KEY, { expiresIn });
+
   return {
     token,
     expiresAt: new Date(Date.now() + expiresIn * 1000),
   };
 };
 
+/**
+ * Checks if a user exists and creates a session
+ */
 const checkAndCreateSession = async (email: string, password: string) => {
   const user = await getUserFromDb(email, password);
 
@@ -133,6 +156,9 @@ const checkAndCreateSession = async (email: string, password: string) => {
   return { token, expiresAt };
 };
 
+/**
+ * Sets a new password for a user
+ */
 const setNewPassword = async (userId: string, newPassword: string) => {
   const hash = await saltAndHashPassword(newPassword);
 
@@ -149,6 +175,9 @@ const setNewPassword = async (userId: string, newPassword: string) => {
   return updatedUser[0];
 };
 
+/**
+ * Changes a password for a user
+ */
 const changePassword = async (
   email: string,
   oldPassword: string,
@@ -198,6 +227,9 @@ const checkGeneralInvitationCode = async (
   }
 };
 
+/**
+ * Local authentication
+ */
 export const LocalAuth = {
   async authorize(email: string, password: string) {
     return await getUserFromDb(email, password);
