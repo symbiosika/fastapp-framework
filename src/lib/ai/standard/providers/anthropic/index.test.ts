@@ -24,24 +24,28 @@ describe("Anthropic Provider", () => {
   });
 
   // Test the generateText method
-  conditionalTest("generateText should return a valid response", async () => {
-    const messages: Message[] = [
-      {
-        role: "user",
-        content: "Hello, can you tell me what is the capital of France?",
-      },
-    ];
+  conditionalTest(
+    "generateText should return a valid response",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Hello, can you tell me what is the capital of France?",
+        },
+      ];
 
-    const response = await anthropicProvider.generateText(messages);
+      const response = await anthropicProvider.generateText(messages);
 
-    expect(response).toBeDefined();
-    expect(response.text).toBeDefined();
-    expect(typeof response.text).toBe("string");
-    expect(response.text.length).toBeGreaterThan(0);
-    expect(response.meta).toBeDefined();
-    expect(response.meta.provider).toBe("anthropic");
-    expect(response.meta.model).toBeDefined();
-  });
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+      expect(response.meta).toBeDefined();
+      expect(response.meta.provider).toBe("anthropic");
+      expect(response.meta.model).toBeDefined();
+    },
+    30000
+  );
 
   // Test the generateText method with JSON output
   conditionalTest(
@@ -64,7 +68,8 @@ describe("Anthropic Provider", () => {
       expect(typeof response.json).toBe("object");
       expect(response.json.name).toBeDefined();
       expect(response.json.country).toBeDefined();
-    }
+    },
+    30000
   );
 
   // Test the generateText method with system message
@@ -90,7 +95,8 @@ describe("Anthropic Provider", () => {
       expect(
         ["Yes", "No"].some((answer) => response.text.includes(answer))
       ).toBe(true);
-    }
+    },
+    30000
   );
 
   // Test the generateText method with temperature parameter
@@ -112,7 +118,8 @@ describe("Anthropic Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
-    }
+    },
+    30000
   );
 
   // Test the generateLongText method
@@ -163,7 +170,8 @@ describe("Anthropic Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
-    }
+    },
+    30000
   );
 
   // Test error handling in generateText
@@ -191,6 +199,7 @@ describe("Anthropic Provider", () => {
           "Failed to generate text with Anthropic"
         );
       }
-    }
+    },
+    30000
   );
 });

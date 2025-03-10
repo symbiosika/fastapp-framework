@@ -33,24 +33,28 @@ describe("Mistral Provider", () => {
   });
 
   // Test the generateText method
-  conditionalTest("generateText should return a valid response", async () => {
-    const messages: Message[] = [
-      {
-        role: "user",
-        content: "Hello, can you tell me what is the capital of France?",
-      },
-    ];
+  conditionalTest(
+    "generateText should return a valid response",
+    async () => {
+      const messages: Message[] = [
+        {
+          role: "user",
+          content: "Hello, can you tell me what is the capital of France?",
+        },
+      ];
 
-    const response = await mistralProvider.generateText(messages);
+      const response = await mistralProvider.generateText(messages);
 
-    expect(response).toBeDefined();
-    expect(response.text).toBeDefined();
-    expect(typeof response.text).toBe("string");
-    expect(response.text.length).toBeGreaterThan(0);
-    expect(response.meta).toBeDefined();
-    expect(response.meta.provider).toBe("mistral");
-    expect(response.meta.model).toBeDefined();
-  });
+      expect(response).toBeDefined();
+      expect(response.text).toBeDefined();
+      expect(typeof response.text).toBe("string");
+      expect(response.text.length).toBeGreaterThan(0);
+      expect(response.meta).toBeDefined();
+      expect(response.meta.provider).toBe("mistral");
+      expect(response.meta.model).toBeDefined();
+    },
+    30000
+  );
 
   // Test the generateText method with JSON output
   conditionalTest(
@@ -73,7 +77,8 @@ describe("Mistral Provider", () => {
       expect(typeof response.json).toBe("object");
       expect(response.json.name).toBeDefined();
       expect(response.json.country).toBeDefined();
-    }
+    },
+    30000
   );
 
   // Test the generateText method with system message
@@ -99,7 +104,8 @@ describe("Mistral Provider", () => {
       expect(
         ["Yes", "No"].some((answer) => response.text.includes(answer))
       ).toBe(true);
-    }
+    },
+    30000
   );
 
   // Test the generateText method with temperature parameter
@@ -121,7 +127,8 @@ describe("Mistral Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
-    }
+    },
+    30000
   );
 
   // Test the generateText method with maxTokens parameter
@@ -143,7 +150,8 @@ describe("Mistral Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
-    }
+    },
+    30000
   );
 
   // Test the generateText method with custom model
@@ -166,7 +174,8 @@ describe("Mistral Provider", () => {
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
       expect(response.meta.model).toBe("mistral-small-latest");
-    }
+    },
+    30000
   );
 
   // Test the generateLongText method
@@ -217,7 +226,8 @@ describe("Mistral Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.text.length).toBeGreaterThan(0);
-    }
+    },
+    30000
   );
 
   // Test the generateLongText method with custom model
@@ -239,7 +249,8 @@ describe("Mistral Provider", () => {
       expect(response.text).toBeDefined();
       expect(typeof response.text).toBe("string");
       expect(response.meta.model).toBe("mistral-small-latest");
-    }
+    },
+    30000
   );
 
   // Test error handling in generateText
@@ -267,7 +278,8 @@ describe("Mistral Provider", () => {
           "Failed to generate text with Mistral"
         );
       }
-    }
+    },
+    30000
   );
 
   // Test error handling in generateLongText
@@ -292,7 +304,8 @@ describe("Mistral Provider", () => {
         expect(error).toBeDefined();
         expect(error instanceof Error).toBe(true);
       }
-    }
+    },
+    30000
   );
 
   // Test embedding generation
@@ -308,6 +321,7 @@ describe("Mistral Provider", () => {
         expect(error).toBeDefined();
         expect(error instanceof Error).toBe(true);
       }
-    }
+    },
+    30000
   );
 });
