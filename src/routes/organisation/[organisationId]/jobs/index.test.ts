@@ -1,9 +1,11 @@
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import defineJobRoutes from "./index";
 import { initTests, TEST_ORGANISATION_1 } from "../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../types";
+import { getDb, jobs } from "../../../../dbSchema";
+import { eq, or } from "drizzle-orm";
 
 let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
 let TEST_USER_1_TOKEN: string;
@@ -27,197 +29,203 @@ describe("Jobs API Endpoints", () => {
     );
   });
 
-  // test("Sequential Job Operations", async () => {
-  //   console.log("Testing sequential job operations...");
+  afterAll(async () => {
+    getDb()
+      .delete(jobs)
+      .where(or(eq(jobs.type, "test-job"), eq(jobs.type, "lifecycle-test")));
+  });
 
-  //   console.log("Creating a new job...");
-  //   let response = await testFetcher.post(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
-  //     TEST_USER_1_TOKEN,
-  //     {
-  //       type: "test-job",
-  //       metadata: { testData: "test value" },
-  //     }
-  //   );
-  //   expect(response.status).toBe(200);
-  //   let data = response.jsonResponse;
-  //   jobId = data.id;
-  //   console.log("Created job:", jobId);
-  //   expect(data.type).toBe("test-job");
-  //   expect(data.status).toBe("pending");
-  //   expect(data.organisationId).toBe(TEST_ORGANISATION_1.id);
+  test("Sequential Job Operations", async () => {
+    console.log("Testing sequential job operations...");
 
-  //   console.log("Getting all jobs...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(Array.isArray(data)).toBe(true);
-  //   expect(data.some((job: any) => job.id === jobId)).toBe(true);
+    console.log("Creating a new job...");
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
+      TEST_USER_1_TOKEN,
+      {
+        type: "test-job",
+        metadata: { testData: "test value" },
+      }
+    );
+    expect(response.status).toBe(200);
+    let data = response.jsonResponse;
+    jobId = data.id;
+    console.log("Created job:", jobId);
+    expect(data.type).toBe("test-job");
+    expect(data.status).toBe("pending");
+    expect(data.organisationId).toBe(TEST_ORGANISATION_1.id);
 
-  //   console.log("Getting job by ID...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(data.id).toBe(jobId);
-  //   expect(data.type).toBe("test-job");
+    console.log("Getting all jobs...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.some((job: any) => job.id === jobId)).toBe(true);
 
-  //   console.log("Getting job status...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/status`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(data.status).toBe("pending");
+    console.log("Getting job by ID...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.id).toBe(jobId);
+    expect(data.type).toBe("test-job");
 
-  //   console.log("Updating job progress...");
-  //   response = await testFetcher.put(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/progress`,
-  //     TEST_USER_1_TOKEN,
-  //     { progress: 50 }
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(data.id).toBe(jobId);
+    console.log("Getting job status...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/status`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.status).toBe("pending");
 
-  //   console.log("Checking updated job status with progress...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/status`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(data.status).toBe("pending");
-  //   expect(data.progress).toBe(50);
+    console.log("Updating job progress...");
+    response = await testFetcher.put(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/progress`,
+      TEST_USER_1_TOKEN,
+      { progress: 50 }
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.id).toBe(jobId);
 
-  //   console.log("Cancelling job...");
-  //   response = await testFetcher.delete(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
+    console.log("Checking updated job status with progress...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}/status`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.status).toBe("pending");
+    expect(data.progress).toBe(50);
 
-  //   console.log("Verifying job was cancelled...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(data.status).toBe("failed");
-  // });
+    console.log("Cancelling job...");
+    response = await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
 
-  // test("Job Filtering and Querying", async () => {
-  //   console.log("Testing job filtering and querying...");
+    console.log("Verifying job was cancelled...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobId}`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(data.status).toBe("failed");
+  });
 
-  //   // Create multiple jobs with different types and statuses
-  //   console.log("Creating test jobs with different types...");
+  test("Job Filtering and Querying", async () => {
+    console.log("Testing job filtering and querying...");
 
-  //   // Create first job - type A
-  //   let response = await testFetcher.post(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
-  //     TEST_USER_1_TOKEN,
-  //     {
-  //       type: "job-type-A",
-  //       metadata: { testData: "A" },
-  //     }
-  //   );
-  //   expect(response.status).toBe(200);
-  //   const jobA = response.jsonResponse.id;
+    // Create multiple jobs with different types and statuses
+    console.log("Creating test jobs with different types...");
 
-  //   // Create second job - type B
-  //   response = await testFetcher.post(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
-  //     TEST_USER_1_TOKEN,
-  //     {
-  //       type: "job-type-B",
-  //       metadata: { testData: "B" },
-  //     }
-  //   );
-  //   expect(response.status).toBe(200);
-  //   const jobB = response.jsonResponse.id;
+    // Create first job - type A
+    let response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
+      TEST_USER_1_TOKEN,
+      {
+        type: "job-type-A",
+        metadata: { testData: "A" },
+      }
+    );
+    expect(response.status).toBe(200);
+    const jobA = response.jsonResponse.id;
 
-  //   // Create third job - type A again
-  //   response = await testFetcher.post(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
-  //     TEST_USER_1_TOKEN,
-  //     {
-  //       type: "job-type-A",
-  //       metadata: { testData: "A2" },
-  //     }
-  //   );
-  //   expect(response.status).toBe(200);
-  //   const jobA2 = response.jsonResponse.id;
+    // Create second job - type B
+    response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
+      TEST_USER_1_TOKEN,
+      {
+        type: "job-type-B",
+        metadata: { testData: "B" },
+      }
+    );
+    expect(response.status).toBe(200);
+    const jobB = response.jsonResponse.id;
 
-  //   console.log("Testing filtering by type...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?type=job-type-A`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   let data = response.jsonResponse;
-  //   expect(Array.isArray(data)).toBe(true);
-  //   expect(data.some((job: any) => job.id === jobA)).toBe(true);
-  //   expect(data.some((job: any) => job.id === jobA2)).toBe(true);
-  //   expect(data.some((job: any) => job.id === jobB)).toBe(false);
+    // Create third job - type A again
+    response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs`,
+      TEST_USER_1_TOKEN,
+      {
+        type: "job-type-A",
+        metadata: { testData: "A2" },
+      }
+    );
+    expect(response.status).toBe(200);
+    const jobA2 = response.jsonResponse.id;
 
-  //   console.log("Testing filtering by status...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?status=pending`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(Array.isArray(data)).toBe(true);
-  //   expect(data.every((job: any) => job.status === "pending")).toBe(true);
+    console.log("Testing filtering by type...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?type=job-type-A`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    let data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.some((job: any) => job.id === jobA)).toBe(true);
+    expect(data.some((job: any) => job.id === jobA2)).toBe(true);
+    expect(data.some((job: any) => job.id === jobB)).toBe(false);
 
-  //   console.log("Testing pagination with limit...");
-  //   response = await testFetcher.get(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?limit=2`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   expect(response.status).toBe(200);
-  //   data = response.jsonResponse;
-  //   expect(Array.isArray(data)).toBe(true);
-  //   expect(data.length).toBeLessThanOrEqual(2);
+    console.log("Testing filtering by status...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?status=pending`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.every((job: any) => job.status === "pending")).toBe(true);
 
-  //   // Clean up jobs
-  //   await testFetcher.delete(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobA}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   await testFetcher.delete(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobB}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  //   await testFetcher.delete(
-  //     app,
-  //     `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobA2}`,
-  //     TEST_USER_1_TOKEN
-  //   );
-  // });
+    console.log("Testing pagination with limit...");
+    response = await testFetcher.get(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs?limit=2`,
+      TEST_USER_1_TOKEN
+    );
+    expect(response.status).toBe(200);
+    data = response.jsonResponse;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeLessThanOrEqual(2);
+
+    // Clean up jobs
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobA}`,
+      TEST_USER_1_TOKEN
+    );
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobB}`,
+      TEST_USER_1_TOKEN
+    );
+    await testFetcher.delete(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/jobs/${jobA2}`,
+      TEST_USER_1_TOKEN
+    );
+  });
 
   test("Job Lifecycle", async () => {
     console.log("Testing job lifecycle...");
