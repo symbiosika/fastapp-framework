@@ -28,8 +28,9 @@ const placeholderSchema = v.object({
 // Schema for template import
 export const templateImportSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+  label: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
   category: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-  organisationId: v.pipe(v.string(), v.minLength(1)),
+  organisationId: v.optional(v.pipe(v.string(), v.minLength(1))),
   description: v.optional(v.string()),
   systemPrompt: v.pipe(v.string(), v.minLength(1)),
   userPrompt: v.pipe(v.string(), v.minLength(1)),
@@ -42,8 +43,9 @@ export const templateImportSchema = v.object({
  */
 export interface TemplateImportData {
   name: string;
+  label: string;
   category: string;
-  organisationId: string;
+  organisationId?: string;
   description?: string;
   systemPrompt: string;
   userPrompt: string;
@@ -100,12 +102,13 @@ export const importPromptTemplate = async (data: TemplateImportData) => {
     // 1. Create the template
     const templateData: PromptTemplatesInsert = {
       name: data.name,
+      label: data.label,
       category: data.category,
       organisationId: data.organisationId,
       description: data.description || "",
       systemPrompt: data.systemPrompt,
       userPrompt: data.userPrompt,
-      hidden: false,
+      hidden: data.hidden,
     };
 
     const [template] = await tx

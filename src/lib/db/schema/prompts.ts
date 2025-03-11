@@ -47,11 +47,9 @@ export const promptTemplates = pgBaseTable(
     userId: uuid("user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
-    organisationId: uuid("organisation_id")
-      .references(() => organisations.id, {
-        onDelete: "cascade",
-      })
-      .notNull(),
+    organisationId: uuid("organisation_id").references(() => organisations.id, {
+      onDelete: "cascade",
+    }),
     hidden: boolean("hidden").notNull().default(false),
     needsInitialCall: boolean("needs_initial_call").notNull().default(false),
     llmOptions: jsonb("llm_options").$type<LLMOptions>().default({}),
