@@ -10,6 +10,7 @@ import { chatStore } from "../../lib/ai/chat/chat-store";
 import { validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import log from "../../lib/log";
+import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 
 export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   /**
@@ -17,6 +18,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
    */
   app.get(
     basePath + "/admin/logs/download",
+    authAndSetUsersInfo,
     describeRoute({
       method: "get",
       path: "/admin/logs/download/:id?",
@@ -85,6 +87,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
    */
   app.get(
     basePath + "/admin/logs/chat/:id",
+    authAndSetUsersInfo,
     describeRoute({
       method: "get",
       path: "/admin/logs/chat/:id",
@@ -124,6 +127,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
    */
   app.post(
     basePath + "/admin/logs/clear",
+    authAndSetUsersInfo,
     describeRoute({
       method: "post",
       path: "/admin/logs/clear",

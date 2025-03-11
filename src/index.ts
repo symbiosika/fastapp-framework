@@ -12,7 +12,7 @@ import {
   createDatabaseClient,
   waitForDbConnection,
 } from "./lib/db/db-connection";
-import { initializeFullDbSchema, type Job } from "./lib/db/db-schema";
+import { initializeFullDbSchema } from "./lib/db/db-schema";
 import { initializeCollectionPermissions } from "./lib/db/db-collections";
 // Types
 import type {
@@ -52,6 +52,7 @@ import defineAdminRoutes from "./routes/admin";
 import defineSearchInOrganisationRoutes from "./routes/organisation/[organisationId]/search";
 import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
 import defineJobRoutes from "./routes/organisation/[organisationId]/jobs";
+import defineDocsRoutes from "./routes/docs";
 
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
@@ -79,13 +80,6 @@ import filesService from "./files-service";
 import middlewareService from "./middleware-service";
 import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
-
-/**
- * OpenAPI Docs
- */
-import { swaggerUI } from "@hono/swagger-ui";
-import { openAPISpecs } from "hono-openapi";
-import widdershins from "widdershins";
 
 /**
  * MAIN FUNCTION
@@ -284,6 +278,11 @@ export const defineServer = (config: ServerSpecificConfig) => {
       defineWorkspaceRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
+       * Adds docs routes
+       */
+      defineDocsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+      /**
        * Adds custom routes from customHonoApps
        * These are used to add custom routes to the server
        * These are defined in the App config
@@ -330,45 +329,6 @@ export const defineServer = (config: ServerSpecificConfig) => {
           rewriteRequestPath: (path) => path.replace(/^\/public/, "/"),
         })
       );
-
-      // OpenAPI Docs
-      app.get(
-        "/api/v1/openapi",
-        openAPISpecs(app, {
-          documentation: {
-            info: {
-              title: "Symbiosika Backend API",
-              version: "1.0.0",
-              description: "API for the Symbiosika AI Backend",
-            },
-          },
-        })
-      );
-      app.get("/api/v1/ui", swaggerUI({ url: "/api/v1/openapi" }));
-
-      // Add Markdown export endpoint
-      app.get("/api/v1/docs.md", async (c, next) => {
-        const spec = await openAPISpecs(app, {
-          documentation: {
-            info: {
-              title: "Symbiosika Backend API",
-              version: "1.0.0",
-              description: "API for the Symbiosika AI Backend",
-            },
-          },
-        })(c, next);
-
-        const options = {
-          language_tabs: [
-            { javascript: "JavaScript", typescript: "TypeScript" },
-          ],
-          summary: true,
-          tocSummary: true,
-        };
-
-        const markdown = await widdershins.convert(await spec!.json(), options);
-        return c.text(markdown);
-      });
 
       /**
        * Start job queue if needed
