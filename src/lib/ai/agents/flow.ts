@@ -1,5 +1,8 @@
 import type { AgentContext, Agent, AgentOptions } from "../../types/agents";
 import type { ChatStoreVariables } from "../chat/chat-store";
+import { DiffAgent } from "./diff-agent";
+import { LLMAgent } from "./llm-agent";
+import { TTSAgent } from "./tts-agent";
 
 export interface FlowStep {
   // Which agent to call
@@ -21,11 +24,22 @@ export interface FlowDefinition {
  * This class holds the logic to run a flow of multiple steps.
  */
 export class FlowEngine {
-  constructor(private agents: Record<string, Agent>) {
-    // we can pass a dictionary of agentName -> agent
-    // e.g. { "llmAgent": new LLMAgent(), "ttsAgent": new TTSAgent() }
+  private agents: Record<string, Agent>;
+
+  constructor() {
+    this.agents = {
+      llmAgent: new LLMAgent(),
+      ttsAgent: new TTSAgent(),
+      diffAgent: new DiffAgent(),
+    };
   }
 
+  /**
+   * Runs a flow of multiple steps.
+   * @param flowDef The definition of the flow to run.
+   * @param initialInputs The initial inputs to the flow.
+   * @param context The context in which to run the flow.
+   */
   async runFlow(
     flowDef: FlowDefinition,
     initialInputs: ChatStoreVariables,
