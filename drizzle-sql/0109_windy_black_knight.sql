@@ -1,0 +1,2 @@
+ALTER TABLE "base_api_tokens" ADD COLUMN "auto_delete" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX "api_tokens_auto_delete_idx" ON "base_api_tokens" USING btree ("auto_delete");

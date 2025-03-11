@@ -752,7 +752,8 @@ export function defineSecuredUserRoutes(
       method: "post",
       path: "/user/api-tokens",
       tags: ["user", "api-tokens"],
-      summary: "Create a new API token for the authenticated user",
+      summary:
+        "Create a new API token for the authenticated user. Set expiredIn in minutes.",
       responses: {
         200: {
           description: "Successful response",

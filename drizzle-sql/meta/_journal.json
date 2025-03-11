@@ -764,6 +764,13 @@
       "when": 1741684294111,
       "tag": "0108_gigantic_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1741686688518,
+      "tag": "0109_windy_black_knight",
+      "breakpoints": true
     }
   ]
 }

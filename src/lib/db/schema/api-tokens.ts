@@ -11,6 +11,7 @@ import {
   index,
   varchar,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { organisations, users } from "./users";
@@ -48,11 +49,13 @@ export const apiTokens = pgBaseTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .notNull()
       .defaultNow(),
+    autoDelete: boolean("auto_delete").notNull().default(false),
   },
   (apiTokens) => [
     unique("api_tokens_token_idx").on(apiTokens.token),
     index("api_tokens_user_id_idx").on(apiTokens.userId),
     index("api_tokens_organisation_id_idx").on(apiTokens.organisationId),
+    index("api_tokens_auto_delete_idx").on(apiTokens.autoDelete),
   ]
 );
 

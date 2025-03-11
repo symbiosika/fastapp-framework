@@ -23,19 +23,22 @@ export const hashToken = (token: string): string => {
 
 /**
  * Creates a new API token for a user and an organisation
+ * expiresIn: optional: number of minutes after which the token expires
  */
 export const createApiToken = async ({
   name,
   userId,
   organisationId,
   scopes,
-  expiresIn, // optional: number of days after which the token expires
+  expiresIn,
+  autoDelete,
 }: {
   name: string;
   userId: string;
   organisationId: string;
   scopes: string[];
   expiresIn?: number;
+  autoDelete?: boolean;
 }): Promise<{ token: string }> => {
   const token = generateApiToken();
   const hashedToken = hashToken(token);
@@ -43,9 +46,7 @@ export const createApiToken = async ({
   // Optional: Calculate the expiration date
   let expiresAt = undefined;
   if (expiresIn) {
-    expiresAt = new Date(
-      Date.now() + expiresIn * 24 * 60 * 60 * 1000
-    ).toISOString();
+    expiresAt = new Date(Date.now() + expiresIn * 60 * 1000).toISOString();
   }
 
   await getDb().insert(apiTokens).values({
@@ -55,6 +56,7 @@ export const createApiToken = async ({
     organisationId,
     scopes: scopes,
     expiresAt,
+    autoDelete,
   });
 
   // Return the unhashed token, as this is the only opportunity to see it (it is not stored in the database)
