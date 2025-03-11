@@ -210,7 +210,7 @@ export const chatWithAgent = async (query: unknown) => {
   let messages = [...session.messages];
 
   // Use the LLMAgent directly, passing the full chat history
-  const llmAgent = agents.llmAgent;
+  const llmAgent = new LLMAgent();
   const result = await llmAgent.run(
     {
       chatId: session.id,
