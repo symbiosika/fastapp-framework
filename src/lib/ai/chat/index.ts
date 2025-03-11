@@ -89,11 +89,7 @@ type ChatWithTemplateReturn = v.InferOutput<
   typeof chatWithTemplateReturnValidation
 >;
 
-// Initialize available agents
-const agents: Record<string, Agent> = {
-  llmAgent: new LLMAgent(),
-};
-const flowEngine = new FlowEngine(agents);
+const flowEngine = new FlowEngine();
 
 /**
  * Initialize a chat session with an optionaltemplate
