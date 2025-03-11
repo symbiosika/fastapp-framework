@@ -1,11 +1,11 @@
+import { eq, and, gt, or, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { eq, and, gt } from "drizzle-orm";
 import { getDb } from "../db/db-connection";
 import { apiTokens } from "../db/schema/api-tokens";
 import { generateJwt } from ".";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
-import { users } from "../db/db-schema";
 import * as crypto from "crypto";
+import { getUserById } from "../usermanagement/user";
 
 /**
  * Generates a secure token
@@ -62,25 +62,23 @@ export const createApiToken = async ({
 };
 
 /**
- * Verifies an API token and returns a short-lived JWT
+ * Search for a token in the database
  */
-export const verifyApiTokenAndGetJwt = async (
-  token: string,
-  requestedScopes?: string[]
-): Promise<{ token: string; expiresAt: Date }> => {
+export const searchForToken = async (token: string) => {
+  // hash the token
   const hashedToken = hashToken(token);
-
-  // Suche den Token in der Datenbank
+  // search for the token in the database
   const apiTokenRecord = await getDb()
     .select()
     .from(apiTokens)
     .where(
       and(
         eq(apiTokens.token, hashedToken),
-        // Check if the token has not expired
-        apiTokens.expiresAt
-          ? gt(apiTokens.expiresAt, new Date().toISOString())
-          : undefined
+        // Check if the token has not expired or has no expiration date
+        or(
+          isNull(apiTokens.expiresAt),
+          gt(apiTokens.expiresAt, new Date().toISOString())
+        )
       )
     );
 
@@ -90,11 +88,31 @@ export const verifyApiTokenAndGetJwt = async (
 
   const tokenRecord = apiTokenRecord[0];
 
-  // Update lastUsed
+  return tokenRecord;
+};
+
+/**
+ * Update the lastUsed field of a token
+ */
+export const updateTokenLastUsed = async (tokenId: string) => {
   await getDb()
     .update(apiTokens)
     .set({ lastUsed: new Date().toISOString() })
-    .where(eq(apiTokens.id, tokenRecord.id));
+    .where(eq(apiTokens.id, tokenId));
+};
+
+/**
+ * Verifies an API token and returns a short-lived JWT
+ */
+export const verifyApiTokenAndGetJwt = async (
+  token: string,
+  requestedScopes?: string[]
+): Promise<{ token: string; expiresAt: Date }> => {
+  // search for the token in the database
+  const tokenRecord = await searchForToken(token);
+
+  // Update lastUsed
+  await updateTokenLastUsed(tokenRecord.id);
 
   // Check scopes, if requested
   if (requestedScopes && requestedScopes.length > 0) {
@@ -109,29 +127,47 @@ export const verifyApiTokenAndGetJwt = async (
   }
 
   // Get the associated user
-  const user = await getDb()
-    .select({
-      id: users.id,
-      email: users.email,
-      firstname: users.firstname,
-      surname: users.surname,
-    })
-    .from(users)
-    .where(eq(users.id, tokenRecord.userId));
-
-  if (user.length === 0) {
-    throw new Error("User not found");
-  }
+  const user = await getUserById(tokenRecord.userId);
 
   // Generate a short-lived JWT with the requested scopes
   const jwt = await generateJwt(
-    user[0],
+    user,
     // Short lifetime for API-generated tokens (e.g. 15 minutes)
     15 * 60, // 15 minutes in seconds
     {
       // Add API token-specific information to the JWT
       apiToken: true,
       scopes: requestedScopes || (tokenRecord.scopes as string[]),
+      organisationId: tokenRecord.organisationId,
+    }
+  );
+
+  return jwt;
+};
+
+/**
+ * Generate a temporary JWT from token
+ * with the scopes of the token
+ */
+export const generateTemporaryJwtFromToken = async (token: string) => {
+  // search for the token in the database
+  const tokenRecord = await searchForToken(token);
+
+  // Update lastUsed
+  await updateTokenLastUsed(tokenRecord.id);
+
+  // Get the associated user
+  const user = await getUserById(tokenRecord.userId);
+
+  // Generate a short-lived JWT with the requested scopes
+  const jwt = await generateJwt(
+    user,
+    // Short lifetime for API-generated tokens (e.g. 15 minutes)
+    15 * 60, // 15 minutes in seconds
+    {
+      // Add API token-specific information to the JWT
+      apiToken: true,
+      scopes: tokenRecord.scopes,
       organisationId: tokenRecord.organisationId,
     }
   );
