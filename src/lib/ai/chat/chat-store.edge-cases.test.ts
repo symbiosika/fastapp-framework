@@ -162,38 +162,43 @@ describe("Chat Store Edge Cases", () => {
   test("Update chat message with non-existent message ID", async () => {
     const nonExistentMessageId = "non-existent-message-id";
 
-    await chatStore.updateChatMessage(
-      TEST_CHAT_ID,
-      nonExistentMessageId,
-      {
-        content: "Updated content",
-      },
-      TEST_ORGANISATION_1.id
-    );
-
-    // This should not throw an error, but should also not update anything
-    const messages = await chatStore.getChatHistory(TEST_CHAT_ID);
-    expect(messages.length).toBe(1);
-    expect(messages[0].content).toBe("You are a helpful assistant.");
+    try {
+      await chatStore.updateChatMessage(
+        TEST_CHAT_ID,
+        nonExistentMessageId,
+        {
+          content: "Updated content",
+        },
+        TEST_ORGANISATION_1.id
+      );
+      // If we reach here, the test should fail
+      expect(true).toBe(false);
+    } catch (error) {
+      // We expect an error
+      expect(error).toBeDefined();
+    }
   });
 
-  test("Update system message (should be ignored)", async () => {
+  test("Update system message (should throw an error)", async () => {
     const messages = await chatStore.getChatHistory(TEST_CHAT_ID);
     const systemMessageId = messages[0].meta?.id;
 
     if (systemMessageId) {
-      await chatStore.updateChatMessage(
-        TEST_CHAT_ID,
-        systemMessageId,
-        {
-          content: "Updated system message",
-        },
-        TEST_ORGANISATION_1.id
-      );
-
-      // System messages should not be updated
-      const updatedMessages = await chatStore.getChatHistory(TEST_CHAT_ID);
-      expect(updatedMessages[0].content).toBe("You are a helpful assistant.");
+      try {
+        await chatStore.updateChatMessage(
+          TEST_CHAT_ID,
+          systemMessageId,
+          {
+            content: "Updated system message",
+          },
+          TEST_ORGANISATION_1.id
+        );
+        // If we reach here, the test should fail
+        expect(true).toBe(false);
+      } catch (error) {
+        // We expect an error
+        expect(error).toBeDefined();
+      }
     }
   });
 

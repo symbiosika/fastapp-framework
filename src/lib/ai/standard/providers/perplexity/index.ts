@@ -69,6 +69,8 @@ export class PerplexityProvider implements AIProvider {
         meta: {
           model,
           provider: "perplexity",
+          inputTokens: result.usage.prompt_tokens,
+          outputTokens: result.usage.completion_tokens,
         },
       };
     } catch (error) {
@@ -89,6 +91,9 @@ export class PerplexityProvider implements AIProvider {
     const citations: string[] = [];
 
     const model = options?.model || DEFAULT_TEXT_MODEL;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
 
     while (!finished) {
       try {
@@ -145,6 +150,10 @@ export class PerplexityProvider implements AIProvider {
         thinkings.push(...extraced.thinkings);
 
         output += extraced.content;
+
+        // count the input and output tokens
+        inputTokens += result.usage.prompt_tokens ?? 0;
+        outputTokens += result.usage.completion_tokens ?? 0;
 
         // check if the response has some citations
         if (result.citations && Array.isArray(result.citations)) {
@@ -207,6 +216,8 @@ export class PerplexityProvider implements AIProvider {
         provider: "perplexity",
         thinkings,
         citations,
+        inputTokens,
+        outputTokens,
       },
     };
   }

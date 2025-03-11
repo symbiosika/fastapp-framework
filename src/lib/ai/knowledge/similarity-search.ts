@@ -41,7 +41,9 @@ export async function getNearestEmbeddings(q: {
   }[]
 > {
   // Generate the embedding for the search text
-  const embed = await generateEmbedding(q.searchText);
+  const embed = await generateEmbedding(q.searchText, undefined, {
+    organisationId: q.organisationId,
+  });
 
   // set some default values
   if (!q.n) {

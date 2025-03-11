@@ -63,7 +63,8 @@ export class LLMAgent implements Agent {
       // Then run the LLM call
       const result = await generateLongText(
         replacedMessages as any,
-        llmOptions
+        llmOptions,
+        context
       );
 
       const metadata = {

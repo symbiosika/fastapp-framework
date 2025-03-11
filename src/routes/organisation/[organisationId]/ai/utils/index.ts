@@ -57,9 +57,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
+      const organisationId = c.req.valid("param").organisationId;
+      const userId = c.get("usersId");
       try {
         const { text, voice } = c.req.valid("json");
-        const result = await textToSpeech(text, voice ?? "alloy");
+
+        const result = await textToSpeech(
+          text,
+          { voice },
+          {
+            organisationId,
+            userId,
+          }
+        );
 
         return new Response(result.file, {
           headers: {
@@ -131,6 +141,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     isOrganisationMember,
     async (c) => {
       try {
+        const userId = c.get("usersId");
+        const organisationId = c.req.valid("param").organisationId;
         const { file, returnSegments, returnWords } = c.req.valid("form");
         const audioFile = file as File;
 
@@ -138,11 +150,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           throw new Error("No audio file provided");
         }
 
-        const result = await speechToText({
-          file: audioFile,
-          returnSegments: returnSegments === "true",
-          returnWords: returnWords === "true",
-        });
+        const result = await speechToText(
+          {
+            file: audioFile,
+          },
+          {
+            returnSegments: returnSegments === "true",
+            returnWords: returnWords === "true",
+          },
+          {
+            organisationId,
+            userId,
+          }
+        );
 
         return c.json(result);
       } catch (e) {

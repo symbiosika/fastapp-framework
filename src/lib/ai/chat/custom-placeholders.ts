@@ -451,11 +451,19 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
 
       // Convert speech to text
-      const transcription = await speechToText({
-        file: file,
-        returnSegments: false,
-        returnWords: false,
-      }).catch((e) => {
+      const transcription = await speechToText(
+        {
+          file: file,
+        },
+        {
+          returnSegments: false,
+          returnWords: false,
+        },
+        {
+          organisationId: meta.organisationId,
+          userId: meta.userId,
+        }
+      ).catch((e) => {
         log.error("Error transcribing audio", e);
         return null;
       });

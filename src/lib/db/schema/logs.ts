@@ -51,6 +51,7 @@ export const appLogs = pgBaseTable(
     index("app_logs_source_idx").on(table.source),
     index("app_logs_created_at_idx").on(table.createdAt),
     index("app_logs_version_idx").on(table.version),
+    index("app_logs_organisation_id_idx").on(table.organisationId),
   ]
 );
 

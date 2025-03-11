@@ -736,6 +736,34 @@
       "when": 1741635065123,
       "tag": "0104_regular_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1741681872953,
+      "tag": "0105_slippery_ultimo",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1741683927632,
+      "tag": "0106_overjoyed_master_mold",
+      "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1741684243041,
+      "tag": "0107_fluffy_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1741684294111,
+      "tag": "0108_gigantic_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

@@ -74,6 +74,8 @@ export class AnthropicProvider implements AIProvider {
         meta: {
           model,
           provider: "anthropic",
+          inputTokens: result.usage.input_tokens,
+          outputTokens: result.usage.output_tokens,
         },
       };
     } catch (error) {
@@ -91,6 +93,9 @@ export class AnthropicProvider implements AIProvider {
     let retryCount = 0;
     let finished = false;
     const model = options?.model || DEFAULT_TEXT_MODEL;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
 
     while (!finished) {
       try {
@@ -132,6 +137,10 @@ export class AnthropicProvider implements AIProvider {
         const result = await response.json();
         const newText = result.content[0].text;
         output += newText;
+
+        // count the input and output tokens
+        inputTokens += result.usage.input_tokens ?? 0;
+        outputTokens += result.usage.output_tokens ?? 0;
 
         // Update messages to include the assistant's reply
         currentMessages.push({
@@ -184,6 +193,8 @@ export class AnthropicProvider implements AIProvider {
       meta: {
         model,
         provider: "anthropic",
+        inputTokens,
+        outputTokens,
       },
     };
   }

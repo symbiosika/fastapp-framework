@@ -107,6 +107,8 @@ export class MistralProvider implements AIProvider {
         meta: {
           model,
           provider: "mistral",
+          inputTokens: result.usage.prompt_tokens,
+          outputTokens: result.usage.completion_tokens,
         },
       };
     } catch (error) {
@@ -128,6 +130,9 @@ export class MistralProvider implements AIProvider {
     let retryCount = 0;
     let finished = false;
     const model = options?.model || DEFAULT_TEXT_MODEL;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
 
     while (!finished) {
       try {
@@ -161,9 +166,14 @@ export class MistralProvider implements AIProvider {
           throw new Error(`Mistral API error: ${response.status} ${errorText}`);
         }
 
+        // get the result
         const result = await response.json();
         const newText = result.choices[0].message.content;
         output += newText;
+
+        // count the input and output tokens
+        inputTokens += result.usage.prompt_tokens ?? 0;
+        outputTokens += result.usage.completion_tokens ?? 0;
 
         // Update messages to include the assistant's reply, ensuring we only keep role and content
         currentMessages.push({
@@ -216,6 +226,8 @@ export class MistralProvider implements AIProvider {
       meta: {
         model,
         provider: "mistral",
+        inputTokens,
+        outputTokens,
       },
     };
   }

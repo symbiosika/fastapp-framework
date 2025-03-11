@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import log from "../../log";
 import type { WhisperResponseWithSegmentsAndWords } from "../../types/openai";
 import * as v from "valibot";
@@ -14,12 +13,13 @@ import anthropicProvider from "./providers/anthropic";
 import mistralProvider from "./providers/mistral";
 import perplexityProvider from "./providers/perplexity";
 import type {
-  Provider,
-  Model,
   Message,
   AIProvider,
   TextGenerationOptions,
   LongTextGenerationOptions,
+  TextToSpeechOptions,
+  ImageGenerationOptions,
+  SpeechToTextOptions,
 } from "./types";
 
 /*
@@ -91,13 +91,34 @@ export const parseModelString = (
  */
 export async function generateEmbedding(
   text: string,
-  embeddingModel: string = EMBEDDING_MODEL
+  embeddingModel?: string,
+  context?: {
+    organisationId?: string;
+    userId?: string;
+  }
 ) {
+  if (!embeddingModel) {
+    embeddingModel = EMBEDDING_MODEL;
+  }
   const { provider, model } = parseModelString(embeddingModel);
 
   // For now, only OpenAI supports embeddings in our implementation
   const result = await getProvider(provider).generateEmbedding!(text, {
     model,
+  });
+
+  // log to db
+  log.logToDB({
+    level: "info",
+    organisationId: context?.organisationId,
+    sessionId: context?.userId,
+    source: "ai",
+    category: "llm",
+    message: "generate-embedding",
+    metadata: {
+      model: model,
+      provider: provider,
+    },
   });
 
   return {
@@ -184,7 +205,11 @@ export async function chatCompletion(
  */
 export async function generateLongText(
   messages: Message[],
-  options?: LongTextGenerationOptions & { model?: string }
+  options?: LongTextGenerationOptions & { model?: string },
+  context?: {
+    organisationId?: string;
+    userId?: string;
+  }
 ): Promise<{
   text: string;
   json?: any;
@@ -202,6 +227,19 @@ export async function generateLongText(
     const result = await getProvider(provider).generateLongText(messages, {
       ...options,
       model,
+    });
+
+    // log to db
+    log.logToDB({
+      level: "info",
+      organisationId: context?.organisationId,
+      sessionId: context?.userId,
+      source: "ai",
+      category: "llm",
+      message: "generate-text",
+      metadata: {
+        ...result.meta,
+      },
     });
 
     return {
@@ -224,13 +262,15 @@ export const speechToText = async (
   query: {
     file?: File;
     filePath?: string;
-    returnSegments?: boolean;
-    returnWords?: boolean;
   },
-  modelString: string = STT_MODEL
+  options?: SpeechToTextOptions,
+  context?: {
+    organisationId?: string;
+    userId?: string;
+  }
 ) => {
   try {
-    const { provider, model } = parseModelString(modelString);
+    const { provider } = parseModelString(options?.model ?? STT_MODEL);
 
     // Currently only OpenAI supports STT in our implementation
     if (provider !== "openai") {
@@ -247,9 +287,22 @@ export const speechToText = async (
     }
 
     const result = await getProvider(provider).speechToText!(audioData, {
-      model,
-      returnSegments: query.returnSegments,
-      returnWords: query.returnWords,
+      model: options?.model,
+      returnSegments: options?.returnSegments,
+      returnWords: options?.returnWords,
+    });
+
+    // log to db
+    log.logToDB({
+      level: "info",
+      organisationId: context?.organisationId,
+      sessionId: context?.userId,
+      source: "ai",
+      category: "stt",
+      message: "generate-stt",
+      metadata: {
+        ...result.meta,
+      },
     });
 
     return result as unknown as WhisperResponseWithSegmentsAndWords;
@@ -264,25 +317,23 @@ export const speechToText = async (
  */
 export const generateImage = async (
   prompt: string,
-  negativePrompt: string = "",
-  modelString: string = `openai:${IMAGE_GENERATION_MODEL}`,
-  width: number = 1024,
-  height: number = 1024
+  options?: ImageGenerationOptions,
+  context?: {
+    organisationId?: string;
+    userId?: string;
+  }
 ) => {
   try {
-    const { provider, model } = parseModelString(modelString);
+    const { provider } = parseModelString(
+      options?.model ?? IMAGE_GENERATION_MODEL
+    );
 
     // Currently only OpenAI supports image generation in our implementation
     if (provider !== "openai") {
       throw new Error(`Provider ${provider} does not support image generation`);
     }
 
-    const result = await getProvider(provider).generateImage!(prompt, {
-      model,
-      negativePrompt,
-      width,
-      height,
-    });
+    const result = await getProvider(provider).generateImage!(prompt, options);
 
     return result.imageBuffer;
   } catch (error) {
@@ -296,24 +347,24 @@ export const generateImage = async (
  */
 export const textToSpeech = async (
   text: string,
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
-  modelString: string = TTS_MODEL
+  options?: TextToSpeechOptions,
+  context?: {
+    organisationId?: string;
+    userId?: string;
+  }
 ): Promise<{
   file: File;
   filename: string;
 }> => {
   try {
-    const { provider, model } = parseModelString(modelString);
+    const { provider } = parseModelString(options?.model ?? TTS_MODEL);
 
     // Currently only OpenAI supports TTS in our implementation
     if (provider !== "openai") {
       throw new Error(`Provider ${provider} does not support text-to-speech`);
     }
 
-    const result = await getProvider(provider).textToSpeech!(text, {
-      model,
-      voice,
-    });
+    const result = await getProvider(provider).textToSpeech!(text, options);
 
     return {
       file: result.file,

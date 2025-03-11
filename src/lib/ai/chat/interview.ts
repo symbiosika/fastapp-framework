@@ -191,12 +191,19 @@ async function generateInterviewResponse(
     guidelines: session.state.interview?.guidelines,
   });
 
-  const result = await generateLongText(replacedMessages as any, {
-    maxTokens: llmOptions.maxTokens,
-    model: llmOptions.model,
-    temperature: llmOptions.temperature,
-    outputType: "text" as const,
-  });
+  const result = await generateLongText(
+    replacedMessages as any,
+    {
+      maxTokens: llmOptions.maxTokens,
+      model: llmOptions.model,
+      temperature: llmOptions.temperature,
+      outputType: "text" as const,
+    },
+    {
+      organisationId: session.organisationId ?? undefined,
+      userId: session.userId ?? undefined,
+    }
+  );
 
   return result.text;
 }

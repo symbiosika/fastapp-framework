@@ -18,7 +18,6 @@ import type {
   TextToSpeechOptions,
   TextToSpeechResponse,
 } from "../../types";
-import { EMBEDDING_MODEL } from "../../index";
 import type { Message } from "../../types";
 import type { WhisperResponseWithSegmentsAndWords } from "../../../../types/openai";
 import { countWords } from "../../utils";
@@ -34,6 +33,8 @@ const DEFAULT_STT_MODEL = "whisper-1";
 const DEFAULT_IMAGE_GENERATION_MODEL = "dall-e-3";
 
 export class OpenAIProvider implements AIProvider {
+  private apiKey: string;
+  private baseURL: string;
   private client: OpenAIClient;
 
   constructor(apiKey: string, baseURL: string = "https://api.openai.com/v1") {
@@ -41,6 +42,8 @@ export class OpenAIProvider implements AIProvider {
       baseURL,
       apiKey,
     });
+    this.apiKey = apiKey;
+    this.baseURL = baseURL;
   }
 
   async generateText(
@@ -76,6 +79,8 @@ export class OpenAIProvider implements AIProvider {
         meta: {
           model: options?.model || DEFAULT_TEXT_MODEL,
           provider: "openai",
+          inputTokens: response.usage?.prompt_tokens,
+          outputTokens: response.usage?.completion_tokens,
         },
       };
     } catch (error) {
@@ -93,6 +98,9 @@ export class OpenAIProvider implements AIProvider {
     let retryCount = 0;
     let finished = false;
     const model = options?.model || DEFAULT_TEXT_MODEL;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
 
     while (!finished) {
       try {
@@ -117,6 +125,10 @@ export class OpenAIProvider implements AIProvider {
 
         const newText = response.choices[0].message.content ?? "";
         output += newText;
+
+        // count the input and output tokens
+        inputTokens += response.usage?.prompt_tokens ?? 0;
+        outputTokens += response.usage?.completion_tokens ?? 0;
 
         // Update messages to include the assistant's reply
         currentMessages.push({
@@ -169,6 +181,8 @@ export class OpenAIProvider implements AIProvider {
       meta: {
         model,
         provider: "openai",
+        inputTokens,
+        outputTokens,
       },
     };
   }
@@ -177,7 +191,7 @@ export class OpenAIProvider implements AIProvider {
     text: string,
     options?: EmbeddingOptions
   ): Promise<EmbeddingResponse> {
-    const model = options?.model || EMBEDDING_MODEL;
+    const model = options?.model || DEFAULT_EMBEDDING_MODEL;
 
     const response = await this.client.embeddings.create({
       model,

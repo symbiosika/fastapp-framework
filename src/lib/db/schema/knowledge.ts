@@ -13,6 +13,7 @@ import {
   unique,
   check,
   boolean,
+  AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { pgBaseTable } from ".";
@@ -123,10 +124,18 @@ export const knowledgeEntry = pgBaseTable(
     sourceExternalId: varchar("source_external_id", { length: 255 }),
     sourceFileBucket: varchar("source_file_bucket", { length: 255 }),
     sourceUrl: varchar("source_url", { length: 1000 }),
+    parentId: uuid("parentId").references(
+      (): AnyPgColumn => knowledgeEntry.id,
+      {
+        onDelete: "cascade",
+      }
+    ),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     abstract: text("abstract"),
     meta: jsonb("meta").$type<KnowledgeTextMeta>().default({}),
+    version: integer("version").notNull().default(1),
+    versionText: text("version_text").notNull().default("1"),
     hidden: boolean("hidden").notNull().default(false),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
@@ -136,7 +145,15 @@ export const knowledgeEntry = pgBaseTable(
       .defaultNow(),
   },
   (knowledgeEntry) => [
-    uniqueIndex("knowledgeentry_name_idx").on(knowledgeEntry.name),
+    uniqueIndex("knowledgeentry_name_idx").on(
+      knowledgeEntry.name,
+      knowledgeEntry.parentId,
+      knowledgeEntry.organisationId,
+      knowledgeEntry.teamId,
+      knowledgeEntry.userId,
+      knowledgeEntry.workspaceId,
+      knowledgeEntry.version
+    ),
     index("knowledge_entry_file_source_type_idx").on(knowledgeEntry.sourceType),
     index("knowledgeentry_created_at_idx").on(knowledgeEntry.createdAt),
     index("knowledgeentry_updated_at_idx").on(knowledgeEntry.updatedAt),
@@ -165,6 +182,12 @@ export const knowledgeEntryUpdateSchema = createUpdateSchema(knowledgeEntry);
 
 // Table to save the raw text chunks for each knowledge entry
 
+export type KnowledgeChunkMeta = {
+  sourceUri?: string;
+  textLength?: number;
+  page?: number;
+};
+
 export const knowledgeChunks = pgBaseTable(
   "knowledge_chunks",
   {
@@ -185,6 +208,7 @@ export const knowledgeChunks = pgBaseTable(
       .default("")
       .notNull(),
     textEmbedding: vector("text_embedding", { dimensions: 1536 }).notNull(),
+    meta: jsonb("meta").$type<KnowledgeChunkMeta>().default({}),
   },
   (knowledgeChunks) => [
     index("knowledge_chunks_knowledge_entry_id_idx").on(

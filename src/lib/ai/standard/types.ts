@@ -39,32 +39,56 @@ export interface ProviderToken {
 export interface AIProvider {
   generateText(
     messages: Message[],
-    options?: TextGenerationOptions
+    options?: TextGenerationOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<TextGenerationResponse>;
 
   generateLongText(
     messages: Message[],
-    options?: LongTextGenerationOptions
+    options?: LongTextGenerationOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<LongTextGenerationResponse>;
 
   generateEmbedding?(
     text: string,
-    options?: EmbeddingOptions
+    options?: EmbeddingOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<EmbeddingResponse>;
 
   generateImage?(
     prompt: string,
-    options?: ImageGenerationOptions
+    options?: ImageGenerationOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<ImageGenerationResponse>;
 
   speechToText?(
     audioData: File | string,
-    options?: SpeechToTextOptions
+    options?: SpeechToTextOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<SpeechToTextResponse>;
 
   textToSpeech?(
     text: string,
-    options?: TextToSpeechOptions
+    options?: TextToSpeechOptions,
+    context?: {
+      organisationId?: string;
+      userId?: string;
+    }
   ): Promise<TextToSpeechResponse>;
 }
 
@@ -84,6 +108,8 @@ export interface TextGenerationResponse {
     provider: string;
     thinkings?: string[];
     citations?: string[];
+    inputTokens?: number;
+    outputTokens?: number;
   };
 }
 

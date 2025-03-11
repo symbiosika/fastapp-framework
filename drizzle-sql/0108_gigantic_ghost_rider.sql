@@ -1,0 +1,1 @@
+ALTER TABLE "base_app_logs" ALTER COLUMN "organisation_id" DROP NOT NULL;

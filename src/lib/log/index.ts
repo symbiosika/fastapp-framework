@@ -138,6 +138,7 @@ class Logger {
     source?: string;
     category?: string;
     sessionId?: string;
+    organisationId?: string;
     message: string;
     metadata?: Record<string, any>;
     version?: number;

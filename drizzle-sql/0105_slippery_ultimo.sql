@@ -1,0 +1,1 @@
+CREATE INDEX "app_logs_organisation_id_idx" ON "base_app_logs" USING btree ("organisation_id");
