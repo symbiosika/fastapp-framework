@@ -45,7 +45,16 @@ import {
 } from "../../../../../dbSchema";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import { isOrganisationMember, isOrganisationAdmin } from "../../..";
+import {
+  isOrganisationMember,
+  isOrganisationAdmin,
+  checkOrganisationIdInBody,
+} from "../../..";
+import {
+  importPromptTemplate,
+  type TemplateImportData,
+  templateImportSchema,
+} from "../../../../../lib/ai/prompt-templates/import";
 
 const placeholdersSelectWithSuggestionsSchema = v.intersect([
   promptTemplatePlaceholdersSelectSchema,
@@ -780,6 +789,45 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { id, organisationId } = c.req.valid("param");
         await deletePromptSnippet(id, organisationId, c.get("usersId"));
         return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Import a complete prompt template with placeholders and suggestions
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/templates/import",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/templates/import",
+      tags: ["ai"],
+      summary:
+        "Import a complete prompt template with placeholders and suggestions",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(promptTemplatesSelectSchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", templateImportSchema),
+    validator("param", v.object({ organisationId: v.string() })),
+    checkOrganisationIdInBody,
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const result = await importPromptTemplate(body);
+        return c.json(result);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }
