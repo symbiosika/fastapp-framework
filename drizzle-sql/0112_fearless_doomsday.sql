@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_source" ALTER COLUMN "plugin_id" DROP NOT NULL;
