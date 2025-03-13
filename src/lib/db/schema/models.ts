@@ -23,6 +23,7 @@ export const aiProviderModelTypeEnum = pgEnum("ai_provider_model_type", [
   "text",
   "image",
   "audio",
+  "embedding",
 ]);
 
 // AI Provider Models table
@@ -49,6 +50,13 @@ export const aiProviderModels = pgBaseTable(
     usesInternet: boolean("uses_internet").notNull(),
     active: boolean("active").notNull().default(true),
     system: boolean("system").notNull().default(false),
+    showInfoBanner: boolean("show_info_banner").notNull().default(false),
+    infoBannerText: varchar("info_banner_text", { length: 255 })
+      .notNull()
+      .default(""),
+    infoBannerColor: varchar("info_banner_color", { length: 255 })
+      .notNull()
+      .default("green"),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
