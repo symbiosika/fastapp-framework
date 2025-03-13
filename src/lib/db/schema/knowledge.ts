@@ -378,9 +378,9 @@ export const knowledgeSource = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    pluginId: uuid("plugin_id")
-      .notNull()
-      .references(() => plugins.id, { onDelete: "cascade" }),
+    pluginId: uuid("plugin_id").references(() => plugins.id, {
+      onDelete: "cascade",
+    }),
     externalId: varchar("external_id", { length: 255 }).notNull(),
     lastSynced: timestamp("last_synced", { mode: "string" }),
     lastHash: varchar("last_hash", { length: 1000 }),

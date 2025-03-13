@@ -43,6 +43,10 @@ import {
   knowledgeTextUpdateSchema,
 } from "../../../../../dbSchema";
 import { isOrganisationAdmin, isOrganisationMember } from "../../..";
+import {
+  checkIfKnowledgeNeedsUpdate,
+  processKnowledgeSync,
+} from "../../../../../lib/ai/knowledge-sync/sync-api";
 
 const FileSourceType = {
   DB: "db",
@@ -131,6 +135,27 @@ const uploadAndLearnValidation = v.object({
       sourceId: v.string(),
     })
   ),
+});
+
+const checkForSyncValidation = v.object({
+  externalId: v.string(),
+  lastChange: v.optional(v.string()),
+  lastHash: v.optional(v.string()),
+  organisationId: v.string(),
+});
+
+const syncKnowledgeValidation = v.object({
+  organisationId: v.string(),
+  externalId: v.string(),
+  lastChange: v.optional(v.string()),
+  lastHash: v.optional(v.string()),
+  title: v.string(),
+  text: v.optional(v.string()),
+  filters: v.optional(v.record(v.string(), v.string())),
+  meta: v.optional(v.record(v.string(), v.any())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
 });
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
@@ -890,6 +915,176 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           true
         );
         return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Check if a knowledge entry needs to be updated
+   * This is useful for external systems to determine if they need to upload new content
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/sync/check",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/sync/check",
+      tags: ["knowledge"],
+      summary:
+        "Check if a knowledge entry needs to be updated based on externalId and lastChange/lastHash",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  needsUpdate: v.boolean(),
+                  existingEntry: v.optional(knowledgeEntrySchema),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", checkForSyncValidation),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
+
+        const result = await checkIfKnowledgeNeedsUpdate({
+          externalId: body.externalId,
+          lastChange: body.lastChange,
+          lastHash: body.lastHash,
+          organisationId,
+        });
+
+        return c.json({
+          needsUpdate: result.needsUpdate,
+          existingEntry: result.existingEntry,
+        });
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Upload and sync knowledge content
+   * This endpoint checks if content needs to be updated based on externalId and timestamp/hash
+   * and only processes the content if necessary
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/sync/upload",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/sync/upload",
+      tags: ["knowledge"],
+      summary: "Upload and sync knowledge with reference tracking",
+      requestBody: {
+        content: {
+          "multipart/form-data": {
+            schema: resolver(
+              v.object({
+                file: v.any(),
+                externalId: v.string(),
+                lastChange: v.optional(v.string()),
+                lastHash: v.optional(v.string()),
+                teamId: v.optional(v.string()),
+                workspaceId: v.optional(v.string()),
+                filters: v.optional(v.string()),
+              })
+            ),
+          },
+          "application/json": {
+            schema: resolver(syncKnowledgeValidation),
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  status: v.enum({
+                    unchanged: "unchanged",
+                    updated: "updated",
+                    added: "added",
+                  }),
+                  ok: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const { organisationId } = c.req.valid("param");
+        const contentType = c.req.header("content-type");
+        const userId = c.get("usersId");
+
+        let data: any = {
+          organisationId,
+          userId,
+        };
+        let file;
+
+        // Handle multipart/form-data (file upload)
+        if (contentType && contentType.includes("multipart/form-data")) {
+          const form = await c.req.formData();
+          data.externalId = form.get("externalId")?.toString() || "";
+          data.lastChange = form.get("lastChange")?.toString();
+          data.lastHash = form.get("lastHash")?.toString();
+          data.teamId = form.get("teamId")?.toString() || undefined;
+          data.workspaceId = form.get("workspaceId")?.toString() || undefined;
+
+          try {
+            data.filters = form.get("filters")
+              ? JSON.parse(form.get("filters")?.toString() || "{}")
+              : undefined;
+          } catch (e) {
+            throw new HTTPException(400, {
+              message: "Error parsing filters from form-data.",
+            });
+          }
+
+          file = form.get("file") as File;
+          data.title = file?.name || "Unnamed Document";
+          data.file = file;
+        } else {
+          // Handle JSON request
+          const bodyData = await c.req.json();
+          data = {
+            ...bodyData,
+            organisationId,
+            userId,
+          };
+        }
+
+        // Validate data
+        v.parse(syncKnowledgeValidation, data);
+
+        // Process the knowledge sync
+        const result = await processKnowledgeSync(data);
+
+        return c.json(result);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }
