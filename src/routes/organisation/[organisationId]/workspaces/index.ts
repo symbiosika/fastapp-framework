@@ -226,7 +226,7 @@ export default function defineWorkspaceRoutes(
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(workspacesSelectSchema),
+              schema: resolver(workspacesUpdateSchema),
             },
           },
         },

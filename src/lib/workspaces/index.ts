@@ -176,8 +176,7 @@ export const updateWorkspace = async (
   const [updated] = await getDb()
     .update(workspaces)
     .set({
-      name: input.name,
-      description: input.description,
+      ...input,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(workspaces.id, id))
