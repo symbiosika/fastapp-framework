@@ -24,7 +24,7 @@ export const checkIfKnowledgeNeedsUpdate = async (params: {
     .limit(1);
 
   if (existingSource.length === 0) {
-    return { needsUpdate: true, existingEntry: null };
+    return { needsUpdate: true, existingEntry: null, existing: false };
   }
 
   const source = existingSource[0];
@@ -61,6 +61,7 @@ export const checkIfKnowledgeNeedsUpdate = async (params: {
 
   return {
     needsUpdate,
+    existing: true,
     existingEntry: entry,
     existingSource: source,
   };

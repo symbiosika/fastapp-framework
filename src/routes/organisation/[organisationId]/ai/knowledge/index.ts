@@ -942,6 +942,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
               schema: resolver(
                 v.object({
                   needsUpdate: v.boolean(),
+                  existing: v.boolean(),
                   existingEntry: v.optional(knowledgeEntrySchema),
                 })
               ),
@@ -968,6 +969,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         return c.json({
           needsUpdate: result.needsUpdate,
           existingEntry: result.existingEntry,
+          existing: result.existing,
         });
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
