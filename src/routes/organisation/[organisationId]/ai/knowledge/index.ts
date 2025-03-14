@@ -1006,7 +1006,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
             ),
           },
           "application/json": {
-            schema: validator("json", syncKnowledgeValidation),
+            schema: resolver(syncKnowledgeValidation),
           },
         },
       },
@@ -1070,15 +1070,14 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         } else {
           // Handle JSON request
           const bodyData = await c.req.json();
+          // Validate data
+          v.parse(syncKnowledgeValidation, bodyData);
           data = {
             ...bodyData,
             organisationId,
             userId,
           };
         }
-
-        // Validate data
-        v.parse(syncKnowledgeValidation, data);
 
         // Process the knowledge sync
         const result = await processKnowledgeSync({
