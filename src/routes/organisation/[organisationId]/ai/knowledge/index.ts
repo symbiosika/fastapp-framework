@@ -141,7 +141,6 @@ const checkForSyncValidation = v.object({
   externalId: v.string(),
   lastChange: v.optional(v.string()),
   lastHash: v.optional(v.string()),
-  organisationId: v.string(),
 });
 
 const syncKnowledgeValidation = v.object({
@@ -958,7 +957,6 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const body = c.req.valid("json");
         const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
 
         const result = await checkIfKnowledgeNeedsUpdate({
           externalId: body.externalId,
