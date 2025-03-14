@@ -144,12 +144,11 @@ const checkForSyncValidation = v.object({
 });
 
 const syncKnowledgeValidation = v.object({
-  organisationId: v.string(),
   externalId: v.string(),
+  title: v.string(),
+  text: v.string(),
   lastChange: v.optional(v.string()),
   lastHash: v.optional(v.string()),
-  title: v.string(),
-  text: v.optional(v.string()),
   filters: v.optional(v.record(v.string(), v.string())),
   meta: v.optional(v.record(v.string(), v.any())),
   teamId: v.optional(v.string()),
@@ -1007,7 +1006,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
             ),
           },
           "application/json": {
-            schema: resolver(syncKnowledgeValidation),
+            schema: validator("json", syncKnowledgeValidation),
           },
         },
       },
@@ -1082,7 +1081,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         v.parse(syncKnowledgeValidation, data);
 
         // Process the knowledge sync
-        const result = await processKnowledgeSync(data);
+        const result = await processKnowledgeSync({
+          ...data,
+          organisationId,
+        });
 
         return c.json(result);
       } catch (e) {
