@@ -11,16 +11,11 @@ import {
   checkUserPermission,
 } from "../../../../../lib/utils/hono-middlewares";
 import {
-  chatInitInputValidation,
+  chatInputValidation,
   chatWithAgent,
   chatWithTemplateReturnValidation,
   createEmptySession,
 } from "../../../../../lib/ai/chat";
-import {
-  interviewRespondInputValidation,
-  interviewRespondOutputValidation,
-  respondInInterview,
-} from "../../../../../lib/ai/chat/interview";
 import { chatStore } from "../../../../../lib/ai/chat/chat-store";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
@@ -31,17 +26,16 @@ import { isOrganisationMember } from "../../..";
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
    * Main CHAT Route. Can handle simple and complex chats.
-   * Chat with a Prompt Template
    */
   app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/chat-with-template",
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "post",
-      path: "/organisation/:organisationId/ai/chat-with-template",
+      path: "/organisation/:organisationId/ai/chat",
       tags: ["ai"],
-      summary: "Chat with a Prompt Template",
+      summary: "Chat with the AI",
       responses: {
         200: {
           description: "Successful response",
@@ -53,17 +47,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validator("json", chatInitInputValidation),
+    validator("json", chatInputValidation),
     isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
-        const usersId = c.get("usersId");
+        const userId = c.get("usersId");
         const organisationId = c.req.param("organisationId");
         const r = await chatWithAgent({
           ...body,
-          userId: usersId,
-          organisationId,
+          context: {
+            userId,
+            organisationId,
+          },
         });
         return c.json(r);
       } catch (e) {
@@ -270,134 +266,6 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         throw new HTTPException(400, {
           message: e + "",
         });
-      }
-    }
-  );
-
-  /**
-   * Start a new interview session
-   */
-  app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/interview/start",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/interview/start",
-      tags: ["ai"],
-      summary: "Start a new interview session",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(
-                v.object({
-                  chatId: v.string(),
-                  name: v.string(),
-                  interview: v.object({
-                    name: v.string(),
-                    description: v.string(),
-                    guidelines: v.string(),
-                  }),
-                })
-              ),
-            },
-          },
-        },
-      },
-    }),
-    validator(
-      "json",
-      v.object({
-        interviewName: v.string(),
-        description: v.string(),
-        guidelines: v.string(),
-      })
-    ),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const usersId = c.get("usersId");
-        const { organisationId } = c.req.valid("param");
-
-        // Create new session with interview data
-        const session = await chatStore.create({
-          messages: [],
-          variables: {}, // or pass in any additional variables
-          context: {
-            userId: usersId,
-            organisationId,
-          },
-          interview: {
-            name: body.interviewName ?? "New Interview",
-            description: body.description ?? "",
-            guidelines: body.guidelines ?? "",
-          },
-        });
-
-        return c.json({
-          chatId: session.id,
-          name: session.name,
-          interview: session.state.interview,
-        });
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Submit response to interview question
-   * Calls our "respondInInterview" middleware
-   */
-  app.post(
-    API_BASE_PATH +
-      "/organisation/:organisationId/ai/interview/:chatId/respond",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/interview/:chatId/respond",
-      tags: ["ai"],
-      summary: "Submit response to interview question",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(interviewRespondOutputValidation),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", interviewRespondInputValidation),
-    validator(
-      "param",
-      v.object({ organisationId: v.string(), chatId: v.string() })
-    ),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const { organisationId, chatId } = c.req.valid("param");
-        const usersId = c.get("usersId");
-
-        // We'll call our interview "middleware" function:
-        const result = await respondInInterview({
-          userId: usersId,
-          organisationId,
-          chatId,
-          user_input: body.user_input ?? "",
-          llmOptions: body.llmOptions,
-        });
-
-        return c.json(result);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
       }
     }
   );

@@ -49,7 +49,7 @@ describe("Chat API Security Tests", () => {
     await rejectUnauthorized(app, [
       [
         "POST",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       ],
       ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/history`],
       [
@@ -143,7 +143,7 @@ describe("Chat API Security Tests", () => {
     // User 2 tries to chat with template in organisation 1
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_2_TOKEN,
       chatData
     );

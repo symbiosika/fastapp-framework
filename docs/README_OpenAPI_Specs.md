@@ -9533,7 +9533,7 @@ This operation does not require authentication
 
 <a id="opIdpostApiV1OrganisationByOrganisationIdAiChat-with-template"></a>
 
-`POST /api/v1/organisation/{organisationId}/ai/chat-with-template`
+`POST /api/v1/organisation/{organisationId}/ai/chat`
 
 > Body parameter
 

@@ -7,6 +7,7 @@ import {
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { nanoid } from "nanoid";
+import { AgentExecution } from "../agents/types";
 
 export type ChatSessionContext = {
   chatId: string;
@@ -34,15 +35,28 @@ export type ChatStoreVariables = {
   userMessage?: string;
 } & Record<string, VariableType>;
 
-export type ChatStoreState = {
-  variables: ChatStoreVariables;
+export type ChatArtifact = {
+  id: string;
+  name: string;
+  type: "file" | "text";
+  content: string;
 };
 
-export type ChatMessageRole = "system" | "user" | "assistant";
+export type ChatArtifactDictionary = Record<string, ChatArtifact>;
+
+export type ChatStoreState = {
+  variables: ChatStoreVariables;
+  artifacts?: ChatArtifactDictionary; // <name, fileId> Chat Artifacts stored as file in the database
+  lastUsedAgentId?: string;
+  agentExecutions?: Record<string, AgentExecution>;
+};
+
+export type ChatMessageRole = "system" | "user" | "assistant" | "developer";
 
 export type ChatMessage = {
   role: ChatMessageRole;
   content?: string | any;
+  artifacts?: ChatArtifactDictionary; // <name, fileId> Chat Artifacts stored as file in the database
   meta?: {
     id: string;
     model?: string;
@@ -51,20 +65,8 @@ export type ChatMessage = {
   };
 };
 
-export type Interview = {
-  name: string;
-  description: string;
-  guidelines: string;
-  moderator: string;
-  interviewer: string;
-  goals?: string[];
-  summary?: string;
-};
-
 export type ChatSession = ChatSessionsSelect & {
-  state: ChatStoreState & {
-    interview?: Interview;
-  };
+  state: ChatStoreState;
   messages: ChatMessage[];
 };
 
@@ -102,7 +104,7 @@ export type PlaceholderParser = {
  */
 
 class ChatHistoryStoreInDb {
-  constructor(private maxAgeHours: number = 48) {
+  constructor(private maxAgeHours: number = 168) {
     setInterval(() => this.cleanup(), 1000 * 60 * 60);
   }
 
@@ -117,11 +119,6 @@ class ChatHistoryStoreInDb {
     variables?: ChatStoreVariables;
     context: NewChatSessionContext;
     messages?: ChatMessage[];
-    interview?: {
-      name: string;
-      description: string;
-      guidelines: string;
-    };
   }): Promise<ChatSession> {
     const chatId = options?.chatId || nanoid(16);
     options?.chatId &&
@@ -137,7 +134,6 @@ class ChatHistoryStoreInDb {
         messages: options.messages || [],
         state: {
           variables: options.variables || {},
-          interview: options.interview,
         },
         deleteAt: this.getDeleteAt(),
         chatSessionGroupId: options.context.chatSessionGroupId,

@@ -6,20 +6,18 @@ import type { ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
 import { LLMAgent } from "../agents/llm-agent";
-import { FlowEngine } from "../agents/flow";
 import { createHeadlineFromChat } from "./generate-headline";
-import type { Agent, AgentInputVariables } from "../../types/agents";
+import type { AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
 
-export const chatInitInputValidation = v.object({
+export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
   chatSessionGroupId: v.optional(v.string()),
-  initiateTemplate: v.optional(
+  useAgent: v.optional(
     v.object({
-      promptId: v.optional(v.string()),
-      promptName: v.optional(v.string()),
-      promptCategory: v.optional(v.string()),
-      organisationId: v.optional(v.string()),
+      id: v.optional(v.string()),
+      name: v.optional(v.string()),
+      category: v.optional(v.string()),
     })
   ),
   trigger: v.optional(
@@ -40,20 +38,30 @@ export const chatInitInputValidation = v.object({
   ),
 });
 
-export const chatInitValidation = v.intersect([
+export const chatInputValidationWithContext = v.intersect([
   v.object({
-    userId: v.string(),
-    organisationId: v.string(),
+    context: v.object({
+      userId: v.string(),
+      organisationId: v.string(),
+    }),
   }),
-  chatInitInputValidation,
+  chatInputValidation,
 ]);
-type ChatInitInput = v.InferOutput<typeof chatInitValidation>;
+type ChatInputWithContext = v.InferOutput<
+  typeof chatInputValidationWithContext
+>;
 
 export const chatWithTemplateReturnValidation = v.object({
   chatId: v.string(),
   message: v.object({
-    role: v.union([v.literal("user"), v.literal("assistant")]),
+    role: v.union([
+      v.literal("user"),
+      v.literal("assistant"),
+      v.literal("system"),
+      v.literal("developer"),
+    ]),
     content: v.string(),
+    artifacts: v.optional(v.record(v.string(), v.string())),
   }),
   meta: v.any(),
   finished: v.optional(v.boolean()),
@@ -89,8 +97,6 @@ type ChatWithTemplateReturn = v.InferOutput<
   typeof chatWithTemplateReturnValidation
 >;
 
-const flowEngine = new FlowEngine();
-
 /**
  * Initialize a chat session with an optionaltemplate
  * Will check if the chat already exists, and if not, will create a new one
@@ -98,7 +104,7 @@ const flowEngine = new FlowEngine();
  * it will be used to initiate the chat with the template as system prompt
  */
 const initChatSession = async (
-  query: ChatInitInput
+  query: ChatInputWithContext
 ): Promise<{
   session: ChatSession;
   isNewSession: boolean;
@@ -122,10 +128,11 @@ const initChatSession = async (
 
     // Init the Agent System Prompt
     const agentTemplate = await initAgentsSystemPrompt(
-      query.userId,
-      query.organisationId,
-      query.initiateTemplate ?? {}
+      query.context.userId,
+      query.context.organisationId,
+      query.useAgent ?? {}
     );
+
     // set as message with meta information
     const messages = [
       initChatMessage(agentTemplate.systemPrompt, "system", {
@@ -155,6 +162,7 @@ const initChatSession = async (
       ...(query.variables ?? {}),
     };
 
+    // if the session is not found, create a new one
     if (!session) {
       // create a new session in the db
       session = await chatStore.create({
@@ -162,8 +170,8 @@ const initChatSession = async (
         messages,
         variables,
         context: {
-          userId: query.userId,
-          organisationId: query.organisationId,
+          userId: query.context.userId,
+          organisationId: query.context.organisationId,
           chatSessionGroupId: query.chatSessionGroupId,
         },
       });
@@ -178,6 +186,7 @@ const initChatSession = async (
       });
     }
   }
+
   // update the session in the db for existing sessions and is not empty
   else {
     llmOptions = {
@@ -198,11 +207,14 @@ const initChatSession = async (
   return { session, isNewSession, llmOptions, includesUserPrompt };
 };
 
-// Keep existing chatWithAgent function, but internally use LLMAgent
+/**
+ * Chat MAIN function to call
+ * when the user sends a message to the agent
+ */
 export const chatWithAgent = async (query: unknown) => {
-  const parsedQuery = v.parse(chatInitValidation, query);
+  const parsedQuery = v.parse(chatInputValidationWithContext, query);
 
-  // Initialize session as before
+  // Initialize the chat session
   const { session, isNewSession, llmOptions, includesUserPrompt } =
     await initChatSession(parsedQuery);
 
@@ -214,13 +226,13 @@ export const chatWithAgent = async (query: unknown) => {
   const result = await llmAgent.run(
     {
       chatId: session.id,
-      userId: parsedQuery.userId,
-      organisationId: parsedQuery.organisationId,
+      userId: parsedQuery.context.userId,
+      organisationId: parsedQuery.context.organisationId,
       chatSessionGroupId: parsedQuery.chatSessionGroupId,
     },
+    messages,
     {
       user_input: session.state.variables["user_input"] ?? "",
-      messages,
       messagesIncludeUserPrompt: includesUserPrompt,
       ...(parsedQuery.variables ?? {}),
     } as unknown as AgentInputVariables,
@@ -254,8 +266,8 @@ export const chatWithAgent = async (query: unknown) => {
     chatId: session.id,
     message: resultMessage,
     meta: {
-      userId: parsedQuery.userId,
-      organisationId: parsedQuery.organisationId,
+      userId: parsedQuery.context.userId,
+      organisationId: parsedQuery.context.organisationId,
       chatSessionGroupId: parsedQuery.chatSessionGroupId,
     },
     finished: true,

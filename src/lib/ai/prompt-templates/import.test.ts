@@ -21,6 +21,7 @@ describe("Prompt Template Import", () => {
   // Valid template data for testing
   const validTemplateData: TemplateImportData = {
     name: "Imported Test Template",
+    label: "Imported Test Template",
     category: "test-import",
     organisationId: TEST_ORGANISATION_1.id,
     description: "A template created through import",
@@ -48,6 +49,7 @@ describe("Prompt Template Import", () => {
   // Invalid template data for testing
   const invalidTemplateData = {
     name: "Invalid Template",
+    label: "Invalid Template",
     // Missing required fields like category, organisationId
     systemPrompt: "System prompt",
     userPrompt: "User prompt",

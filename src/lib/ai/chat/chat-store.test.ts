@@ -183,36 +183,6 @@ describe("Chat Store", () => {
     }
   });
 
-  test("Create a chat session with interview data", async () => {
-    const interviewSession = await chatStore.create({
-      messages: [],
-      variables: {},
-      context: {
-        userId: TEST_USER_1.id,
-        organisationId: TEST_ORGANISATION_1.id,
-      },
-      interview: {
-        name: "Test Interview",
-        description: "A test interview session",
-        guidelines: "Test guidelines",
-      },
-    });
-
-    expect(interviewSession).toBeDefined();
-    expect(interviewSession.id).toBeDefined();
-    expect(interviewSession.state.interview).toBeDefined();
-    expect(interviewSession.state.interview?.name).toBe("Test Interview");
-    expect(interviewSession.state.interview?.description).toBe(
-      "A test interview session"
-    );
-    expect(interviewSession.state.interview?.guidelines).toBe(
-      "Test guidelines"
-    );
-
-    // Clean up the interview session
-    await chatStore.drop(interviewSession.id);
-  });
-
   // Clean up after all tests
   test("Delete a chat session", async () => {
     await chatStore.drop(TEST_CHAT_ID);

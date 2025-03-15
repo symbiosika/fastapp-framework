@@ -78,7 +78,7 @@ describe("Chat API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_1_TOKEN,
       chatData
     );
@@ -101,7 +101,7 @@ describe("Chat API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_1_TOKEN,
       chatData
     );
@@ -216,7 +216,7 @@ describe("Chat API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_1_TOKEN,
       chatData
     );
@@ -239,7 +239,7 @@ describe("Chat API Edge Cases", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_1_TOKEN,
       chatData
     );
@@ -263,7 +263,7 @@ describe("Chat API Edge Cases", () => {
 
     const lowTempResponse = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
       TEST_USER_1_TOKEN,
       lowTempData
     );
@@ -281,7 +281,7 @@ describe("Chat API Edge Cases", () => {
 
     // const highTempResponse = await testFetcher.post(
     //   app,
-    //   `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat-with-template`,
+    //   `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat`,
     //   TEST_USER_1_TOKEN,
     //   highTempData
     // );
