@@ -60,7 +60,6 @@ export class LLMAgent implements BaseAgent {
         ? execution.inputs.user_input.toString()
         : "";
 
-      const messages = execution.inputs.messages ?? [];
       // Only add the user message if it's not already the last message in the conversation
       if (
         !execution.inputs.messagesIncludeUserPrompt &&
