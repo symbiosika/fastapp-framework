@@ -22,6 +22,11 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
+import {
+  executeFlow,
+  flowInputValidation,
+  flowReturnValidation,
+} from "../../../../../lib/ai/chat/flow";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -55,6 +60,52 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const userId = c.get("usersId");
         const organisationId = c.req.param("organisationId");
         const r = await chatWithAgent({
+          ...body,
+          context: {
+            userId,
+            organisationId,
+          },
+        });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Execute a complex agent flow
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/flow",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/flow",
+      tags: ["ai"],
+      summary: "Execute a complex agent flow",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(flowReturnValidation),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", flowInputValidation),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const userId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+        const r = await executeFlow({
           ...body,
           context: {
             userId,

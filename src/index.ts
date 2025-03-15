@@ -81,6 +81,9 @@ import middlewareService from "./middleware-service";
 import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
 
+// Import the registerAgents function
+import { registerAgents } from "./lib/ai/agents";
+
 /**
  * MAIN FUNCTION
  * Define the server and start it
@@ -347,6 +350,9 @@ export const defineServer = (config: ServerSpecificConfig) => {
        * Register job routes
        */
       defineJobRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+      // Register all agents
+      registerAgents();
     } else {
       console.log("License check was invalid! Please check your license key.");
     }

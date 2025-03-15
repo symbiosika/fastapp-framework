@@ -6,9 +6,21 @@ import {
   chatStore,
   type ChatSessionContext,
 } from "../chat/chat-store";
-import type { AgentDefinition, BaseAgent, AgentExecution } from "./types";
+import type { AgentDefinition, AgentExecution } from "./types";
+import { ReActAgent } from "./react-agent";
+import log from "../../../lib/log";
 
-export class DiffAgent implements BaseAgent {
+export class DiffAgent extends ReActAgent {
+  constructor() {
+    super(
+      "Text Diff Agent",
+      "Compares two versions of text and shows the differences",
+      "You are a text comparison specialist. Your task is to analyze and highlight differences between text versions.",
+      "Analyze the input texts and determine if they can be compared.",
+      "Compare the texts and generate a diff showing the changes."
+    );
+  }
+
   getDefinition(): AgentDefinition {
     return {
       id: "diff-text",
@@ -43,32 +55,38 @@ export class DiffAgent implements BaseAgent {
     };
   }
 
-  async run(
+  async think(
     context: ChatSessionContext,
-    messages: ChatMessage[],
     variables: Record<string, any>,
     modelOptions: LLMOptions
-  ): Promise<AgentExecution> {
-    const execution: AgentExecution = {
-      id: nanoid(16),
-      agentId: this.getDefinition().id,
-      status: "running",
-      inputs: variables,
-      outputs: {},
-      startTime: new Date().toISOString(),
-    };
+  ): Promise<boolean> {
+    // Prüfe, ob die erforderlichen Eingaben vorhanden sind
+    const oldText = variables.old_text;
+    const newText = variables.new_text;
 
+    if (!oldText || !newText) {
+      log.error("DiffAgent: Fehlende Eingaben für den Textvergleich");
+      return false; // Keine Aktion ausführen
+    }
+
+    // Für den DiffAgent ist das Thinking sehr einfach - wir müssen nur prüfen, ob die Eingaben vorhanden sind
+    return true; // Immer handeln, wenn die Eingaben vorhanden sind
+  }
+
+  async act(
+    context: ChatSessionContext,
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<string> {
     try {
+      // Aktualisiere den Fortschritt
+      const execution = this.createProgressExecution(context.chatId);
       await this.updateAgentExecutionInChat(context.chatId, execution);
 
       // Get the old and new text versions from inputs
-      const oldText = execution.inputs.old_text
-        ? execution.inputs.old_text.toString()
-        : "";
-      const newText = execution.inputs.new_text
-        ? execution.inputs.new_text.toString()
-        : "";
-      const formatAsHtml = execution.inputs.formatAsHtml === true;
+      const oldText = variables.old_text ? variables.old_text.toString() : "";
+      const newText = variables.new_text ? variables.new_text.toString() : "";
+      const formatAsHtml = variables.formatAsHtml === true;
 
       // Generate the diff
       const textDiff = compareTextVersions(oldText, newText);
@@ -78,24 +96,42 @@ export class DiffAgent implements BaseAgent {
         ? formatTextDiffAsHtml(textDiff)
         : JSON.stringify(textDiff);
 
+      // Aktualisiere den Status
       execution.outputs.diff = result;
       execution.metadata = {
         diffCount: textDiff.length,
       };
-
       execution.status = "completed";
       execution.progress = 100;
       execution.progressMessage = "Textvergleich abgeschlossen";
       execution.endTime = new Date().toISOString();
-    } catch (error) {
+      await this.updateAgentExecutionInChat(context.chatId, execution);
+
+      return result;
+    } catch (error: any) {
+      const errorMessage = `Fehler beim Textvergleich: ${error.message}`;
+      log.error(errorMessage);
+      
+      // Aktualisiere den Fehler im Execution-Objekt
+      const execution = this.createProgressExecution(context.chatId);
       execution.status = "failed";
-      execution.error = error + "";
+      execution.error = errorMessage;
       execution.endTime = new Date().toISOString();
+      await this.updateAgentExecutionInChat(context.chatId, execution);
+      
+      throw new Error(errorMessage);
     }
+  }
 
-    await this.updateAgentExecutionInChat(context.chatId, execution);
-
-    return execution;
+  private createProgressExecution(chatId: string): AgentExecution {
+    return {
+      id: nanoid(16),
+      agentId: this.getDefinition().id,
+      status: "running",
+      inputs: {},
+      outputs: {},
+      startTime: new Date().toISOString(),
+    };
   }
 
   private async updateAgentExecutionInChat(
@@ -122,11 +158,15 @@ export class DiffAgent implements BaseAgent {
     );
   }
 
-  getExecutionStatus(executionId: string): Promise<AgentExecution | null> {
-    return Promise.resolve(null);
-  }
-
-  cancel(executionId: string): Promise<boolean> {
-    return Promise.resolve(true);
+  // Überschreibe run, um die Maximalschritte auf 1 zu setzen
+  async run(
+    context: ChatSessionContext,
+    messages: ChatMessage[],
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<AgentExecution> {
+    // DiffAgent braucht nur einen Schritt
+    this.maxSteps = 1;
+    return super.run(context, messages, variables, modelOptions);
   }
 }

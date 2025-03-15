@@ -72,3 +72,70 @@ export type BaseAgent = {
   // Cancels a running execution
   cancel(executionId: string): Promise<boolean>;
 };
+
+// Types for ReAct pattern and Flow Agents
+
+export enum AgentState {
+  IDLE = "idle",
+  THINKING = "thinking",
+  ACTING = "acting",
+  RUNNING = "running",
+  FINISHED = "finished",
+  ERROR = "error",
+}
+
+export type ToolDefinition = {
+  id: string;
+  name: string;
+  description: string;
+  inputSchema: AgentInputSchema;
+  outputSchema: AgentOutputSchema;
+};
+
+export type ToolExecution = {
+  id: string;
+  toolId: string;
+  inputs: Record<string, any>;
+  outputs: Record<string, any>;
+  error?: string;
+  startTime: string;
+  endTime?: string;
+};
+
+export type AgentTool = {
+  definition: ToolDefinition;
+  execute(inputs: Record<string, any>): Promise<Record<string, any>>;
+};
+
+export type PlanStep = {
+  id: string;
+  description: string;
+  status: PlanStepStatus;
+  dependencies: string[];
+  agentId?: string;
+  toolId?: string;
+  result?: string;
+};
+
+export enum PlanStepStatus {
+  NOT_STARTED = "not_started",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  BLOCKED = "blocked",
+  FAILED = "failed",
+}
+
+export type Plan = {
+  id: string;
+  goal: string;
+  steps: PlanStep[];
+};
+
+export type FlowExecution = AgentExecution & {
+  plan?: Plan;
+  currentStepIndex?: number;
+  tools?: Record<string, ToolExecution>;
+  subAgents?: Record<string, AgentExecution>;
+};
+
+export type AgentInputVariables = Record<string, any>;

@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { generateLongText } from "../standard";
 import { initChatMessage } from "../chat/get-prompt-template";
 import { replaceCustomPlaceholders, replaceVariables } from "../chat/replacer";
@@ -6,13 +7,21 @@ import {
   parseIntFromUnknown,
   parseStringFromUnknown,
 } from "../../helper/parsers";
-import type { BaseAgent, AgentDefinition, AgentExecution } from "./types";
+import type { AgentDefinition, AgentExecution } from "./types";
 import { ChatMessage, type ChatSessionContext } from "../chat/chat-store";
 import { LLMOptions } from "../../../dbSchema";
-import { nanoid } from "nanoid";
+import { ReActAgent } from "./react-agent";
 
-export class LLMAgent implements BaseAgent {
-  name = "llmAgent";
+export class LLMAgent extends ReActAgent {
+  constructor() {
+    super(
+      "LLM Agent",
+      "Processes text using a language model",
+      undefined, // systemPrompt wird aus den Messages genommen
+      "Analyze the conversation history and decide if a response is needed.",
+      "Generate a thoughtful response based on the conversation history."
+    );
+  }
 
   getDefinition(): AgentDefinition {
     return {
@@ -38,85 +47,72 @@ export class LLMAgent implements BaseAgent {
     };
   }
 
-  async run(
+  async think(
     context: ChatSessionContext,
-    messages: ChatMessage[],
     variables: Record<string, any>,
     modelOptions: LLMOptions
-  ): Promise<AgentExecution> {
-    const execution: AgentExecution = {
-      id: nanoid(16),
-      agentId: this.getDefinition().id,
-      status: "running",
-      inputs: variables,
-      outputs: {},
-      startTime: new Date().toISOString(),
-    };
+  ): Promise<boolean> {
+    // LLM Agent braucht kein komplexes Thinking - er reagiert immer auf Benutzereingaben
+    // Wir könnten hier in Zukunft Logik hinzufügen, um zu entscheiden, ob eine Antwort nötig ist
+    return true; // Immer handeln (eine Antwort generieren)
+  }
+
+  async act(
+    context: ChatSessionContext,
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<string> {
     try {
-      execution.status = "running";
+      // Ersetze Variablen in den Nachrichten
+      const replaced = await replaceVariables(this.memory, variables);
 
-      // The "default" input variable is "user_input"
-      const userInput = execution.inputs.user_input
-        ? execution.inputs.user_input.toString()
-        : "";
-
-      // Only add the user message if it's not already the last message in the conversation
-      if (
-        !execution.inputs.messagesIncludeUserPrompt &&
-        (messages.length === 0 ||
-          messages[messages.length - 1].role !== "user" ||
-          messages[messages.length - 1].content !== userInput)
-      ) {
-        messages.push(
-          initChatMessage(userInput, "user", {
-            human: true,
-            timestamp: new Date().toISOString(),
-          })
-        );
-      }
-
-      const replaced = await replaceVariables(messages, execution.inputs);
-
-      // Possibly handle custom placeholders
+      // Behandle benutzerdefinierte Platzhalter
       const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
         replaced,
         customAppPlaceholders,
-        execution.inputs,
+        variables,
         context
       );
 
-      // Parse the options
+      // Parse die Optionen
       const llmOptions = {
         maxTokens: parseIntFromUnknown(modelOptions?.maxTokens),
         model: parseStringFromUnknown(modelOptions?.model),
-        temperature: parseIntFromUnknown(modelOptions?.temperature),
+        temperature: modelOptions?.temperature !== undefined 
+          ? Number(modelOptions.temperature) 
+          : undefined,
         outputType: "text" as const,
       };
 
-      // Then run the LLM call
+      // Führe den LLM-Aufruf durch
       const result = await generateLongText(
         replacedMessages as any,
         llmOptions,
         context
       );
 
-      const metadata = {
-        ...addToMeta,
-        ...result.meta,
-      };
+      // Füge das Ergebnis zum Speicher hinzu
+      this.updateMemory("assistant", result.text, {
+        model: result.meta?.model,
+        human: false,
+      });
 
-      // Return the LLM result as "default" along with metadata
-      execution.outputs.default = result.text;
-      execution.metadata = metadata;
-      execution.status = "completed";
-      execution.endTime = new Date().toISOString();
+      return result.text;
     } catch (error: any) {
-      execution.status = "failed";
-      execution.error = error.message;
-      execution.endTime = new Date().toISOString();
+      throw new Error(`Error in LLM Agent: ${error.message}`);
     }
+  }
 
-    return execution;
+  // Überschreibe run, um die Maximalschritte auf 1 zu setzen
+  async run(
+    context: ChatSessionContext,
+    messages: ChatMessage[],
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<AgentExecution> {
+    // LLM Agent braucht nur einen Schritt
+    this.maxSteps = 1;
+    return super.run(context, messages, variables, modelOptions);
   }
 
   validateInputs(inputs: Record<string, any>): boolean {

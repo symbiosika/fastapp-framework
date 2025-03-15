@@ -2,11 +2,23 @@ import { nanoid } from "nanoid";
 import { LLMOptions } from "../../../dbSchema";
 import type { ChatMessage, ChatSessionContext } from "../chat/chat-store";
 import { chatStore } from "../chat/chat-store";
-import type { AgentDefinition, BaseAgent, AgentExecution } from "./types";
+import type { AgentDefinition, AgentExecution } from "./types";
 import { textToSpeech } from "../standard";
 import { saveFileToDb } from "../../storage/db";
+import { ReActAgent } from "./react-agent";
+import log from "../../../lib/log";
 
-export class TTSAgent implements BaseAgent {
+export class TTSAgent extends ReActAgent {
+  constructor() {
+    super(
+      "Text to Speech Agent",
+      "Converts text to speech audio",
+      "You are a text-to-speech conversion specialist. Your task is to convert text into natural-sounding speech.",
+      "Analyze the input text and determine if it can be converted to speech.",
+      "Convert the text to speech and save the audio file."
+    );
+  }
+
   getDefinition(): AgentDefinition {
     return {
       id: "tts-agent",
@@ -36,25 +48,34 @@ export class TTSAgent implements BaseAgent {
     };
   }
 
-  async run(
+  async think(
     context: ChatSessionContext,
-    messages: ChatMessage[],
     variables: Record<string, any>,
     modelOptions: LLMOptions
-  ): Promise<AgentExecution> {
-    const execution: AgentExecution = {
-      id: nanoid(16),
-      agentId: this.getDefinition().id,
-      status: "running",
-      inputs: variables,
-      outputs: {},
-      startTime: new Date().toISOString(),
-    };
+  ): Promise<boolean> {
+    // Prüfe, ob die erforderlichen Eingaben vorhanden sind
+    const text = variables.text;
 
+    if (!text) {
+      log.error("TTSAgent: Fehlender Text für die Sprachsynthese");
+      return false; // Keine Aktion ausführen
+    }
+
+    // Für den TTSAgent ist das Thinking sehr einfach - wir müssen nur prüfen, ob der Text vorhanden ist
+    return true; // Immer handeln, wenn der Text vorhanden ist
+  }
+
+  async act(
+    context: ChatSessionContext,
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<string> {
     try {
+      // Aktualisiere den Fortschritt
+      const execution = this.createProgressExecution(context.chatId);
       await this.updateAgentExecutionInChat(context.chatId, execution);
 
-      const { text } = execution.inputs;
+      const { text } = variables;
 
       // process
       const audio = await textToSpeech(text, modelOptions, context);
@@ -76,14 +97,33 @@ export class TTSAgent implements BaseAgent {
       execution.progress = 100;
       execution.progressMessage = "Text to speech conversion completed";
       execution.endTime = new Date().toISOString();
-    } catch (error) {
-      execution.status = "failed";
-      execution.error = error + "";
-      execution.endTime = new Date().toISOString();
-    }
+      await this.updateAgentExecutionInChat(context.chatId, execution);
 
-    await this.updateAgentExecutionInChat(context.chatId, execution);
-    return execution;
+      return `Audio file generated with ID: ${fileId.id}`;
+    } catch (error: any) {
+      const errorMessage = `Error in text-to-speech conversion: ${error.message}`;
+      log.error(errorMessage);
+
+      // Aktualisiere den Fehler im Execution-Objekt
+      const execution = this.createProgressExecution(context.chatId);
+      execution.status = "failed";
+      execution.error = errorMessage;
+      execution.endTime = new Date().toISOString();
+      await this.updateAgentExecutionInChat(context.chatId, execution);
+
+      throw new Error(errorMessage);
+    }
+  }
+
+  private createProgressExecution(chatId: string): AgentExecution {
+    return {
+      id: nanoid(16),
+      agentId: this.getDefinition().id,
+      status: "running",
+      inputs: {},
+      outputs: {},
+      startTime: new Date().toISOString(),
+    };
   }
 
   private async updateAgentExecutionInChat(
@@ -108,11 +148,15 @@ export class TTSAgent implements BaseAgent {
     return typeof inputs.text === "string" && inputs.text.length > 0;
   }
 
-  getExecutionStatus(executionId: string): Promise<AgentExecution | null> {
-    return Promise.resolve(null);
-  }
-
-  cancel(executionId: string): Promise<boolean> {
-    return Promise.resolve(true);
+  // Überschreibe run, um die Maximalschritte auf 1 zu setzen
+  async run(
+    context: ChatSessionContext,
+    messages: ChatMessage[],
+    variables: Record<string, any>,
+    modelOptions: LLMOptions
+  ): Promise<AgentExecution> {
+    // TTSAgent braucht nur einen Schritt
+    this.maxSteps = 1;
+    return super.run(context, messages, variables, modelOptions);
   }
 }
