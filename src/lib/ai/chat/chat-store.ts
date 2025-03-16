@@ -29,6 +29,7 @@ export type VariableType =
   | number[]
   | boolean
   | boolean[]
+  | Record<string, any>
   | undefined;
 
 export type ChatStoreVariables = {

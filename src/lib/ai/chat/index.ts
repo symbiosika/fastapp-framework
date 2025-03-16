@@ -2,13 +2,13 @@
  * A lib to control chat flows
  */
 import * as v from "valibot";
-import type { ChatSession } from "./chat-store";
+import type { ChatMessage, ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
-import { LLMAgent } from "../agents/llm-agent";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
+import { chatCompletion } from "../standard";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -222,22 +222,27 @@ export const chatWithAgent = async (query: unknown) => {
   let messages = [...session.messages];
 
   // Use the LLMAgent directly, passing the full chat history
-  const llmAgent = new LLMAgent();
-  const result = await llmAgent.run(
-    {
-      chatId: session.id,
-      userId: parsedQuery.context.userId,
-      organisationId: parsedQuery.context.organisationId,
-      chatSessionGroupId: parsedQuery.chatSessionGroupId,
-    },
-    messages,
-    {
-      user_input: session.state.variables["user_input"] ?? "",
-      messagesIncludeUserPrompt: includesUserPrompt,
-      ...(parsedQuery.variables ?? {}),
-    } as unknown as AgentInputVariables,
-    llmOptions
-  );
+  const text = await chatCompletion(messages as any, {
+    model: llmOptions.model,
+    temperature: llmOptions.temperature,
+    maxTokens: llmOptions.maxTokens,
+  });
+
+  // const result = await llmAgent.run(
+  //   {
+  //     chatId: session.id,
+  //     userId: parsedQuery.context.userId,
+  //     organisationId: parsedQuery.context.organisationId,
+  //     chatSessionGroupId: parsedQuery.chatSessionGroupId,
+  //   },
+  //   messages,
+  //   {
+  //     user_input: session.state.variables["user_input"] ?? "",
+  //     messagesIncludeUserPrompt: includesUserPrompt,
+  //     ...(parsedQuery.variables ?? {}),
+  //   } as unknown as AgentInputVariables,
+  //   llmOptions
+  // );
 
   // Convert agent output to chat message with meta information
   const resultMessage = initChatMessage(result.outputs.default, "assistant", {
