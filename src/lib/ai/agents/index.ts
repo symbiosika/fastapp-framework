@@ -3,7 +3,7 @@ export * from "./types";
 
 // Export core components
 export { Agent } from "./agent";
-export { Runner, RunConfig } from "./runner";
+export { Runner, type RunConfig } from "./runner";
 
 // Export tool utilities
 export {

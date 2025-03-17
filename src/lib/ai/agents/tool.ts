@@ -1,5 +1,5 @@
-import { ChatSessionContext } from "../chat/chat-store";
-import { AgentTool } from "./types";
+import type { ChatSessionContext } from "../chat/chat-store";
+import type { AgentTool } from "./types";
 import { textToSpeech, speechToText } from "../standard";
 
 /**

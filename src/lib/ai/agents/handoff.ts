@@ -1,6 +1,15 @@
 import { Agent } from "./agent";
-import { AgentConfig, AgentExecution, AgentExecutionResult, AgentExecutionStatus } from "./types";
-import { ChatMessage, ChatSessionContext, chatStore } from "../chat/chat-store";
+import {
+  type AgentConfig,
+  type AgentExecution,
+  type AgentExecutionResult,
+  type AgentExecutionStatus,
+} from "./types";
+import {
+  type ChatMessage,
+  type ChatSessionContext,
+  chatStore,
+} from "../chat/chat-store";
 import { Runner } from "./runner";
 import { nanoid } from "nanoid";
 import log from "../../../lib/log";
@@ -16,7 +25,10 @@ export function handoff(
   options: {
     name?: string;
     description?: string;
-    onHandoff?: (context: ChatSessionContext, input: any) => Promise<void> | void;
+    onHandoff?: (
+      context: ChatSessionContext,
+      input: any
+    ) => Promise<void> | void;
     inputType?: any;
   } = {}
 ): AgentConfig {
@@ -27,7 +39,7 @@ export function handoff(
     modelSettings: agent.modelSettings,
     tools: agent.tools,
     handoffs: agent.handoffs,
-    outputType: agent.outputType
+    outputType: agent.outputType,
   };
 }
 
@@ -44,15 +56,15 @@ export async function executeHandoff(
   input?: string | ChatMessage[]
 ): Promise<AgentExecutionResult> {
   const { context } = fromExecution;
-  
+
   log.logCustom(
-    { name: context.chatId }, 
+    { name: context.chatId },
     `Executing handoff from ${fromExecution.agentId} to ${toAgent.name}`
   );
-  
+
   // Create a new execution ID for the handoff
   const handoffExecutionId = nanoid(16);
-  
+
   // Create a handoff execution record
   const handoffExecution: AgentExecution = {
     id: handoffExecutionId,
@@ -63,39 +75,40 @@ export async function executeHandoff(
     messages: [],
     context,
     variables: {},
-    parentExecutionId: fromExecution.id
+    parentExecutionId: fromExecution.id,
   };
-  
+
   // Update the parent execution to track this child
   fromExecution.childExecutions = [
     ...(fromExecution.childExecutions || []),
-    handoffExecutionId
+    handoffExecutionId,
   ];
-  
+
   try {
     // Run the handoff agent
     const result = await Runner.run(toAgent, handoffExecution.input, context);
-    
+
     // Update the handoff execution record
     handoffExecution.status = "completed";
     handoffExecution.endTime = new Date().toISOString();
     handoffExecution.output = result.output;
     handoffExecution.messages = result.messages;
     handoffExecution.variables = result.variables;
-    
+
     // Store the handoff execution
     await Runner.storeExecution(handoffExecution);
-    
+
     return result;
   } catch (error) {
     // Update the handoff execution record
     handoffExecution.status = "failed";
     handoffExecution.endTime = new Date().toISOString();
-    handoffExecution.error = error instanceof Error ? error.message : String(error);
-    
+    handoffExecution.error =
+      error instanceof Error ? error.message : String(error);
+
     // Store the handoff execution
     await Runner.storeExecution(handoffExecution);
-    
+
     throw error;
   }
 }
@@ -116,7 +129,10 @@ export async function executeAgentWorkflow(
     passThroughOutput?: boolean;
     workflowName?: string;
     onAgentStart?: (agent: Agent, input: any) => Promise<void> | void;
-    onAgentEnd?: (agent: Agent, result: AgentExecutionResult) => Promise<void> | void;
+    onAgentEnd?: (
+      agent: Agent,
+      result: AgentExecutionResult
+    ) => Promise<void> | void;
   } = {}
 ): Promise<AgentExecutionResult> {
   if (agents.length === 0) {
@@ -125,12 +141,12 @@ export async function executeAgentWorkflow(
 
   const workflowId = nanoid(16);
   const workflowName = options.workflowName || "agent_workflow";
-  
+
   log.logCustom(
     { name: context.chatId },
     `Starting agent workflow "${workflowName}" with ${agents.length} agents`
   );
-  
+
   // Create a workflow execution record in variables
   const workflowExecution: {
     id: string;
@@ -151,49 +167,49 @@ export async function executeAgentWorkflow(
     name: workflowName,
     startTime: new Date().toISOString(),
     agentExecutions: [],
-    status: "running"
+    status: "running",
   };
-  
+
   // Initialize result with the input
   let currentInput = input;
   let finalResult: AgentExecutionResult | null = null;
-  
+
   try {
     // Execute each agent in sequence
     for (let i = 0; i < agents.length; i++) {
       const agent = agents[i];
       const isLastAgent = i === agents.length - 1;
-      
+
       log.logCustom(
         { name: context.chatId },
-        `Executing agent ${i+1}/${agents.length}: ${agent.name}`
+        `Executing agent ${i + 1}/${agents.length}: ${agent.name}`
       );
-      
+
       // Call onAgentStart hook if available
       if (options.onAgentStart) {
         await options.onAgentStart(agent, currentInput);
       }
-      
+
       // Run the agent
       const result = await Runner.run(agent, currentInput, context);
-      
+
       // Store the result
       finalResult = result;
-      
+
       // Add to workflow execution record
       workflowExecution.agentExecutions.push({
         agentName: agent.name,
         executionId: nanoid(10), // Generate a unique ID since result doesn't have executionId
         status: "completed",
         startTime: new Date().toISOString(),
-        endTime: new Date().toISOString()
+        endTime: new Date().toISOString(),
       });
-      
+
       // Call onAgentEnd hook if available
       if (options.onAgentEnd) {
         await options.onAgentEnd(agent, result);
       }
-      
+
       // If this is not the last agent, prepare input for the next agent
       if (!isLastAgent) {
         if (options.passThroughOutput) {
@@ -201,22 +217,24 @@ export async function executeAgentWorkflow(
           currentInput = result.output;
         } else {
           // Create a message summarizing the result for the next agent
-          currentInput = [{
-            role: "system",
-            content: `Previous agent (${agent.name}) result: ${JSON.stringify(result.output)}`,
-            meta: {
-              id: nanoid(10),
-              timestamp: new Date().toISOString()
-            }
-          }];
+          currentInput = [
+            {
+              role: "system",
+              content: `Previous agent (${agent.name}) result: ${JSON.stringify(result.output)}`,
+              meta: {
+                id: nanoid(10),
+                timestamp: new Date().toISOString(),
+              },
+            },
+          ];
         }
       }
     }
-    
+
     // Update workflow status
     workflowExecution.status = "completed";
     workflowExecution.endTime = new Date().toISOString();
-    
+
     // Store workflow execution in chat session
     const chatSession = await chatStore.get(context.chatId);
     if (chatSession) {
@@ -226,21 +244,25 @@ export async function executeAgentWorkflow(
           variables: {
             ...chatSession.state.variables,
             workflows: {
-              ...((chatSession.state.variables.workflows as Record<string, any>) || {}),
-              [workflowId]: workflowExecution
-            }
-          }
-        }
+              ...((chatSession.state.variables.workflows as Record<
+                string,
+                any
+              >) || {}),
+              [workflowId]: workflowExecution,
+            },
+          },
+        },
       });
     }
-    
+
     return finalResult!;
   } catch (error) {
     // Update workflow status
     workflowExecution.status = "failed";
     workflowExecution.endTime = new Date().toISOString();
-    workflowExecution.error = error instanceof Error ? error.message : String(error);
-    
+    workflowExecution.error =
+      error instanceof Error ? error.message : String(error);
+
     // Store workflow execution in chat session
     const chatSession = await chatStore.get(context.chatId);
     if (chatSession) {
@@ -250,14 +272,17 @@ export async function executeAgentWorkflow(
           variables: {
             ...chatSession.state.variables,
             workflows: {
-              ...((chatSession.state.variables.workflows as Record<string, any>) || {}),
-              [workflowId]: workflowExecution
-            }
-          }
-        }
+              ...((chatSession.state.variables.workflows as Record<
+                string,
+                any
+              >) || {}),
+              [workflowId]: workflowExecution,
+            },
+          },
+        },
       });
     }
-    
+
     throw error;
   }
-} 
+}

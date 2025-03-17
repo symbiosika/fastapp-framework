@@ -182,7 +182,7 @@ export async function generateImageDescription(
 export async function chatCompletion(
   messages: Message[],
   options?: TextGenerationOptions & { model?: string }
-): Promise<string> {
+): Promise<{ text: string; meta: { model: string; provider: string } }> {
   try {
     const modelString = options?.model ?? DEFAULT_MODEL;
     const { provider, model } = parseModelString(modelString);
@@ -192,7 +192,13 @@ export async function chatCompletion(
       model,
     });
 
-    return result.text;
+    return {
+      text: result.text,
+      meta: {
+        model: model,
+        provider: provider,
+      },
+    };
   } catch (error) {
     log.error(`Error in chatCompletion: ${error}`);
     throw new Error("Failed to generate text");

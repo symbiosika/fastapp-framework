@@ -1,7 +1,16 @@
 import { nanoid } from "nanoid";
 import { Agent } from "./agent";
-import { AgentExecution, AgentExecutionResult, InputGuardrail, OutputGuardrail } from "./types";
-import { ChatMessage, ChatSessionContext, chatStore } from "../chat/chat-store";
+import {
+  type AgentExecution,
+  type AgentExecutionResult,
+  type InputGuardrail,
+  type OutputGuardrail,
+} from "./types";
+import {
+  type ChatMessage,
+  type ChatSessionContext,
+  chatStore,
+} from "../chat/chat-store";
 import log from "../../../lib/log";
 
 export interface RunConfig {
@@ -21,10 +30,14 @@ export class Runner {
     context: ChatSessionContext,
     config: RunConfig = {}
   ): Promise<AgentExecutionResult> {
-    const { inputGuardrails = [], outputGuardrails = [], maxTurns = 10 } = config;
-    
+    const {
+      inputGuardrails = [],
+      outputGuardrails = [],
+      maxTurns = 10,
+    } = config;
+
     log.logCustom({ name: context.chatId }, `Running agent ${agent.name}`);
-    
+
     // Run the agent
     return await agent.run(input, context, inputGuardrails, outputGuardrails);
   }
@@ -56,18 +69,16 @@ export class Runner {
       chatId,
       userId,
       organisationId,
-      chatSessionGroupId
+      chatSessionGroupId,
     };
   }
 
   /**
    * Store an agent execution in the chat store
    */
-  public static async storeExecution(
-    execution: AgentExecution
-  ): Promise<void> {
+  public static async storeExecution(execution: AgentExecution): Promise<void> {
     const { context, messages, variables } = execution;
-    
+
     // Get or create chat session
     let chatSession = await chatStore.get(context.chatId);
     if (!chatSession) {
@@ -76,25 +87,25 @@ export class Runner {
         context: {
           userId: context.userId,
           organisationId: context.organisationId,
-          chatSessionGroupId: context.chatSessionGroupId
-        }
+          chatSessionGroupId: context.chatSessionGroupId,
+        },
       });
     }
-    
+
     // Update chat session with messages and variables
-    await chatStore.set(context.chatId, { 
+    await chatStore.set(context.chatId, {
       messages: [...chatSession.messages, ...messages],
       state: {
         ...chatSession.state,
         variables: {
           ...chatSession.state.variables,
-          ...variables
+          ...variables,
         },
         agentExecutions: {
           ...chatSession.state.agentExecutions,
-          [execution.id]: execution
-        }
-      }
+          [execution.id]: execution,
+        },
+      },
     });
   }
-} 
+}

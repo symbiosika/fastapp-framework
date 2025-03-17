@@ -9,6 +9,8 @@ import { createHeadlineFromChat } from "./generate-headline";
 import type { AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
 import { chatCompletion } from "../standard";
+import { replaceCustomPlaceholders } from "./replacer";
+import { customAppPlaceholders } from "./custom-placeholders";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -221,35 +223,28 @@ export const chatWithAgent = async (query: unknown) => {
   // Create a shallow copy of the current chat messages
   let messages = [...session.messages];
 
+  // Replace variables in the messages
+  // Possibly handle custom placeholders
+  const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
+    messages,
+    customAppPlaceholders,
+    parsedQuery.variables ?? {},
+    { ...parsedQuery.context, chatId: session.id }
+  );
+
   // Use the LLMAgent directly, passing the full chat history
-  const text = await chatCompletion(messages as any, {
+  const llmResult = await chatCompletion(replacedMessages as any, {
     model: llmOptions.model,
     temperature: llmOptions.temperature,
     maxTokens: llmOptions.maxTokens,
   });
 
-  // const result = await llmAgent.run(
-  //   {
-  //     chatId: session.id,
-  //     userId: parsedQuery.context.userId,
-  //     organisationId: parsedQuery.context.organisationId,
-  //     chatSessionGroupId: parsedQuery.chatSessionGroupId,
-  //   },
-  //   messages,
-  //   {
-  //     user_input: session.state.variables["user_input"] ?? "",
-  //     messagesIncludeUserPrompt: includesUserPrompt,
-  //     ...(parsedQuery.variables ?? {}),
-  //   } as unknown as AgentInputVariables,
-  //   llmOptions
-  // );
-
   // Convert agent output to chat message with meta information
-  const resultMessage = initChatMessage(result.outputs.default, "assistant", {
+  const resultMessage = initChatMessage(llmResult.text, "assistant", {
     human: false,
-    model: result.metadata?.model ? result.metadata.model + "" : "unknown",
+    model: llmResult.meta.model,
+    provider: llmResult.meta.provider,
     timestamp: new Date().toISOString(),
-    ...result.metadata,
   });
 
   // Add the assistant's response to the messages array

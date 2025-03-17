@@ -1,15 +1,10 @@
 import { nanoid } from "nanoid";
-import {
-  ChatMessage,
-  ChatSessionContext,
-  ChatStoreVariables,
-  chatStore,
-} from "../chat/chat-store";
-import {
+import type { ChatMessage, ChatSessionContext } from "../chat/chat-store";
+import { chatStore } from "../chat/chat-store";
+import type {
   AgentConfig,
   AgentExecution,
   AgentExecutionResult,
-  AgentExecutionStatus,
   AgentHooks,
   AgentModelSettings,
   AgentTool,
@@ -18,7 +13,7 @@ import {
 } from "./types";
 import log from "../../../lib/log";
 import { chatCompletion } from "../standard";
-import { Message } from "../standard/types";
+import type { Message } from "../standard/types";
 
 export class Agent {
   private config: AgentConfig;
@@ -181,66 +176,69 @@ export class Agent {
       });
 
       // Process tool calls if present in the response
-      let assistantContent = llmResult;
-      let toolResults: Array<{tool: string; args: any; result: any}> = [];
-      
+      let assistantContent = llmResult.text;
+      let toolResults: Array<{ tool: string; args: any; result: any }> = [];
+
       // Check if the response contains tool calls - this is a mock implementation
       // In a real implementation, the LLM would return tool calls in a structured format
-      const mockToolCalls = this.extractToolCallsFromResponse(llmResult);
-      
+      const mockToolCalls = this.extractToolCallsFromResponse(llmResult.text);
+
       if (mockToolCalls.length > 0) {
         assistantContent = ""; // Will be populated with tool results
-        
+
         // Process each tool call
         for (const toolCall of mockToolCalls) {
           const { name, args } = toolCall;
-          
+
           // Find the tool
-          const tool = this.config.tools?.find(t => t.name === name);
+          const tool = this.config.tools?.find((t) => t.name === name);
           if (!tool) {
             throw new Error(`Tool "${name}" not found`);
           }
-          
+
           // Call onToolStart hook if available
           if (this.hooks?.onToolStart) {
             await this.hooks.onToolStart(execution, tool);
           }
-          
+
           try {
             // Execute the tool
             const result = await tool.function(args, context);
-            
+
             // Add tool result to the list
             toolResults.push({
               tool: name,
               args,
-              result
+              result,
             });
-            
+
             // Update assistant content with tool result
             assistantContent += `\nTool: ${name}\nResult: ${JSON.stringify(result, null, 2)}\n`;
-            
+
             // Call onToolEnd hook if available
             if (this.hooks?.onToolEnd) {
               await this.hooks.onToolEnd(execution, tool, result);
             }
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
             assistantContent += `\nTool: ${name}\nError: ${errorMessage}\n`;
-            
+
             // Call onToolEnd hook with error if available
             if (this.hooks?.onToolEnd) {
-              await this.hooks.onToolEnd(execution, tool, { error: errorMessage });
+              await this.hooks.onToolEnd(execution, tool, {
+                error: errorMessage,
+              });
             }
           }
         }
-        
+
         // Store tool results in execution variables
         execution.variables = {
           ...execution.variables,
-          toolResults: JSON.stringify(toolResults)
+          toolResults: JSON.stringify(toolResults),
         };
-        
+
         // Make a follow-up call to the LLM with the tool results
         const followUpMessages = [
           ...messages,
@@ -251,7 +249,7 @@ export class Agent {
               id: nanoid(10),
               model: this.config.model,
               timestamp: new Date().toISOString(),
-            }
+            },
           },
           {
             role: "system",
@@ -259,16 +257,18 @@ export class Agent {
             meta: {
               id: nanoid(10),
               timestamp: new Date().toISOString(),
-            }
-          }
+            },
+          },
         ];
-        
+
         // Get the final response from the LLM
-        assistantContent = await chatCompletion(followUpMessages as Message[], {
-          model: this.config.model,
-          temperature: this.config.modelSettings?.temperature,
-          maxTokens: this.config.modelSettings?.maxTokens,
-        });
+        assistantContent = (
+          await chatCompletion(followUpMessages as Message[], {
+            model: this.config.model,
+            temperature: this.config.modelSettings?.temperature,
+            maxTokens: this.config.modelSettings?.maxTokens,
+          })
+        ).text;
       }
 
       // Create the assistant message
@@ -344,24 +344,26 @@ export class Agent {
    * This is a mock implementation that looks for patterns like "use tool: tool_name(args)"
    * In a real implementation, the LLM would return tool calls in a structured format
    */
-  private extractToolCallsFromResponse(response: string): Array<{name: string; args: any}> {
-    const toolCalls: Array<{name: string; args: any}> = [];
-    
+  private extractToolCallsFromResponse(
+    response: string
+  ): Array<{ name: string; args: any }> {
+    const toolCalls: Array<{ name: string; args: any }> = [];
+
     // Check if we have tools configured
     if (!this.config.tools || this.config.tools.length === 0) {
       return toolCalls;
     }
-    
+
     // Simple regex to find tool calls in the format "use tool: tool_name(args)"
     const toolRegex = /use tool:\s*(\w+)\(([^)]*)\)/gi;
     let match;
-    
+
     while ((match = toolRegex.exec(response)) !== null) {
       const toolName = match[1];
       const argsStr = match[2];
-      
+
       // Find the tool
-      const tool = this.config.tools.find(t => t.name === toolName);
+      const tool = this.config.tools.find((t) => t.name === toolName);
       if (tool) {
         // Parse arguments
         let args: Record<string, string> = {};
@@ -370,22 +372,22 @@ export class Agent {
           args = JSON.parse(`{${argsStr}}`);
         } catch (e) {
           // Simple parsing for key=value pairs
-          const argPairs = argsStr.split(',');
-          argPairs.forEach(pair => {
-            const [key, value] = pair.split('=').map(s => s.trim());
+          const argPairs = argsStr.split(",");
+          argPairs.forEach((pair) => {
+            const [key, value] = pair.split("=").map((s) => s.trim());
             if (key && value) {
               args[key] = value;
             }
           });
         }
-        
+
         toolCalls.push({
           name: toolName,
-          args
+          args,
         });
       }
     }
-    
+
     return toolCalls;
   }
 }

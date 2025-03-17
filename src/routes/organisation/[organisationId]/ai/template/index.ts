@@ -557,9 +557,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           c.req.valid("query");
 
         const r = await getPlaceholdersForPromptTemplate({
-          promptId,
-          promptName,
-          promptCategory,
+          id: promptId,
+          name: promptName,
+          category: promptCategory,
           organisationId,
         });
         return c.json(r);

@@ -6,7 +6,6 @@ import {
   promptTemplatePlaceholderExamples,
   type PromptTemplatePlaceholdersUpdate,
   type PromptTemplatePlaceholdersInsert,
-  type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesInsert,
   type PromptTemplatesSelect,
 } from "../../../lib/db/db-schema";
@@ -17,9 +16,9 @@ import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
  * Get all placeholders for one template as an object
  */
 export const getPlaceholdersForPromptTemplate = async (request: {
-  promptId?: string;
-  promptName?: string;
-  promptCategory?: string;
+  id?: string;
+  name?: string;
+  category?: string;
   organisationId?: string;
 }) => {
   const definition = await getPromptTemplateDefinition(request);

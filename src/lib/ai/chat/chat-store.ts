@@ -7,7 +7,7 @@ import {
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { nanoid } from "nanoid";
-import { AgentExecution } from "../agents/types";
+import type { AgentExecution } from "../agents/types";
 
 export type ChatSessionContext = {
   chatId: string;

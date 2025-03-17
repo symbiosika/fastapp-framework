@@ -1,10 +1,14 @@
-import { ChatMessage, ChatSessionContext, ChatStoreVariables } from "../chat/chat-store";
+import type {
+  ChatMessage,
+  ChatSessionContext,
+  ChatStoreVariables,
+} from "../chat/chat-store";
 
-export type AgentExecutionStatus = 
+export type AgentExecutionStatus =
   | "pending"
-  | "running" 
-  | "completed" 
-  | "failed" 
+  | "running"
+  | "completed"
+  | "failed"
   | "cancelled";
 
 export type AgentTool = {
@@ -71,13 +75,19 @@ export type OutputGuardrailResult = {
 export type InputGuardrail = {
   name: string;
   description: string;
-  check: (input: string | ChatMessage[], context: ChatSessionContext) => Promise<InputGuardrailResult>;
+  check: (
+    input: string | ChatMessage[],
+    context: ChatSessionContext
+  ) => Promise<InputGuardrailResult>;
 };
 
 export type OutputGuardrail = {
   name: string;
   description: string;
-  check: (output: any, context: ChatSessionContext) => Promise<OutputGuardrailResult>;
+  check: (
+    output: any,
+    context: ChatSessionContext
+  ) => Promise<OutputGuardrailResult>;
 };
 
 export type AgentHooks = {
@@ -85,7 +95,18 @@ export type AgentHooks = {
   onEnd?: (execution: AgentExecution) => Promise<void>;
   onError?: (execution: AgentExecution, error: Error) => Promise<void>;
   onToolStart?: (execution: AgentExecution, tool: AgentTool) => Promise<void>;
-  onToolEnd?: (execution: AgentExecution, tool: AgentTool, result: any) => Promise<void>;
-  onHandoffStart?: (execution: AgentExecution, handoff: AgentConfig) => Promise<void>;
-  onHandoffEnd?: (execution: AgentExecution, handoff: AgentConfig, result: any) => Promise<void>;
-}; 
+  onToolEnd?: (
+    execution: AgentExecution,
+    tool: AgentTool,
+    result: any
+  ) => Promise<void>;
+  onHandoffStart?: (
+    execution: AgentExecution,
+    handoff: AgentConfig
+  ) => Promise<void>;
+  onHandoffEnd?: (
+    execution: AgentExecution,
+    handoff: AgentConfig,
+    result: any
+  ) => Promise<void>;
+};
