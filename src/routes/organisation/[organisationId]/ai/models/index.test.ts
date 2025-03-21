@@ -378,3 +378,60 @@ describe("AI Models API Security Tests", () => {
     expect(getResponse.status).not.toBe(200);
   });
 });
+
+describe("AI Models Sync API", () => {
+  test("Sync models with public repository", async () => {
+    // Call the sync endpoint
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/sync`,
+      TEST_USER_1_TOKEN,
+      {}
+    );
+
+    // Verify the response structure
+    expect(response.status).toBe(200);
+    expect(response.jsonResponse).toBeDefined();
+    expect(typeof response.jsonResponse.added).toBe("number");
+    expect(typeof response.jsonResponse.removed).toBe("number");
+  });
+
+  test("Non-admin users cannot sync models", async () => {
+    // Create a test user that is a member but not admin of TEST_ORGANISATION_1
+    // This assumes TEST_USER_2_TOKEN belongs to a non-admin user
+
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/sync`,
+      TEST_USER_2_TOKEN,
+      {}
+    );
+
+    // Should be rejected due to admin permission check
+    expect(response.status).toBe(403);
+    expect(response.textResponse).toContain("User is not a member of this organisation");
+  });
+
+  test("Users cannot sync models for organisations they don't belong to", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_2.id}/ai/models/sync`,
+      TEST_USER_1_TOKEN,
+      {}
+    );
+
+    // Should be rejected due to organisation membership check
+    expect(response.status).toBe(403);
+  });
+
+  test("Sync endpoint rejects unauthorized requests", async () => {
+    const response = await testFetcher.post(
+      app,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/models/sync`,
+      "invalid-token",
+      {}
+    );
+
+    expect(response.status).toBe(401);
+  });
+});
