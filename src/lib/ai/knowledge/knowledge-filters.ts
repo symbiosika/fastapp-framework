@@ -1,5 +1,5 @@
 import { getDb } from "../../db/db-connection";
-import { knowledgeFilters } from "../../db/db-schema";
+import { knowledgeFilters, knowledgeEntryFilters } from "../../db/db-schema";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -54,7 +54,7 @@ export const updateFilterCategory = async (
   organisationId: string
 ): Promise<void> => {
   const db = getDb();
-  
+
   // First get all filters that need to be updated
   const filtersToUpdate = await db
     .select()
@@ -122,4 +122,109 @@ export const deleteFilter = async (
         eq(knowledgeFilters.organisationId, organisationId)
       )
     );
+};
+
+/**
+ * Add a filter to a knowledge entry
+ * This function adds or updates a filter for a specific knowledge entry
+ */
+export const addFilterToKnowledgeEntry = async (
+  knowledgeEntryId: string,
+  filterId: string,
+  organisationId: string
+): Promise<void> => {
+  const db = getDb();
+
+  // Verify the filter exists and belongs to the organisation
+  const filter = await db
+    .select()
+    .from(knowledgeFilters)
+    .where(
+      and(
+        eq(knowledgeFilters.id, filterId),
+        eq(knowledgeFilters.organisationId, organisationId)
+      )
+    )
+    .limit(1);
+
+  if (!filter || filter.length === 0) {
+    throw new Error("Filter not found or does not belong to the organisation");
+  }
+
+  // Add the filter to the knowledge entry using Drizzle ORM
+  await db
+    .insert(knowledgeEntryFilters)
+    .values({
+      knowledgeEntryId,
+      knowledgeFilterId: filterId,
+    })
+    .onConflictDoNothing({
+      target: [
+        knowledgeEntryFilters.knowledgeEntryId,
+        knowledgeEntryFilters.knowledgeFilterId,
+      ],
+    });
+};
+
+/**
+ * Remove a filter from a knowledge entry
+ */
+export const removeFilterFromKnowledgeEntry = async (
+  knowledgeEntryId: string,
+  filterId: string,
+  organisationId: string
+): Promise<void> => {
+  const db = getDb();
+
+  // Remove the filter from the knowledge entry using Drizzle ORM
+  await db
+    .delete(knowledgeEntryFilters)
+    .where(eq(knowledgeEntryFilters.id, filterId));
+};
+
+/**
+ * Get all filters associated with a knowledge entry
+ */
+export const getFiltersForKnowledgeEntry = async (
+  knowledgeEntryId: string
+): Promise<any[]> => {
+  const db = getDb();
+
+  // Get all filters associated with the knowledge entry using Drizzle ORM
+  const filters = await db
+    .select({
+      filter: knowledgeFilters,
+    })
+    .from(knowledgeEntryFilters)
+    .innerJoin(
+      knowledgeFilters,
+      eq(knowledgeEntryFilters.knowledgeFilterId, knowledgeFilters.id)
+    )
+    .where(eq(knowledgeEntryFilters.knowledgeEntryId, knowledgeEntryId));
+
+  return filters.map((result) => result.filter);
+};
+
+/**
+ * Get a filter by its category and name
+ */
+export const getFilterByCategoryAndName = async (
+  category: string,
+  name: string,
+  organisationId: string
+): Promise<any> => {
+  const db = getDb();
+  const filter = await db
+    .select()
+    .from(knowledgeFilters)
+    .where(
+      and(
+        eq(knowledgeFilters.category, category),
+        eq(knowledgeFilters.name, name),
+        eq(knowledgeFilters.organisationId, organisationId)
+      )
+    )
+    .limit(1);
+
+  return filter[0];
 };

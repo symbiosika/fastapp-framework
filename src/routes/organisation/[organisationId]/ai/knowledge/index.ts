@@ -47,6 +47,13 @@ import {
   checkIfKnowledgeNeedsUpdate,
   processKnowledgeSync,
 } from "../../../../../lib/ai/knowledge-sync/sync-api";
+import {
+  addFilterToKnowledgeEntry,
+  getFilterByCategoryAndName,
+  getFiltersForKnowledgeEntry,
+  removeFilterFromKnowledgeEntry,
+  upsertFilter,
+} from "../../../../../lib/ai/knowledge/knowledge-filters";
 
 const FileSourceType = {
   DB: "db",
@@ -1086,6 +1093,140 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         });
 
         return c.json(result);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Add a filter to a knowledge entry
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+      tags: ["knowledge"],
+      summary: "Add a filter to a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    validator(
+      "json",
+      v.object({
+        category: v.string(),
+        name: v.string(),
+      })
+    ),
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const { category, name } = c.req.valid("json");
+
+        // Zuerst den Filter anhand von category und name finden
+        let filter = await getFilterByCategoryAndName(
+          category,
+          name,
+          organisationId
+        );
+
+        if (!filter) {
+          filter = await upsertFilter(category, name, organisationId);
+        }
+
+        await addFilterToKnowledgeEntry(id, filter.id, organisationId);
+
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Get all filters for a knowledge entry
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+      tags: ["knowledge"],
+      summary: "Get all filters for a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const { id } = c.req.valid("param");
+
+        const filters = await getFiltersForKnowledgeEntry(id);
+
+        return c.json(filters);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Remove a filter from a knowledge entry
+   */
+  app.delete(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters/:filterId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters/:filterId",
+      tags: ["knowledge"],
+      summary: "Remove a filter from a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        id: v.string(),
+        filterId: v.string(),
+      })
+    ),
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const { organisationId, id, filterId } = c.req.valid("param");
+
+        await removeFilterFromKnowledgeEntry(id, filterId, organisationId);
+
+        return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

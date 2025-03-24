@@ -306,6 +306,7 @@ export const getKnowledgeEntries = async (query: {
     filters: {
       id: string;
       filter: {
+        id: string;
         category: string;
         name: string;
       };
@@ -364,6 +365,7 @@ export const getKnowledgeEntries = async (query: {
         with: {
           filter: {
             columns: {
+              id: true,
               category: true,
               name: true,
             },
@@ -475,6 +477,7 @@ export const getFullSourceDocumentsForKnowledgeEntry = async (
         with: {
           filter: {
             columns: {
+              id: true,
               category: true,
               name: true,
             },
