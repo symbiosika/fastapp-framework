@@ -41,6 +41,7 @@ export const _GLOBAL_SERVER_CONFIG = {
  */
 export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   _GLOBAL_SERVER_CONFIG.port = config.port ?? 3000;
+  _GLOBAL_SERVER_CONFIG.appName = config.appName ?? "App";
   _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
   _GLOBAL_SERVER_CONFIG.baseUrl =
     config.baseUrl ?? process.env.BASE_URL ?? "http://localhost:3000";

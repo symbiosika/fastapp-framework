@@ -61,6 +61,7 @@ export type EmailTemplateFunction = (data: {
 
 export interface ServerSpecificConfig {
   port?: number;
+  appName?: string;
   basePath?: string;
   baseUrl?: string;
 

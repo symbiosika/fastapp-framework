@@ -116,7 +116,7 @@ export const stdTemplatePasswordResetWelcome: EmailTemplateFunction = async (
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #4a4a4a;">Welcome to ${data.appName}</h2>
             <p>Hello,</p>
-            <p>Please click the link below to set a your password for ${data.appName}</p>
+            <p>Please click the link below to set your password for ${data.appName}.</p>
             <p><a href="${data.link}">Set Password</a></p>
             <p>Best regards,<br>The ${data.appName} Team</p>
           </div>
