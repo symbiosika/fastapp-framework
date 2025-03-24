@@ -467,6 +467,21 @@ export const getFullSourceDocumentsForKnowledgeEntry = async (
       eq(knowledgeEntry.id, id),
       eq(knowledgeEntry.organisationId, organisationId)
     ),
+    with: {
+      filters: {
+        columns: {
+          id: true,
+        },
+        with: {
+          filter: {
+            columns: {
+              category: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
   });
   const chunks = await getDb().query.knowledgeChunks.findMany({
     where: eq(knowledgeChunks.knowledgeEntryId, id),

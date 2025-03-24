@@ -35,6 +35,7 @@ import paymentRoutes from "./routes/payment";
 import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/template";
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
+import aiKnowledgeFiltersRoutes from "./routes/organisation/[organisationId]/ai/knowledge-filters";
 import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
 import defineOrganisationRoutes from "./routes/organisation";
@@ -264,6 +265,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
        */
       aiFineTuningRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiKnowledgeRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiKnowledgeFiltersRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
