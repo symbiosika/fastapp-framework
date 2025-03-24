@@ -292,10 +292,23 @@ export function definePublicUserRoutes(
         email: v.string(),
       })
     ),
+    validator(
+      "query",
+      v.object({
+        type: v.optional(v.string()),
+      })
+    ),
     async (c) => {
       try {
         const { email } = c.req.valid("json");
-        await LocalAuth.forgotPasswort(email);
+        const { type } = c.req.valid("query");
+
+        let welcomeText = false;
+        if (type === "welcome") {
+          welcomeText = true;
+        }
+
+        await LocalAuth.forgotPasswort(email, welcomeText);
         return c.json(RESPONSES.SUCCESS);
       } catch (err) {
         throw new HTTPException(500, {

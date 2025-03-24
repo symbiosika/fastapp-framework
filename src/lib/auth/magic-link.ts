@@ -233,15 +233,33 @@ export const createResetPasswordLink = async (
 /**
  * Send a Reset Password Email
  */
-export const sendResetPasswordLink = async (email: string): Promise<void> => {
+export const sendResetPasswordLink = async (
+  email: string,
+  sendWelcomeText = false
+): Promise<void> => {
   const resetLink = await createResetPasswordLink(email);
 
-  const { html, subject } =
-    await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword({
+  let html: string;
+  let subject: string;
+
+  if (sendWelcomeText) {
+    const welcomeMail =
+      await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword({
+        appName: _GLOBAL_SERVER_CONFIG.appName,
+        baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+        link: resetLink,
+      });
+    html = welcomeMail.html;
+    subject = welcomeMail.subject;
+  } else {
+    const resetMail = await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword({
       appName: _GLOBAL_SERVER_CONFIG.appName,
       baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
       link: resetLink,
     });
+    html = resetMail.html;
+    subject = resetMail.subject;
+  }
 
   await smtpService.sendMail({
     sender: process.env.SMTP_FROM,

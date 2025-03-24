@@ -101,6 +101,7 @@ export interface ServerSpecificConfig {
     verifyEmail?: EmailTemplateFunction;
     magicLink?: EmailTemplateFunction;
     resetPassword?: EmailTemplateFunction;
+    resetPasswordWelcome?: EmailTemplateFunction;
     inviteToOrganization?: EmailTemplateFunction;
     inviteToOrganizationWhenUserExists?: EmailTemplateFunction;
   };

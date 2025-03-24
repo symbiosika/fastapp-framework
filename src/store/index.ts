@@ -4,6 +4,7 @@ import {
   stdTemplateInviteToOrganizationWhenUserExists,
   stdTemplateMagicLink,
   stdTemplatePasswordReset,
+  stdTemplatePasswordResetWelcome,
   stdTemplateVerifyEmail,
 } from "./email-templates";
 
@@ -27,6 +28,7 @@ export const _GLOBAL_SERVER_CONFIG = {
     verifyEmail: stdTemplateVerifyEmail,
     magicLink: stdTemplateMagicLink,
     resetPassword: stdTemplatePasswordReset,
+    resetPasswordWelcome: stdTemplatePasswordResetWelcome,
     inviteToOrganization: stdTemplateInviteToOrganization,
     inviteToOrganizationWhenUserExists:
       stdTemplateInviteToOrganizationWhenUserExists,
@@ -86,5 +88,9 @@ export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   if (config.emailTemplates?.inviteToOrganizationWhenUserExists) {
     _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganizationWhenUserExists =
       config.emailTemplates.inviteToOrganizationWhenUserExists;
+  }
+  if (config.emailTemplates?.resetPasswordWelcome) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.resetPasswordWelcome =
+      config.emailTemplates.resetPasswordWelcome;
   }
 };
