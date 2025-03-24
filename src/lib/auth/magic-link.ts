@@ -244,7 +244,7 @@ export const sendResetPasswordLink = async (
 
   if (sendWelcomeText) {
     const welcomeMail =
-      await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword({
+      await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPasswordWelcome({
         appName: _GLOBAL_SERVER_CONFIG.appName,
         baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
         link: resetLink,

@@ -303,10 +303,7 @@ export function definePublicUserRoutes(
         const { email } = c.req.valid("json");
         const { type } = c.req.valid("query");
 
-        let welcomeText = false;
-        if (type === "welcome") {
-          welcomeText = true;
-        }
+        const welcomeText = type && type === "welcome" ? true : false;
 
         await LocalAuth.forgotPasswort(email, welcomeText);
         return c.json(RESPONSES.SUCCESS);
