@@ -84,6 +84,8 @@ export const extractKnowledgeFromText = async (data: {
   userId?: string;
   teamId?: string;
   workspaceId?: string;
+  knowledgeGroupId?: string;
+  userOwned?: boolean;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -131,6 +133,8 @@ export const extractKnowledgeFromText = async (data: {
       userId: data.userId,
       teamId: data.teamId,
       workspaceId: data.workspaceId,
+      knowledgeGroupId: data.knowledgeGroupId,
+      userOwned: data.userOwned,
     },
     data.filters || {}
   );
@@ -169,6 +173,8 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   userId?: string;
   teamId?: string;
   workspaceId?: string;
+  knowledgeGroupId?: string;
+  userOwned?: boolean;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, title } = await parseDocument(data);
@@ -186,6 +192,8 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     userId: data.userId,
     teamId: data.teamId,
     workspaceId: data.workspaceId,
+    knowledgeGroupId: data.knowledgeGroupId,
+    userOwned: data.userOwned,
   });
 };
 
@@ -225,6 +233,8 @@ export const extractKnowledgeInOneStep = async (
     filters?: Record<string, string>;
     teamId?: string;
     workspaceId?: string;
+    knowledgeGroupId?: string;
+    userOwned?: boolean;
     file?: File;
     data?: {
       title: string;
@@ -261,6 +271,8 @@ export const extractKnowledgeInOneStep = async (
       filters: data.filters,
       teamId: data.teamId,
       workspaceId: data.workspaceId,
+      knowledgeGroupId: data.knowledgeGroupId,
+      userOwned: data.userOwned,
       sourceType: "external",
       sourceExternalId: data.meta?.sourceId ?? data.file.name,
       sourceFileBucket: bucket,
@@ -277,6 +289,8 @@ export const extractKnowledgeInOneStep = async (
       filters: data.filters,
       teamId: data.teamId,
       workspaceId: data.workspaceId,
+      knowledgeGroupId: data.knowledgeGroupId,
+      userOwned: data.userOwned,
       sourceExternalId: data.meta?.sourceId ?? data.data.title,
       sourceType: "external",
       sourceFileBucket: bucket,

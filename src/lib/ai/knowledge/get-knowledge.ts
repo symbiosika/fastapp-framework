@@ -301,6 +301,8 @@ export const getKnowledgeEntries = async (query: {
   userId: string;
   teamId?: string;
   workspaceId?: string;
+  knowledgeGroupId?: string;
+  userOwned?: boolean;
   ids?: string[];
 }): Promise<
   (KnowledgeEntrySelect & {
@@ -347,6 +349,18 @@ export const getKnowledgeEntries = async (query: {
   }
   if (!query.workspaceId) {
     filterConditions.push(isNull(knowledgeEntry.workspaceId));
+  }
+  
+  // Add filter for knowledgeGroupId
+  if (query.knowledgeGroupId) {
+    filterConditions.push(eq(knowledgeEntry.knowledgeGroupId, query.knowledgeGroupId));
+  }
+  
+  // Add filter for userOwned
+  if (query.userOwned === true) {
+    filterConditions.push(eq(knowledgeEntry.userOwned, true));
+  } else if (query.userOwned === false) {
+    filterConditions.push(or(eq(knowledgeEntry.userOwned, false), isNull(knowledgeEntry.userOwned)));
   }
 
   const r = await getDb().query.knowledgeEntry.findMany({

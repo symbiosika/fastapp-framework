@@ -45,6 +45,10 @@ export const parseDocument = async (data: {
   sourceId?: string;
   sourceFileBucket?: string;
   sourceUrl?: string;
+  knowledgeGroupId?: string;
+  userOwned?: boolean;
+  teamId?: string;
+  workspaceId?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let content: string;

@@ -124,8 +124,9 @@ export const knowledgeGroup = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    unique("knowledge_group_name_idx").on(table.name),
+    unique("knowledge_group_name_org_idx").on(table.name, table.organisationId),
     index("knowledge_group_organisation_id_idx").on(table.organisationId),
+    index("knowledge_group_user_id_idx").on(table.userId),
   ]
 );
 
@@ -182,6 +183,23 @@ export const knowledgeGroupTeamAssignmentsInsertSchema = createInsertSchema(
 export const knowledgeGroupTeamAssignmentsUpdateSchema = createUpdateSchema(
   knowledgeGroupTeamAssignments
 );
+
+// Relations for knowledge groups
+export const knowledgeGroupRelations = relations(knowledgeGroup, ({ many }) => ({
+  teamAssignments: many(knowledgeGroupTeamAssignments),
+}));
+
+// Relations for knowledge group team assignments
+export const knowledgeGroupTeamAssignmentsRelations = relations(knowledgeGroupTeamAssignments, ({ one }) => ({
+  knowledgeGroup: one(knowledgeGroup, {
+    fields: [knowledgeGroupTeamAssignments.knowledgeGroupId],
+    references: [knowledgeGroup.id],
+  }),
+  team: one(teams, {
+    fields: [knowledgeGroupTeamAssignments.teamId],
+    references: [teams.id],
+  }),
+}));
 
 // Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable(

@@ -2,7 +2,6 @@
  * Routes to manage the knowledge entries for each organisation
  * These routes are protected by JWT and CheckPermission middleware
  */
-
 import type { FastAppHono } from "../../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -72,7 +71,9 @@ const generateKnowledgeValidation = v.object({
   filters: v.optional(v.record(v.string(), v.string())),
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -84,6 +85,10 @@ const askKnowledgeValidation = v.object({
   addBeforeN: v.optional(v.number()),
   addAfterN: v.optional(v.number()),
   filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+  userOwned: v.optional(v.boolean()),
+  teamId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
 });
 export type AskKnowledgeInput = v.InferOutput<typeof askKnowledgeValidation>;
 
@@ -93,6 +98,10 @@ const parseDocumentValidation = v.object({
   sourceFileBucket: v.optional(v.string()),
   sourceUrl: v.optional(v.string()),
   organisationId: v.string(),
+  userOwned: v.optional(v.boolean()),
+  knowledgeGroupId: v.optional(v.string()),
+  teamId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
@@ -103,6 +112,10 @@ const similaritySearchValidation = v.object({
   addBeforeN: v.optional(v.number()),
   addAfterN: v.optional(v.number()),
   filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+  filterKnowledgeGroupIds: v.optional(v.array(v.string())),
+  filterTeamIds: v.optional(v.array(v.string())),
+  filterUserOwned: v.optional(v.boolean()),
+  filterWorkspaceIds: v.optional(v.array(v.string())),
   filter: v.optional(v.record(v.string(), v.array(v.string()))),
   filterName: v.optional(v.array(v.string())),
   fullDocument: v.optional(v.boolean()),
@@ -116,6 +129,8 @@ const addFromTextValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   meta: v.optional(
     v.object({
       sourceUri: v.string(),
@@ -127,6 +142,12 @@ const addFromTextValidation = v.object({
 const addFromUrlValidation = v.object({
   organisationId: v.string(),
   url: v.string(),
+  filters: v.optional(v.record(v.string(), v.string())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
 });
 
 const uploadAndLearnValidation = v.object({
@@ -135,6 +156,8 @@ const uploadAndLearnValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   text: v.optional(v.string()),
   meta: v.optional(
     v.object({
@@ -161,6 +184,8 @@ const syncKnowledgeValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
 });
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
@@ -246,6 +271,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         page: v.optional(v.string()),
         teamId: v.optional(v.string()),
         workspaceId: v.optional(v.string()),
+        knowledgeGroupId: v.optional(v.string()),
+        userOwned: v.optional(v.string()),
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
@@ -257,6 +284,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           page: pageStr,
           teamId,
           workspaceId,
+          knowledgeGroupId,
+          userOwned,
         } = c.req.valid("query");
         const { organisationId } = c.req.valid("param");
         const usersId = c.get("usersId");
@@ -271,6 +300,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           userId: usersId,
           teamId,
           workspaceId,
+          knowledgeGroupId,
+          userOwned: userOwned === "true",
         });
         return c.json(r);
       } catch (e) {
@@ -510,7 +541,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await parseDocument(body);
+        // Pass through all fields including knowledgeGroupId and userOwned
+        const r = await parseDocument({
+          ...body,
+          organisationId,
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -558,6 +593,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           filters: data.filters,
           teamId: data.teamId,
           workspaceId: data.workspaceId,
+          knowledgeGroupId: data.knowledgeGroupId,
+          userOwned: data.userOwned,
           sourceExternalId: data.meta?.sourceId ?? data.title,
           sourceType: "external",
           sourceFileBucket: "default",
@@ -843,6 +880,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
                 file: v.any(),
                 teamId: v.optional(v.string()),
                 workspaceId: v.optional(v.string()),
+                knowledgeGroupId: v.optional(v.string()),
+                userOwned: v.optional(v.string()),
                 filters: v.optional(v.string()),
               })
             ),
@@ -882,6 +921,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       let file;
       let teamId;
       let workspaceId;
+      let knowledgeGroupId;
+      let userOwned;
       let filters;
 
       if (contentType && contentType.includes("multipart/form-data")) {
@@ -895,6 +936,14 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         if (workspaceId && workspaceId === "") {
           workspaceId = undefined;
         }
+
+        knowledgeGroupId = form.get("knowledgeGroupId")?.toString();
+        if (knowledgeGroupId && knowledgeGroupId === "") {
+          knowledgeGroupId = undefined;
+        }
+
+        userOwned = form.get("userOwned")?.toString() === "true";
+
         try {
           filters = form.get("filters")
             ? JSON.parse(form.get("filters")?.toString() || "{}")
@@ -910,6 +959,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
           teamId,
           workspaceId,
+          knowledgeGroupId,
+          userOwned,
           filters,
         };
       } else {
@@ -1016,6 +1067,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
                 lastHash: v.optional(v.string()),
                 teamId: v.optional(v.string()),
                 workspaceId: v.optional(v.string()),
+                knowledgeGroupId: v.optional(v.string()),
+                userOwned: v.optional(v.string()),
                 filters: v.optional(v.string()),
               })
             ),
@@ -1068,6 +1121,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           data.lastHash = form.get("lastHash")?.toString();
           data.teamId = form.get("teamId")?.toString() || undefined;
           data.workspaceId = form.get("workspaceId")?.toString() || undefined;
+          data.knowledgeGroupId =
+            form.get("knowledgeGroupId")?.toString() || undefined;
+          data.userOwned = form.get("userOwned")?.toString() === "true";
 
           try {
             data.filters = form.get("filters")
