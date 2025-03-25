@@ -326,7 +326,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
 
   /**
    * Update a knowledge entry by ID
-   * Only the name can be updated
+   * Name and assignments can be updated
    */
   app.put(
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
@@ -336,7 +336,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "put",
       path: "/organisation/:organisationId/ai/knowledge/entries/:id",
       tags: ["knowledge"],
-      summary: "Update a knowledge entry by ID. Only the name can be updated.",
+      summary:
+        "Update a knowledge entry by ID. Name and assignments can be updated.",
       responses: {
         200: {
           description: "Successful response",
@@ -352,7 +353,14 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
-    validator("json", v.object({ name: v.string() })),
+    validator(
+      "json",
+      v.object({
+        name: v.optional(v.string()),
+        teamId: v.optional(v.nullable(v.string())),
+        workspaceId: v.optional(v.nullable(v.string())),
+      })
+    ),
     isOrganisationAdmin,
     async (c) => {
       try {

@@ -13,6 +13,7 @@ import { deleteFileFromDB } from "../../storage/db";
 import { deleteFileFromLocalDisc } from "../../storage/local";
 import { workspaces } from "../../db/schema/workspaces";
 import { teamMembers } from "../../db/schema/users";
+import { isUserPartOfTeam } from "../../usermanagement/teams";
 
 type KnowledgeQuery = {
   id?: string[];
@@ -430,7 +431,9 @@ export const updateKnowledgeEntry = async (
   organisationId: string,
   userId: string,
   data: {
-    name: string;
+    name?: string | undefined;
+    teamId?: string | null;
+    workspaceId?: string | null;
   }
 ) => {
   const canUpdate = await validateKnowledgeAccess(id, userId, organisationId);
@@ -439,6 +442,15 @@ export const updateKnowledgeEntry = async (
       "User does not have permission to update this knowledge entry"
     );
   }
+
+  // is a new teamId provided?
+  if (data.teamId) {
+    const isPartOfTeam = await isUserPartOfTeam(userId, data.teamId);
+    if (!isPartOfTeam) {
+      throw new Error("User is not part of the provided team");
+    }
+  }
+
   const r = await getDb()
     .update(knowledgeEntry)
     .set(data)
