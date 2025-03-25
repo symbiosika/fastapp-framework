@@ -119,6 +119,9 @@ export const knowledgeEntry = pgBaseTable(
     workspaceId: uuid("workspace_id").references(() => workspaces.id, {
       onDelete: "cascade",
     }),
+    // optional assign a document only to my user
+    // security feature to limit access to knowledge entries
+    userOwned: boolean("user_owned").notNull().default(false),
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceExternalId: varchar("source_external_id", { length: 255 }),
