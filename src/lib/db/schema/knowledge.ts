@@ -185,21 +185,27 @@ export const knowledgeGroupTeamAssignmentsUpdateSchema = createUpdateSchema(
 );
 
 // Relations for knowledge groups
-export const knowledgeGroupRelations = relations(knowledgeGroup, ({ many }) => ({
-  teamAssignments: many(knowledgeGroupTeamAssignments),
-}));
+export const knowledgeGroupRelations = relations(
+  knowledgeGroup,
+  ({ many }) => ({
+    teamAssignments: many(knowledgeGroupTeamAssignments),
+  })
+);
 
 // Relations for knowledge group team assignments
-export const knowledgeGroupTeamAssignmentsRelations = relations(knowledgeGroupTeamAssignments, ({ one }) => ({
-  knowledgeGroup: one(knowledgeGroup, {
-    fields: [knowledgeGroupTeamAssignments.knowledgeGroupId],
-    references: [knowledgeGroup.id],
-  }),
-  team: one(teams, {
-    fields: [knowledgeGroupTeamAssignments.teamId],
-    references: [teams.id],
-  }),
-}));
+export const knowledgeGroupTeamAssignmentsRelations = relations(
+  knowledgeGroupTeamAssignments,
+  ({ one }) => ({
+    knowledgeGroup: one(knowledgeGroup, {
+      fields: [knowledgeGroupTeamAssignments.knowledgeGroupId],
+      references: [knowledgeGroup.id],
+    }),
+    team: one(teams, {
+      fields: [knowledgeGroupTeamAssignments.teamId],
+      references: [teams.id],
+    }),
+  })
+);
 
 // Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable(
@@ -577,6 +583,10 @@ export const knowledgeEntryRelations = relations(
     workspace: one(workspaces, {
       fields: [knowledgeEntry.workspaceId],
       references: [workspaces.id],
+    }),
+    knowledgeGroup: one(knowledgeGroup, {
+      fields: [knowledgeEntry.knowledgeGroupId],
+      references: [knowledgeGroup.id],
     }),
   })
 );

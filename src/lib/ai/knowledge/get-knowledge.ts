@@ -350,17 +350,19 @@ export const getKnowledgeEntries = async (query: {
   if (!query.workspaceId) {
     filterConditions.push(isNull(knowledgeEntry.workspaceId));
   }
-  
+
   // Add filter for knowledgeGroupId
   if (query.knowledgeGroupId) {
-    filterConditions.push(eq(knowledgeEntry.knowledgeGroupId, query.knowledgeGroupId));
+    filterConditions.push(
+      eq(knowledgeEntry.knowledgeGroupId, query.knowledgeGroupId)
+    );
   }
-  
+
   // Add filter for userOwned
   if (query.userOwned === true) {
     filterConditions.push(eq(knowledgeEntry.userOwned, true));
   } else if (query.userOwned === false) {
-    filterConditions.push(or(eq(knowledgeEntry.userOwned, false), isNull(knowledgeEntry.userOwned)));
+    filterConditions.push(eq(knowledgeEntry.userOwned, false));
   }
 
   const r = await getDb().query.knowledgeEntry.findMany({
@@ -387,6 +389,7 @@ export const getKnowledgeEntries = async (query: {
           },
         },
       },
+      knowledgeGroup: true,
     },
   });
   // filter the teams by organisationId
@@ -510,6 +513,7 @@ export const getFullSourceDocumentsForKnowledgeEntry = async (
           },
         },
       },
+      knowledgeGroup: true,
     },
   });
   const chunks = await getDb().query.knowledgeChunks.findMany({

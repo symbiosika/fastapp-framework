@@ -228,7 +228,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await extractKnowledgeFromExistingDbEntry(body);
+        const r = await extractKnowledgeFromExistingDbEntry({
+          ...body,
+          organisationId,
+          userId: c.get("usersId"),
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -301,7 +305,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           teamId,
           workspaceId,
           knowledgeGroupId,
-          userOwned: userOwned === "true",
+          ...(userOwned === "true" ? { userOwned: true } : {}),
         });
         return c.json(r);
       } catch (e) {
@@ -587,6 +591,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         validateOrganisationId(data, organisationId);
 
         const r = await extractKnowledgeFromText({
+          userId: c.get("usersId"),
           organisationId: data.organisationId,
           title: data.title,
           text: data.text,
@@ -641,7 +646,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await addKnowledgeTextFromUrl(body);
+        const r = await addKnowledgeTextFromUrl({
+          ...body,
+          organisationId,
+          userId: c.get("usersId"),
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
