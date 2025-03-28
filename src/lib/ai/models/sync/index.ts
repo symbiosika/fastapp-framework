@@ -15,15 +15,15 @@ import {
 } from "../types/models";
 
 /**
- * Synchronizes AI models between the public models API and organization models
- * @param organisationId The organization ID to sync models for
+ * Synchronizes AI models between the public models API and organisation models
+ * @param organisationId The organisation ID to sync models for
  * @returns Object containing counts of added and removed models
  */
 export async function syncModels(
   organisationId: string
 ): Promise<SyncModelsResult> {
   try {
-    // Fetch both current organization models and public models
+    // Fetch both current organisation models and public models
     const [orgModels, publicModelsResponse] = await Promise.all([
       getAllAiProviderModels(organisationId),
       fetch("https://service-marketplace.perlecto.de/api/v1/models").then(
