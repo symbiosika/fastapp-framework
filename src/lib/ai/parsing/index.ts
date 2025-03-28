@@ -7,9 +7,10 @@ import { knowledgeText } from "../../../lib/db/db-schema";
 import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
 import { generateImageDescription } from "../standard";
+import type { PageContent } from "./pdf/index.d";
 
 /**
- * Helper function to parse a file and return the text content
+ * Helper function to parse a file and return the text content and pages if available
  */
 export const parseFile = async (
   file: File,
@@ -23,18 +24,29 @@ export const parseFile = async (
     model?: string;
     extractImages?: boolean;
   }
-): Promise<{ text: string; includesImages: boolean }> => {
+): Promise<{
+  text: string;
+  pages?: PageContent[];
+  includesImages: boolean;
+}> => {
   log.debug(`Parse file: ${file.name} from type ${file.type}`);
 
   // PDF
   if (file.type === "application/pdf") {
-    // try tp parse the content
-    const { text, includesImages } = await parsePdfFileAsMardown(
-      file,
-      context,
-      options
-    );
-    return { text, includesImages };
+    // try to parse the content
+    const result = await parsePdfFileAsMardown(file, context, options);
+
+    // Create a combined text from all pages if available
+    let fullText = "";
+    if (result.pages && result.pages.length > 0) {
+      fullText = result.pages.map((page) => page.text).join("\n\n");
+    }
+
+    return {
+      text: fullText,
+      pages: result.pages,
+      includesImages: result.includesImages,
+    };
   }
 
   // TXT file
@@ -69,9 +81,11 @@ export const parseDocument = async (data: {
   extractImages?: boolean;
 }) => {
   // Get the file (from DB or local disc) or content from URL
-  let content: string;
+  let content: string = "";
+  let pages: PageContent[] | undefined;
   let title: string;
   let docIncludesImages = false;
+
   if (data.sourceType === "db" && data.sourceId && data.sourceFileBucket) {
     log.debug(
       `Get file from DB: ${data.sourceId} ${data.sourceFileBucket} for organisation ${data.organisationId}`
@@ -81,7 +95,11 @@ export const parseDocument = async (data: {
       data.sourceFileBucket,
       data.organisationId
     );
-    const { text, includesImages } = await parseFile(
+    const {
+      text,
+      pages: filePages,
+      includesImages,
+    } = await parseFile(
       file,
       {
         organisationId: data.organisationId,
@@ -94,6 +112,7 @@ export const parseDocument = async (data: {
       }
     );
     content = text;
+    pages = filePages;
     title = file.name;
     docIncludesImages = includesImages;
   } else if (
@@ -109,7 +128,11 @@ export const parseDocument = async (data: {
       data.sourceFileBucket,
       data.organisationId
     );
-    const { text, includesImages } = await parseFile(
+    const {
+      text,
+      pages: filePages,
+      includesImages,
+    } = await parseFile(
       file,
       {
         organisationId: data.organisationId,
@@ -122,6 +145,7 @@ export const parseDocument = async (data: {
       }
     );
     content = text;
+    pages = filePages;
     title = file.name;
     docIncludesImages = includesImages;
   } else if (data.sourceType === "url" && data.sourceUrl) {
@@ -149,5 +173,5 @@ export const parseDocument = async (data: {
   }
   log.debug(`File parsed. Content length: ${content.length}`);
 
-  return { content, title, includesImages: docIncludesImages };
+  return { content, pages, title, includesImages: docIncludesImages };
 };

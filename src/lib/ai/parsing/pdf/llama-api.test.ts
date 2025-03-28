@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "bun:test";
-import { parsePdfFileAsMardownLocal } from "./local-service";
+import { parsePdfFileAsMardownLlama } from "./llama-api";
 import fs from "fs";
 import path from "path";
 
@@ -27,7 +27,7 @@ describe("Local PDF Parser Service", () => {
       type: "application/pdf",
     });
 
-    const result = await parsePdfFileAsMardownLocal(file, {
+    const result = await parsePdfFileAsMardownLlama(file, {
       organisationId: TEST_ORGANISATION_1.id,
     });
 

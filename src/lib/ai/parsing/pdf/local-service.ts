@@ -125,13 +125,16 @@ export const parsePdfFileAsMardownLocal = async (
   log.debug("Result retrieved successfully.");
   const result = (await resultResponse.json()) as LocalParserResult;
 
-  // Extract content from raw_content and join all page texts
-  const extractedText =
-    result.raw_content?.content?.map((page) => page.text).join("\n") || "";
+  // Create pages array with page numbers and content
+  const pages =
+    result.raw_content?.content?.map((page) => ({
+      page: page.page,
+      text: page.text,
+    })) || [];
 
   return {
-    text: extractedText || "",
     includesImages: false,
     model: "local",
+    pages: pages, // Add pages information
   };
 };

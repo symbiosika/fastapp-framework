@@ -9,6 +9,18 @@ import type {
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_API_BASE_URL = "https://api.mistral.ai/v1";
 
+// https://docs.mistral.ai/capabilities/document/
+
+type MistralOcrResult = {
+  pages: {
+    images?: {
+      id: string;
+      image_base64: string;
+    }[];
+    markdown: string;
+  }[];
+};
+
 /**
  * Parse a PDF file as markdown using the Mistral OCR service
  */
@@ -91,7 +103,7 @@ export const parsePdfFileAsMarkdownMistral = async (
       );
     }
 
-    const ocrResult = await ocrResponse.json();
+    const ocrResult: MistralOcrResult = await ocrResponse.json();
     log.debug("OCR result retrieved successfully.");
 
     // Process images from all pages
@@ -142,7 +154,10 @@ export const parsePdfFileAsMarkdownMistral = async (
     });
 
     return {
-      text: extractedText || "",
+      pages: ocrResult.pages.map((page, index) => ({
+        page: index + 1,
+        text: page.markdown,
+      })),
       includesImages: imageMap.size > 0,
       model: "mistral",
     };

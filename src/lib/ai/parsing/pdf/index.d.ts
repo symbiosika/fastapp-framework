@@ -10,8 +10,13 @@ export type PdfParserOptions = {
   extractImages?: boolean;
 };
 
-export type PdfParserResult = {
+export interface PageContent {
+  page: number;
   text: string;
+}
+
+export interface PdfParserResult {
   includesImages: boolean;
   model: string;
-};
+  pages?: PageContent[];
+}

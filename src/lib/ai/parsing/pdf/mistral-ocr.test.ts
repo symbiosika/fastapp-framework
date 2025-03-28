@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { parsePdfFileAsMarkdownMistral } from "./mistral-ocr";
 import fs from "fs";
 import path from "path";
@@ -20,7 +20,7 @@ describe("Mistral OCR Service", () => {
     await initTests();
   });
 
-  it("should successfully parse a PDF file", async () => {
+  test("should successfully parse a PDF file", async () => {
     // Read the test PDF file
     const fileBuffer = await fs.promises.readFile(TEST_PDF_PATH);
     const file = new File([fileBuffer], "example_wih_images.pdf", {
@@ -33,8 +33,7 @@ describe("Mistral OCR Service", () => {
 
     // Basic validation of the result
     expect(result).toBeDefined();
-    expect(result.text).toBeDefined();
-    expect(typeof result.text).toBe("string");
-    expect(result.text.length).toBeGreaterThan(0);
-  });
+    expect(result.pages).toBeDefined();
+    expect(result.pages?.length).toBeGreaterThan(0);
+  }, 30000);
 });

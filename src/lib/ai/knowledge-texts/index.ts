@@ -15,7 +15,7 @@ export const addKnowledgeTextFromUrl = async (data: {
   userOwned?: boolean;
 }) => {
   const markdown = await getMarkdownFromUrl(data.url);
-  log.debug(`Got markdown from URL: ${markdown.slice(0, 100)}`);
+  log.debug(`Got markdown from URL: ${markdown.slice(0, 25)}`);
 
   return extractKnowledgeFromText({
     organisationId: data.organisationId,

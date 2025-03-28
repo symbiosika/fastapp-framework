@@ -29,6 +29,7 @@ import { nanoid } from "nanoid";
 import { upsertFilter } from "./knowledge-filters";
 import { eq } from "drizzle-orm";
 import { generateDocumentSummary, generateChunkBasedSummary } from "../summary";
+import type { PageContent } from "../parsing/pdf/index.d";
 
 /**
  * Helper function to store a knowledge entry in the database
@@ -74,7 +75,8 @@ const storeKnowledgeChunk = async (data: KnowledgeChunksInsert) => {
 export const extractKnowledgeFromText = async (data: {
   organisationId: string;
   title: string;
-  text: string;
+  text?: string;
+  pages?: PageContent[];
   filters?: Record<string, string>;
   metadata?: Record<string, string | number | boolean | undefined>;
   sourceType?: FileSourceType;
@@ -94,8 +96,14 @@ export const extractKnowledgeFromText = async (data: {
 }) => {
   const title = data.title + "-" + nanoid(4);
 
-  // Split the content into chunks
-  const chunks = splitTextIntoSectionsOrChunks(data.text);
+  // Get full text for text-based operations
+  let fullText = data.text || "";
+  if (!data.text && data.pages) {
+    fullText = data.pages.map((page) => page.text).join("\n\n");
+  }
+
+  // Split the content into chunks - now handles both text and pages
+  const chunks = splitTextIntoSectionsOrChunks(data.pages || fullText);
 
   // Generate embeddings for all chunks
   const allEmbeddings: ChunkWithEmbedding[] = await Promise.all(
@@ -128,7 +136,7 @@ export const extractKnowledgeFromText = async (data: {
     log.debug(`Generating summary for knowledge entry: ${title}`);
 
     // Use chunk-based summary generation for longer texts
-    if (data.text.length > 10000 && chunks.length > 1) {
+    if (fullText.length > 10000 && chunks.length > 1) {
       log.debug(`Using chunk-based summary generation for long document`);
       const summary = await generateChunkBasedSummary(
         chunks,
@@ -146,7 +154,7 @@ export const extractKnowledgeFromText = async (data: {
     } else {
       // Use the original method for shorter texts
       const summary = await generateDocumentSummary(
-        data.text,
+        fullText,
         data.title,
         {
           organisationId: data.organisationId,
@@ -164,8 +172,9 @@ export const extractKnowledgeFromText = async (data: {
   // merge metadata
   const meta = {
     ...(data.metadata ?? {}),
-    textLength: data.text.length,
+    textLength: fullText.length,
     includesLocalImages: data.includesLocalImages,
+    pageCount: data.pages?.length,
   };
 
   // Store the main entry in the database
@@ -199,6 +208,7 @@ export const extractKnowledgeFromText = async (data: {
         order: e.order,
         embeddingModel: e.embedding.model,
         textEmbedding: e.embedding.embedding,
+        meta: e.meta,
       })
     )
   );
@@ -231,11 +241,12 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   summaryModel?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
-  let { content, title, includesImages } = await parseDocument(data);
+  let { content, pages, title, includesImages } = await parseDocument(data);
 
   return extractKnowledgeFromText({
     title,
     text: content,
+    pages: pages,
     filters: data.filters,
     metadata: data.metadata,
     sourceType: data.sourceType,
