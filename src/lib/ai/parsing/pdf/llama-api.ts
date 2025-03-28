@@ -1,3 +1,8 @@
+import type {
+  PdfParserContext,
+  PdfParserOptions,
+  PdfParserResult,
+} from "./index.d";
 import log from "../../../log";
 
 // https://docs.cloud.llamaindex.ai/llamaparse/getting_started/api
@@ -8,10 +13,10 @@ const API_BASE_URL = "https://api.cloud.llamaindex.ai";
  * Parse a PDF file as markdown
  */
 export const parsePdfFileAsMardownLlama = async (
-  fileContent: File
-): Promise<{
-  text: string;
-}> => {
+  fileContent: File,
+  context: PdfParserContext,
+  options?: PdfParserOptions
+): Promise<PdfParserResult> => {
   if (!LLAMA_CLOUD_API_KEY) {
     throw new Error("No API key set for LlamaParse API.");
   }
@@ -80,5 +85,7 @@ export const parsePdfFileAsMardownLlama = async (
 
   return {
     text: r.markdown,
+    includesImages: false,
+    model: "llama",
   };
 };

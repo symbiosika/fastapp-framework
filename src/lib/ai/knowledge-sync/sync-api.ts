@@ -125,7 +125,11 @@ export const processKnowledgeSync = async (params: {
   let result;
   if (params.file) {
     // Process file
-    const parsedFile = await parseFile(params.file);
+    const parsedFile = await parseFile(params.file, {
+      organisationId: params.organisationId,
+      teamId: params.teamId,
+      workspaceId: params.workspaceId,
+    });
     result = await extractKnowledgeFromText({
       organisationId: params.organisationId,
       title: params.title || params.file.name,
@@ -136,6 +140,7 @@ export const processKnowledgeSync = async (params: {
       workspaceId: params.workspaceId,
       sourceType: "external",
       sourceExternalId: params.externalId,
+      includesLocalImages: parsedFile.includesImages,
     });
   } else if (params.text) {
     // Process text content
@@ -149,6 +154,7 @@ export const processKnowledgeSync = async (params: {
       workspaceId: params.workspaceId,
       sourceType: "external",
       sourceExternalId: params.externalId,
+      includesLocalImages: false,
     });
   } else {
     throw new Error("Either file or text content is required");

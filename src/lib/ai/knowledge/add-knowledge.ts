@@ -86,6 +86,7 @@ export const extractKnowledgeFromText = async (data: {
   workspaceId?: string;
   knowledgeGroupId?: string;
   userOwned?: boolean;
+  includesLocalImages?: boolean;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -119,6 +120,7 @@ export const extractKnowledgeFromText = async (data: {
   const meta = {
     ...(data.metadata ?? {}),
     textLength: data.text.length,
+    includesLocalImages: data.includesLocalImages,
   };
 
   // Store the main entry in the database
@@ -175,9 +177,11 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   workspaceId?: string;
   knowledgeGroupId?: string;
   userOwned?: boolean;
+  model?: string;
+  extractImages?: boolean;
 }) => {
   // Get the file (from DB or local disc) or content from URL
-  let { content, title } = await parseDocument(data);
+  let { content, title, includesImages } = await parseDocument(data);
 
   return extractKnowledgeFromText({
     title,
@@ -194,6 +198,7 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     workspaceId: data.workspaceId,
     knowledgeGroupId: data.knowledgeGroupId,
     userOwned: data.userOwned,
+    includesLocalImages: includesImages,
   });
 };
 
@@ -261,7 +266,11 @@ export const extractKnowledgeInOneStep = async (
   // if the file is provided, extract knowledge from it
   if (data.file) {
     // 1. parse file content
-    const parsed = await parseFile(data.file);
+    const parsed = await parseFile(data.file, {
+      organisationId: data.organisationId,
+      teamId: data.teamId,
+      workspaceId: data.workspaceId,
+    });
 
     // 2. Extract knowledge
     const result = await extractKnowledgeFromText({
@@ -277,6 +286,7 @@ export const extractKnowledgeInOneStep = async (
       sourceExternalId: data.meta?.sourceId ?? data.file.name,
       sourceFileBucket: bucket,
       sourceUrl: data.meta?.sourceUri ?? data.file.name,
+      includesLocalImages: parsed.includesImages,
     });
     return result;
   }
@@ -295,6 +305,7 @@ export const extractKnowledgeInOneStep = async (
       sourceType: "external",
       sourceFileBucket: bucket,
       sourceUrl: data.meta?.sourceUri ?? data.data.title,
+      includesLocalImages: false,
     });
   }
   // if no file and no text is provided, throw an error

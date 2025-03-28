@@ -11,26 +11,42 @@ import { generateImageDescription } from "../standard";
 /**
  * Helper function to parse a file and return the text content
  */
-export const parseFile = async (file: File): Promise<{ text: string }> => {
+export const parseFile = async (
+  file: File,
+  context: {
+    organisationId: string;
+    userId?: string;
+    teamId?: string;
+    workspaceId?: string;
+  },
+  options?: {
+    model?: string;
+    extractImages?: boolean;
+  }
+): Promise<{ text: string; includesImages: boolean }> => {
   log.debug(`Parse file: ${file.name} from type ${file.type}`);
 
   // PDF
   if (file.type === "application/pdf") {
     // try tp parse the content
-    const { text } = await parsePdfFileAsMardown(file);
-    return { text };
+    const { text, includesImages } = await parsePdfFileAsMardown(
+      file,
+      context,
+      options
+    );
+    return { text, includesImages };
   }
 
   // TXT file
   if (file.type.startsWith("text/plain")) {
-    return { text: await file.text() };
+    return { text: await file.text(), includesImages: false };
   }
 
   // Image
   else if (file.type.startsWith("image")) {
     // the the image describe by ai
     const description = await generateImageDescription(file);
-    return { text: description };
+    return { text: description, includesImages: false };
   } else {
     throw new Error(`Unsupported file type for parsing: ${file.type}`);
   }
@@ -49,10 +65,13 @@ export const parseDocument = async (data: {
   userOwned?: boolean;
   teamId?: string;
   workspaceId?: string;
+  model?: string;
+  extractImages?: boolean;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let content: string;
   let title: string;
+  let docIncludesImages = false;
   if (data.sourceType === "db" && data.sourceId && data.sourceFileBucket) {
     log.debug(
       `Get file from DB: ${data.sourceId} ${data.sourceFileBucket} for organisation ${data.organisationId}`
@@ -62,9 +81,21 @@ export const parseDocument = async (data: {
       data.sourceFileBucket,
       data.organisationId
     );
-    const { text } = await parseFile(file);
+    const { text, includesImages } = await parseFile(
+      file,
+      {
+        organisationId: data.organisationId,
+        teamId: data.teamId,
+        workspaceId: data.workspaceId,
+      },
+      {
+        model: data.model,
+        extractImages: data.extractImages,
+      }
+    );
     content = text;
     title = file.name;
+    docIncludesImages = includesImages;
   } else if (
     data.sourceType === "local" &&
     data.sourceId &&
@@ -78,9 +109,21 @@ export const parseDocument = async (data: {
       data.sourceFileBucket,
       data.organisationId
     );
-    const { text } = await parseFile(file);
+    const { text, includesImages } = await parseFile(
+      file,
+      {
+        organisationId: data.organisationId,
+        teamId: data.teamId,
+        workspaceId: data.workspaceId,
+      },
+      {
+        model: data.model,
+        extractImages: data.extractImages,
+      }
+    );
     content = text;
     title = file.name;
+    docIncludesImages = includesImages;
   } else if (data.sourceType === "url" && data.sourceUrl) {
     log.debug(`Get file from URL: ${data.sourceUrl}`);
     content = "";
@@ -106,5 +149,5 @@ export const parseDocument = async (data: {
   }
   log.debug(`File parsed. Content length: ${content.length}`);
 
-  return { content, title };
+  return { content, title, includesImages: docIncludesImages };
 };

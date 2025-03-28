@@ -22,12 +22,6 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "../../../../../lib/ai/knowledge/similarity-search";
-import {
-  createKnowledgeText,
-  getKnowledgeText,
-  updateKnowledgeText,
-  deleteKnowledgeText,
-} from "../../../../../lib/ai/knowledge/knowledge-texts";
 import { addKnowledgeTextFromUrl } from "../../../../../lib/ai/knowledge-texts";
 import {
   authAndSetUsersInfo,
@@ -36,11 +30,7 @@ import {
 import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-organisation";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import {
-  knowledgeEntrySchema,
-  knowledgeTextInsertSchema,
-  knowledgeTextUpdateSchema,
-} from "../../../../../dbSchema";
+import { knowledgeEntrySchema } from "../../../../../dbSchema";
 import { isOrganisationAdmin, isOrganisationMember } from "../../..";
 import {
   checkIfKnowledgeNeedsUpdate,
@@ -74,6 +64,8 @@ const generateKnowledgeValidation = v.object({
   userOwned: v.optional(v.boolean()),
   workspaceId: v.optional(v.string()),
   knowledgeGroupId: v.optional(v.string()),
+  model: v.optional(v.string()), // mistral | llama | local
+  extractImages: v.optional(v.boolean()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -165,6 +157,8 @@ const uploadAndLearnValidation = v.object({
       sourceId: v.string(),
     })
   ),
+  model: v.optional(v.string()), // mistral | llama | local
+  extractImages: v.optional(v.boolean()),
 });
 
 const checkForSyncValidation = v.object({
@@ -189,57 +183,6 @@ const syncKnowledgeValidation = v.object({
 });
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
-  /**
-   * Call the knowledge extraction from a document to generate embeddings in the database
-   * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
-   */
-  app.post(
-    API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/extract-knowledge",
-      tags: ["knowledge"],
-      summary: "Extract knowledge from a document",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(
-                v.object({
-                  id: v.string(),
-                  ok: v.boolean(),
-                })
-              ),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", generateKnowledgeValidation),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
-
-        const r = await extractKnowledgeFromExistingDbEntry({
-          ...body,
-          organisationId,
-          userId: c.get("usersId"),
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
   /**
    * Get all knowledge entries
    * URL params:
@@ -560,86 +503,36 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   );
 
   /**
-   * Add a text knowledge entry from a Text
-   * This will create a knowledge-text entry
+   * Call the knowledge extraction from a document to generate embeddings in the database
+   * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
    */
   app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-text",
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/from-text",
+      path: "/organisation/:organisationId/ai/knowledge/extract-knowledge",
       tags: ["knowledge"],
-      summary: "Add a text knowledge entry from text",
+      summary: "Extract knowledge from a document",
       responses: {
         200: {
           description: "Successful response",
           content: {
             "application/json": {
-              schema: resolver(knowledgeEntrySchema),
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  ok: v.boolean(),
+                })
+              ),
             },
           },
         },
       },
     }),
-    validator("json", addFromTextValidation),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const data = c.req.valid("json");
-        const { organisationId } = c.req.valid("param");
-        validateOrganisationId(data, organisationId);
-
-        const r = await extractKnowledgeFromText({
-          userId: c.get("usersId"),
-          organisationId: data.organisationId,
-          title: data.title,
-          text: data.text,
-          filters: data.filters,
-          teamId: data.teamId,
-          workspaceId: data.workspaceId,
-          knowledgeGroupId: data.knowledgeGroupId,
-          userOwned: data.userOwned,
-          sourceExternalId: data.meta?.sourceId ?? data.title,
-          sourceType: "external",
-          sourceFileBucket: "default",
-          sourceUrl: data.meta?.sourceUri ?? data.title,
-        });
-
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Add a text knowledge entry from an URL
-   * This will parse the URL to markdown and then create a knowledge-text entry
-   */
-  app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-url",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/from-url",
-      tags: ["knowledge"],
-      summary: "Add a text knowledge entry from URL",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(knowledgeEntrySchema),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", addFromUrlValidation),
+    validator("json", generateKnowledgeValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -648,221 +541,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await addKnowledgeTextFromUrl({
+        const r = await extractKnowledgeFromExistingDbEntry({
           ...body,
           organisationId,
           userId: c.get("usersId"),
         });
         return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Create a new knowledge text entry
-   */
-  app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/texts",
-      tags: ["knowledge"],
-      summary: "Create a new knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-        },
-      },
-    }),
-    validator("json", knowledgeTextInsertSchema),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
-
-        const r = await createKnowledgeText({
-          ...body,
-          userId: c.get("usersId"),
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Read knowledge text entries
-   */
-  app.get(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "get",
-      path: "/organisation/:organisationId/ai/knowledge/texts",
-      tags: ["knowledge"],
-      summary: "Read knowledge text entries",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(v.array(knowledgeEntrySchema)),
-            },
-          },
-        },
-      },
-    }),
-    validator(
-      "query",
-      v.object({
-        id: v.optional(v.string()),
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-        limit: v.optional(v.string()),
-        page: v.optional(v.string()),
-      })
-    ),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const {
-          id,
-          teamId,
-          workspaceId,
-          limit: limitStr,
-          page: pageStr,
-        } = c.req.valid("query");
-        const { organisationId } = c.req.valid("param");
-        const userId = c.get("usersId");
-        const limit = limitStr ? parseInt(limitStr) : undefined;
-        const page = pageStr ? parseInt(pageStr) : undefined;
-
-        const r = await getKnowledgeText({
-          id,
-          limit,
-          page,
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Update a knowledge text entry
-   */
-  app.put(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "put",
-      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
-      tags: ["knowledge"],
-      summary: "Update a knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(knowledgeEntrySchema),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", knowledgeTextUpdateSchema),
-    validator(
-      "query",
-      v.object({
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-      })
-    ),
-    validator(
-      "param",
-      v.object({ organisationId: v.string(), id: v.string() })
-    ),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const { teamId, workspaceId } = c.req.valid("query");
-        const { organisationId, id } = c.req.valid("param");
-        const body = c.req.valid("json");
-        const userId = c.get("usersId");
-        validateOrganisationId(body, organisationId);
-
-        const r = await updateKnowledgeText(id, body, {
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Delete a knowledge text entry
-   */
-  app.delete(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "delete",
-      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
-      tags: ["knowledge"],
-      summary: "Delete a knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-        },
-      },
-    }),
-    validator(
-      "query",
-      v.object({
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-      })
-    ),
-    validator(
-      "param",
-      v.object({ organisationId: v.string(), id: v.string() })
-    ),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const { teamId, workspaceId } = c.req.valid("query");
-        const { organisationId, id } = c.req.valid("param");
-        const userId = c.get("usersId");
-
-        await deleteKnowledgeText(id, {
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }
@@ -989,6 +673,108 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           { ...parsedData, file },
           true
         );
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Add a text knowledge entry from a Text
+   * This will create a knowledge-text entry
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-text",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/from-text",
+      tags: ["knowledge"],
+      summary: "Add a text knowledge entry from text",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", addFromTextValidation),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const data = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(data, organisationId);
+
+        const r = await extractKnowledgeFromText({
+          userId: c.get("usersId"),
+          organisationId: data.organisationId,
+          title: data.title,
+          text: data.text,
+          filters: data.filters,
+          teamId: data.teamId,
+          workspaceId: data.workspaceId,
+          knowledgeGroupId: data.knowledgeGroupId,
+          userOwned: data.userOwned,
+          sourceExternalId: data.meta?.sourceId ?? data.title,
+          sourceType: "external",
+          sourceFileBucket: "default",
+          sourceUrl: data.meta?.sourceUri ?? data.title,
+          includesLocalImages: false,
+        });
+
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Add a text knowledge entry from an URL
+   * This will parse the URL to markdown and then create a knowledge-text entry
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/from-url",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/from-url",
+      tags: ["knowledge"],
+      summary: "Add a text knowledge entry from URL",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(knowledgeEntrySchema),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", addFromUrlValidation),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
+
+        const r = await addKnowledgeTextFromUrl({
+          ...body,
+          organisationId,
+          userId: c.get("usersId"),
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });

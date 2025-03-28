@@ -37,6 +37,7 @@ import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-t
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
 import aiKnowledgeFiltersRoutes from "./routes/organisation/[organisationId]/ai/knowledge-filters";
 import aiKnowledgeGroupRoutes from "./routes/organisation/[organisationId]/ai/knowledge-groups";
+import aiKnowledgeTextsRoutes from "./routes/organisation/[organisationId]/ai/knowledge-texts";
 import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
 import defineOrganisationRoutes from "./routes/organisation";
@@ -268,6 +269,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiKnowledgeRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiKnowledgeFiltersRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiKnowledgeGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiKnowledgeTextsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);

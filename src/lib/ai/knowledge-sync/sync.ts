@@ -127,6 +127,7 @@ export const syncKnowledgeFromPlugin = async (
       sourceFileBucket: undefined,
       sourceId: undefined,
       sourceUrl: undefined,
+      includesLocalImages: false,
     });
 
     // Create new knowledge source entry
@@ -170,6 +171,7 @@ export const syncKnowledgeFromPlugin = async (
       sourceFileBucket: undefined,
       sourceId: undefined,
       sourceUrl: undefined,
+      includesLocalImages: false,
     });
 
     // Create new knowledge source entry

@@ -96,6 +96,7 @@ export const knowledgeTextUpdateSchema = createUpdateSchema(knowledgeText);
 export type KnowledgeTextMeta = {
   sourceUri?: string;
   textLength?: number;
+  includesLocalImages?: boolean; // when the document has mardown ![image](image.png) which can be found in the storage
 };
 
 // Table for knowledge groups (grouping of knowledge entries)

@@ -29,5 +29,6 @@ export const addKnowledgeTextFromUrl = async (data: {
     sourceType: "external",
     sourceFileBucket: "default",
     sourceUrl: data.url,
+    includesLocalImages: false,
   });
 };
