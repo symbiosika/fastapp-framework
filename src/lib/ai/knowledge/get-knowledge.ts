@@ -1,6 +1,7 @@
 import { getDb } from "../../../lib/db/db-connection";
 import { and, eq, inArray, SQL, sql, or, isNull } from "drizzle-orm";
 import {
+  KnowledgeChunkMeta,
   knowledgeChunks,
   knowledgeEntry,
   knowledgeEntryFilters,
@@ -35,6 +36,7 @@ type PlainKnowledgetEntry = {
   text: string;
   knowledgeEntryId: string;
   chunkId: string;
+  meta: KnowledgeChunkMeta;
 };
 
 /**
@@ -283,6 +285,7 @@ export const getPlainKnowledge = async (
         text: chunk.text,
         knowledgeEntryId: entry.id,
         chunkId: chunk.id,
+        meta: chunk.meta ?? {},
       });
     }
   }

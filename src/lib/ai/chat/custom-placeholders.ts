@@ -134,6 +134,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
               userId: meta.userId,
             }),
           },
+          chunks: knowledgebase.map((k) => ({
+            id: k.knowledgeEntryId,
+            text: k.text,
+            meta: k.meta,
+          })),
         },
       };
     },
@@ -214,6 +219,11 @@ export const customAppPlaceholders: PlaceholderParser[] = [
               userId: meta.userId,
             }),
           },
+          chunks: results.map((r) => ({
+            id: r.knowledgeEntryId,
+            text: r.text,
+            meta: r.meta,
+          })),
         },
       };
     },
