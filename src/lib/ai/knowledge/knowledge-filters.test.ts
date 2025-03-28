@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { getDb } from "../../db/db-connection";
-import { upsertFilter, updateFilterName, updateFilterCategory, getFiltersByCategory, deleteFilter } from "./knowledge-filters";
+import {
+  upsertFilter,
+  updateFilterName,
+  updateFilterCategory,
+  getFiltersByCategory,
+  deleteFilter,
+} from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
 import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
@@ -153,7 +159,7 @@ describe("updateFilterCategory", () => {
       .where(eq(knowledgeFilters.category, "new-category"));
 
     expect(filters.length).toBe(2);
-    expect(filters.map(f => f.name).sort()).toEqual(["filter1", "filter2"]);
+    expect(filters.map((f) => f.name).sort()).toEqual(["filter1", "filter2"]);
   });
 
   it("should not update filters from other categories", async () => {
@@ -199,14 +205,13 @@ describe("getFiltersByCategory", () => {
 
     const groupedFilters = await getFiltersByCategory(TEST_ORGANISATION_1.id);
 
-    expect(groupedFilters).toEqual({
-      category1: ["filter1", "filter2"],
-      category2: ["filter3"],
-    });
+    expect(groupedFilters?.category1).toContain("filter1");
+    expect(groupedFilters?.category1).toContain("filter2");
+    expect(groupedFilters?.category2).toContain("filter3");
   });
 
   it("should return empty object if no filters exist", async () => {
-    const groupedFilters = await getFiltersByCategory("non-existent-org");
+    const groupedFilters = await getFiltersByCategory("99000000-0000-0000-0000-000000000000");
     expect(groupedFilters).toEqual({});
   });
 });

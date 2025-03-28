@@ -66,6 +66,9 @@ const generateKnowledgeValidation = v.object({
   knowledgeGroupId: v.optional(v.string()),
   model: v.optional(v.string()), // mistral | llama | local
   extractImages: v.optional(v.boolean()),
+  generateSummary: v.optional(v.boolean()),
+  summaryCustomPrompt: v.optional(v.string()),
+  summaryModel: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -159,6 +162,9 @@ const uploadAndLearnValidation = v.object({
   ),
   model: v.optional(v.string()), // mistral | llama | local
   extractImages: v.optional(v.boolean()),
+  generateSummary: v.optional(v.boolean()),
+  summaryCustomPrompt: v.optional(v.string()),
+  summaryModel: v.optional(v.string()),
 });
 
 const checkForSyncValidation = v.object({
@@ -619,6 +625,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       let knowledgeGroupId;
       let userOwned;
       let filters;
+      let generateSummary;
+      let summaryCustomPrompt;
+      let summaryModel;
+      let extractImages;
 
       if (contentType && contentType.includes("multipart/form-data")) {
         const form = await c.req.formData();
@@ -637,7 +647,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           knowledgeGroupId = undefined;
         }
 
+        extractImages = form.get("extractImages")?.toString() === "true";
         userOwned = form.get("userOwned")?.toString() === "true";
+        generateSummary = form.get("generateSummary")?.toString() === "true";
+        summaryCustomPrompt = form.get("summaryCustomPrompt")?.toString();
+        summaryModel = form.get("summaryModel")?.toString();
 
         try {
           filters = form.get("filters")
@@ -657,6 +671,10 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           knowledgeGroupId,
           userOwned,
           filters,
+          extractImages,
+          generateSummary,
+          summaryCustomPrompt,
+          summaryModel,
         };
       } else {
         data = await c.req.json();

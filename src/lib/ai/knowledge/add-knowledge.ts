@@ -28,6 +28,7 @@ import { parseDocument, parseFile } from "../parsing";
 import { nanoid } from "nanoid";
 import { upsertFilter } from "./knowledge-filters";
 import { eq } from "drizzle-orm";
+import { generateDocumentSummary, generateChunkBasedSummary } from "../summary";
 
 /**
  * Helper function to store a knowledge entry in the database
@@ -87,6 +88,9 @@ export const extractKnowledgeFromText = async (data: {
   knowledgeGroupId?: string;
   userOwned?: boolean;
   includesLocalImages?: boolean;
+  generateSummary?: boolean;
+  summaryCustomPrompt?: string;
+  summaryModel?: string;
 }) => {
   const title = data.title + "-" + nanoid(4);
 
@@ -116,6 +120,47 @@ export const extractKnowledgeFromText = async (data: {
   );
   log.debug(`Embeddings generated. Chunks: ${chunks.length}`);
 
+  // Generate summary if requested
+  let description = undefined;
+  let abstract = undefined;
+
+  if (data.generateSummary ?? true) {
+    log.debug(`Generating summary for knowledge entry: ${title}`);
+
+    // Use chunk-based summary generation for longer texts
+    if (data.text.length > 10000 && chunks.length > 1) {
+      log.debug(`Using chunk-based summary generation for long document`);
+      const summary = await generateChunkBasedSummary(
+        chunks,
+        data.title,
+        {
+          organisationId: data.organisationId,
+          userId: data.userId,
+        },
+        {
+          model: data.summaryModel,
+          customPrompt: data.summaryCustomPrompt,
+        }
+      );
+      description = summary.description;
+    } else {
+      // Use the original method for shorter texts
+      const summary = await generateDocumentSummary(
+        data.text,
+        data.title,
+        {
+          organisationId: data.organisationId,
+          userId: data.userId,
+        },
+        {
+          model: data.summaryModel,
+          customPrompt: data.summaryCustomPrompt,
+        }
+      );
+      description = summary.description;
+    }
+  }
+
   // merge metadata
   const meta = {
     ...(data.metadata ?? {}),
@@ -137,6 +182,8 @@ export const extractKnowledgeFromText = async (data: {
       workspaceId: data.workspaceId,
       knowledgeGroupId: data.knowledgeGroupId,
       userOwned: data.userOwned,
+      description,
+      abstract,
     },
     data.filters || {}
   );
@@ -179,6 +226,9 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   userOwned?: boolean;
   model?: string;
   extractImages?: boolean;
+  generateSummary?: boolean;
+  summaryCustomPrompt?: string;
+  summaryModel?: string;
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, title, includesImages } = await parseDocument(data);
@@ -199,6 +249,9 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
     knowledgeGroupId: data.knowledgeGroupId,
     userOwned: data.userOwned,
     includesLocalImages: includesImages,
+    generateSummary: data.generateSummary,
+    summaryCustomPrompt: data.summaryCustomPrompt,
+    summaryModel: data.summaryModel,
   });
 };
 
@@ -249,6 +302,9 @@ export const extractKnowledgeInOneStep = async (
       sourceUri: string;
       sourceId: string;
     };
+    generateSummary?: boolean;
+    summaryCustomPrompt?: string;
+    summaryModel?: string;
   },
   overwrite?: boolean
 ) => {
@@ -287,6 +343,9 @@ export const extractKnowledgeInOneStep = async (
       sourceFileBucket: bucket,
       sourceUrl: data.meta?.sourceUri ?? data.file.name,
       includesLocalImages: parsed.includesImages,
+      generateSummary: data.generateSummary,
+      summaryCustomPrompt: data.summaryCustomPrompt,
+      summaryModel: data.summaryModel,
     });
     return result;
   }
@@ -306,6 +365,9 @@ export const extractKnowledgeInOneStep = async (
       sourceFileBucket: bucket,
       sourceUrl: data.meta?.sourceUri ?? data.data.title,
       includesLocalImages: false,
+      generateSummary: data.generateSummary,
+      summaryCustomPrompt: data.summaryCustomPrompt,
+      summaryModel: data.summaryModel,
     });
   }
   // if no file and no text is provided, throw an error

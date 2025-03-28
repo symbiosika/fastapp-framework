@@ -194,6 +194,7 @@ export const getFiltersForKnowledgeEntry = async (
   const filters = await db
     .select({
       filter: knowledgeFilters,
+      assigned: knowledgeEntryFilters,
     })
     .from(knowledgeEntryFilters)
     .innerJoin(
@@ -202,7 +203,10 @@ export const getFiltersForKnowledgeEntry = async (
     )
     .where(eq(knowledgeEntryFilters.knowledgeEntryId, knowledgeEntryId));
 
-  return filters.map((result) => result.filter);
+  return filters.map((result) => ({
+    ...result.filter,
+    relationId: result.assigned.id,
+  }));
 };
 
 /**

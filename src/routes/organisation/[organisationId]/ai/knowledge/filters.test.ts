@@ -2,30 +2,32 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineKnowledgeRoutes from ".";
 import defineKnowledgeFilterRoutes from "../knowledge-filters";
-import {
-  initTests,
-  TEST_ORGANISATION_1,
-  TEST_USER_1,
-} from "../../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
 import {
   createDatabaseClient,
   waitForDbConnection,
 } from "../../../../../lib/db/db-connection";
+import defineRoutesTexts from "../knowledge-texts";
 
-let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledge = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appTexts = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appFilters = new Hono<{ Variables: FastAppHonoContextVariables }>();
+
 let TEST_USER_1_TOKEN: string;
 let createdKnowledgeTextId: string;
 let createdKnowledgeEntryId: string;
 let createdFilterId: string;
+let createdFilterRelationId: string;
 
 beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  defineKnowledgeRoutes(app, "/api");
-  defineKnowledgeFilterRoutes(app, "/api");
+  defineKnowledgeRoutes(appKnowledge, "/api");
+  defineKnowledgeFilterRoutes(appFilters, "/api");
+  defineRoutesTexts(appTexts, "/api");
   const { user1Token } = await initTests();
   TEST_USER_1_TOKEN = user1Token;
 });
@@ -39,7 +41,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -61,7 +63,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
       TEST_USER_1_TOKEN,
       parseData
@@ -81,7 +83,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appFilters,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge-filters`,
       TEST_USER_1_TOKEN,
       filterData
@@ -94,11 +96,12 @@ describe("Knowledge Filter Management API Endpoints", () => {
 
   test("Add a filter to a knowledge entry", async () => {
     const filterData = {
-      filterId: createdFilterId,
+      category: "test-category",
+      name: "test-filter",
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}/filters`,
       TEST_USER_1_TOKEN,
       filterData
@@ -110,7 +113,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
 
   test("Get all filters for a knowledge entry", async () => {
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}/filters`,
       TEST_USER_1_TOKEN
     );
@@ -121,12 +124,14 @@ describe("Knowledge Filter Management API Endpoints", () => {
     expect(response.jsonResponse[0].id).toBe(createdFilterId);
     expect(response.jsonResponse[0].category).toBe("test-category");
     expect(response.jsonResponse[0].name).toBe("test-filter");
+
+    createdFilterRelationId = response.jsonResponse[0].relationId;
   });
 
   test("Remove a filter from a knowledge entry", async () => {
     const response = await testFetcher.delete(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}/filters/${createdFilterId}`,
+      appKnowledge,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}/filters/${createdFilterRelationId}`,
       TEST_USER_1_TOKEN
     );
 
@@ -135,7 +140,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
 
     // Verify the filter was removed
     const getResponse = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}/filters`,
       TEST_USER_1_TOKEN
     );
@@ -147,7 +152,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
   // Cleanup tests
   test("Delete the test knowledge entry", async () => {
     const response = await testFetcher.delete(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_1_TOKEN
     );
@@ -157,7 +162,7 @@ describe("Knowledge Filter Management API Endpoints", () => {
 
   test("Delete the test knowledge text entry", async () => {
     const response = await testFetcher.delete(
-      app,
+      appTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_1_TOKEN
     );
@@ -167,11 +172,11 @@ describe("Knowledge Filter Management API Endpoints", () => {
 
   test("Delete the test filter", async () => {
     const response = await testFetcher.delete(
-      app,
+      appFilters,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge-filters?category=test-category&name=test-filter`,
       TEST_USER_1_TOKEN
     );
 
     expect(response.status).toBe(200);
   });
-}); 
+});
