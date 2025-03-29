@@ -1,4 +1,3 @@
-import { AiProviderModelsSelect } from "../../db/schema/models";
 import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { mistral } from "@ai-sdk/mistral";
@@ -7,6 +6,7 @@ import { azure } from "@ai-sdk/azure";
 import { perplexity } from "@ai-sdk/perplexity";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { getAllAiProviderModels } from "../models";
+import { UserContext } from "./types";
 
 /**
  * Gets a Vercel AI SDK compatible model from a provider:model string
@@ -16,12 +16,7 @@ import { getAllAiProviderModels } from "../models";
  * @returns Vercel AI SDK compatible model
  * @throws Error if model is not found, not active, or provider is unsupported
  */
-export const getAiSdkModel = async (
-  modelString: string,
-  context: {
-    organisationId: string;
-  }
-) => {
+export const getAIModel = async (modelString: string, context: UserContext) => {
   const [providerName, modelName] = modelString.split(":");
 
   if (!providerName || !modelName) {
@@ -79,5 +74,81 @@ export const getAiSdkModel = async (
       }
 
       throw new Error(`Provider ${providerName} is not supported`);
+  }
+};
+
+/**
+ * Gets a Vercel AI SDK compatible embedding model from a provider:model string
+ *
+ * @param modelString - String in format "provider:model"
+ * @param context - UserContext
+ * @returns Vercel AI SDK compatible embedding model
+ * @throws Error if model is not found, not active, or provider is unsupported
+ */
+export const getAIEmbeddingModel = async (
+  modelString: string,
+  context: UserContext
+) => {
+  const [providerName, modelName] = modelString.split(":");
+
+  if (!providerName || !modelName) {
+    throw new Error("Invalid model string format. Expected 'provider:model'");
+  }
+
+  // Get all models from DB
+  const allModels = await getAllAiProviderModels(context.organisationId);
+
+  // Find the requested model
+  const modelConfig = allModels.find(
+    (m) => m.provider === providerName && m.model === modelName && m.active
+  );
+
+  if (!modelConfig) {
+    throw new Error(`Model ${modelString} not found or not active`);
+  }
+
+  // Create and return the appropriate embedding model based on provider
+  switch (providerName.toLowerCase()) {
+    case "openai":
+      return openai.textEmbeddingModel(modelName);
+
+    case "anthropic":
+      throw new Error("Anthropic doesn't support embeddings via AI SDK");
+
+    case "mistral":
+      return mistral.textEmbeddingModel(modelName);
+
+    case "google":
+      return google.textEmbeddingModel(modelName);
+
+    case "azure":
+      return azure.textEmbeddingModel(modelName);
+
+    case "perplexity":
+      throw new Error("Perplexity doesn't support embeddings via AI SDK");
+
+    default:
+      // Custom OpenAI-compatible endpoints might support embeddings
+      if (
+        modelConfig.endpointCompatibility === "openai" &&
+        modelConfig.endpoint
+      ) {
+        if (!process.env[modelConfig.provider.toUpperCase() + "_API_KEY"]) {
+          throw new Error(
+            `API key for ${modelConfig.provider} is not set in environment variables`
+          );
+        }
+
+        // For custom OpenAI-compatible endpoints, use the OpenAI embedding model directly
+        // since createOpenAICompatible doesn't directly support embeddings
+        const openaiModel = openai.embedding(modelName);
+
+        // You might need to adapt this for custom endpoints if needed in future
+        return openaiModel;
+      }
+
+      throw new Error(
+        `Provider ${providerName} is not supported for embeddings`
+      );
   }
 };
