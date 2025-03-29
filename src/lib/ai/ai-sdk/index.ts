@@ -4,6 +4,7 @@ import { getAIEmbeddingModel, getAIModel } from "./get-model";
 import { encodeImageFromFile } from "./utils";
 import log from "../../log";
 import { LanguageModelV1 } from "ai";
+import { nanoid } from "nanoid";
 
 /**
  * Generate an embedding for the given text using AI SDK
@@ -150,6 +151,7 @@ export async function chatCompletion(
   });
 
   return {
+    id: nanoid(6),
     text: result.text,
     model: providerAndModelName,
     meta: {
