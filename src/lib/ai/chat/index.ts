@@ -5,8 +5,7 @@ import * as v from "valibot";
 import type { ChatSession } from "./chat-store";
 import { chatStore } from "./chat-store";
 import { initAgentsSystemPrompt, initChatMessage } from "./get-prompt-template";
-import { LLMAgent } from "../agents/llm-agent";
-import { FlowEngine } from "../agents/flow";
+import { LLMAgent } from "../agents-OLD/llm-agent";
 import { createHeadlineFromChat } from "./generate-headline";
 import type { Agent, AgentInputVariables } from "../../types/agents";
 import type { LLMOptions } from "../../db/db-schema";
@@ -49,6 +48,32 @@ export const chatInitValidation = v.intersect([
 ]);
 type ChatInitInput = v.InferOutput<typeof chatInitValidation>;
 
+export const chatInputValidation = v.object({
+  chatId: v.optional(v.string()),
+  context: v.optional(
+    v.object({
+      chatSessionGroupId: v.optional(v.string()),
+    })
+  ),
+  startWithAssistant: v.optional(
+    v.object({
+      id: v.optional(v.string()),
+      name: v.optional(v.string()),
+      category: v.optional(v.string()),
+    })
+  ),
+  variables: v.optional(
+    v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
+  ),
+  options: v.optional(
+    v.object({
+      model: v.optional(v.string()),
+      maxTokens: v.optional(v.number()),
+      temperature: v.optional(v.number()),
+    })
+  ),
+});
+
 export const chatWithTemplateReturnValidation = v.object({
   chatId: v.string(),
   message: v.object({
@@ -88,8 +113,6 @@ export const chatWithTemplateReturnValidation = v.object({
 type ChatWithTemplateReturn = v.InferOutput<
   typeof chatWithTemplateReturnValidation
 >;
-
-const flowEngine = new FlowEngine();
 
 /**
  * Initialize a chat session with an optionaltemplate

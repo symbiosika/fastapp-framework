@@ -12,6 +12,7 @@ import {
 } from "../../../../../lib/utils/hono-middlewares";
 import {
   chatInitInputValidation,
+  chatInputValidation,
   chatWithAgent,
   chatWithTemplateReturnValidation,
   createEmptySession,
@@ -61,6 +62,48 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           organisationId,
         });
         return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, {
+          message: e + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * The new main CHAT Route. Can handle simple and complex chats.
+   * Chat use assistants, tools, knowledge and more.
+   */
+  app.post(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/chat",
+      tags: ["ai"],
+      summary: "Chat with a Prompt Template",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(chatWithTemplateReturnValidation),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", chatInputValidation),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const usersId = c.get("usersId");
+        const organisationId = c.req.param("organisationId");
+
+        
+        
       } catch (e) {
         throw new HTTPException(400, {
           message: e + "",
