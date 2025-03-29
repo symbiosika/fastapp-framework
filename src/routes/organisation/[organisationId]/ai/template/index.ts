@@ -6,6 +6,7 @@
 import {
   addPromptTemplate,
   addPromptTemplatePlaceholder,
+  createFullPromptTemplate,
   deletePromptTemplate,
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
@@ -821,12 +822,18 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     }),
     validator("json", templateImportSchema),
     validator("param", v.object({ organisationId: v.string() })),
+    validator(
+      "query",
+      v.object({ overwriteExisting: v.optional(v.boolean()) })
+    ),
     checkOrganisationIdInBody,
     isOrganisationAdmin,
     async (c) => {
       try {
         const body = c.req.valid("json");
-        const result = await importPromptTemplate(body);
+        const overwriteExisting =
+          c.req.valid("query").overwriteExisting ?? false;
+        const result = await createFullPromptTemplate(body, overwriteExisting);
         return c.json(result);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });

@@ -9,6 +9,12 @@ import {
   type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesInsert,
   type PromptTemplatesSelect,
+  promptTemplateKnowledgeEntries,
+  knowledgeEntry,
+  promptTemplateKnowledgeFilters,
+  knowledgeFilters,
+  promptTemplateKnowledgeGroups,
+  knowledgeGroup,
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
@@ -318,4 +324,184 @@ export const deletePromptTemplatePlaceholder = async (
     );
 
   return RESPONSES.SUCCESS;
+};
+
+/**
+ * Get a complete prompt template with all related data
+ */
+export const getFullPromptTemplate = async (request: {
+  promptId?: string;
+  promptName?: string;
+  promptCategory?: string;
+  organisationId?: string;
+}) => {
+  const where = request.promptId
+    ? eq(promptTemplates.id, request.promptId)
+    : request.promptName && request.promptCategory && request.organisationId
+      ? and(
+          eq(promptTemplates.name, request.promptName),
+          eq(promptTemplates.category, request.promptCategory),
+          eq(promptTemplates.organisationId, request.organisationId)
+        )
+      : undefined;
+
+  if (!where) {
+    throw new Error("Invalid request parameters");
+  }
+
+  const template = await getDb().query.promptTemplates.findFirst({
+    where,
+    with: {
+      placeholders: {
+        with: {
+          suggestions: true,
+        },
+      },
+      knowledgeEntries: {
+        with: {
+          knowledgeEntry: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      knowledgeFilters: {
+        with: {
+          knowledgeFilter: true,
+        },
+      },
+      knowledgeGroups: {
+        with: {
+          knowledgeGroup: true,
+        },
+      },
+    },
+  });
+
+  if (!template) {
+    throw new Error("Prompt template not found");
+  }
+
+  return template;
+};
+
+/**
+ * Get all complete prompt templates for an organisation
+ */
+export const getFullPromptTemplates = async (organisationId: string) => {
+  // Get all templates with their relations in one query
+  const templates = await getDb().query.promptTemplates.findMany({
+    where: eq(promptTemplates.organisationId, organisationId),
+    with: {
+      placeholders: {
+        with: {
+          suggestions: true,
+        },
+      },
+      knowledgeEntries: {
+        with: {
+          knowledgeEntry: true,
+        },
+      },
+      knowledgeFilters: {
+        with: {
+          knowledgeFilter: true,
+        },
+      },
+      knowledgeGroups: {
+        with: {
+          knowledgeGroup: true,
+        },
+      },
+    },
+  });
+  return templates;
+};
+
+/**
+ * Create a complete prompt template with all related data
+ */
+export const createFullPromptTemplate = async (
+  data: PromptTemplatesInsert & {
+    placeholders?: Array<
+      Omit<PromptTemplatePlaceholdersInsert, "promptTemplateId"> & {
+        suggestions?: string[];
+      }
+    >;
+    knowledgeEntryIds?: string[];
+    knowledgeFilterIds?: string[];
+    knowledgeGroupIds?: string[];
+  },
+  overwriteExisting = false
+) => {
+  return await getDb().transaction(async (tx) => {
+    // 0. check for existing and delete if overwrite is true
+    if (overwriteExisting && data.id) {
+      await tx.delete(promptTemplates).where(eq(promptTemplates.id, data.id));
+    }
+
+    // 1. Create the template
+    const [template] = await tx
+      .insert(promptTemplates)
+      .values(data)
+      .returning();
+
+    // 2. Create placeholders with suggestions if provided
+    if (data.placeholders) {
+      for (const placeholder of data.placeholders) {
+        const { suggestions, ...placeholderData } = placeholder;
+        const [placeholderRecord] = await tx
+          .insert(promptTemplatePlaceholders)
+          .values({
+            ...placeholderData,
+            promptTemplateId: template.id,
+          })
+          .returning();
+
+        if (suggestions && suggestions.length > 0) {
+          await tx.insert(promptTemplatePlaceholderExamples).values(
+            suggestions.map((value) => ({
+              placeholderId: placeholderRecord.id,
+              value,
+            }))
+          );
+        }
+      }
+    }
+
+    // 3. Create knowledge entry assignments if provided
+    if (data.knowledgeEntryIds && data.knowledgeEntryIds.length > 0) {
+      await tx.insert(promptTemplateKnowledgeEntries).values(
+        data.knowledgeEntryIds.map((entryId) => ({
+          promptTemplateId: template.id,
+          knowledgeEntryId: entryId,
+        }))
+      );
+    }
+
+    // 4. Create knowledge filter assignments if provided
+    if (data.knowledgeFilterIds && data.knowledgeFilterIds.length > 0) {
+      await tx.insert(promptTemplateKnowledgeFilters).values(
+        data.knowledgeFilterIds.map((filterId) => ({
+          promptTemplateId: template.id,
+          knowledgeFilterId: filterId,
+        }))
+      );
+    }
+
+    // 5. Create knowledge group assignments if provided
+    if (data.knowledgeGroupIds && data.knowledgeGroupIds.length > 0) {
+      await tx.insert(promptTemplateKnowledgeGroups).values(
+        data.knowledgeGroupIds.map((groupId) => ({
+          promptTemplateId: template.id,
+          knowledgeGroupId: groupId,
+        }))
+      );
+    }
+
+    // Return the complete template with all related data
+    return await getFullPromptTemplate({ promptId: template.id });
+  });
 };

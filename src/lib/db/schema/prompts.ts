@@ -20,6 +20,7 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
+import { knowledgeEntry, knowledgeGroup, knowledgeFilters } from "./knowledge";
 
 export type LLMOptions = {
   model?: string;
@@ -202,7 +203,7 @@ export const promptTemplatePlaceholdersRelations = relations(
       fields: [promptTemplatePlaceholders.promptTemplateId],
       references: [promptTemplates.id],
     }),
-    examples: many(promptTemplatePlaceholderExamples),
+    suggestions: many(promptTemplatePlaceholderExamples),
   })
 );
 
@@ -217,11 +218,190 @@ export const promptTemplatePlaceholderExamplesRelations = relations(
   })
 );
 
+// Table for linking prompt templates to specific knowledge entries
+export const promptTemplateKnowledgeEntries = pgBaseTable(
+  "prompt_template_knowledge_entries",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    promptTemplateId: uuid("prompt_template_id")
+      .notNull()
+      .references(() => promptTemplates.id, { onDelete: "cascade" }),
+    knowledgeEntryId: uuid("knowledge_entry_id")
+      .notNull()
+      .references(() => knowledgeEntry.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("prompt_template_knowledge_entry_unique").on(
+      table.promptTemplateId,
+      table.knowledgeEntryId
+    ),
+    index("prompt_template_knowledge_entries_prompt_id_idx").on(
+      table.promptTemplateId
+    ),
+    index("prompt_template_knowledge_entries_entry_id_idx").on(
+      table.knowledgeEntryId
+    ),
+  ]
+);
+
+// Table for linking prompt templates to knowledge groups
+export const promptTemplateKnowledgeGroups = pgBaseTable(
+  "prompt_template_knowledge_groups",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    promptTemplateId: uuid("prompt_template_id")
+      .notNull()
+      .references(() => promptTemplates.id, { onDelete: "cascade" }),
+    knowledgeGroupId: uuid("knowledge_group_id")
+      .notNull()
+      .references(() => knowledgeGroup.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("prompt_template_knowledge_group_unique").on(
+      table.promptTemplateId,
+      table.knowledgeGroupId
+    ),
+    index("prompt_template_knowledge_groups_prompt_id_idx").on(
+      table.promptTemplateId
+    ),
+    index("prompt_template_knowledge_groups_group_id_idx").on(
+      table.knowledgeGroupId
+    ),
+  ]
+);
+
+// Table for linking prompt templates to knowledge filters
+export const promptTemplateKnowledgeFilters = pgBaseTable(
+  "prompt_template_knowledge_filters",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    promptTemplateId: uuid("prompt_template_id")
+      .notNull()
+      .references(() => promptTemplates.id, { onDelete: "cascade" }),
+    knowledgeFilterId: uuid("knowledge_filter_id")
+      .notNull()
+      .references(() => knowledgeFilters.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("prompt_template_knowledge_filter_unique").on(
+      table.promptTemplateId,
+      table.knowledgeFilterId
+    ),
+    index("prompt_template_knowledge_filters_prompt_id_idx").on(
+      table.promptTemplateId
+    ),
+    index("prompt_template_knowledge_filters_filter_id_idx").on(
+      table.knowledgeFilterId
+    ),
+  ]
+);
+
+// Define types for the new tables
+export type PromptTemplateKnowledgeEntriesSelect =
+  typeof promptTemplateKnowledgeEntries.$inferSelect;
+export type PromptTemplateKnowledgeEntriesInsert =
+  typeof promptTemplateKnowledgeEntries.$inferInsert;
+
+export type PromptTemplateKnowledgeGroupsSelect =
+  typeof promptTemplateKnowledgeGroups.$inferSelect;
+export type PromptTemplateKnowledgeGroupsInsert =
+  typeof promptTemplateKnowledgeGroups.$inferInsert;
+
+export type PromptTemplateKnowledgeFiltersSelect =
+  typeof promptTemplateKnowledgeFilters.$inferSelect;
+export type PromptTemplateKnowledgeFiltersInsert =
+  typeof promptTemplateKnowledgeFilters.$inferInsert;
+
+// Create schemas for the new tables
+export const promptTemplateKnowledgeEntriesSelectSchema = createSelectSchema(
+  promptTemplateKnowledgeEntries
+);
+export const promptTemplateKnowledgeEntriesInsertSchema = createInsertSchema(
+  promptTemplateKnowledgeEntries
+);
+
+export const promptTemplateKnowledgeGroupsSelectSchema = createSelectSchema(
+  promptTemplateKnowledgeGroups
+);
+export const promptTemplateKnowledgeGroupsInsertSchema = createInsertSchema(
+  promptTemplateKnowledgeGroups
+);
+
+export const promptTemplateKnowledgeFiltersSelectSchema = createSelectSchema(
+  promptTemplateKnowledgeFilters
+);
+export const promptTemplateKnowledgeFiltersInsertSchema = createInsertSchema(
+  promptTemplateKnowledgeFilters
+);
+
+// Modify the existing promptTemplatesRelations
 export const promptTemplatesRelations = relations(
   promptTemplates,
   ({ many }) => ({
+    placeholders: many(promptTemplatePlaceholders),
     promptTemplatePlaceholders: many(promptTemplatePlaceholders),
     workspaces: many(workspacePromptTemplates),
+    knowledgeEntries: many(promptTemplateKnowledgeEntries),
+    knowledgeGroups: many(promptTemplateKnowledgeGroups),
+    knowledgeFilters: many(promptTemplateKnowledgeFilters),
+  })
+);
+
+// Add relations for the new tables
+export const promptTemplateKnowledgeEntriesRelations = relations(
+  promptTemplateKnowledgeEntries,
+  ({ one }) => ({
+    promptTemplate: one(promptTemplates, {
+      fields: [promptTemplateKnowledgeEntries.promptTemplateId],
+      references: [promptTemplates.id],
+    }),
+    knowledgeEntry: one(knowledgeEntry, {
+      fields: [promptTemplateKnowledgeEntries.knowledgeEntryId],
+      references: [knowledgeEntry.id],
+    }),
+  })
+);
+
+export const promptTemplateKnowledgeGroupsRelations = relations(
+  promptTemplateKnowledgeGroups,
+  ({ one }) => ({
+    promptTemplate: one(promptTemplates, {
+      fields: [promptTemplateKnowledgeGroups.promptTemplateId],
+      references: [promptTemplates.id],
+    }),
+    knowledgeGroup: one(knowledgeGroup, {
+      fields: [promptTemplateKnowledgeGroups.knowledgeGroupId],
+      references: [knowledgeGroup.id],
+    }),
+  })
+);
+
+export const promptTemplateKnowledgeFiltersRelations = relations(
+  promptTemplateKnowledgeFilters,
+  ({ one }) => ({
+    promptTemplate: one(promptTemplates, {
+      fields: [promptTemplateKnowledgeFilters.promptTemplateId],
+      references: [promptTemplates.id],
+    }),
+    knowledgeFilter: one(knowledgeFilters, {
+      fields: [promptTemplateKnowledgeFilters.knowledgeFilterId],
+      references: [knowledgeFilters.id],
+    }),
   })
 );
 

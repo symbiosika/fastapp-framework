@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   addPromptTemplate,
   updatePromptTemplate,
@@ -8,8 +8,22 @@ import {
   updatePromptTemplatePlaceholder,
   deletePromptTemplatePlaceholder,
   getPlainPlaceholdersForPromptTemplate,
+  createFullPromptTemplate,
+  getFullPromptTemplate,
+  getFullPromptTemplates,
 } from "./crud";
-import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
+import {
+  initTests,
+  TEST_ADMIN_USER,
+  TEST_ORGANISATION_1,
+} from "../../../test/init.test";
+import { getDb, PromptTemplatePlaceholdersInsert } from "../../../dbSchema";
+import {
+  knowledgeEntry,
+  knowledgeFilters,
+  knowledgeGroup,
+} from "../../db/schema/knowledge";
+import { eq } from "drizzle-orm";
 
 beforeAll(async () => {
   await initTests();
@@ -263,5 +277,330 @@ describe("Prompt Template Placeholder Suggestions", () => {
   it("should cleanup test data", async () => {
     await deletePromptTemplatePlaceholder(placeholderId, templateId);
     await deletePromptTemplate(templateId, testTemplate.organisationId);
+  });
+});
+
+describe("Complete Prompt Template Operations", () => {
+  const testTemplate = {
+    organisationId: TEST_ORGANISATION_1.id,
+    name: "Complete Test Template",
+    category: "test",
+    systemPrompt: "Test system prompt",
+    userPrompt: "Test user prompt with {{placeholder1}}",
+    description: "Test description",
+    hidden: false,
+    langCode: "en",
+    needsInitialCall: false,
+    llmOptions: {},
+  };
+
+  const testPlaceholders: (PromptTemplatePlaceholdersInsert & {
+    suggestions?: string[];
+  })[] = [
+    {
+      name: "placeholder1",
+      label: "Placeholder 1",
+      description: "First placeholder",
+      defaultValue: "default value 1",
+      type: "text" as const,
+      requiredByUser: true,
+      suggestions: ["suggestion 1", "suggestion 2"],
+      promptTemplateId: "",
+    },
+  ];
+
+  let createdTemplateId: string;
+  let knowledgeEntryId: string;
+  let knowledgeFilterId: string;
+  let knowledgeGroupId: string;
+
+  beforeAll(async () => {
+    // Create test knowledge entry
+    const entry = await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Test Knowledge Entry",
+        description: "Test description",
+        sourceType: "text",
+      })
+      .returning();
+    knowledgeEntryId = entry[0].id;
+
+    // Create test knowledge filter
+    const filter = await getDb()
+      .insert(knowledgeFilters)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        category: "test",
+        name: "Test Filter",
+      })
+      .returning();
+    knowledgeFilterId = filter[0].id;
+
+    // Create test knowledge group
+    const group = await getDb()
+      .insert(knowledgeGroup)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "Test Group",
+        description: "Test group description",
+        userId: TEST_ADMIN_USER.id,
+        organisationWideAccess: false,
+      })
+      .returning();
+    knowledgeGroupId = group[0].id;
+  });
+
+  it("should create a complete prompt template with all related data", async () => {
+    const result = await createFullPromptTemplate({
+      ...testTemplate,
+      placeholders: testPlaceholders,
+      knowledgeEntryIds: [knowledgeEntryId],
+      knowledgeFilterIds: [knowledgeFilterId],
+      knowledgeGroupIds: [knowledgeGroupId],
+    });
+
+    expect(result).toBeDefined();
+    expect(result.id).toBeDefined();
+    expect(result.name).toBe(testTemplate.name);
+    expect(result.placeholders.length).toBe(1);
+    expect(result.knowledgeEntries.length).toBe(1);
+    expect(result.knowledgeFilters.length).toBe(1);
+    expect(result.knowledgeGroups.length).toBe(1);
+
+    createdTemplateId = result.id;
+  });
+
+  it("should get a complete prompt template", async () => {
+    const result = await getFullPromptTemplate({
+      promptId: createdTemplateId,
+    });
+
+    expect(result).toBeDefined();
+    expect(result.id).toBe(createdTemplateId);
+    expect(result.placeholders.length).toBe(1);
+    expect(result.knowledgeEntries.length).toBe(1);
+    expect(result.knowledgeFilters.length).toBe(1);
+    expect(result.knowledgeGroups.length).toBe(1);
+  });
+
+  it("should get all complete prompt templates for an organisation", async () => {
+    const results = await getFullPromptTemplates(TEST_ORGANISATION_1.id);
+
+    expect(Array.isArray(results)).toBe(true);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty("placeholders");
+    expect(results[0]).toHaveProperty("knowledgeEntries");
+    expect(results[0]).toHaveProperty("knowledgeFilters");
+    expect(results[0]).toHaveProperty("knowledgeGroups");
+  });
+
+  it("should update a complete prompt template with all related data", async () => {
+    // First create a template to update
+    const initialTemplate = {
+      organisationId: TEST_ORGANISATION_1.id,
+      name: "Update Test Template",
+      category: "test",
+      systemPrompt: "Initial system prompt",
+      userPrompt: "Initial user prompt with {{placeholder1}}",
+      description: "Initial description",
+      hidden: false,
+      langCode: "en",
+      needsInitialCall: false,
+      llmOptions: {},
+    };
+
+    const initialPlaceholders = [
+      {
+        name: "placeholder1",
+        label: "Placeholder 1",
+        description: "First placeholder",
+        defaultValue: "default value 1",
+        type: "text" as const,
+        requiredByUser: true,
+        suggestions: ["initial suggestion 1", "initial suggestion 2"],
+        promptTemplateId: "",
+      },
+    ];
+
+    const result = await createFullPromptTemplate({
+      ...initialTemplate,
+      placeholders: initialPlaceholders,
+      knowledgeEntryIds: [knowledgeEntryId],
+      knowledgeFilterIds: [knowledgeFilterId],
+      knowledgeGroupIds: [knowledgeGroupId],
+    });
+
+    const templateId = result.id;
+
+    // Now update the template with new data
+    const updatedTemplate = {
+      ...initialTemplate,
+      id: templateId,
+      name: "Updated Test Template",
+      systemPrompt: "Updated system prompt",
+      userPrompt:
+        "Updated user prompt with {{placeholder1}} and {{placeholder2}}",
+      description: "Updated description",
+    };
+
+    const updatedPlaceholders = [
+      {
+        id: result.placeholders[0].id,
+        promptTemplateId: templateId,
+        name: "placeholder1",
+        label: "Updated Placeholder 1",
+        description: "Updated first placeholder",
+        defaultValue: "updated default value 1",
+        type: "text" as const,
+        requiredByUser: true,
+        suggestions: ["updated suggestion 1", "updated suggestion 2"],
+      },
+      {
+        name: "placeholder2",
+        label: "New Placeholder 2",
+        description: "Second placeholder",
+        defaultValue: "default value 2",
+        type: "text" as const,
+        requiredByUser: true,
+        suggestions: ["new suggestion 1", "new suggestion 2"],
+        promptTemplateId: templateId,
+      },
+    ];
+
+    // Create additional test data for the update
+    const newKnowledgeEntry = await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "New Test Knowledge Entry",
+        description: "New test description",
+        sourceType: "text",
+      })
+      .returning();
+
+    const newKnowledgeFilter = await getDb()
+      .insert(knowledgeFilters)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        category: "test",
+        name: "New Test Filter",
+      })
+      .returning();
+
+    const newKnowledgeGroup = await getDb()
+      .insert(knowledgeGroup)
+      .values({
+        organisationId: TEST_ORGANISATION_1.id,
+        name: "New Test Group",
+        description: "New test group description",
+        userId: TEST_ADMIN_USER.id,
+        organisationWideAccess: false,
+      })
+      .returning();
+
+    // Update the template with new data
+    const updatedResult = await createFullPromptTemplate(
+      {
+        ...updatedTemplate,
+        placeholders: updatedPlaceholders,
+        knowledgeEntryIds: [knowledgeEntryId, newKnowledgeEntry[0].id],
+        knowledgeFilterIds: [knowledgeFilterId, newKnowledgeFilter[0].id],
+        knowledgeGroupIds: [knowledgeGroupId, newKnowledgeGroup[0].id],
+      },
+      true // overwrite existing
+    );
+
+    // Verify the updates
+    expect(updatedResult.name).toBe("Updated Test Template");
+    expect(updatedResult.systemPrompt).toBe("Updated system prompt");
+    expect(updatedResult.userPrompt).toBe(
+      "Updated user prompt with {{placeholder1}} and {{placeholder2}}"
+    );
+    expect(updatedResult.description).toBe("Updated description");
+
+    // Verify placeholders
+    expect(updatedResult.placeholders.length).toBe(2);
+    expect(updatedResult.placeholders[0].label).toBe("Updated Placeholder 1");
+    expect(updatedResult.placeholders[0].suggestions).toEqual([
+      {
+        id: expect.any(String),
+        value: "updated suggestion 1",
+        placeholderId: updatedResult.placeholders[0].id,
+      },
+      {
+        id: expect.any(String),
+        value: "updated suggestion 2",
+        placeholderId: updatedResult.placeholders[0].id,
+      },
+    ]);
+    expect(updatedResult.placeholders[1].name).toBe("placeholder2");
+    expect(updatedResult.placeholders[1].suggestions).toEqual([
+      {
+        id: expect.any(String),
+        value: "new suggestion 1",
+        placeholderId: updatedResult.placeholders[1].id,
+      },
+      {
+        id: expect.any(String),
+        value: "new suggestion 2",
+        placeholderId: updatedResult.placeholders[1].id,
+      },
+    ]);
+
+    // Verify knowledge entries
+    expect(updatedResult.knowledgeEntries.length).toBe(2);
+    expect(
+      updatedResult.knowledgeEntries.map((ke) => ke.knowledgeEntry.id)
+    ).toContain(knowledgeEntryId);
+    expect(
+      updatedResult.knowledgeEntries.map((ke) => ke.knowledgeEntry.id)
+    ).toContain(newKnowledgeEntry[0].id);
+
+    // Verify knowledge filters
+    expect(updatedResult.knowledgeFilters.length).toBe(2);
+    expect(
+      updatedResult.knowledgeFilters.map((kf) => kf.knowledgeFilter.id)
+    ).toContain(knowledgeFilterId);
+    expect(
+      updatedResult.knowledgeFilters.map((kf) => kf.knowledgeFilter.id)
+    ).toContain(newKnowledgeFilter[0].id);
+
+    // Verify knowledge groups
+    expect(updatedResult.knowledgeGroups.length).toBe(2);
+    expect(
+      updatedResult.knowledgeGroups.map((kg) => kg.knowledgeGroup.id)
+    ).toContain(knowledgeGroupId);
+    expect(
+      updatedResult.knowledgeGroups.map((kg) => kg.knowledgeGroup.id)
+    ).toContain(newKnowledgeGroup[0].id);
+
+    // Clean up the new test data
+    await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, newKnowledgeEntry[0].id));
+    await getDb()
+      .delete(knowledgeFilters)
+      .where(eq(knowledgeFilters.id, newKnowledgeFilter[0].id));
+    await getDb()
+      .delete(knowledgeGroup)
+      .where(eq(knowledgeGroup.id, newKnowledgeGroup[0].id));
+  });
+
+  afterAll(async () => {
+    // Clean up test data
+    if (createdTemplateId) {
+      deletePromptTemplate(createdTemplateId, TEST_ORGANISATION_1.id);
+    }
+    getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, knowledgeEntryId));
+    getDb()
+      .delete(knowledgeFilters)
+      .where(eq(knowledgeFilters.id, knowledgeFilterId));
+    getDb()
+      .delete(knowledgeGroup)
+      .where(eq(knowledgeGroup.id, knowledgeGroupId));
   });
 });
