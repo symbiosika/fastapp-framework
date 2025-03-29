@@ -94,6 +94,15 @@
     "valibot": "^1.0.0-rc.1",
     "widdershins": "^4.0.1",
     "diff": "^7.0.0",
-    "@types/diff": "^7.0.1"
+    "@types/diff": "^7.0.1",
+    "@ai-sdk/anthropic": "^1.2.2",
+    "@ai-sdk/azure": "^1.3.4",
+    "@ai-sdk/deepseek": "^0.2.2",
+    "@ai-sdk/google": "^1.2.3",
+    "@ai-sdk/mistral": "^1.2.1",
+    "@ai-sdk/openai": "^1.3.4",
+    "@ai-sdk/openai-compatible": "^0.2.2",
+    "@ai-sdk/perplexity": "^1.1.1",
+    "ai": "^4.2.8"
   }
 }
