@@ -32,6 +32,7 @@ export async function getNearestEmbeddings(q: {
   filterKnowledgeEntryIds?: string[];
   filterKnowledgeGroupIds?: string[];
   filter?: Record<string, string[]>;
+  filterKnowledgeFilterIds?: string[];
   filterName?: string[];
   workspaceId?: string;
 }): Promise<
@@ -73,6 +74,17 @@ export async function getNearestEmbeddings(q: {
 
   if (q.workspaceId) {
     filters.push(eq(knowledgeEntry.workspaceId, q.workspaceId));
+  }
+
+  if (q.filterKnowledgeFilterIds) {
+    filters.push(
+      inArray(
+        knowledgeEntry.id,
+        sql`SELECT ${knowledgeEntryFilters.knowledgeEntryId} FROM ${knowledgeEntryFilters} WHERE ${knowledgeEntryFilters.knowledgeFilterId} IN (${sql.join(
+          q.filterKnowledgeFilterIds
+        )})`
+      )
+    );
   }
 
   if (q.filter) {

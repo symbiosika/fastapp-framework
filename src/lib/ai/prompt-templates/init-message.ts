@@ -1,4 +1,4 @@
-import { getPlaceholdersForPromptTemplate, getPlainTemplate } from "./crud";
+import { getFullPromptTemplate } from "./crud";
 
 /**
  * Helper to split a template name into category and name
@@ -31,7 +31,13 @@ export const initTemplateMessage = async (request: {
   organisationId: string;
   template: string; // "<category>:<name>" or "00000000-0000-0000-0000-000000000000"
   userInput: Record<string, string>;
-}): Promise<{ systemPrompt: string; userPrompt: string }> => {
+}): Promise<{
+  systemPrompt: string;
+  userPrompt: string;
+  knowledgeEntries: { id: string }[];
+  knowledgeFilters: { id: string }[];
+  knowledgeGroups: { id: string }[];
+}> => {
   // sequence of checks:
   // 1. check if "template" is a UUID
   // 2. check if "template" is a valid template name
@@ -49,14 +55,14 @@ export const initTemplateMessage = async (request: {
     promptName = name;
   }
 
-  let { systemPrompt, userPrompt } = await getPlainTemplate({
-    promptCategory,
-    promptName,
-    promptId,
-    organisationId: request.organisationId,
-  });
-
-  const { placeholderDefinitions } = await getPlaceholdersForPromptTemplate({
+  let {
+    systemPrompt,
+    userPrompt,
+    placeholders,
+    knowledgeEntries,
+    knowledgeFilters,
+    knowledgeGroups,
+  } = await getFullPromptTemplate({
     promptCategory,
     promptName,
     promptId,
@@ -64,7 +70,7 @@ export const initTemplateMessage = async (request: {
   });
 
   // iterate over placeholders and replace them in the template
-  for (const placeholder of Object.values(placeholderDefinitions)) {
+  for (const placeholder of placeholders) {
     const placeholderValue =
       request.userInput[placeholder.name] !== undefined
         ? request.userInput[placeholder.name]
@@ -86,5 +92,14 @@ export const initTemplateMessage = async (request: {
   return {
     systemPrompt,
     userPrompt: userPrompt || request.userInput["user_input"] || "",
+    knowledgeEntries: knowledgeEntries.map((knowledgeEntry) => ({
+      id: knowledgeEntry.id,
+    })),
+    knowledgeFilters: knowledgeFilters.map((knowledgeFilter) => ({
+      id: knowledgeFilter.id,
+    })),
+    knowledgeGroups: knowledgeGroups.map((knowledgeGroup) => ({
+      id: knowledgeGroup.id,
+    })),
   };
 };

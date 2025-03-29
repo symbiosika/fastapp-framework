@@ -5,7 +5,7 @@ import { encodeImageFromFile } from "./utils";
 import log from "../../log";
 import { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
-import { prepareToolsForAI } from "../interaction/tools";
+import { getToolsDictionary } from "../interaction/tools";
 
 /**
  * Generate an embedding for the given text using AI SDK
@@ -141,13 +141,44 @@ export async function chatCompletion(
 
   // Add tools if provided
   if (options?.tools && options.tools.length > 0) {
-    params.tools = prepareToolsForAI(options.tools);
+    // Get tools from registry
+    const toolDictionary = getToolsDictionary(options.tools);
+
+    // Convert to format expected by AI SDK
+    params.tools = toolDictionary;
+
+    // Allow model to decide when to use tools
+    params.tool_choice = "auto";
+
+    // Allow multiple steps in conversation
+    params.maxSteps = 3;
   }
 
   const result = await generateText(params);
 
   // Handle tool calls if present
   let finalText = result.text;
+  let toolUsage: Array<{ toolName: string; arguments: any }> = [];
+
+  // Track tool calls if present in the response
+  if (result.toolCalls && result.toolCalls.length > 0) {
+    toolUsage = result.toolCalls.map((call) => ({
+      toolName: call.toolName,
+      arguments: call.args,
+    }));
+
+    log.logToDB({
+      level: "info",
+      organisationId: context?.organisationId,
+      sessionId: context?.userId,
+      source: "ai",
+      category: "tool-usage",
+      message: "tool-call-executed",
+      metadata: {
+        toolCalls: toolUsage,
+      },
+    });
+  }
 
   // Log completion
   log.logToDB({
@@ -163,6 +194,7 @@ export async function chatCompletion(
       usedTokens: result.usage?.totalTokens,
       promptTokens: result.usage?.promptTokens,
       completionTokens: result.usage?.completionTokens,
+      toolsUsed: toolUsage.length > 0 ? toolUsage : undefined,
     },
   });
 
@@ -175,6 +207,7 @@ export async function chatCompletion(
       usedTokens: result.usage?.totalTokens,
       promptTokens: result.usage?.promptTokens,
       completionTokens: result.usage?.completionTokens,
+      toolsUsed: toolUsage.length > 0 ? toolUsage : undefined,
     },
   };
 }

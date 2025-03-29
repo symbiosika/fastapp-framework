@@ -4,6 +4,7 @@ import { ChatMessage, chatStore, ChatSession } from "../../ai/chat-store";
 import { chatCompletion } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
+import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -87,18 +88,37 @@ export async function chat(
       });
     }
 
-    // 3. Handle initial templates or messages
+    // 3. Use the central tools registry and preparation function
+    const enabledToolNames = options.enabledTools || [];
+
+    // 4. Handle initial templates or messages
     let messages: ChatMessage[] = [...session.messages];
     const isFirstInteraction = messages.length === 0;
 
     if (isFirstInteraction) {
       // Use template if specified, otherwise use default
       if (options.useTemplate) {
-        const { systemPrompt, userPrompt } = await initTemplateMessage({
+        const {
+          systemPrompt,
+          userPrompt,
+          knowledgeEntries,
+          knowledgeFilters,
+          knowledgeGroups,
+        } = await initTemplateMessage({
           organisationId: options.context.organisationId,
           template: options.useTemplate, // "<category>:<name>" or "00000000-0000-0000-0000-000000000000"
           userInput,
         });
+
+        // Check and register the dynamic knowledge base tool
+        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool({
+          knowledgeEntries,
+          knowledgeFilters,
+          knowledgeGroups,
+        });
+        if (dynamicKnowledgeBaseTool) {
+          enabledToolNames.push(dynamicKnowledgeBaseTool.name);
+        }
 
         // Add system message
         messages.push({
@@ -155,9 +175,6 @@ export async function chat(
       });
     }
 
-    // 4. Use the central tools registry and preparation function
-    const enabledToolNames = options.enabledTools || [];
-
     // 5. Convert messages to format expected by AI SDK
     const coreMessages = messages.map((msg) => ({
       role: msg.role,
@@ -206,7 +223,7 @@ export async function chat(
       messages,
     };
   } catch (error) {
-    log.error(`Error in chatWithTemplate: ${error}`);
+    log.error(`Error in chat(): ${error}`);
     throw error;
   }
 }
