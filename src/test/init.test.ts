@@ -287,6 +287,50 @@ const getJwtTokenForTesting = async (email: string) => {
 };
 
 /**
+ * Init all Test AI Models
+ */
+export const initTestAiModels = async () => {
+  // Drop existing test models first
+  await dropAllTestAiProviderModels();
+
+  // Insert OpenAI PGT-40-mini for testing
+  await getDb()
+    .insert(aiProviderModels)
+    .values({
+      organisationId: TEST_ORGANISATION_1.id,
+      name: "openai:gpt-4o-mini",
+      provider: "openai",
+      model: "gpt-4o-mini",
+      inputType: ["text"],
+      outputType: ["text"],
+      label: "GPT-4o-mini (Test Model)",
+      description: "Test model for OpenAI GPT-4o-mini",
+      maxTokens: 16000,
+      maxOutputTokens: 4000,
+      endpoint: "https://api.openai.com/v1",
+      endpointCompatibility: "openai",
+      hostingOrigin: "openai",
+      usesInternet: true,
+      active: true,
+      system: false,
+      showInfoBanner: true,
+      infoBannerText: "This is a test model",
+      infoBannerColor: "blue",
+    })
+    .onConflictDoUpdate({
+      target: [
+        aiProviderModels.organisationId,
+        aiProviderModels.provider,
+        aiProviderModels.model,
+      ],
+      set: {
+        active: true,
+        description: "Test model for OpenAI PGT-40-mini",
+      },
+    });
+};
+
+/**
  * GLOBAL Init global test data
  */
 export const initTests = async () => {
@@ -307,6 +351,9 @@ export const initTests = async () => {
   });
   await dropAllInvitationsCodes().catch((err) => {
     console.info("Error dropping invitation codes", err);
+  });
+  await initTestAiModels().catch((err) => {
+    console.info("Error initialising test AI models", err);
   });
 
   const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);

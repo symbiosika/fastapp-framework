@@ -8,7 +8,7 @@ describe("Knowledge Text Flow", () => {
   });
 
   it("should return a valid model", async () => {
-    const model = await getAiSdkModel("openai:gpt-4o", {
+    const model = await getAiSdkModel("openai:gpt-4o-mini", {
       organisationId: TEST_ORGANISATION_1.id,
     });
     expect(model).toBeDefined();
