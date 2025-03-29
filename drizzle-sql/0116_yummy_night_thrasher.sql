@@ -1,0 +1,2 @@
+CREATE TYPE "public"."ai_provider_model_endpoint_compatibility" AS ENUM('openai', 'anthropic');--> statement-breakpoint
+ALTER TABLE "base_ai_provider_models" ADD COLUMN "endpoint_compatibility" "ai_provider_model_endpoint_compatibility" DEFAULT 'openai' NOT NULL;
