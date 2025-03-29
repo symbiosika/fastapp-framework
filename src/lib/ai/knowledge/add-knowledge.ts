@@ -14,7 +14,7 @@
 import { getDb } from "../../db/db-connection";
 import log from "../../log";
 import type { FileSourceType } from "../../storage";
-import { generateEmbedding } from "../standard";
+import { generateEmbedding } from "../ai-sdk";
 import { splitTextIntoSectionsOrChunks } from "./splitter";
 import type { ChunkWithEmbedding } from "../../types/chunks";
 import {
@@ -109,7 +109,7 @@ export const extractKnowledgeFromText = async (data: {
   const allEmbeddings: ChunkWithEmbedding[] = await Promise.all(
     chunks.map(async (chunk) => {
       try {
-        const embedding = await generateEmbedding(chunk.text, undefined, {
+        const embedding = await generateEmbedding(chunk.text, {
           organisationId: data.organisationId,
           userId: data.userId,
         });

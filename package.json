@@ -89,7 +89,7 @@
     "openai": "^4.40.2",
     "pg": "^8.13.0",
     "pgvector": "^0.1.8",
-    "stripe": "^17.1.0",
+    "stripe": "^17.4.0",
     "turndown": "^7.2.0",
     "valibot": "^1.0.0-rc.1",
     "widdershins": "^4.0.1",

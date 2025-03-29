@@ -1,29 +1,18 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { parsePdfFileAsMardownLocal } from "./local-service";
 import fs from "fs";
-import path from "path";
-
 import { TEST_ORGANISATION_1 } from "../../../../test/init.test";
+import { TEST_PDF_TEXT } from "../../../../test/files.test";
 
 describe("Local PDF Parser Service", () => {
-  const TEST_PDF_PATH = path.join(
-    process.cwd(),
-    "src",
-    "fastapp-framework",
-    "src",
-    "test",
-    "files",
-    "example_knowlede.pdf"
-  );
-
   beforeAll(() => {
     // environment variables are set!
   });
 
   test("should successfully parse a PDF file", async () => {
     // Read the test PDF file
-    const fileBuffer = await fs.promises.readFile(TEST_PDF_PATH);
-    const file = new File([fileBuffer], "example_knowledge.pdf", {
+    const fileBuffer = await fs.promises.readFile(TEST_PDF_TEXT);
+    const file = new File([fileBuffer], "t.pdf", {
       type: "application/pdf",
     });
 

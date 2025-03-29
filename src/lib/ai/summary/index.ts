@@ -1,5 +1,6 @@
-import { chatCompletion } from "../standard";
+import { chatCompletion } from "../ai-sdk";
 import log from "../../log";
+import { UserContext } from "../ai-sdk/types";
 
 /**
  * Generates a summary for a document using LLM
@@ -7,10 +8,7 @@ import log from "../../log";
 export async function generateDocumentSummary(
   text: string,
   title: string,
-  context: {
-    organisationId: string;
-    userId?: string;
-  },
+  context: UserContext,
   options?: {
     customPrompt?: string;
     model?: string;
@@ -33,16 +31,18 @@ export async function generateDocumentSummary(
         { role: "user", content: prompt + "\n\nDocument content:\n" + text },
       ],
       {
-        model: options?.model,
+        organisationId: context.organisationId,
+        userId: context.userId,
+      },
+      {
+        providerAndModelName: options?.model,
         temperature: 0.3,
         maxTokens: 500,
-        outputType: "text",
-        ...options,
       }
     );
 
     return {
-      description: result,
+      description: result.text,
     };
   } catch (e) {
     log.error(`Error generating summary for document: ${title}`, e + "");
@@ -58,10 +58,7 @@ export async function generateDocumentSummary(
 export async function generateChunkBasedSummary(
   chunks: { text: string; header?: string }[],
   title: string,
-  context: {
-    organisationId: string;
-    userId?: string;
-  },
+  context: UserContext,
   options?: {
     customPrompt?: string;
     model?: string;
@@ -90,14 +87,16 @@ export async function generateChunkBasedSummary(
             },
           ],
           {
-            model: options?.model,
+            organisationId: context.organisationId,
+            userId: context.userId,
+          },
+          {
+            providerAndModelName: options?.model,
             temperature: 0.3,
             maxTokens: 200,
-            outputType: "text",
-            ...options,
           }
         );
-        return result;
+        return result.text;
       } catch (e) {
         log.error(`Error generating summary for chunk: ${chunkTitle}`, e + "");
         return "";
@@ -139,15 +138,17 @@ export async function generateChunkBasedSummary(
         },
       ],
       {
-        model: options?.model,
+        organisationId: context.organisationId,
+        userId: context.userId,
+      },
+      {
+        providerAndModelName: options?.model,
         temperature: 0.3,
         maxTokens: 300,
-        outputType: "text",
-        ...options,
       }
     );
 
-    return { description: result };
+    return { description: result.text };
   } catch (e) {
     log.error(
       `Error generating combined summary for document: ${title}`,

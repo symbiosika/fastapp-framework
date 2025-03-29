@@ -152,5 +152,11 @@ export async function chatCompletion(
   return {
     text: result.text,
     model: providerAndModelName,
+    meta: {
+      responseLength: result.text.length,
+      usedTokens: result.usage?.totalTokens,
+      promptTokens: result.usage?.promptTokens,
+      completionTokens: result.usage?.completionTokens,
+    },
   };
 }

@@ -48,13 +48,11 @@ import { chatWithAgent } from "./lib/ai/chat";
 import {
   chatCompletion,
   generateEmbedding,
-  generateImage,
   generateImageDescription,
-  generateLongText,
-  speechToText,
-  textToSpeech,
-} from "./lib/ai/standard";
+} from "./lib/ai/ai-sdk";
 import { importPromptTemplate } from "./lib/ai/prompt-templates/import";
+import { speechToText } from "./lib/ai/ai-sdk/stt";
+import { textToSpeech } from "./lib/ai/ai-sdk/tts";
 
 export default {
   // prompt templates
@@ -98,8 +96,6 @@ export default {
   generateEmbedding,
   generateImageDescription,
   chatCompletion,
-  generateLongText,
   speechToText,
   textToSpeech,
-  generateImage,
 };

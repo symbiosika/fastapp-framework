@@ -1,4 +1,4 @@
-import { generateLongText } from "../standard";
+import { chatCompletion } from "../ai-sdk";
 import { initChatMessage } from "../chat/get-prompt-template";
 import { replaceCustomPlaceholders, replaceVariables } from "../chat/replacer";
 import { customAppPlaceholders } from "../chat/custom-placeholders";
@@ -55,21 +55,22 @@ export class LLMAgent implements Agent {
       // Parse the options
       const llmOptions = {
         maxTokens: parseIntFromUnknown(options.maxTokens),
-        model: parseStringFromUnknown(options.model),
+        providerAndModelName: parseStringFromUnknown(options.model),
         temperature: parseIntFromUnknown(options.temperature),
         outputType: "text" as const,
       };
 
       // Then run the LLM call
-      const result = await generateLongText(
+      const result = await chatCompletion(
         replacedMessages as any,
-        llmOptions,
-        context
+        context,
+        llmOptions
       );
 
       const metadata = {
         ...addToMeta,
         ...result.meta,
+        model: result.model,
       };
 
       // Return the LLM result as "default" along with metadata

@@ -1,11 +1,14 @@
-import { generateLongText } from "../standard";
+import { chatCompletion } from "../ai-sdk";
 import log from "../../log";
 import type { ChatMessage } from "./chat-store";
-
+import type { UserContext } from "../ai-sdk/types";
 /**
  * Create a headline from a chat
  */
-export const createHeadlineFromChat = async (messages: ChatMessage[]) => {
+export const createHeadlineFromChat = async (
+  messages: ChatMessage[],
+  context: UserContext
+) => {
   try {
     const chat = [
       {
@@ -24,12 +27,18 @@ export const createHeadlineFromChat = async (messages: ChatMessage[]) => {
         content: `Create the headline for the given chat. No other text than the headline.`,
       },
     ];
-    const headline = await generateLongText(chat as any, {
-      maxTokens: 100,
-      model: "openai:gpt-4o-mini",
-      temperature: 0,
-      outputType: "text",
-    });
+    const headline = await chatCompletion(
+      chat as any,
+      {
+        organisationId: context.organisationId,
+        userId: context.userId,
+      },
+      {
+        maxTokens: 100,
+        providerAndModelName: "openai:gpt-4o-mini",
+        temperature: 0,
+      }
+    );
     return headline.text;
   } catch (error) {
     log.error(error + "");

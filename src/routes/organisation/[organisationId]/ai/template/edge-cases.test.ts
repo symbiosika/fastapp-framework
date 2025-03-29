@@ -252,9 +252,8 @@ describe("Prompt Templates API Edge Cases", () => {
     );
 
     // Should return an empty array, not an error
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.jsonResponse)).toBe(true);
-    expect(response.jsonResponse.length).toBe(0);
+    expect(response.status).toBe(400);
+    expect(response.textResponse).toContain("Template not found");
   });
 
   test("Get non-existent placeholder", async () => {

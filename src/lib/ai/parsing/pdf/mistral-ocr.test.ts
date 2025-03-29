@@ -1,20 +1,10 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { parsePdfFileAsMarkdownMistral } from "./mistral-ocr";
 import fs from "fs";
-import path from "path";
 import { TEST_ORGANISATION_1, initTests } from "../../../../test/init.test";
+import { TEST_PDF_TEXT } from "../../../../test/files.test";
 
 describe("Mistral OCR Service", () => {
-  const TEST_PDF_PATH = path.join(
-    process.cwd(),
-    "src",
-    "fastapp-framework",
-    "src",
-    "test",
-    "files",
-    "example_wih_images.pdf"
-  );
-
   beforeAll(async () => {
     // environment variables are set!
     await initTests();
@@ -22,8 +12,8 @@ describe("Mistral OCR Service", () => {
 
   test("should successfully parse a PDF file", async () => {
     // Read the test PDF file
-    const fileBuffer = await fs.promises.readFile(TEST_PDF_PATH);
-    const file = new File([fileBuffer], "example_wih_images.pdf", {
+    const fileBuffer = await fs.promises.readFile(TEST_PDF_TEXT);
+    const file = new File([fileBuffer], "t.pdf", {
       type: "application/pdf",
     });
 

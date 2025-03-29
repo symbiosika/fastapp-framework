@@ -75,8 +75,7 @@ describe("Prompt Templates API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.jsonResponse)).toBe(true);
-    expect(response.jsonResponse[0].id).toBe(createdTemplateId);
+    expect(response.jsonResponse.id).toBe(createdTemplateId);
   });
 
   test("Get a template by name and category", async () => {
@@ -87,9 +86,8 @@ describe("Prompt Templates API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.jsonResponse)).toBe(true);
-    expect(response.jsonResponse[0].name).toBe("test-template");
-    expect(response.jsonResponse[0].category).toBe("test");
+    expect(response.jsonResponse.name).toBe("test-template");
+    expect(response.jsonResponse.category).toBe("test");
   });
 
   test("Update a prompt template", async () => {

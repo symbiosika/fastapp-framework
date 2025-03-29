@@ -17,10 +17,15 @@ import { UserContext } from "./types";
  * @throws Error if model is not found, not active, or provider is unsupported
  */
 export const getAIModel = async (modelString: string, context: UserContext) => {
-  const [providerName, modelName] = modelString.split(":");
+  let [providerName, modelName] = modelString.split(":");
 
   if (!providerName || !modelName) {
     throw new Error("Invalid model string format. Expected 'provider:model'");
+  }
+
+  if (providerName === "" || modelName === "") {
+    providerName = "openai";
+    modelName = "gpt-4o-mini";
   }
 
   // Get all models from DB

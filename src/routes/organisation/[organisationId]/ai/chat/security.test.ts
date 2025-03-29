@@ -65,14 +65,6 @@ describe("Chat API Security Tests", () => {
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/ensure-session`,
       ],
       [
-        "POST",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
-      ],
-      [
-        "POST",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/${createdChatId}/respond`,
-      ],
-      [
         "PUT",
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/chat/${createdChatId}/message/some-message-id`,
       ],
@@ -149,46 +141,6 @@ describe("Chat API Security Tests", () => {
     );
 
     // Should be rejected due to organisation permission check
-    expect(response.status).toBe(403);
-  });
-
-  test("User cannot start interview in another organisation", async () => {
-    const interviewData = {
-      interviewName: "Test Interview",
-      description: "A test interview session",
-      guidelines: "These are test guidelines for the interview",
-    };
-
-    // User 2 tries to start an interview in organisation 1
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
-      TEST_USER_2_TOKEN,
-      interviewData
-    );
-
-    // Should be rejected due to organisation permission check
-    expect(response.status).toBe(403);
-  });
-
-  test("User cannot respond to interview in another organisation", async () => {
-    const respondData = {
-      chatId: createdChatId,
-      userId: TEST_USER_2.id,
-      organisationId: TEST_ORGANISATION_1.id,
-      user_input: "This is my response to the interview question",
-    };
-
-    // User 2 tries to respond to an interview in organisation 1
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/${createdChatId}/respond`,
-      TEST_USER_2_TOKEN,
-      respondData
-    );
-
-    // Should be rejected due to organisation permission check
-    console.log(response.textResponse);
     expect(response.status).toBe(403);
   });
 

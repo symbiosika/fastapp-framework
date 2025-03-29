@@ -61,7 +61,15 @@ export async function createAiProviderModel(
     const [model] = await getDb()
       .insert(aiProviderModels)
       .values(data)
-      .returning();
+      .returning()
+      .onConflictDoUpdate({
+        target: [
+          aiProviderModels.organisationId,
+          aiProviderModels.model,
+          aiProviderModels.provider,
+        ],
+        set: data,
+      });
 
     return model;
   } catch (error) {

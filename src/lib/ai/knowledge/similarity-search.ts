@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import { knowledgeChunks, knowledgeEntry } from "../../../lib/db/db-schema";
-import { generateEmbedding } from "../standard";
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { getFullSourceDocumentsForKnowledgeEntry } from "./get-knowledge";
@@ -10,6 +9,7 @@ import {
   knowledgeEntryFilters,
   knowledgeFilters,
 } from "../../db/schema/knowledge";
+import { generateEmbedding } from "../ai-sdk";
 
 type KnowledgeChunk = {
   id: string;
@@ -44,7 +44,7 @@ export async function getNearestEmbeddings(q: {
   }[]
 > {
   // Generate the embedding for the search text
-  const embed = await generateEmbedding(q.searchText, undefined, {
+  const embed = await generateEmbedding(q.searchText, {
     organisationId: q.organisationId,
   });
 

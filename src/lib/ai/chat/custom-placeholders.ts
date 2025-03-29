@@ -18,7 +18,7 @@ import type {
   ChatStoreVariables,
   PlaceholderParser,
 } from "./chat-store";
-import { speechToText } from "../standard";
+import { speechToText } from "../ai-sdk/stt";
 import { getFileFromDb } from "../../storage/db";
 import {
   getBooleanArgument,
@@ -462,16 +462,14 @@ export const customAppPlaceholders: PlaceholderParser[] = [
 
       // Convert speech to text
       const transcription = await speechToText(
+        file,
         {
-          file: file,
+          organisationId: meta.organisationId,
+          userId: meta.userId,
         },
         {
           returnSegments: false,
           returnWords: false,
-        },
-        {
-          organisationId: meta.organisationId,
-          userId: meta.userId,
         }
       ).catch((e) => {
         log.error("Error transcribing audio", e);

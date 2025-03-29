@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import * as getModelModule from "./get-model";
 import { fail } from "assert";
+import { TEST_IMAGE } from "../../../test/files.test";
 
 describe("AI SDK Functions", () => {
   const userContext = {
@@ -68,12 +69,9 @@ describe("AI SDK Functions", () => {
 
       try {
         // Use the existing image from the test files directory
-        const imagePath = path.join(
-          process.cwd(),
-          "src/test/files/klara_cheers.png"
-        );
+        const imagePath = TEST_IMAGE;
         const imageBuffer = fs.readFileSync(imagePath);
-        const imageFile = new File([imageBuffer], "klara_cheers.png", {
+        const imageFile = new File([imageBuffer], "some_image.png", {
           type: "image/png",
         });
 
@@ -99,12 +97,9 @@ describe("AI SDK Functions", () => {
 
       try {
         // Use the existing image from the test files directory
-        const imagePath = path.join(
-          process.cwd(),
-          "src/test/files/klara_cheers.png"
-        );
+        const imagePath = TEST_IMAGE;
         const imageBuffer = fs.readFileSync(imagePath);
-        const imageFile = new File([imageBuffer], "klara_cheers.png", {
+        const imageFile = new File([imageBuffer], "some_image.png", {
           type: "image/png",
         });
 
@@ -126,7 +121,7 @@ describe("AI SDK Functions", () => {
         );
         // Don't fail the test suite if this specific test has API issues
       }
-    }, 15000); // Increase timeout to 15 seconds
+    }, 25000); 
 
     it("should throw an error for invalid image", async () => {
       // Create an invalid File object

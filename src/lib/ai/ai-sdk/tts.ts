@@ -9,8 +9,8 @@ export const textToSpeech = async (
   text: string,
   context: UserContext,
   options?: {
-    providerAndModelName: string;
-    voice: string;
+    providerAndModelName?: string;
+    voice?: string;
   }
 ): Promise<{
   file: File;

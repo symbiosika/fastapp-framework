@@ -240,7 +240,10 @@ export const chatWithAgent = async (query: unknown) => {
 
   // Create headline for new sessions
   if (isNewSession) {
-    session.name = await createHeadlineFromChat(messages);
+    session.name = await createHeadlineFromChat(messages, {
+      organisationId: parsedQuery.organisationId,
+      userId: parsedQuery.userId,
+    });
   }
 
   // Save to chat store with the updated messages and state

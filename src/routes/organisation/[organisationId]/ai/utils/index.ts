@@ -1,4 +1,3 @@
-import { textToSpeech, speechToText } from "../../../../../lib/ai/standard";
 import type { FastAppHono } from "../../../../../types";
 import { HTTPException } from "hono/http-exception";
 import {
@@ -9,6 +8,8 @@ import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationMember } from "../../..";
+import { textToSpeech } from "../../../../../lib/ai/ai-sdk/tts";
+import { speechToText } from "../../../../../lib/ai/ai-sdk/stt";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -62,13 +63,19 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const { text, voice } = c.req.valid("json");
 
+        if (text.length > 10000) {
+          throw new HTTPException(400, {
+            message: "Text is too long",
+          });
+        }
+
         const result = await textToSpeech(
           text,
-          { voice },
           {
             organisationId,
             userId,
-          }
+          },
+          { voice }
         );
 
         return new Response(result.file, {
@@ -151,16 +158,14 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         }
 
         const result = await speechToText(
+          audioFile,
           {
-            file: audioFile,
+            organisationId,
+            userId,
           },
           {
             returnSegments: returnSegments === "true",
             returnWords: returnWords === "true",
-          },
-          {
-            organisationId,
-            userId,
           }
         );
 

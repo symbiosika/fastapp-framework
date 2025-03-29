@@ -6,8 +6,8 @@ import { parsePdfFileAsMardown } from "./pdf";
 import { knowledgeText } from "../../../lib/db/db-schema";
 import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
-import { generateImageDescription } from "../standard";
 import type { PageContent } from "./pdf/index.d";
+import { generateImageDescription } from "../ai-sdk";
 
 /**
  * Helper function to parse a file and return the text content and pages if available
@@ -57,8 +57,11 @@ export const parseFile = async (
   // Image
   else if (file.type.startsWith("image")) {
     // the the image describe by ai
-    const description = await generateImageDescription(file);
-    return { text: description, includesImages: false };
+    const d = await generateImageDescription(file, {
+      organisationId: context.organisationId,
+      userId: context.userId,
+    });
+    return { text: d.text, includesImages: false };
   } else {
     throw new Error(`Unsupported file type for parsing: ${file.type}`);
   }
