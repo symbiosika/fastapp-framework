@@ -29,6 +29,11 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-valibot";
+import {
+  promptTemplateKnowledgeEntries,
+  promptTemplateKnowledgeFilters,
+  promptTemplateKnowledgeGroups,
+} from "./prompts";
 
 // Enum for the type of file source
 export const fileSourceTypeEnum = pgEnum("file_source_type", [
@@ -190,6 +195,7 @@ export const knowledgeGroupRelations = relations(
   knowledgeGroup,
   ({ many }) => ({
     teamAssignments: many(knowledgeGroupTeamAssignments),
+    promptTemplates: many(promptTemplateKnowledgeGroups),
   })
 );
 
@@ -589,6 +595,7 @@ export const knowledgeEntryRelations = relations(
       fields: [knowledgeEntry.knowledgeGroupId],
       references: [knowledgeGroup.id],
     }),
+    promptTemplates: many(promptTemplateKnowledgeEntries),
   })
 );
 
@@ -645,5 +652,13 @@ export const knowledgeTextRelations = relations(
       fields: [knowledgeText.workspaceId],
       references: [workspaces.id],
     }),
+  })
+);
+
+export const knowledgeFiltersRelations = relations(
+  knowledgeFilters,
+  ({ many }) => ({
+    entries: many(knowledgeEntryFilters),
+    promptTemplates: many(promptTemplateKnowledgeFilters),
   })
 );
