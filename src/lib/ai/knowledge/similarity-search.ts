@@ -31,8 +31,8 @@ export async function getNearestEmbeddings(q: {
   addAfterN?: number;
   filterKnowledgeEntryIds?: string[];
   filterKnowledgeGroupIds?: string[];
-  filter?: Record<string, string[]>;
   filterKnowledgeFilterIds?: string[];
+  filter?: Record<string, string[]>;
   filterName?: string[];
   workspaceId?: string;
 }): Promise<
@@ -62,11 +62,11 @@ export async function getNearestEmbeddings(q: {
   }
 
   const filters = [];
-  if (q.filterKnowledgeEntryIds) {
+  if (q.filterKnowledgeEntryIds && q.filterKnowledgeEntryIds.length > 0) {
     filters.push(inArray(knowledgeEntry.id, q.filterKnowledgeEntryIds));
   }
 
-  if (q.filterKnowledgeGroupIds) {
+  if (q.filterKnowledgeGroupIds && q.filterKnowledgeGroupIds.length > 0) {
     filters.push(
       inArray(knowledgeEntry.knowledgeGroupId, q.filterKnowledgeGroupIds)
     );
@@ -76,7 +76,7 @@ export async function getNearestEmbeddings(q: {
     filters.push(eq(knowledgeEntry.workspaceId, q.workspaceId));
   }
 
-  if (q.filterKnowledgeFilterIds) {
+  if (q.filterKnowledgeFilterIds && q.filterKnowledgeFilterIds.length > 0) {
     filters.push(
       inArray(
         knowledgeEntry.id,

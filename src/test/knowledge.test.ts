@@ -58,7 +58,7 @@ export const TEST_KNOWLEDGE_ENTRY = {
 export const TEST_KNOWLEDGE_PROMPT_TEMPLATE = {
   id: "00000000-1100-1100-1100-123000000000",
   organisationId: TEST_ORGANISATION_1.id,
-  name: "Test Knowledge Prompt Template",
+  name: "test-knowledge-prompt-template",
   category: "test",
   description: "Test description",
   hidden: false,
@@ -75,18 +75,28 @@ export const importTestKnowledge = async () => {
   await getDb()
     .insert(knowledgeGroup)
     .values(TEST_KNOWLEDGE_GROUP)
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [knowledgeGroup.id],
+      set: TEST_KNOWLEDGE_GROUP,
+    });
 
   const knowledge = await getDb()
     .insert(knowledgeEntry)
     .values(TEST_KNOWLEDGE_ENTRY)
+    .onConflictDoUpdate({
+      target: [knowledgeEntry.id],
+      set: TEST_KNOWLEDGE_ENTRY,
+    })
     .returning();
 
   // Create a prompt template for the knowledge entry
   await getDb()
     .insert(promptTemplates)
     .values(TEST_KNOWLEDGE_PROMPT_TEMPLATE)
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [promptTemplates.id],
+      set: TEST_KNOWLEDGE_PROMPT_TEMPLATE,
+    });
 
   // assign the prompt template to the knowledge entry
   await getDb()
@@ -95,7 +105,13 @@ export const importTestKnowledge = async () => {
       promptTemplateId: TEST_KNOWLEDGE_PROMPT_TEMPLATE.id,
       knowledgeEntryId: knowledge[0].id,
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [promptTemplateKnowledgeEntries.id],
+      set: {
+        promptTemplateId: TEST_KNOWLEDGE_PROMPT_TEMPLATE.id,
+        knowledgeEntryId: knowledge[0].id,
+      },
+    });
 
   // Create a corresponding knowledge chunk with the same embedding
   await getDb().insert(knowledgeChunks).values({

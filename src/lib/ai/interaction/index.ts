@@ -111,11 +111,17 @@ export async function chat(
         });
 
         // Check and register the dynamic knowledge base tool
-        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool({
-          knowledgeEntries,
-          knowledgeFilters,
-          knowledgeGroups,
-        });
+        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool(
+          {
+            knowledgeEntries,
+            knowledgeFilters,
+            knowledgeGroups,
+          },
+          {
+            userId: options.context.userId,
+            organisationId: options.context.organisationId,
+          }
+        );
         if (dynamicKnowledgeBaseTool) {
           enabledToolNames.push(dynamicKnowledgeBaseTool.name);
         }
