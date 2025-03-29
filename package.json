@@ -11,10 +11,10 @@
   "scripts": {
     "dev": "bun --hot run demo.ts",
     "dev:inspect": "bun --inspect --hot run demo.ts",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push",
-    "generate": "drizzle-kit generate",
-    "studio": "drizzle-kit studio",
+    "fastapp:migrate": "drizzle-kit migrate",
+    "fastapp:push": "drizzle-kit push",
+    "fastapp:generate": "drizzle-kit generate",
+    "fastapp:studio": "drizzle-kit studio",
     "build": "tsc",
     "clean": "rm -rf ./lib/",
     "release:patch": "npm version patch && git push --follow-tags",
@@ -68,7 +68,7 @@
     "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.10",
     "@types/turndown": "^5.0.5",
-    "drizzle-kit": "^0.30.1",
+    "drizzle-kit": "^0.30.6",
     "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   },

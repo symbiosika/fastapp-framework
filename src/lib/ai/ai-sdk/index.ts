@@ -5,6 +5,7 @@ import { encodeImageFromFile } from "./utils";
 import log from "../../log";
 import { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
+import { prepareToolsForAI } from "../interaction/tools";
 
 /**
  * Generate an embedding for the given text using AI SDK
@@ -119,6 +120,7 @@ export async function chatCompletion(
     providerAndModelName?: string;
     temperature?: number;
     maxTokens?: number;
+    tools?: string[];
   }
 ) {
   let providerAndModelName = options?.providerAndModelName;
@@ -128,12 +130,26 @@ export async function chatCompletion(
   }
 
   const model = await getAIModel(providerAndModelName, context);
-  const result = await generateText({
+
+  // Build parameters for generateText
+  const params: any = {
     model: model as LanguageModelV1,
     messages,
-    ...options,
-  });
+    temperature: options?.temperature,
+    maxTokens: options?.maxTokens,
+  };
 
+  // Add tools if provided
+  if (options?.tools && options.tools.length > 0) {
+    params.tools = prepareToolsForAI(options.tools);
+  }
+
+  const result = await generateText(params);
+
+  // Handle tool calls if present
+  let finalText = result.text;
+
+  // Log completion
   log.logToDB({
     level: "info",
     organisationId: context?.organisationId,
@@ -143,7 +159,7 @@ export async function chatCompletion(
     message: "text-generation-complete",
     metadata: {
       model: providerAndModelName,
-      responseLength: result.text.length,
+      responseLength: finalText.length,
       usedTokens: result.usage?.totalTokens,
       promptTokens: result.usage?.promptTokens,
       completionTokens: result.usage?.completionTokens,
@@ -152,10 +168,10 @@ export async function chatCompletion(
 
   return {
     id: nanoid(6),
-    text: result.text,
+    text: finalText,
     model: providerAndModelName,
     meta: {
-      responseLength: result.text.length,
+      responseLength: finalText.length,
       usedTokens: result.usage?.totalTokens,
       promptTokens: result.usage?.promptTokens,
       completionTokens: result.usage?.completionTokens,

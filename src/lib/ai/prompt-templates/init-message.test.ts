@@ -59,7 +59,7 @@ describe("Prompt Template Import", () => {
   it("should init a template message", async () => {
     const result = await initTemplateMessage({
       organisationId: TEST_ORGANISATION_1.id,
-      templateName: "test:test-template-1",
+      template: "test:test-template-1",
       userInput: { name: "T1", name_2: "T2" },
     });
 
