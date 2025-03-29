@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineRoutes from ".";
+import defineRoutesTexts from "../knowledge-texts";
 import {
   initTests,
   TEST_ORGANISATION_1,
@@ -15,7 +16,9 @@ import {
 import { readFileSync } from "fs";
 import { join } from "path";
 
-let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledge = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appTexts = new Hono<{ Variables: FastAppHonoContextVariables }>();
+
 let TEST_USER_1_TOKEN: string;
 let createdKnowledgeTextId: string;
 let createdKnowledgeEntryId: string;
@@ -24,7 +27,9 @@ beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  defineRoutes(app, "/api");
+  defineRoutes(appKnowledge, "/api");
+  defineRoutesTexts(appTexts, "/api");
+
   const { user1Token } = await initTests();
   TEST_USER_1_TOKEN = user1Token;
 });
@@ -38,7 +43,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -53,42 +58,6 @@ describe("Knowledge API Endpoints", () => {
     createdKnowledgeTextId = response.jsonResponse.id;
   });
 
-  test("Get knowledge text entries", async () => {
-    const response = await testFetcher.get(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
-      TEST_USER_1_TOKEN
-    );
-
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.jsonResponse)).toBe(true);
-    expect(response.jsonResponse.length).toBeGreaterThan(0);
-    expect(
-      response.jsonResponse.some(
-        (entry: any) => entry.id === createdKnowledgeTextId
-      )
-    ).toBe(true);
-  });
-
-  test("Update a knowledge text entry", async () => {
-    const updatedData = {
-      organisationId: TEST_ORGANISATION_1.id,
-      text: "This is an updated test knowledge text.",
-      title: "Updated Test Knowledge Text",
-    };
-
-    const response = await testFetcher.put(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
-      TEST_USER_1_TOKEN,
-      updatedData
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.jsonResponse.text).toBe(updatedData.text);
-    expect(response.jsonResponse.title).toBe(updatedData.title);
-  });
-
   test("Parse document to create knowledge entry", async () => {
     const parseData = {
       sourceType: "text",
@@ -97,7 +66,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
       TEST_USER_1_TOKEN,
       parseData
@@ -112,7 +81,7 @@ describe("Knowledge API Endpoints", () => {
 
   test("Get knowledge entries", async () => {
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries`,
       TEST_USER_1_TOKEN
     );
@@ -124,7 +93,7 @@ describe("Knowledge API Endpoints", () => {
 
   test("Get a knowledge entry by ID", async () => {
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_1_TOKEN
     );
@@ -141,7 +110,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
       TEST_USER_1_TOKEN,
       extractData
@@ -160,7 +129,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-text`,
       TEST_USER_1_TOKEN,
       textData
@@ -178,7 +147,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-url`,
       TEST_USER_1_TOKEN,
       urlData
@@ -196,7 +165,7 @@ describe("Knowledge API Endpoints", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/similarity-search`,
       TEST_USER_1_TOKEN,
       searchData
@@ -220,7 +189,7 @@ describe("Knowledge API Endpoints", () => {
     formData.append("file", file);
 
     const response = await testFetcher.postFormData(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
@@ -234,7 +203,7 @@ describe("Knowledge API Endpoints", () => {
   // Cleanup tests - run these last
   test("Delete a knowledge entry", async () => {
     const response = await testFetcher.delete(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_1_TOKEN
     );
@@ -244,7 +213,7 @@ describe("Knowledge API Endpoints", () => {
 
   test("Delete a knowledge text entry", async () => {
     const response = await testFetcher.delete(
-      app,
+      appTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_1_TOKEN
     );

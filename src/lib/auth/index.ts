@@ -354,7 +354,7 @@ export const LocalAuth = {
     return { token, expiresAt };
   },
 
-  async forgotPasswort(email: string) {
+  async forgotPasswort(email: string, sendWelcomeText = false) {
     // Check if user exists in DB (optional check for clarity)
     const user = await getDb()
       .select({
@@ -367,7 +367,7 @@ export const LocalAuth = {
       throw "User not found";
     }
     // Send password-reset link
-    await sendResetPasswordLink(email);
+    await sendResetPasswordLink(email, sendWelcomeText);
     return { message: "Reset password link has been sent to your email." };
   },
 };

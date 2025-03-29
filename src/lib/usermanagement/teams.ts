@@ -236,3 +236,14 @@ export const updateTeamMemberRole = async (
     .returning();
   return result[0];
 };
+
+/**
+ * Check if a user is part of a team
+ */
+export const isUserPartOfTeam = async (userId: string, teamId: string) => {
+  const result = await getDb()
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId)));
+  return result.length > 0;
+};

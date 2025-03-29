@@ -1,0 +1,1 @@
+ALTER TABLE "base_knowledge_entry" ADD COLUMN "user_owned" boolean DEFAULT false NOT NULL;

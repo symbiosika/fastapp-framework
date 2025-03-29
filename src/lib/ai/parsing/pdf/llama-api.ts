@@ -1,6 +1,13 @@
+import type {
+  PdfParserContext,
+  PdfParserOptions,
+  PdfParserResult,
+} from "./index.d";
 import log from "../../../log";
 
 // https://docs.cloud.llamaindex.ai/llamaparse/getting_started/api
+// https://docs.cloud.llamaindex.ai/llamaparse/features/parsing_options
+
 const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY;
 const API_BASE_URL = "https://api.cloud.llamaindex.ai";
 
@@ -8,10 +15,10 @@ const API_BASE_URL = "https://api.cloud.llamaindex.ai";
  * Parse a PDF file as markdown
  */
 export const parsePdfFileAsMardownLlama = async (
-  fileContent: File
-): Promise<{
-  text: string;
-}> => {
+  fileContent: File,
+  context: PdfParserContext,
+  options?: PdfParserOptions
+): Promise<PdfParserResult> => {
   if (!LLAMA_CLOUD_API_KEY) {
     throw new Error("No API key set for LlamaParse API.");
   }
@@ -78,7 +85,18 @@ export const parsePdfFileAsMardownLlama = async (
   log.debug("Result retrieved successfully.");
   const r = await resultResponse.json();
 
+  // Parse the markdown into pages
+  // By default, LlamaParse will separate pages in the markdown and text output by \n---\n.
+
+  const pageTexts = r.markdown.split("\n---\n");
+  const pages = pageTexts.map((text: string, index: number) => ({
+    page: index + 1,
+    text: text.trim(),
+  }));
+
   return {
-    text: r.markdown,
+    includesImages: false,
+    model: "llama",
+    pages: pages,
   };
 };

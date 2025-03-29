@@ -96,7 +96,117 @@ export const knowledgeTextUpdateSchema = createUpdateSchema(knowledgeText);
 export type KnowledgeTextMeta = {
   sourceUri?: string;
   textLength?: number;
+  includesLocalImages?: boolean; // when the document has mardown ![image](image.png) which can be found in the storage
 };
+
+// Table for knowledge groups (grouping of knowledge entries)
+export const knowledgeGroup = pgBaseTable(
+  "knowledge_group",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    organisationWideAccess: boolean("organisation_wide_access")
+      .notNull()
+      .default(false),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("knowledge_group_name_org_idx").on(table.name, table.organisationId),
+    index("knowledge_group_organisation_id_idx").on(table.organisationId),
+    index("knowledge_group_user_id_idx").on(table.userId),
+  ]
+);
+
+export type KnowledgeGroupSelect = typeof knowledgeGroup.$inferSelect;
+export type KnowledgeGroupInsert = typeof knowledgeGroup.$inferInsert;
+
+export const knowledgeGroupSchema = createSelectSchema(knowledgeGroup);
+export const knowledgeGroupInsertSchema = createInsertSchema(knowledgeGroup);
+export const knowledgeGroupUpdateSchema = createUpdateSchema(knowledgeGroup);
+
+// Assignments of knowledge groups to teams
+export const knowledgeGroupTeamAssignments = pgBaseTable(
+  "knowledge_group_team_assignments",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    knowledgeGroupId: uuid("knowledge_group_id")
+      .notNull()
+      .references(() => knowledgeGroup.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("knowledge_group_team_assignment_unique").on(
+      table.knowledgeGroupId,
+      table.teamId
+    ),
+    index("knowledge_group_team_assignment_knowledge_group_id_idx").on(
+      table.knowledgeGroupId
+    ),
+    index("knowledge_group_team_assignment_team_id_idx").on(table.teamId),
+  ]
+);
+
+export type KnowledgeGroupTeamAssignmentSelect =
+  typeof knowledgeGroupTeamAssignments.$inferSelect;
+export type KnowledgeGroupTeamAssignmentInsert =
+  typeof knowledgeGroupTeamAssignments.$inferInsert;
+
+export const knowledgeGroupTeamAssignmentsSchema = createSelectSchema(
+  knowledgeGroupTeamAssignments
+);
+export const knowledgeGroupTeamAssignmentsInsertSchema = createInsertSchema(
+  knowledgeGroupTeamAssignments
+);
+export const knowledgeGroupTeamAssignmentsUpdateSchema = createUpdateSchema(
+  knowledgeGroupTeamAssignments
+);
+
+// Relations for knowledge groups
+export const knowledgeGroupRelations = relations(
+  knowledgeGroup,
+  ({ many }) => ({
+    teamAssignments: many(knowledgeGroupTeamAssignments),
+  })
+);
+
+// Relations for knowledge group team assignments
+export const knowledgeGroupTeamAssignmentsRelations = relations(
+  knowledgeGroupTeamAssignments,
+  ({ one }) => ({
+    knowledgeGroup: one(knowledgeGroup, {
+      fields: [knowledgeGroupTeamAssignments.knowledgeGroupId],
+      references: [knowledgeGroup.id],
+    }),
+    team: one(teams, {
+      fields: [knowledgeGroupTeamAssignments.teamId],
+      references: [teams.id],
+    }),
+  })
+);
 
 // Main table for all knowledge entries
 export const knowledgeEntry = pgBaseTable(
@@ -119,6 +229,15 @@ export const knowledgeEntry = pgBaseTable(
     workspaceId: uuid("workspace_id").references(() => workspaces.id, {
       onDelete: "cascade",
     }),
+    // optional assign a document only to my user
+    // security feature to limit access to knowledge entries
+    userOwned: boolean("user_owned").notNull().default(false),
+    // optional assign a document to a knowledge group
+    knowledgeGroupId: uuid("knowledge_group_id").references(
+      () => knowledgeGroup.id,
+      { onDelete: "cascade" }
+    ),
+    // define the source
     sourceType: fileSourceTypeEnum("source_type").notNull(),
     sourceId: uuid("source_id"),
     sourceExternalId: varchar("source_external_id", { length: 255 }),
@@ -465,6 +584,10 @@ export const knowledgeEntryRelations = relations(
     workspace: one(workspaces, {
       fields: [knowledgeEntry.workspaceId],
       references: [workspaces.id],
+    }),
+    knowledgeGroup: one(knowledgeGroup, {
+      fields: [knowledgeEntry.knowledgeGroupId],
+      references: [knowledgeGroup.id],
     }),
   })
 );

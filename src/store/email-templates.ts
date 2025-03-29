@@ -106,6 +106,27 @@ export const stdTemplatePasswordReset: EmailTemplateFunction = async (data) => {
   };
 };
 
+export const stdTemplatePasswordResetWelcome: EmailTemplateFunction = async (
+  data
+) => {
+  return {
+    html: `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4a4a4a;">Welcome to ${data.appName}</h2>
+            <p>Hello,</p>
+            <p>Please click the link below to set your password for ${data.appName}.</p>
+            <p><a href="${data.link}">Set Password</a></p>
+            <p>Best regards,<br>The ${data.appName} Team</p>
+          </div>
+        </body>
+      </html>
+    `,
+    subject: `Welcome to ${data.appName}`,
+  };
+};
+
 export const stdTemplateInviteToOrganization: EmailTemplateFunction = async (
   data
 ) => {

@@ -9,6 +9,7 @@ import {
   organisationMembers,
   invitationCodes,
   aiProviderModels,
+  teams,
 } from "../lib/db/db-schema";
 import { inArray } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
@@ -80,6 +81,12 @@ export const TEST_USERS = [
   TEST_USER_3,
   TEST_ADMIN_USER,
 ];
+
+export const TEST_TEAM_1 = {
+  id: "00000000-3333-3333-3333-000000000001",
+  name: "Test Team 1",
+  organisationId: TEST_ORGANISATION_1.id,
+};
 
 /**
  * Delete all Test Organisations
@@ -221,6 +228,39 @@ export const initTestOrganisationMembers = async () => {
 };
 
 /**
+ * Init all Test Teams
+ */
+export const initTestTeams = async () => {
+  await dropAllTestTeamMembers();
+
+  // Create test team
+  await getDb()
+    .insert(teams)
+    .values({
+      id: TEST_TEAM_1.id,
+      name: TEST_TEAM_1.name,
+      organisationId: TEST_TEAM_1.organisationId,
+    })
+    .onConflictDoUpdate({
+      target: [teams.id],
+      set: {
+        name: TEST_TEAM_1.name,
+        organisationId: TEST_TEAM_1.organisationId,
+      },
+    });
+
+  // Add test user to team
+  await getDb()
+    .insert(teamMembers)
+    .values({
+      userId: TEST_USER_1.id,
+      teamId: TEST_TEAM_1.id,
+      role: "admin",
+    })
+    .onConflictDoNothing();
+};
+
+/**
  * Drop all invitations codes
  */
 export const dropAllInvitationsCodes = async () => {
@@ -248,22 +288,13 @@ const getJwtTokenForTesting = async (email: string) => {
 
 /**
  * GLOBAL Init global test data
- * Can be called for each test file
  */
 export const initTests = async () => {
   await createDatabaseClient();
-  await waitForDbConnection();  
-
-  const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);
-  const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
-  const user3Token = await getJwtTokenForTesting(TEST_USER_3.email);
-  const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
-
-  await dropAllInvitationsCodes();
-  await dropAllTestAiProviderModels();
+  await waitForDbConnection();
 
   await initTestOrganisations().catch((err) => {
-    console.info("Error initialising test organisation", err);
+    console.info("Error initialising test organisations", err);
   });
   await initTestUsers().catch((err) => {
     console.info("Error initialising test users", err);
@@ -271,6 +302,17 @@ export const initTests = async () => {
   await initTestOrganisationMembers().catch((err) => {
     console.info("Error initialising test organisation members", err);
   });
+  await initTestTeams().catch((err) => {
+    console.info("Error initialising test teams", err);
+  });
+  await dropAllInvitationsCodes().catch((err) => {
+    console.info("Error dropping invitation codes", err);
+  });
+
+  const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);
+  const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
+  const user3Token = await getJwtTokenForTesting(TEST_USER_3.email);
+  const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
 
   return {
     user1Token,

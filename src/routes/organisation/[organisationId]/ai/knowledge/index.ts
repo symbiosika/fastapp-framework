@@ -2,7 +2,6 @@
  * Routes to manage the knowledge entries for each organisation
  * These routes are protected by JWT and CheckPermission middleware
  */
-
 import type { FastAppHono } from "../../../../../types";
 import * as v from "valibot";
 import { HTTPException } from "hono/http-exception";
@@ -23,12 +22,6 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "../../../../../lib/ai/knowledge/similarity-search";
-import {
-  createKnowledgeText,
-  getKnowledgeText,
-  updateKnowledgeText,
-  deleteKnowledgeText,
-} from "../../../../../lib/ai/knowledge/knowledge-texts";
 import { addKnowledgeTextFromUrl } from "../../../../../lib/ai/knowledge-texts";
 import {
   authAndSetUsersInfo,
@@ -37,16 +30,19 @@ import {
 import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-organisation";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
-import {
-  knowledgeEntrySchema,
-  knowledgeTextInsertSchema,
-  knowledgeTextUpdateSchema,
-} from "../../../../../dbSchema";
+import { knowledgeEntrySchema } from "../../../../../dbSchema";
 import { isOrganisationAdmin, isOrganisationMember } from "../../..";
 import {
   checkIfKnowledgeNeedsUpdate,
   processKnowledgeSync,
 } from "../../../../../lib/ai/knowledge-sync/sync-api";
+import {
+  addFilterToKnowledgeEntry,
+  getFilterByCategoryAndName,
+  getFiltersForKnowledgeEntry,
+  removeFilterFromKnowledgeEntry,
+  upsertFilter,
+} from "../../../../../lib/ai/knowledge/knowledge-filters";
 
 const FileSourceType = {
   DB: "db",
@@ -65,7 +61,14 @@ const generateKnowledgeValidation = v.object({
   filters: v.optional(v.record(v.string(), v.string())),
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  model: v.optional(v.string()), // mistral | llama | local
+  extractImages: v.optional(v.boolean()),
+  generateSummary: v.optional(v.boolean()),
+  summaryCustomPrompt: v.optional(v.string()),
+  summaryModel: v.optional(v.string()),
 });
 export type GenerateKnowledgeInput = v.InferOutput<
   typeof generateKnowledgeValidation
@@ -77,6 +80,10 @@ const askKnowledgeValidation = v.object({
   addBeforeN: v.optional(v.number()),
   addAfterN: v.optional(v.number()),
   filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+  userOwned: v.optional(v.boolean()),
+  teamId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
 });
 export type AskKnowledgeInput = v.InferOutput<typeof askKnowledgeValidation>;
 
@@ -86,6 +93,10 @@ const parseDocumentValidation = v.object({
   sourceFileBucket: v.optional(v.string()),
   sourceUrl: v.optional(v.string()),
   organisationId: v.string(),
+  userOwned: v.optional(v.boolean()),
+  knowledgeGroupId: v.optional(v.string()),
+  teamId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
 });
 export type ParseDocumentInput = v.InferOutput<typeof parseDocumentValidation>;
 
@@ -96,6 +107,10 @@ const similaritySearchValidation = v.object({
   addBeforeN: v.optional(v.number()),
   addAfterN: v.optional(v.number()),
   filterKnowledgeEntryIds: v.optional(v.array(v.string())),
+  filterKnowledgeGroupIds: v.optional(v.array(v.string())),
+  filterTeamIds: v.optional(v.array(v.string())),
+  filterUserOwned: v.optional(v.boolean()),
+  filterWorkspaceIds: v.optional(v.array(v.string())),
   filter: v.optional(v.record(v.string(), v.array(v.string()))),
   filterName: v.optional(v.array(v.string())),
   fullDocument: v.optional(v.boolean()),
@@ -109,6 +124,8 @@ const addFromTextValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   meta: v.optional(
     v.object({
       sourceUri: v.string(),
@@ -120,6 +137,12 @@ const addFromTextValidation = v.object({
 const addFromUrlValidation = v.object({
   organisationId: v.string(),
   url: v.string(),
+  filters: v.optional(v.record(v.string(), v.string())),
+  teamId: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
 });
 
 const uploadAndLearnValidation = v.object({
@@ -128,6 +151,8 @@ const uploadAndLearnValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
   text: v.optional(v.string()),
   meta: v.optional(
     v.object({
@@ -135,6 +160,11 @@ const uploadAndLearnValidation = v.object({
       sourceId: v.string(),
     })
   ),
+  model: v.optional(v.string()), // mistral | llama | local
+  extractImages: v.optional(v.boolean()),
+  generateSummary: v.optional(v.boolean()),
+  summaryCustomPrompt: v.optional(v.string()),
+  summaryModel: v.optional(v.string()),
 });
 
 const checkForSyncValidation = v.object({
@@ -154,56 +184,11 @@ const syncKnowledgeValidation = v.object({
   teamId: v.optional(v.string()),
   userId: v.optional(v.string()),
   workspaceId: v.optional(v.string()),
+  knowledgeGroupId: v.optional(v.string()),
+  userOwned: v.optional(v.boolean()),
 });
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
-  /**
-   * Call the knowledge extraction from a document to generate embeddings in the database
-   * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
-   */
-  app.post(
-    API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/extract-knowledge",
-      tags: ["knowledge"],
-      summary: "Extract knowledge from a document",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(
-                v.object({
-                  id: v.string(),
-                  ok: v.boolean(),
-                })
-              ),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", generateKnowledgeValidation),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
-
-        const r = await extractKnowledgeFromExistingDbEntry(body);
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
   /**
    * Get all knowledge entries
    * URL params:
@@ -239,6 +224,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         page: v.optional(v.string()),
         teamId: v.optional(v.string()),
         workspaceId: v.optional(v.string()),
+        knowledgeGroupId: v.optional(v.string()),
+        userOwned: v.optional(v.string()),
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
@@ -250,6 +237,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           page: pageStr,
           teamId,
           workspaceId,
+          knowledgeGroupId,
+          userOwned,
         } = c.req.valid("query");
         const { organisationId } = c.req.valid("param");
         const usersId = c.get("usersId");
@@ -264,6 +253,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           userId: usersId,
           teamId,
           workspaceId,
+          knowledgeGroupId,
+          ...(userOwned === "true" ? { userOwned: true } : {}),
         });
         return c.json(r);
       } catch (e) {
@@ -319,7 +310,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
 
   /**
    * Update a knowledge entry by ID
-   * Only the name can be updated
+   * Name and assignments can be updated
    */
   app.put(
     API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/entries/:id",
@@ -329,7 +320,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "put",
       path: "/organisation/:organisationId/ai/knowledge/entries/:id",
       tags: ["knowledge"],
-      summary: "Update a knowledge entry by ID. Only the name can be updated.",
+      summary:
+        "Update a knowledge entry by ID. Name and assignments can be updated.",
       responses: {
         200: {
           description: "Successful response",
@@ -345,7 +337,16 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
-    validator("json", v.object({ name: v.string() })),
+    validator(
+      "json",
+      v.object({
+        name: v.optional(v.string()),
+        teamId: v.optional(v.nullable(v.string())),
+        workspaceId: v.optional(v.nullable(v.string())),
+        knowledgeGroupId: v.optional(v.nullable(v.string())),
+        userOwned: v.optional(v.boolean()),
+      })
+    ),
     isOrganisationAdmin,
     async (c) => {
       try {
@@ -495,7 +496,201 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await parseDocument(body);
+        // Pass through all fields including knowledgeGroupId and userOwned
+        const r = await parseDocument({
+          ...body,
+          organisationId,
+        });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Call the knowledge extraction from a document to generate embeddings in the database
+   * A document can be a plain text in the DB, a markdown file, an PDF file, an image, etc.
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/extract-knowledge",
+      tags: ["knowledge"],
+      summary: "Extract knowledge from a document",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  ok: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validator("json", generateKnowledgeValidation),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
+        const { organisationId } = c.req.valid("param");
+        validateOrganisationId(body, organisationId);
+
+        const r = await extractKnowledgeFromExistingDbEntry({
+          ...body,
+          organisationId,
+          userId: c.get("usersId"),
+        });
+        return c.json(r);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Upload a file, learn from it, and then delete it
+   * This endpoint combines file upload and knowledge extraction in one step
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/upload-and-extract",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/upload-and-extract",
+      tags: ["knowledge"],
+      summary: "Upload a file and extract knowledge in one step",
+      requestBody: {
+        content: {
+          "multipart/form-data": {
+            schema: resolver(
+              v.object({
+                file: v.any(),
+                teamId: v.optional(v.string()),
+                workspaceId: v.optional(v.string()),
+                knowledgeGroupId: v.optional(v.string()),
+                userOwned: v.optional(v.string()),
+                filters: v.optional(v.string()),
+              })
+            ),
+          },
+          "application/json": {
+            schema: resolver(uploadAndLearnValidation),
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  id: v.string(),
+                  ok: v.boolean(),
+                })
+              ),
+            },
+          },
+        },
+        400: {
+          description: "Bad request",
+        },
+      },
+    }),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      const organisationId = c.req.param("organisationId");
+      const contentType = c.req.header("content-type");
+      const userId = c.get("usersId");
+
+      let data;
+      let file;
+      let teamId;
+      let workspaceId;
+      let knowledgeGroupId;
+      let userOwned;
+      let filters;
+      let generateSummary;
+      let summaryCustomPrompt;
+      let summaryModel;
+      let extractImages;
+
+      if (contentType && contentType.includes("multipart/form-data")) {
+        const form = await c.req.formData();
+        teamId = form.get("teamId")?.toString();
+
+        if (teamId && teamId === "") {
+          teamId = undefined;
+        }
+        workspaceId = form.get("workspaceId")?.toString();
+        if (workspaceId && workspaceId === "") {
+          workspaceId = undefined;
+        }
+
+        knowledgeGroupId = form.get("knowledgeGroupId")?.toString();
+        if (knowledgeGroupId && knowledgeGroupId === "") {
+          knowledgeGroupId = undefined;
+        }
+
+        extractImages = form.get("extractImages")?.toString() === "true";
+        userOwned = form.get("userOwned")?.toString() === "true";
+        generateSummary = form.get("generateSummary")?.toString() === "true";
+        summaryCustomPrompt = form.get("summaryCustomPrompt")?.toString();
+        summaryModel = form.get("summaryModel")?.toString();
+
+        try {
+          filters = form.get("filters")
+            ? JSON.parse(form.get("filters")?.toString() || "{}")
+            : undefined;
+        } catch (e) {
+          throw new HTTPException(400, {
+            message: "Error parsing filters from form-data.",
+          });
+        }
+        file = form.get("file") as File;
+        data = {
+          userId,
+          organisationId,
+          teamId,
+          workspaceId,
+          knowledgeGroupId,
+          userOwned,
+          filters,
+          extractImages,
+          generateSummary,
+          summaryCustomPrompt,
+          summaryModel,
+        };
+      } else {
+        data = await c.req.json();
+        data = {
+          ...data,
+          organisationId,
+          userId,
+        };
+      }
+
+      try {
+        const parsedData = v.parse(uploadAndLearnValidation, data);
+        const r = await extractKnowledgeInOneStep(
+          { ...parsedData, file },
+          true
+        );
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -537,16 +732,20 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         validateOrganisationId(data, organisationId);
 
         const r = await extractKnowledgeFromText({
+          userId: c.get("usersId"),
           organisationId: data.organisationId,
           title: data.title,
           text: data.text,
           filters: data.filters,
           teamId: data.teamId,
           workspaceId: data.workspaceId,
+          knowledgeGroupId: data.knowledgeGroupId,
+          userOwned: data.userOwned,
           sourceExternalId: data.meta?.sourceId ?? data.title,
           sourceType: "external",
           sourceFileBucket: "default",
           sourceUrl: data.meta?.sourceUri ?? data.title,
+          includesLocalImages: false,
         });
 
         return c.json(r);
@@ -589,329 +788,11 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(body, organisationId);
 
-        const r = await addKnowledgeTextFromUrl(body);
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Create a new knowledge text entry
-   */
-  app.post(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/texts",
-      tags: ["knowledge"],
-      summary: "Create a new knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-        },
-      },
-    }),
-    validator("json", knowledgeTextInsertSchema),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const body = c.req.valid("json");
-        const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
-
-        const r = await createKnowledgeText({
+        const r = await addKnowledgeTextFromUrl({
           ...body,
+          organisationId,
           userId: c.get("usersId"),
         });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Read knowledge text entries
-   */
-  app.get(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "get",
-      path: "/organisation/:organisationId/ai/knowledge/texts",
-      tags: ["knowledge"],
-      summary: "Read knowledge text entries",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(v.array(knowledgeEntrySchema)),
-            },
-          },
-        },
-      },
-    }),
-    validator(
-      "query",
-      v.object({
-        id: v.optional(v.string()),
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-        limit: v.optional(v.string()),
-        page: v.optional(v.string()),
-      })
-    ),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const {
-          id,
-          teamId,
-          workspaceId,
-          limit: limitStr,
-          page: pageStr,
-        } = c.req.valid("query");
-        const { organisationId } = c.req.valid("param");
-        const userId = c.get("usersId");
-        const limit = limitStr ? parseInt(limitStr) : undefined;
-        const page = pageStr ? parseInt(pageStr) : undefined;
-
-        const r = await getKnowledgeText({
-          id,
-          limit,
-          page,
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Update a knowledge text entry
-   */
-  app.put(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "put",
-      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
-      tags: ["knowledge"],
-      summary: "Update a knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(knowledgeEntrySchema),
-            },
-          },
-        },
-      },
-    }),
-    validator("json", knowledgeTextUpdateSchema),
-    validator(
-      "query",
-      v.object({
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-      })
-    ),
-    validator(
-      "param",
-      v.object({ organisationId: v.string(), id: v.string() })
-    ),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const { teamId, workspaceId } = c.req.valid("query");
-        const { organisationId, id } = c.req.valid("param");
-        const body = c.req.valid("json");
-        const userId = c.get("usersId");
-        validateOrganisationId(body, organisationId);
-
-        const r = await updateKnowledgeText(id, body, {
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(r);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Delete a knowledge text entry
-   */
-  app.delete(
-    API_BASE_PATH + "/organisation/:organisationId/ai/knowledge/texts/:id",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "delete",
-      path: "/organisation/:organisationId/ai/knowledge/texts/:id",
-      tags: ["knowledge"],
-      summary: "Delete a knowledge text entry",
-      responses: {
-        200: {
-          description: "Successful response",
-        },
-      },
-    }),
-    validator(
-      "query",
-      v.object({
-        teamId: v.optional(v.string()),
-        workspaceId: v.optional(v.string()),
-      })
-    ),
-    validator(
-      "param",
-      v.object({ organisationId: v.string(), id: v.string() })
-    ),
-    isOrganisationMember,
-    async (c) => {
-      try {
-        const { teamId, workspaceId } = c.req.valid("query");
-        const { organisationId, id } = c.req.valid("param");
-        const userId = c.get("usersId");
-
-        await deleteKnowledgeText(id, {
-          organisationId,
-          userId,
-          teamId,
-          workspaceId,
-        });
-        return c.json(RESPONSES.SUCCESS);
-      } catch (e) {
-        throw new HTTPException(400, { message: e + "" });
-      }
-    }
-  );
-
-  /**
-   * Upload a file, learn from it, and then delete it
-   * This endpoint combines file upload and knowledge extraction in one step
-   */
-  app.post(
-    API_BASE_PATH +
-      "/organisation/:organisationId/ai/knowledge/upload-and-extract",
-    authAndSetUsersInfo,
-    checkUserPermission,
-    describeRoute({
-      method: "post",
-      path: "/organisation/:organisationId/ai/knowledge/upload-and-extract",
-      tags: ["knowledge"],
-      summary: "Upload a file and extract knowledge in one step",
-      requestBody: {
-        content: {
-          "multipart/form-data": {
-            schema: resolver(
-              v.object({
-                file: v.any(),
-                teamId: v.optional(v.string()),
-                workspaceId: v.optional(v.string()),
-                filters: v.optional(v.string()),
-              })
-            ),
-          },
-          "application/json": {
-            schema: resolver(uploadAndLearnValidation),
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: resolver(
-                v.object({
-                  id: v.string(),
-                  ok: v.boolean(),
-                })
-              ),
-            },
-          },
-        },
-        400: {
-          description: "Bad request",
-        },
-      },
-    }),
-    validator("param", v.object({ organisationId: v.string() })),
-    isOrganisationMember,
-    async (c) => {
-      const organisationId = c.req.param("organisationId");
-      const contentType = c.req.header("content-type");
-      const userId = c.get("usersId");
-
-      let data;
-      let file;
-      let teamId;
-      let workspaceId;
-      let filters;
-
-      if (contentType && contentType.includes("multipart/form-data")) {
-        const form = await c.req.formData();
-        teamId = form.get("teamId")?.toString();
-
-        if (teamId && teamId === "") {
-          teamId = undefined;
-        }
-        workspaceId = form.get("workspaceId")?.toString();
-        if (workspaceId && workspaceId === "") {
-          workspaceId = undefined;
-        }
-        try {
-          filters = form.get("filters")
-            ? JSON.parse(form.get("filters")?.toString() || "{}")
-            : undefined;
-        } catch (e) {
-          throw new HTTPException(400, {
-            message: "Error parsing filters from form-data.",
-          });
-        }
-        file = form.get("file") as File;
-        data = {
-          userId,
-          organisationId,
-          teamId,
-          workspaceId,
-          filters,
-        };
-      } else {
-        data = await c.req.json();
-        data = {
-          ...data,
-          organisationId,
-          userId,
-        };
-      }
-
-      try {
-        const parsedData = v.parse(uploadAndLearnValidation, data);
-        const r = await extractKnowledgeInOneStep(
-          { ...parsedData, file },
-          true
-        );
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
@@ -1001,6 +882,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
                 lastHash: v.optional(v.string()),
                 teamId: v.optional(v.string()),
                 workspaceId: v.optional(v.string()),
+                knowledgeGroupId: v.optional(v.string()),
+                userOwned: v.optional(v.string()),
                 filters: v.optional(v.string()),
               })
             ),
@@ -1053,6 +936,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
           data.lastHash = form.get("lastHash")?.toString();
           data.teamId = form.get("teamId")?.toString() || undefined;
           data.workspaceId = form.get("workspaceId")?.toString() || undefined;
+          data.knowledgeGroupId =
+            form.get("knowledgeGroupId")?.toString() || undefined;
+          data.userOwned = form.get("userOwned")?.toString() === "true";
 
           try {
             data.filters = form.get("filters")
@@ -1086,6 +972,140 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         });
 
         return c.json(result);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Add a filter to a knowledge entry
+   */
+  app.post(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "post",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+      tags: ["knowledge"],
+      summary: "Add a filter to a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    validator(
+      "json",
+      v.object({
+        category: v.string(),
+        name: v.string(),
+      })
+    ),
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const { organisationId, id } = c.req.valid("param");
+        const { category, name } = c.req.valid("json");
+
+        // Zuerst den Filter anhand von category und name finden
+        let filter = await getFilterByCategoryAndName(
+          category,
+          name,
+          organisationId
+        );
+
+        if (!filter) {
+          filter = await upsertFilter(category, name, organisationId);
+        }
+
+        await addFilterToKnowledgeEntry(id, filter.id, organisationId);
+
+        return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Get all filters for a knowledge entry
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters",
+      tags: ["knowledge"],
+      summary: "Get all filters for a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), id: v.string() })
+    ),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const { id } = c.req.valid("param");
+
+        const filters = await getFiltersForKnowledgeEntry(id);
+
+        return c.json(filters);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Remove a filter from a knowledge entry
+   */
+  app.delete(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/entries/:id/filters/:filterId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "delete",
+      path: "/organisation/:organisationId/ai/knowledge/entries/:id/filters/:filterId",
+      tags: ["knowledge"],
+      summary: "Remove a filter from a knowledge entry",
+      responses: {
+        200: {
+          description: "Successful response",
+        },
+      },
+    }),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        id: v.string(),
+        filterId: v.string(),
+      })
+    ),
+    isOrganisationAdmin,
+    async (c) => {
+      try {
+        const { organisationId, id, filterId } = c.req.valid("param");
+
+        await removeFilterFromKnowledgeEntry(id, filterId, organisationId);
+
+        return c.json(RESPONSES.SUCCESS);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

@@ -4,6 +4,7 @@ import {
   stdTemplateInviteToOrganizationWhenUserExists,
   stdTemplateMagicLink,
   stdTemplatePasswordReset,
+  stdTemplatePasswordResetWelcome,
   stdTemplateVerifyEmail,
 } from "./email-templates";
 
@@ -27,6 +28,7 @@ export const _GLOBAL_SERVER_CONFIG = {
     verifyEmail: stdTemplateVerifyEmail,
     magicLink: stdTemplateMagicLink,
     resetPassword: stdTemplatePasswordReset,
+    resetPasswordWelcome: stdTemplatePasswordResetWelcome,
     inviteToOrganization: stdTemplateInviteToOrganization,
     inviteToOrganizationWhenUserExists:
       stdTemplateInviteToOrganizationWhenUserExists,
@@ -39,6 +41,7 @@ export const _GLOBAL_SERVER_CONFIG = {
  */
 export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   _GLOBAL_SERVER_CONFIG.port = config.port ?? 3000;
+  _GLOBAL_SERVER_CONFIG.appName = config.appName ?? "App";
   _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
   _GLOBAL_SERVER_CONFIG.baseUrl =
     config.baseUrl ?? process.env.BASE_URL ?? "http://localhost:3000";
@@ -86,5 +89,9 @@ export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   if (config.emailTemplates?.inviteToOrganizationWhenUserExists) {
     _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganizationWhenUserExists =
       config.emailTemplates.inviteToOrganizationWhenUserExists;
+  }
+  if (config.emailTemplates?.resetPasswordWelcome) {
+    _GLOBAL_SERVER_CONFIG.emailTemplates.resetPasswordWelcome =
+      config.emailTemplates.resetPasswordWelcome;
   }
 };

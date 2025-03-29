@@ -8,16 +8,27 @@ import { getMarkdownFromUrl } from "../parsing/url";
 export const addKnowledgeTextFromUrl = async (data: {
   url: string;
   organisationId: string;
+  userId: string;
+  knowledgeGroupId?: string;
+  teamId?: string;
+  workspaceId?: string;
+  userOwned?: boolean;
 }) => {
   const markdown = await getMarkdownFromUrl(data.url);
-  log.debug(`Got markdown from URL: ${markdown.slice(0, 100)}`);
+  log.debug(`Got markdown from URL: ${markdown.slice(0, 25)}`);
 
   return extractKnowledgeFromText({
     organisationId: data.organisationId,
+    knowledgeGroupId: data.knowledgeGroupId,
+    teamId: data.teamId,
+    workspaceId: data.workspaceId,
+    userId: data.userId,
+    userOwned: data.userOwned,
     title: data.url,
     text: markdown,
     sourceType: "external",
     sourceFileBucket: "default",
     sourceUrl: data.url,
+    includesLocalImages: false,
   });
 };

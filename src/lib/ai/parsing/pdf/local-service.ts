@@ -1,4 +1,9 @@
 import log from "../../../log";
+import type {
+  PdfParserContext,
+  PdfParserOptions,
+  PdfParserResult,
+} from "./index.d";
 
 const LOCAL_API_KEY = process.env.LOCAL_PDF_PARSER_API_KEY;
 const LOCAL_API_BASE_URL =
@@ -27,7 +32,7 @@ interface PdfParserChunk {
   metadata: PdfParserChunkMetadata;
 }
 
-interface PdfParserResult {
+interface LocalParserResult {
   job_id: string;
   original_filename: string;
   num_pages: number;
@@ -42,10 +47,10 @@ interface PdfParserResult {
  * Parse a PDF file as markdown using the local PDF parsing service
  */
 export const parsePdfFileAsMardownLocal = async (
-  fileContent: File
-): Promise<{
-  text: string;
-}> => {
+  fileContent: File,
+  context: PdfParserContext,
+  options?: PdfParserOptions
+): Promise<PdfParserResult> => {
   if (!LOCAL_API_KEY) {
     throw new Error("No API key set for local PDF parser API.");
   }
@@ -118,13 +123,18 @@ export const parsePdfFileAsMardownLocal = async (
   }
 
   log.debug("Result retrieved successfully.");
-  const result = (await resultResponse.json()) as PdfParserResult;
+  const result = (await resultResponse.json()) as LocalParserResult;
 
-  // Extract content from raw_content and join all page texts
-  const extractedText =
-    result.raw_content?.content?.map((page) => page.text).join("\n") || "";
+  // Create pages array with page numbers and content
+  const pages =
+    result.raw_content?.content?.map((page) => ({
+      page: page.page,
+      text: page.text,
+    })) || [];
 
   return {
-    text: extractedText || "",
+    includesImages: false,
+    model: "local",
+    pages: pages, // Add pages information
   };
 };

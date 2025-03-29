@@ -61,6 +61,7 @@ export type EmailTemplateFunction = (data: {
 
 export interface ServerSpecificConfig {
   port?: number;
+  appName?: string;
   basePath?: string;
   baseUrl?: string;
 
@@ -101,6 +102,7 @@ export interface ServerSpecificConfig {
     verifyEmail?: EmailTemplateFunction;
     magicLink?: EmailTemplateFunction;
     resetPassword?: EmailTemplateFunction;
+    resetPasswordWelcome?: EmailTemplateFunction;
     inviteToOrganization?: EmailTemplateFunction;
     inviteToOrganizationWhenUserExists?: EmailTemplateFunction;
   };

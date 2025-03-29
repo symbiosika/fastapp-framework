@@ -6,6 +6,7 @@ import log from "../../../lib/log";
 import { getFullSourceDocumentsForKnowledgeEntry } from "./get-knowledge";
 import { and, eq, inArray } from "drizzle-orm";
 import {
+  type KnowledgeChunkMeta,
   knowledgeEntryFilters,
   knowledgeFilters,
 } from "../../db/schema/knowledge";
@@ -16,6 +17,7 @@ type KnowledgeChunk = {
   knowledgeEntryId: string;
   knowledgeEntryName: string;
   order: number;
+  meta: KnowledgeChunkMeta;
 };
 
 /**
@@ -37,6 +39,7 @@ export async function getNearestEmbeddings(q: {
     text: string;
     knowledgeEntryId: string;
     knowledgeEntryName: string;
+    meta: KnowledgeChunkMeta;
     order: number;
   }[]
 > {
@@ -102,7 +105,8 @@ export async function getNearestEmbeddings(q: {
       ${knowledgeChunks.text},
       ${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
       ${knowledgeEntry.name} AS "knowledgeEntryName",
-      ${knowledgeChunks.order}
+      ${knowledgeChunks.order},
+      ${knowledgeChunks.meta}
     FROM 
       ${knowledgeChunks}
     JOIN 
