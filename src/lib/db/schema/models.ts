@@ -26,6 +26,11 @@ export const aiProviderModelTypeEnum = pgEnum("ai_provider_model_type", [
   "embedding",
 ]);
 
+export const aiProviderModelEndpointCompatibilityEnum = pgEnum(
+  "ai_provider_model_endpoint_compatibility",
+  ["openai", "anthropic"]
+);
+
 // AI Provider Models table
 export const aiProviderModels = pgBaseTable(
   "ai_provider_models",
@@ -46,6 +51,11 @@ export const aiProviderModels = pgBaseTable(
     maxTokens: integer("max_tokens").notNull(),
     maxOutputTokens: integer("max_output_tokens").notNull(),
     endpoint: varchar("endpoint", { length: 255 }).notNull(),
+    endpointCompatibility: aiProviderModelEndpointCompatibilityEnum(
+      "endpoint_compatibility"
+    )
+      .notNull()
+      .default("openai"),
     hostingOrigin: varchar("hosting_origin", { length: 255 }).notNull(),
     usesInternet: boolean("uses_internet").notNull(),
     active: boolean("active").notNull().default(true),
