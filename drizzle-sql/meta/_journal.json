@@ -827,6 +827,13 @@
       "when": 1743258388869,
       "tag": "0117_wise_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1743422888847,
+      "tag": "0118_low_paladin",
+      "breakpoints": true
     }
   ]
 }

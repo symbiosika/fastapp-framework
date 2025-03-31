@@ -80,11 +80,11 @@ export const promptTemplates = pgBaseTable(
     ),
     check(
       "prompt_templates_system_prompt_max_length",
-      sql`length(system_prompt) <= 10000`
+      sql`length(system_prompt) <= 50000`
     ),
     check(
       "prompt_templates_user_prompt_max_length",
-      sql`length(user_prompt) <= 10000`
+      sql`length(user_prompt) <= 50000`
     ),
   ]
 );
