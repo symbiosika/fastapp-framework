@@ -37,6 +37,7 @@ import {
   promptSnippetsInsertSchema,
   promptSnippetsSelectSchema,
   promptSnippetsUpdateSchema,
+  promptTemplateImportSchema,
   promptTemplatePlaceholdersInsertSchema,
   promptTemplatePlaceholdersSelectSchema,
   promptTemplatePlaceholdersUpdateSchema,
