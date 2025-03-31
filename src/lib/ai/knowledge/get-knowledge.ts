@@ -1,7 +1,7 @@
 import { getDb } from "../../../lib/db/db-connection";
 import { and, eq, inArray, SQL, sql, or, isNull } from "drizzle-orm";
 import {
-  KnowledgeChunkMeta,
+  type KnowledgeChunkMeta,
   knowledgeChunks,
   knowledgeEntry,
   knowledgeEntryFilters,

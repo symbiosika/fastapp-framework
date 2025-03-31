@@ -54,7 +54,6 @@ import {
   speechToText,
   textToSpeech,
 } from "./lib/ai/standard";
-import { importPromptTemplate } from "./lib/ai/prompt-templates/import";
 
 export default {
   // prompt templates
@@ -65,7 +64,6 @@ export default {
   updatePromptTemplatePlaceholder,
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
-  importPromptTemplate,
   // chat
   chatWithAgent,
   // knowledge

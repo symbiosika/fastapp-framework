@@ -51,11 +51,6 @@ import {
   isOrganisationAdmin,
   checkOrganisationIdInBody,
 } from "../../..";
-import {
-  importPromptTemplate,
-  type TemplateImportData,
-  templateImportSchema,
-} from "../../../../../lib/ai/prompt-templates/import";
 
 const placeholdersSelectWithSuggestionsSchema = v.intersect([
   promptTemplatePlaceholdersSelectSchema,
@@ -820,7 +815,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validator("json", templateImportSchema),
+    validator("json", promptTemplateImportSchema),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "query",

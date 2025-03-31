@@ -1,4 +1,4 @@
-import { getTableColumns, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -21,6 +21,7 @@ import {
   createUpdateSchema,
 } from "drizzle-valibot";
 import { knowledgeEntry, knowledgeGroup, knowledgeFilters } from "./knowledge";
+import * as v from "valibot";
 
 export type LLMOptions = {
   model?: string;
@@ -459,3 +460,17 @@ export const promptSnippetsRelations = relations(promptSnippets, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const promptTemplateImportSchema = v.intersect([
+  promptTemplatesInsertSchema,
+  v.object({
+    placeholders: v.array(
+      v.intersect([
+        v.omit(promptTemplatePlaceholdersInsertSchema, ["promptTemplateId"]),
+        v.object({
+          suggestions: v.array(v.string()),
+        }),
+      ])
+    ),
+  }),
+]);
