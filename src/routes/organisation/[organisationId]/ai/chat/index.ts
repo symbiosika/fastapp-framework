@@ -22,7 +22,11 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
-import { chat, chatInputValidation } from "../../../../../lib/ai/interaction";
+import {
+  chat,
+  ChatInputValidation,
+  chatInputValidation,
+} from "../../../../../lib/ai/interaction";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -50,18 +54,59 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       },
     }),
     validator("json", chatInitInputValidation),
+    validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
       try {
         const body = c.req.valid("json");
         const usersId = c.get("usersId");
-        const organisationId = c.req.param("organisationId");
-        const r = await chatWithAgent({
-          ...body,
-          userId: usersId,
-          organisationId,
+        const { organisationId } = c.req.valid("param");
+
+        // Transform old format to new format
+        const newFormatInput: ChatInputValidation = {
+          chatId: body.chatId,
+          context: {
+            chatSessionGroupId: body.chatSessionGroupId,
+            organisationId,
+            userId: usersId,
+          },
+          // Convert initiateTemplate to useTemplate if present
+          useTemplate: body.initiateTemplate
+            ? body.initiateTemplate.promptCategory &&
+              body.initiateTemplate.promptName
+              ? `${body.initiateTemplate.promptCategory}:${body.initiateTemplate.promptName}`
+              : body.initiateTemplate.promptId
+            : undefined,
+          variables: body.variables,
+          // Convert llmOptions to options
+          options: body.llmOptions
+            ? {
+                model: body.llmOptions.model,
+                maxTokens: body.llmOptions.maxTokens,
+                temperature: body.llmOptions.temperature,
+              }
+            : undefined,
+          // Use user_input from variables or empty string as input
+          input: body.variables?.user_input || "",
+        };
+
+        // Call new chat function with transformed input
+        const r = await chat(newFormatInput);
+
+        // Return response in format expected by old endpoint clients
+        // (the format is already compatible, but we can add any missing fields if needed)
+        return c.json({
+          ...r,
+          meta: {
+            ...(r.message.meta || {}),
+            userId: usersId,
+            organisationId,
+            chatSessionGroupId: body.chatSessionGroupId,
+          },
+          finished: true,
+          llmOptions: body.llmOptions,
+          render: { type: "markdown" },
         });
-        return c.json(r);
       } catch (e) {
         throw new HTTPException(400, {
           message: e + "",

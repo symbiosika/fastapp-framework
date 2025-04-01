@@ -27,9 +27,7 @@ export const chatInitInputValidation = v.object({
       skip: v.boolean(),
     })
   ),
-  variables: v.optional(
-    v.record(v.string(), v.union([v.string(), v.number(), v.boolean()]))
-  ),
+  variables: v.optional(v.record(v.string(), v.string())),
   llmOptions: v.optional(
     v.object({
       model: v.optional(v.string()),
