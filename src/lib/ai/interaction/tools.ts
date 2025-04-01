@@ -68,6 +68,8 @@ export const registerCleanUpJob = () => {
 };
 
 export const getToolsDictionary = (filter: string[] = []) => {
+  if (filter.length === 0) return {};
+
   const filteredTools: Record<string, Tool> = {};
 
   Object.keys(toolRegistry).forEach((toolName) => {
