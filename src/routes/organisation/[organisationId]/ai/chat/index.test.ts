@@ -126,60 +126,6 @@ describe("Chat API Endpoints", () => {
     }
   });
 
-  test("Start a new interview session", async () => {
-    const interviewData = {
-      interviewName: "Test Interview",
-      description: "A test interview session",
-      guidelines: "These are test guidelines for the interview",
-    };
-
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
-      TEST_USER_1_TOKEN,
-      interviewData
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.jsonResponse.chatId).toBeDefined();
-    expect(response.jsonResponse.interview.name).toBe(
-      interviewData.interviewName
-    );
-    expect(response.jsonResponse.interview.description).toBe(
-      interviewData.description
-    );
-    expect(response.jsonResponse.interview.guidelines).toBe(
-      interviewData.guidelines
-    );
-
-    // Save the interview chat ID for the next test
-    const interviewChatId = response.jsonResponse.chatId;
-
-    // Test responding to the interview
-    const respondData = {
-      user_input: "This is my response to the interview question",
-      llmOptions: {
-        model: "gpt-3.5-turbo",
-        temperature: 0.7,
-      },
-    };
-
-    const respondResponse = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/${interviewChatId}/respond`,
-      TEST_USER_1_TOKEN,
-      respondData
-    );
-
-    // This might fail if the AI service is not available in test environment
-    if (respondResponse.status === 200) {
-      expect(respondResponse.jsonResponse.chatId).toBe(interviewChatId);
-    } else {
-      // If AI service is not available, we expect a specific error
-      expect(respondResponse.status).toBe(400);
-    }
-  });
-
   // Cleanup test - run this last
   test("Delete a chat session", async () => {
     const response = await testFetcher.delete(

@@ -17,7 +17,7 @@ import {
   knowledgeGroup,
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
-import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
+import { getPromptTemplateDefinition } from "./get-prompt-template";
 
 /**
  * Get all placeholders for one template as an object
@@ -62,7 +62,7 @@ export const getPlainTemplate = async (request: {
   organisationId?: string;
 }) => {
   if (request.promptId) {
-    return await getDb()
+    const template = await getDb()
       .select()
       .from(promptTemplates)
       .where(
@@ -71,12 +71,16 @@ export const getPlainTemplate = async (request: {
           eq(promptTemplates.hidden, false)
         )
       );
+    if (template.length === 0) {
+      throw new Error("Template not found.");
+    }
+    return template[0];
   } else if (
     request.promptName &&
     request.promptCategory &&
     request.organisationId
   ) {
-    return await getDb()
+    const template = await getDb()
       .select()
       .from(promptTemplates)
       .where(
@@ -87,9 +91,13 @@ export const getPlainTemplate = async (request: {
           eq(promptTemplates.hidden, false)
         )
       );
+    if (template.length === 0) {
+      throw new Error("Template not found.");
+    }
+    return template[0];
   }
   throw new Error(
-    "Either promptId or [promptName, promptCategory and organisationId] have to be set."
+    "Either promptId or [promptName and promptCategory] and organisationId have to be set."
   );
 };
 

@@ -54,7 +54,7 @@ describe("AI Utils API Edge Cases", () => {
 
   test("Text to Speech with very long text", async () => {
     // Create a very long text (10,000 characters)
-    const longText = "a".repeat(10000);
+    const longText = "a".repeat(10001);
 
     const response = await testFetcher.post(
       app,
@@ -66,7 +66,7 @@ describe("AI Utils API Edge Cases", () => {
     // The API should handle long text appropriately
     // This might succeed or fail depending on the API limits
     expect(response.status).toBe(400);
-    expect(response.textResponse).toContain("Failed to convert text to speech");
+    expect(response.textResponse).toContain("Text is too long");
   });
 
   test("Speech to Text without file", async () => {

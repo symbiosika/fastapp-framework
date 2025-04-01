@@ -19,14 +19,13 @@ export type * from "./lib/db/schema/webhooks";
 export type * from "./lib/db/schema/server";
 
 export type * from "./lib/types/openai";
-export type * from "./lib/ai/standard";
+export type * from "./lib/ai/ai-sdk/types";
 
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";
 import Logger from "./lib/log";
 import type { PermissionDefinitionPerTable } from "./lib/types/permission-checker";
 import type { JobHandlerRegister } from "./lib/jobs";
-import type { GenericFormEntry } from "./lib/ai/smart-chat/shared-types";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
 
@@ -141,18 +140,18 @@ export type RenderTypeMarkdown = {
   type: "markdown";
 };
 
-export type RenderTypeForm = {
-  type: "form";
-  definition: GenericFormEntry[];
-  data: { [key: string]: any };
-};
+// export type RenderTypeForm = {
+//   type: "form";
+//   definition: GenericFormEntry[];
+//   data: { [key: string]: any };
+// };
 
 export type RenderType =
   | RenderTypeText
   | RenderTypeImage
   | RenderTypeBox
-  | RenderTypeMarkdown
-  | RenderTypeForm;
+  | RenderTypeMarkdown;
+// | RenderTypeForm;
 
 export type ChatWithTemplateReturn = {
   chatId: string;

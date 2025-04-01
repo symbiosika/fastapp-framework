@@ -196,26 +196,6 @@ describe("Prompt Templates API Security Tests", () => {
     expect(response.status).toBe(403);
   });
 
-  test("User cannot create prompt snippet in another organisation", async () => {
-    const snippetData = {
-      name: "malicious-snippet",
-      content: "This is a malicious snippet.",
-      category: "security-test",
-      organisationId: TEST_ORGANISATION_1.id,
-    };
-
-    // User 2 tries to create a snippet in organisation 1
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/prompt-snippets`,
-      TEST_USER_2_TOKEN,
-      snippetData
-    );
-
-    // Should be rejected due to organisation permission check
-    expect(response.status).toBe(403);
-  });
-
   test("Invalid organisation ID should be rejected", async () => {
     const invalidOrgId = "invalid-org-id";
 

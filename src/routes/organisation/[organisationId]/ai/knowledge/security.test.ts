@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineRoutes from ".";
+import defineRoutesKnowledgeTexts from "../knowledge-texts";
 import {
   initTests,
   TEST_ORGANISATION_1,
@@ -14,7 +15,9 @@ import {
   waitForDbConnection,
 } from "../../../../../lib/db/db-connection";
 
-let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledge = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledgeTexts = new Hono<{ Variables: FastAppHonoContextVariables }>();
+
 let TEST_USER_1_TOKEN: string;
 let TEST_USER_2_TOKEN: string;
 let createdKnowledgeTextId: string;
@@ -24,7 +27,9 @@ beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  defineRoutes(app, "/api");
+  defineRoutes(appKnowledge, "/api");
+  defineRoutesKnowledgeTexts(appKnowledgeTexts, "/api");
+
   const { user1Token, user2Token } = await initTests();
   TEST_USER_1_TOKEN = user1Token;
   TEST_USER_2_TOKEN = user2Token;
@@ -37,7 +42,7 @@ beforeAll(async () => {
   };
 
   const response = await testFetcher.post(
-    app,
+    appKnowledgeTexts,
     `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
     TEST_USER_1_TOKEN,
     textData
@@ -53,7 +58,7 @@ beforeAll(async () => {
   };
 
   const parseResponse = await testFetcher.post(
-    app,
+    appKnowledge,
     `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
     TEST_USER_1_TOKEN,
     parseData
@@ -64,7 +69,7 @@ beforeAll(async () => {
 
 describe("Knowledge API Security Tests", () => {
   test("Endpoints should reject unauthorized requests", async () => {
-    await rejectUnauthorized(app, [
+    await rejectUnauthorized(appKnowledge, [
       [
         "GET",
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries`,
@@ -97,6 +102,15 @@ describe("Knowledge API Security Tests", () => {
         "POST",
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-url`,
       ],
+      [
+        "POST",
+        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
+      ],
+    ]);
+  });
+
+  test("Knowledge texts endpoints should reject unauthorized requests", async () => {
+    await rejectUnauthorized(appKnowledgeTexts, [
       ["GET", `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`],
       [
         "POST",
@@ -110,17 +124,13 @@ describe("Knowledge API Security Tests", () => {
         "DELETE",
         `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       ],
-      [
-        "POST",
-        `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
-      ],
     ]);
   });
 
   test("User cannot access knowledge entries in another organisation", async () => {
     // User 2 tries to access organisation 1's knowledge entries
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries`,
       TEST_USER_2_TOKEN
     );
@@ -132,7 +142,7 @@ describe("Knowledge API Security Tests", () => {
   test("User cannot access specific knowledge entry in another organisation", async () => {
     // User 2 tries to access a specific knowledge entry in organisation 1
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_2_TOKEN
     );
@@ -144,7 +154,7 @@ describe("Knowledge API Security Tests", () => {
   test("User cannot delete knowledge entry in another organisation", async () => {
     // User 2 tries to delete a knowledge entry in organisation 1
     const response = await testFetcher.delete(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_2_TOKEN
     );
@@ -162,7 +172,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to extract knowledge in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
       TEST_USER_2_TOKEN,
       extractData
@@ -180,7 +190,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to perform similarity search in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/similarity-search`,
       TEST_USER_2_TOKEN,
       searchData
@@ -199,7 +209,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to parse document in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/parse-document`,
       TEST_USER_2_TOKEN,
       parseData
@@ -218,7 +228,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to add knowledge from text in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-text`,
       TEST_USER_2_TOKEN,
       textData
@@ -236,7 +246,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to add knowledge from URL in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-url`,
       TEST_USER_2_TOKEN,
       urlData
@@ -249,7 +259,7 @@ describe("Knowledge API Security Tests", () => {
   test("User cannot access knowledge texts in another organisation", async () => {
     // User 2 tries to access organisation 1's knowledge texts
     const response = await testFetcher.get(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_2_TOKEN
     );
@@ -267,7 +277,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to create knowledge text in organisation 1
     const response = await testFetcher.post(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_2_TOKEN,
       textData
@@ -286,7 +296,7 @@ describe("Knowledge API Security Tests", () => {
 
     // User 2 tries to update knowledge text in organisation 1
     const response = await testFetcher.put(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_2_TOKEN,
       updatedData
@@ -299,7 +309,7 @@ describe("Knowledge API Security Tests", () => {
   test("User cannot delete knowledge text in another organisation", async () => {
     // User 2 tries to delete knowledge text in organisation 1
     const response = await testFetcher.delete(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_2_TOKEN
     );
@@ -317,7 +327,7 @@ describe("Knowledge API Security Tests", () => {
 
     // Try to create knowledge text with mismatched organisation IDs
     const response = await testFetcher.post(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -333,7 +343,7 @@ describe("Knowledge API Security Tests", () => {
 
     // Try to access knowledge entries with invalid organisation ID
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${invalidOrgId}/ai/knowledge/entries`,
       TEST_USER_1_TOKEN
     );
@@ -345,7 +355,7 @@ describe("Knowledge API Security Tests", () => {
   test("User can access their own organisation's endpoints", async () => {
     // User 2 accesses their own organisation's knowledge entries
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_2.id}/ai/knowledge/entries`,
       TEST_USER_2_TOKEN
     );
@@ -357,7 +367,7 @@ describe("Knowledge API Security Tests", () => {
   // Clean up after security tests
   test("Clean up created knowledge entry", async () => {
     const response = await testFetcher.delete(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${createdKnowledgeEntryId}`,
       TEST_USER_1_TOKEN
     );
@@ -367,7 +377,7 @@ describe("Knowledge API Security Tests", () => {
 
   test("Clean up created knowledge text", async () => {
     const response = await testFetcher.delete(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_1_TOKEN
     );

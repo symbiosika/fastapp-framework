@@ -1,53 +1,50 @@
-import { describe, test, expect, beforeAll, mock } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { generateDocumentSummary, generateChunkBasedSummary } from ".";
-import { chatCompletion } from "../standard";
-
-// Mock the chatCompletion function
-mock.module("../standard", () => ({
-  chatCompletion: mock(async () => "This is a test summary"),
-}));
+import {
+  initTests,
+  TEST_ORGANISATION_1,
+  TEST_USER_1,
+} from "../../../test/init.test";
 
 describe("Summary Generation", () => {
+  beforeAll(async () => {
+    await initTests();
+  });
+
   const testContext = {
-    organisationId: "test-org-id",
-    userId: "test-user-id",
+    organisationId: TEST_ORGANISATION_1.id,
+    userId: TEST_USER_1.id,
   };
 
   describe("generateDocumentSummary", () => {
     test("should generate a summary for a document", async () => {
       const text = "This is a test document content.";
       const title = "Test Document";
-      
+
       const result = await generateDocumentSummary(text, title, testContext);
-      
-      expect(result).toEqual({
-        description: "This is a test summary",
-      });
+
+      expect(result.description).toBeString();
     });
 
     test("should handle empty text", async () => {
       const text = "";
       const title = "Empty Document";
-      
+
       const result = await generateDocumentSummary(text, title, testContext);
-      
-      expect(result).toEqual({
-        description: "This is a test summary",
-      });
+
+      expect(result.description).toBeString();
     });
 
     test("should use custom prompt when provided", async () => {
       const text = "Test content";
       const title = "Test Document";
       const customPrompt = "Custom summary prompt";
-      
+
       const result = await generateDocumentSummary(text, title, testContext, {
         customPrompt,
       });
-      
-      expect(result).toEqual({
-        description: "This is a test summary",
-      });
+
+      expect(result.description).toBeString();
     });
   });
 
@@ -60,12 +57,14 @@ describe("Summary Generation", () => {
         },
       ];
       const title = "Test Document";
-      
-      const result = await generateChunkBasedSummary(chunks, title, testContext);
-      
-      expect(result).toEqual({
-        description: "This is a test summary",
-      });
+
+      const result = await generateChunkBasedSummary(
+        chunks,
+        title,
+        testContext
+      );
+
+      expect(result.description).toBeString();
     });
 
     test("should handle multiple chunks", async () => {
@@ -80,23 +79,27 @@ describe("Summary Generation", () => {
         },
       ];
       const title = "Test Document";
-      
-      const result = await generateChunkBasedSummary(chunks, title, testContext);
-      
-      expect(result).toEqual({
-        description: "This is a test summary",
-      });
+
+      const result = await generateChunkBasedSummary(
+        chunks,
+        title,
+        testContext
+      );
+
+      expect(result.description).toBeString();
     });
 
     test("should handle empty chunks array", async () => {
       const chunks: { text: string; header?: string }[] = [];
       const title = "Test Document";
-      
-      const result = await generateChunkBasedSummary(chunks, title, testContext);
-      
-      expect(result).toEqual({
-        description: "",
-      });
+
+      const result = await generateChunkBasedSummary(
+        chunks,
+        title,
+        testContext
+      );
+
+      expect(result.description).toBeString();
     });
   });
-}); 
+});

@@ -1,35 +1,51 @@
 {
   "name": "fastapp-framework",
-  "description": "FastApp Framework Backend",
-  "author": "Symbiosika GmbH",
-  "license": "proprietary",
-  "homepage": "https://github.com/symbiosika/fastapp-framework#readme",
   "version": "0.8.0",
+  "author": "Symbiosika GmbH",
   "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
-  "keywords": [],
-  "scripts": {
-    "dev": "bun --hot run demo.ts",
-    "dev:inspect": "bun --inspect --hot run demo.ts",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push",
-    "generate": "drizzle-kit generate",
-    "studio": "drizzle-kit studio",
-    "build": "tsc",
-    "clean": "rm -rf ./lib/",
-    "release:patch": "npm version patch && git push --follow-tags",
-    "release:minor": "npm version minor && git push --follow-tags",
-    "release:major": "npm version major && git push --follow-tags"
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/nodemailer": "^6.4.16",
+    "@types/pg": "^8.11.10",
+    "@types/turndown": "^5.0.5",
+    "drizzle-kit": "^0.30.6",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2"
   },
-  "engines": {
-    "bun": ">=1.0.0"
+  "peerDependencies": {
+    "@hono/swagger-ui": "^0.5.0",
+    "@hono/valibot-validator": "^0.5.2",
+    "@valibot/to-json-schema": "^1.0.0-rc.0",
+    "@scalar/hono-api-reference": "^0.5.184",
+    "cron": "^3.1.7",
+    "csv": "^6.3.10",
+    "drizzle-orm": "^0.38.2",
+    "drizzle-valibot": "^0.4.0",
+    "hono": "^4.6.5",
+    "hono-openapi": "^0.4.4",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.0.7",
+    "nodemailer": "^6.9.15",
+    "openai": "^4.40.2",
+    "pg": "^8.13.0",
+    "pgvector": "^0.1.8",
+    "stripe": "^17.4.0",
+    "turndown": "^7.2.0",
+    "valibot": "^1.0.0-rc.1",
+    "widdershins": "^4.0.1",
+    "diff": "^7.0.0",
+    "@types/diff": "^7.0.1",
+    "@ai-sdk/anthropic": "^1.2.2",
+    "@ai-sdk/azure": "^1.3.4",
+    "@ai-sdk/deepseek": "^0.2.2",
+    "@ai-sdk/google": "^1.2.3",
+    "@ai-sdk/mistral": "^1.2.1",
+    "@ai-sdk/openai": "^1.3.4",
+    "@ai-sdk/openai-compatible": "^0.2.2",
+    "@ai-sdk/perplexity": "^1.1.1",
+    "ai": "^4.2.8"
   },
-  "files": [
-    "lib/**/*",
-    "static/**/*",
-    "public/**/*",
-    "drizzle-sql/**/*"
-  ],
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
@@ -62,38 +78,31 @@
       "default": "./lib/api-types.js"
     }
   },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/nodemailer": "^6.4.16",
-    "@types/pg": "^8.11.10",
-    "@types/turndown": "^5.0.5",
-    "drizzle-kit": "^0.30.1",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.2"
+  "description": "FastApp Framework Backend",
+  "engines": {
+    "bun": ">=1.0.0"
   },
-  "peerDependencies": {
-    "@hono/swagger-ui": "^0.5.0",
-    "@hono/valibot-validator": "^0.5.2",
-    "@valibot/to-json-schema": "^1.0.0-rc.0",
-    "@scalar/hono-api-reference": "^0.5.184",
-    "cron": "^3.1.7",
-    "csv": "^6.3.10",
-    "drizzle-orm": "^0.38.2",
-    "drizzle-valibot": "^0.4.0",
-    "hono": "^4.6.5",
-    "hono-openapi": "^0.4.4",
-    "jsonwebtoken": "^9.0.2",
-    "nanoid": "^5.0.7",
-    "nodemailer": "^6.9.15",
-    "openai": "^4.40.2",
-    "pg": "^8.13.0",
-    "pgvector": "^0.1.8",
-    "stripe": "^17.1.0",
-    "turndown": "^7.2.0",
-    "valibot": "^1.0.0-rc.1",
-    "widdershins": "^4.0.1",
-    "diff": "^7.0.0",
-    "@types/diff": "^7.0.1"
-  }
+  "files": [
+    "lib/**/*",
+    "static/**/*",
+    "public/**/*",
+    "drizzle-sql/**/*"
+  ],
+  "homepage": "https://github.com/symbiosika/fastapp-framework#readme",
+  "keywords": [],
+  "license": "proprietary",
+  "scripts": {
+    "dev": "bun --hot run demo.ts",
+    "dev:inspect": "bun --inspect --hot run demo.ts",
+    "fastapp:migrate": "drizzle-kit migrate",
+    "fastapp:push": "drizzle-kit push",
+    "fastapp:generate": "drizzle-kit generate",
+    "fastapp:studio": "drizzle-kit studio",
+    "build": "tsc",
+    "clean": "rm -rf ./lib/",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:major": "npm version major && git push --follow-tags"
+  },
+  "types": "./lib/index.d.ts"
 }

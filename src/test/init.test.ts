@@ -10,8 +10,9 @@ import {
   invitationCodes,
   aiProviderModels,
   teams,
+  type AiProviderModelsInsert,
 } from "../lib/db/db-schema";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
 
 /**
@@ -86,6 +87,66 @@ export const TEST_TEAM_1 = {
   id: "00000000-3333-3333-3333-000000000001",
   name: "Test Team 1",
   organisationId: TEST_ORGANISATION_1.id,
+};
+
+export const TEST_MODEL_1: AiProviderModelsInsert = {
+  id: "00000000-0000-0000-0000-000000000001",
+  organisationId: TEST_ORGANISATION_1.id,
+  name: "openai:gpt-4o-mini",
+  provider: "openai",
+  model: "gpt-4o-mini",
+  inputType: ["text"],
+  outputType: ["text"],
+  label: "GPT-4o-mini (Test Model)",
+  description: "Test model for OpenAI GPT-4o-mini",
+  maxTokens: 16000,
+  maxOutputTokens: 4000,
+  endpoint: "https://api.openai.com/v1",
+  endpointCompatibility: "openai",
+  hostingOrigin: "openai",
+  usesInternet: true,
+  active: true,
+  system: false,
+};
+
+export const TEST_MODEL_2: AiProviderModelsInsert = {
+  id: "00000000-0000-0000-0000-000000000002",
+  organisationId: TEST_ORGANISATION_1.id,
+  name: "ionos:llama-3.1-8b-instruct",
+  provider: "ionos",
+  model: "llama-3.1-8b-instruct",
+  inputType: ["text"],
+  outputType: ["text"],
+  label: "Llama-3.1-8b-instruct (Test Model)",
+  description: "Test model for Ionos Llama-3.1-8b-instruct",
+  maxTokens: 16000,
+  maxOutputTokens: 4000,
+  endpoint: "https://api.ionos.com/v1",
+  endpointCompatibility: "openai",
+  hostingOrigin: "ionos",
+  usesInternet: true,
+  active: true,
+  system: false,
+};
+
+export const TEST_EMBEDDING_MODEL: AiProviderModelsInsert = {
+  id: "00000000-0000-0000-0000-000000000003",
+  organisationId: TEST_ORGANISATION_1.id,
+  name: "openai:text-embedding-3-small",
+  provider: "openai",
+  model: "text-embedding-3-small",
+  inputType: ["text"],
+  outputType: ["embedding"],
+  label: "Text-embedding-3-small (Test Model)",
+  description: "Test model for OpenAI Text-embedding-3-small",
+  maxTokens: 16000,
+  maxOutputTokens: 4000,
+  endpoint: "https://api.openai.com/v1",
+  endpointCompatibility: "openai",
+  hostingOrigin: "openai",
+  usesInternet: true,
+  active: true,
+  system: false,
 };
 
 /**
@@ -178,11 +239,11 @@ export const dropAllTestAiProviderModels = async () => {
   await getDb()
     .delete(aiProviderModels)
     .where(
-      inArray(aiProviderModels.organisationId, [
-        TEST_ORGANISATION_1.id,
-        TEST_ORGANISATION_2.id,
-        TEST_ORGANISATION_3.id,
-      ])
+      or(
+        eq(aiProviderModels.organisationId, TEST_ORGANISATION_1.id),
+        eq(aiProviderModels.organisationId, TEST_ORGANISATION_2.id),
+        eq(aiProviderModels.organisationId, TEST_ORGANISATION_3.id)
+      )
     );
 };
 
@@ -287,6 +348,20 @@ const getJwtTokenForTesting = async (email: string) => {
 };
 
 /**
+ * Init all Test AI Models
+ */
+export const initTestAiModels = async () => {
+  // Drop existing test models first
+  await dropAllTestAiProviderModels();
+
+  // Insert OpenAI PGT-40-mini for testing
+  await getDb()
+    .insert(aiProviderModels)
+    .values([TEST_MODEL_1, TEST_MODEL_2, TEST_EMBEDDING_MODEL])
+    .onConflictDoNothing();
+};
+
+/**
  * GLOBAL Init global test data
  */
 export const initTests = async () => {
@@ -307,6 +382,9 @@ export const initTests = async () => {
   });
   await dropAllInvitationsCodes().catch((err) => {
     console.info("Error dropping invitation codes", err);
+  });
+  await initTestAiModels().catch((err) => {
+    console.info("Error initialising test AI models", err);
   });
 
   const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);

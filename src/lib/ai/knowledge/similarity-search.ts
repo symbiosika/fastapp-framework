@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import { knowledgeChunks, knowledgeEntry } from "../../../lib/db/db-schema";
-import { generateEmbedding } from "../standard";
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { getFullSourceDocumentsForKnowledgeEntry } from "./get-knowledge";
@@ -10,6 +9,7 @@ import {
   knowledgeEntryFilters,
   knowledgeFilters,
 } from "../../db/schema/knowledge";
+import { generateEmbedding } from "../ai-sdk";
 
 type KnowledgeChunk = {
   id: string;
@@ -30,6 +30,8 @@ export async function getNearestEmbeddings(q: {
   addBeforeN?: number;
   addAfterN?: number;
   filterKnowledgeEntryIds?: string[];
+  filterKnowledgeGroupIds?: string[];
+  filterKnowledgeFilterIds?: string[];
   filter?: Record<string, string[]>;
   filterName?: string[];
   workspaceId?: string;
@@ -44,7 +46,7 @@ export async function getNearestEmbeddings(q: {
   }[]
 > {
   // Generate the embedding for the search text
-  const embed = await generateEmbedding(q.searchText, undefined, {
+  const embed = await generateEmbedding(q.searchText, {
     organisationId: q.organisationId,
   });
 
@@ -60,12 +62,29 @@ export async function getNearestEmbeddings(q: {
   }
 
   const filters = [];
-  if (q.filterKnowledgeEntryIds) {
+  if (q.filterKnowledgeEntryIds && q.filterKnowledgeEntryIds.length > 0) {
     filters.push(inArray(knowledgeEntry.id, q.filterKnowledgeEntryIds));
+  }
+
+  if (q.filterKnowledgeGroupIds && q.filterKnowledgeGroupIds.length > 0) {
+    filters.push(
+      inArray(knowledgeEntry.knowledgeGroupId, q.filterKnowledgeGroupIds)
+    );
   }
 
   if (q.workspaceId) {
     filters.push(eq(knowledgeEntry.workspaceId, q.workspaceId));
+  }
+
+  if (q.filterKnowledgeFilterIds && q.filterKnowledgeFilterIds.length > 0) {
+    filters.push(
+      inArray(
+        knowledgeEntry.id,
+        sql`SELECT ${knowledgeEntryFilters.knowledgeEntryId} FROM ${knowledgeEntryFilters} WHERE ${knowledgeEntryFilters.knowledgeFilterId} IN (${sql.join(
+          q.filterKnowledgeFilterIds
+        )})`
+      )
+    );
   }
 
   if (q.filter) {
@@ -178,6 +197,7 @@ export async function getFullSourceDocumentsForSimilaritySearch(q: {
   searchText: string;
   n?: number;
   filterKnowledgeEntryIds?: string[];
+  filterKnowledgeGroupIds?: string[];
   filter?: Record<string, string[]>;
   filterName?: string[];
   userId: string;

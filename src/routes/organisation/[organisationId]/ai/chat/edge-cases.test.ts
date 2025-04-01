@@ -50,7 +50,7 @@ describe("Chat API Edge Cases", () => {
       TEST_USER_1_TOKEN
     );
 
-    // Should return a 404 error    
+    // Should return a 404 error
     expect(response.status).toBe(400);
     expect(response.textResponse).toContain("not found");
   });
@@ -126,65 +126,10 @@ describe("Chat API Edge Cases", () => {
 
     // Should still return success as the operation is idempotent
     expect(response.status).toBe(400);
-    expect(response.textResponse).toContain(" Message non-existent-message-id not found or is a system message");
+    expect(response.textResponse).toContain(
+      " Message non-existent-message-id not found or is a system message"
+    );
   });
-
-  test("Start interview with empty fields", async () => {
-    const interviewData = {
-      interviewName: "",
-      description: "",
-      guidelines: "",
-    };
-
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
-      TEST_USER_1_TOKEN,
-      interviewData
-    );
-
-    // Should still succeed with default values
-    expect(response.status).toBe(200);
-    expect(response.jsonResponse.chatId).toBeDefined();
-    expect(response.jsonResponse.name).toStartWith("Chat ");
-    expect(response.jsonResponse.interview.description).toBe("");
-    expect(response.jsonResponse.interview.guidelines).toBe("");
-  });
-
-  test("Respond to interview with empty user input", async () => {
-    // First create an interview session
-    const interviewData = {
-      interviewName: "Empty Input Interview",
-      description: "Testing empty input",
-      guidelines: "Guidelines for testing",
-    };
-
-    const createResponse = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/start`,
-      TEST_USER_1_TOKEN,
-      interviewData
-    );
-
-    const interviewChatId = createResponse.jsonResponse.chatId;
-
-    // Now respond with empty input
-    const response = await testFetcher.post(
-      app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/ai/interview/${interviewChatId}/respond`,
-      TEST_USER_1_TOKEN,
-      {
-        chatId: interviewChatId,
-        userId: TEST_USER_1.id,
-        organisationId: TEST_ORGANISATION_1.id,
-        user_input: "",
-      }
-    );
-
-    // This might fail if the AI service is not available in test environment
-    // So we'll check for either success or a specific error
-    expect([200, 400]).toContain(response.status);
-  }, 300000);
 
   test("Create chat session with invalid chatSessionGroupId", async () => {
     const sessionData = {
@@ -246,7 +191,7 @@ describe("Chat API Edge Cases", () => {
 
     // Should either use a default model or return an error
     expect(response.status).toBe(200);
-    expect(response.jsonResponse.message.meta.model).toBe("gpt-4o-mini");
+    expect(response.jsonResponse.message.meta.model).toBe("openai:gpt-4o-mini");
   }, 30000);
 
   test("Chat with template with extreme temperature values", async () => {

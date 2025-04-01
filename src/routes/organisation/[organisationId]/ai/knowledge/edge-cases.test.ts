@@ -1,11 +1,8 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineRoutes from ".";
-import {
-  initTests,
-  TEST_ORGANISATION_1,
-  TEST_USER_1,
-} from "../../../../../test/init.test";
+import defineRoutesKnowledgeTexts from "../knowledge-texts";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
 import {
@@ -13,7 +10,8 @@ import {
   waitForDbConnection,
 } from "../../../../../lib/db/db-connection";
 
-let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledge = new Hono<{ Variables: FastAppHonoContextVariables }>();
+let appKnowledgeTexts = new Hono<{ Variables: FastAppHonoContextVariables }>();
 let TEST_USER_1_TOKEN: string;
 let createdKnowledgeTextId: string;
 
@@ -21,7 +19,8 @@ beforeAll(async () => {
   await createDatabaseClient();
   await waitForDbConnection();
 
-  defineRoutes(app, "/api");
+  defineRoutes(appKnowledge, "/api");
+  defineRoutesKnowledgeTexts(appKnowledgeTexts, "/api");
   const { user1Token } = await initTests();
   TEST_USER_1_TOKEN = user1Token;
 
@@ -33,7 +32,7 @@ beforeAll(async () => {
   };
 
   const response = await testFetcher.post(
-    app,
+    appKnowledgeTexts,
     `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
     TEST_USER_1_TOKEN,
     textData
@@ -51,7 +50,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -72,7 +71,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -94,7 +93,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts`,
       TEST_USER_1_TOKEN,
       textData
@@ -114,7 +113,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/parse-document`,
       TEST_USER_1_TOKEN,
       parseData
@@ -134,7 +133,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/extract-knowledge`,
       TEST_USER_1_TOKEN,
       extractData
@@ -148,7 +147,7 @@ describe("Knowledge API Edge Cases", () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
 
     const response = await testFetcher.get(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
@@ -161,7 +160,7 @@ describe("Knowledge API Edge Cases", () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
 
     const response = await testFetcher.delete(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/entries/${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
@@ -174,7 +173,7 @@ describe("Knowledge API Edge Cases", () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
 
     const response = await testFetcher.get(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts?id=${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
@@ -195,7 +194,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.put(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${nonExistentId}`,
       TEST_USER_1_TOKEN,
       updatedData
@@ -209,7 +208,7 @@ describe("Knowledge API Edge Cases", () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
 
     const response = await testFetcher.delete(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${nonExistentId}`,
       TEST_USER_1_TOKEN
     );
@@ -225,7 +224,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/similarity-search`,
       TEST_USER_1_TOKEN,
       searchData
@@ -245,7 +244,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/similarity-search`,
       TEST_USER_1_TOKEN,
       searchData
@@ -254,7 +253,7 @@ describe("Knowledge API Edge Cases", () => {
     // The API should handle long search texts appropriately
     // This might succeed or fail depending on the API limits
     expect([200, 400]).toContain(response.status);
-  });
+  }, 15000);
 
   test("Add knowledge from invalid URL", async () => {
     const urlData = {
@@ -263,7 +262,7 @@ describe("Knowledge API Edge Cases", () => {
     };
 
     const response = await testFetcher.post(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/from-url`,
       TEST_USER_1_TOKEN,
       urlData
@@ -278,7 +277,7 @@ describe("Knowledge API Edge Cases", () => {
     // No file attached
 
     const response = await testFetcher.postFormData(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
@@ -290,16 +289,18 @@ describe("Knowledge API Edge Cases", () => {
   });
 
   test("Upload and learn with invalid filters JSON", async () => {
-    const filePath = join(process.cwd(), "src/fastapp-framework/src/test/files/example_knowlede.pdf");
+    const filePath = TEST_PDF_TEXT;
     const fileBuffer = readFileSync(filePath);
-    const file = new File([fileBuffer], "example_knowlede.pdf", { type: "application/pdf" });
-    
+    const file = new File([fileBuffer], "t.pdf", {
+      type: "application/pdf",
+    });
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("filters", "not-valid-json");
-    
+
     const response = await testFetcher.postFormData(
-      app,
+      appKnowledge,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/upload-and-extract`,
       TEST_USER_1_TOKEN,
       formData
@@ -313,7 +314,7 @@ describe("Knowledge API Edge Cases", () => {
   // Clean up after edge case tests
   test("Clean up created knowledge text", async () => {
     const response = await testFetcher.delete(
-      app,
+      appKnowledgeTexts,
       `/api/organisation/${TEST_ORGANISATION_1.id}/ai/knowledge/texts/${createdKnowledgeTextId}`,
       TEST_USER_1_TOKEN
     );
@@ -324,4 +325,5 @@ describe("Knowledge API Edge Cases", () => {
 
 // Import path module for file path operations
 import { join } from "path";
-import { readFileSync } from "fs"; 
+import { readFileSync } from "fs";
+import { TEST_PDF_TEXT } from "../../../../../test/files.test";

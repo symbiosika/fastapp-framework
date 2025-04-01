@@ -44,16 +44,13 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
-import { chatWithAgent } from "./lib/ai/chat";
 import {
   chatCompletion,
   generateEmbedding,
-  generateImage,
   generateImageDescription,
-  generateLongText,
-  speechToText,
-  textToSpeech,
-} from "./lib/ai/standard";
+} from "./lib/ai/ai-sdk";
+import { textToSpeech } from "./lib/ai/ai-sdk/tts";
+import { speechToText } from "./lib/ai/ai-sdk/stt";
 
 export default {
   // prompt templates
@@ -64,8 +61,6 @@ export default {
   updatePromptTemplatePlaceholder,
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
-  // chat
-  chatWithAgent,
   // knowledge
   parseDocument,
   extractKnowledgeFromExistingDbEntry,
@@ -96,8 +91,6 @@ export default {
   generateEmbedding,
   generateImageDescription,
   chatCompletion,
-  generateLongText,
   speechToText,
   textToSpeech,
-  generateImage,
 };

@@ -15,6 +15,7 @@ import {
 } from "../../../../../lib/db/db-connection";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { TEST_PDF_TEXT } from "../../../../../test/files.test";
 
 let appKnowledge = new Hono<{ Variables: FastAppHonoContextVariables }>();
 let appTexts = new Hono<{ Variables: FastAppHonoContextVariables }>();
@@ -176,12 +177,9 @@ describe("Knowledge API Endpoints", () => {
   });
 
   test("Upload and learn from PDF file", async () => {
-    const filePath = join(
-      process.cwd(),
-      "src/fastapp-framework/src/test/files/example_knowlede.pdf"
-    );
+    const filePath = TEST_PDF_TEXT;
     const fileBuffer = readFileSync(filePath);
-    const file = new File([fileBuffer], "example_knowlede.pdf", {
+    const file = new File([fileBuffer], "t.pdf", {
       type: "application/pdf",
     });
 

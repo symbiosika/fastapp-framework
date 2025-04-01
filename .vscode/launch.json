@@ -55,7 +55,7 @@
       "runtime": "bun",
       // The arguments to pass to the `bun` executable, if any.
       // Unlike `args`, these are passed to the executable itself, not the program.
-      "runtimeArgs": ["test"]
+      "runtimeArgs": ["test", "--timeout", "0"]
     },
     {
       "type": "bun",
