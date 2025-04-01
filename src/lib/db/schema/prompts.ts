@@ -1,4 +1,4 @@
-import { getTableColumns, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -21,6 +21,7 @@ import {
   createUpdateSchema,
 } from "drizzle-valibot";
 import { knowledgeEntry, knowledgeGroup, knowledgeFilters } from "./knowledge";
+import * as v from "valibot";
 
 export type LLMOptions = {
   model?: string;
@@ -79,11 +80,11 @@ export const promptTemplates = pgBaseTable(
     ),
     check(
       "prompt_templates_system_prompt_max_length",
-      sql`length(system_prompt) <= 10000`
+      sql`length(system_prompt) <= 50000`
     ),
     check(
       "prompt_templates_user_prompt_max_length",
-      sql`length(user_prompt) <= 10000`
+      sql`length(user_prompt) <= 50000`
     ),
   ]
 );
@@ -459,3 +460,17 @@ export const promptSnippetsRelations = relations(promptSnippets, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const promptTemplateImportSchema = v.intersect([
+  promptTemplatesInsertSchema,
+  v.object({
+    placeholders: v.array(
+      v.intersect([
+        v.omit(promptTemplatePlaceholdersInsertSchema, ["promptTemplateId"]),
+        v.object({
+          suggestions: v.array(v.string()),
+        }),
+      ])
+    ),
+  }),
+]);

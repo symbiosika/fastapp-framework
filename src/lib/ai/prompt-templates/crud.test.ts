@@ -17,7 +17,7 @@ import {
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
 } from "../../../test/init.test";
-import { getDb, PromptTemplatePlaceholdersInsert } from "../../../dbSchema";
+import { getDb, type PromptTemplatePlaceholdersInsert } from "../../../dbSchema";
 import {
   knowledgeEntry,
   knowledgeFilters,

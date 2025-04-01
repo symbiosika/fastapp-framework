@@ -50,9 +50,8 @@ import {
   generateEmbedding,
   generateImageDescription,
 } from "./lib/ai/ai-sdk";
-import { importPromptTemplate } from "./lib/ai/prompt-templates/import";
-import { speechToText } from "./lib/ai/ai-sdk/stt";
 import { textToSpeech } from "./lib/ai/ai-sdk/tts";
+import { speechToText } from "./lib/ai/ai-sdk/stt";
 
 export default {
   // prompt templates
@@ -63,7 +62,6 @@ export default {
   updatePromptTemplatePlaceholder,
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
-  importPromptTemplate,
   // chat
   chatWithAgent,
   // knowledge

@@ -29,8 +29,6 @@ import type { JobHandlerRegister } from "./lib/jobs";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
 
-export type * from "./lib/ai/prompt-templates/import";
-
 export type { SyncItem };
 export type { JobHandlerRegister };
 export { HTTPException } from "hono/http-exception";
