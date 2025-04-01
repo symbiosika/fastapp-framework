@@ -9,6 +9,9 @@ import { chatCompletion, type SourceReturn } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
 import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";
+import { replaceCustomPlaceholders } from "../custom-replacer/replacer";
+import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
+import type { CoreMessage } from "ai";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -18,6 +21,7 @@ export const chatInputValidation = v.object({
     })
   ),
   useTemplate: v.optional(v.string()),
+  useTemplatePlaceholders: v.optional(v.boolean()),
   variables: v.optional(v.record(v.string(), v.string())),
   options: v.optional(
     v.object({
@@ -198,12 +202,29 @@ export async function chat(
     }
 
     // 5. Convert messages to format expected by AI SDK
-    const coreMessages = messages.map((msg) => ({
+    let coreMessages: CoreMessage[] = messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
     }));
 
-    // 6. Generate response using AI SDK
+    // 6. Replace custom placeholders if specified
+    let replacedMessagesSources: SourceReturn[] = [];
+    if (options.useTemplatePlaceholders ?? true) {
+      const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
+        coreMessages,
+        customAppPlaceholders,
+        userInput,
+        {
+          userId: options.context.userId,
+          organisationId: options.context.organisationId,
+          chatId,
+        }
+      );
+      coreMessages = replacedMessages;
+      replacedMessagesSources = addToMeta?.sources || [];
+    }
+
+    // 7. Generate response using AI SDK
     const response = await chatCompletion(
       coreMessages,
       {
@@ -218,7 +239,10 @@ export async function chat(
       }
     );
 
-    // 7. Add assistant response to messages
+    // attach custom placeholders sources to the response if needed
+    response.meta.sources.push(...replacedMessagesSources);
+
+    // 8. Add assistant response to messages
     // check if the dynamic tool was used
     const dynamicToolWasUsed = dynamicKnowledgeBaseToolName
       ? response.meta.toolsUsed?.includes(dynamicKnowledgeBaseToolName)
@@ -241,6 +265,13 @@ export async function chat(
       response.meta.sources.push(...sources);
     }
 
+    // drop all duplicate sources by id
+    response.meta.sources = response.meta.sources.filter(
+      (source, index, self) =>
+        index === self.findIndex((t) => t.id === source.id)
+    );
+
+    // build message to be stored and returned
     const assistantMessage: ChatMessage = {
       role: "assistant",
       content: response.text,
@@ -260,13 +291,13 @@ export async function chat(
 
     messages.push(assistantMessage);
 
-    // 8. Update chat session in store
+    // 9. Update chat session in store
     await chatStore.set(chatId, {
       messages,
       updatedAt: new Date().toISOString(),
     });
 
-    // 9. Return response
+    // 10. Return response
     return {
       chatId,
       message: assistantMessage,

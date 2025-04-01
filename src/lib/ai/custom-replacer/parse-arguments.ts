@@ -1,4 +1,4 @@
-import type { PlaceholderArgumentDict } from "./chat-store";
+import type { PlaceholderArgumentDict } from "./replacer";
 
 /**
  * Try to parse in this order: boolean, number, string
@@ -14,6 +14,7 @@ const parseBoolOrNumberOrString = (
   }
   return expression;
 };
+
 /**
  * A default argument parser
  * Will parse all arguments in the form of:

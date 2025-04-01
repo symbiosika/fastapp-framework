@@ -28,6 +28,7 @@ describe("Prompt Template Import", () => {
     placeholders: [
       {
         name: "name",
+        label: "Name",
         description: "Name",
         defaultValue: "default value 1",
         required: true,
@@ -35,6 +36,7 @@ describe("Prompt Template Import", () => {
       },
       {
         name: "name_2",
+        label: "Name 2",
         description: "Name 2",
         defaultValue: "default value 2",
         required: false,
@@ -42,6 +44,7 @@ describe("Prompt Template Import", () => {
       },
       {
         name: "name_3",
+        label: "Name 3",
         description: "Name 3",
         defaultValue: "DEF1",
         required: false,

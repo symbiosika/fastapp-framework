@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import {
+  chatSessionGroups,
   chatSessions,
   type ChatSessionsSelect,
 } from "../../../lib/db/db-schema";
@@ -192,6 +193,20 @@ class ChatHistoryStoreInDb {
     const session = await this.get(chatId);
     if (!session) throw new Error(`Chat session ${chatId} not found`);
     return session.messages as ChatMessage[];
+  }
+
+  async getParentWorkspaceByChatGroupId(
+    chatGroupId: string | null
+  ): Promise<{ workspaceId: string | null }> {
+    if (!chatGroupId) return { workspaceId: null };
+    const chatSessionGroup = await getDb()
+      .select({
+        workspaceId: chatSessionGroups.workspaceId,
+      })
+      .from(chatSessionGroups)
+      .where(eq(chatSessionGroups.id, chatGroupId))
+      .limit(1);
+    return chatSessionGroup[0] ?? { workspaceId: null };
   }
 
   async updateChatMessage(

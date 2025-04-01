@@ -10,13 +10,6 @@ import {
   authAndSetUsersInfo,
   checkUserPermission,
 } from "../../../../../lib/utils/hono-middlewares";
-import {
-  chatInitInputValidation,
-  chatWithAgent,
-  chatWithTemplateReturnValidation,
-  createEmptySession,
-} from "../../../../../lib/ai/chat";
-import { chatStore } from "../../../../../lib/ai/chat/chat-store";
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
@@ -27,6 +20,9 @@ import {
   type ChatInputValidation,
   chatInputValidation,
 } from "../../../../../lib/ai/interaction";
+import { chatInitInputValidation } from "../../../../../lib/ai/chat-store/compatibility";
+import { chatWithTemplateReturnValidation } from "../../../../../lib/ai/chat-store/compatibility";
+import { chatStore } from "../../../../../lib/ai/chat-store";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -349,13 +345,25 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const usersId = c.get("usersId");
         const { organisationId } = c.req.valid("param");
 
-        const session = await createEmptySession({
-          userId: usersId,
-          organisationId,
+        if (data.chatId) {
+          const exists = await chatStore.checkIfSessionExists(data.chatId);
+          if (exists) {
+            return c.json({ chatId: data.chatId });
+          }
+        }
+
+        const session = await chatStore.create({
           chatId: data.chatId ?? undefined,
-          chatSessionGroupId: data.chatSessionGroupId ?? undefined,
+          messages: [],
+          variables: {},
+          context: {
+            userId: usersId,
+            organisationId,
+            chatSessionGroupId: data.chatSessionGroupId ?? undefined,
+          },
         });
-        return c.json(session);
+
+        return c.json({ chatId: session.id });
       } catch (e) {
         throw new HTTPException(400, {
           message: e + "",

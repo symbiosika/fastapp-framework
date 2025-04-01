@@ -17,7 +17,7 @@ import {
   knowledgeGroup,
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
-import { getPromptTemplateDefinition } from "../chat/get-prompt-template";
+import { getPromptTemplateDefinition } from "./get-prompt-template";
 
 /**
  * Get all placeholders for one template as an object

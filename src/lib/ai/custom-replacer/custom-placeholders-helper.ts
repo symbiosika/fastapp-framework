@@ -1,4 +1,4 @@
-import type { ChatStoreVariables, PlaceholderArgumentDict } from "./chat-store";
+import type { PlaceholderArgumentDict } from "./replacer";
 
 function getStringArgument(
   args: PlaceholderArgumentDict,
@@ -113,31 +113,10 @@ const isNumber = (value: unknown): number | null | undefined => {
   return null;
 };
 
-const getIndexValue = (variables: ChatStoreVariables, indexName: string) => {
-  if (
-    !variables[indexName] ||
-    typeof variables[indexName] !== "number" ||
-    isNaN(variables[indexName])
-  ) {
-    variables[indexName] = 0;
-  }
-  return variables[indexName];
-};
-
-const incrementIndexValue = (
-  variables: ChatStoreVariables,
-  indexName: string
-) => {
-  const ixValue = getIndexValue(variables, indexName);
-  variables[indexName] = ixValue + 1;
-};
-
 export {
   getStringArgument,
   getStringArrayArgument,
   getBooleanArgument,
   getNumberArgument,
-  getIndexValue,
-  incrementIndexValue,
   isNumber,
 };

@@ -12,53 +12,23 @@ import {
 } from "../prompt-snippets";
 import { getKnowledgeTextByTitle } from "../knowledge/knowledge-texts";
 import log from "../../log";
-import type {
-  ChatSessionContext,
-  PlaceholderArgumentDict,
-  ChatStoreVariables,
-  PlaceholderParser,
-} from "./chat-store";
 import { speechToText } from "../ai-sdk/stt";
 import { getFileFromDb } from "../../storage/db";
 import {
-  getBooleanArgument,
   getNumberArgument,
   getStringArgument,
   getStringArrayArgument,
-  getIndexValue,
-  incrementIndexValue,
-  isNumber,
 } from "./custom-placeholders-helper";
+import type { ChatMessageReplacerMeta, PlaceholderParser } from "./replacer";
+import type { ChatSessionContext } from "../chat-store";
+import type { PlaceholderArgumentDict } from "./replacer";
+import type { SourceReturn } from "../ai-sdk";
 
+export type ChatStoreVariables = Record<string, string>;
 /**
  * Custom App Placeholders
  */
 export const customAppPlaceholders: PlaceholderParser[] = [
-  {
-    name: "inc_value",
-    replacerFunction: async (
-      match: string,
-      args: PlaceholderArgumentDict,
-      variables: ChatStoreVariables,
-      meta: ChatSessionContext
-    ): Promise<{
-      content: string;
-      skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
-    }> => {
-      if (!args.variable) {
-        throw new Error(
-          "variable parameter is required for inc_value placeholder"
-        );
-      }
-      const varName = args.variable + "";
-      const actualValue: number = isNumber(variables[varName]) ?? 0;
-      const increaseBy: number = isNumber(args.increase) ?? 1;
-
-      variables[varName] = actualValue + increaseBy;
-      return { content: "" };
-    },
-  },
   {
     name: "knowledgebase",
     replacerFunction: async (
@@ -69,14 +39,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
-      let pointerName = getStringArgument(args, "pointer", "_chunk_offset");
-      let autoIncrease = getBooleanArgument(args, "auto_increase", true);
-
-      let chunkOffset = getNumberArgument(args, pointerName, 0);
-      let chunkCount = getNumberArgument(args, "chunk_count");
-
       // Parse dynamic filters
       const filters: Record<string, string[]> = {};
       Object.entries(args).forEach(([key, value]) => {
@@ -90,8 +54,6 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const query = {
         id: args.id ? [args.id as string] : undefined,
         filters,
-        chunkCount,
-        chunkOffset,
         userId: userId + "",
         organisationId: meta.organisationId,
       };
@@ -120,25 +82,17 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         return { content: "", skipThisBlock: true };
       }
 
-      // write back to variables
-      if (chunkCount && autoIncrease) {
-        variables[pointerName] = chunkOffset + chunkCount;
-      }
+      // attach sources to the response
+      const sources: SourceReturn[] = knowledgebase.map((k) => ({
+        type: "knowledge-entry",
+        id: k.knowledgeEntryId,
+        external: false,
+      }));
+
       return {
         content: knowledgebase.map((k) => k.text).join("\n"),
         addToMeta: {
-          documents: {
-            knowledgeEntries: await getKnowledgeEntries({
-              organisationId: meta.organisationId,
-              ids: knowledgebase.map((k) => k.knowledgeEntryId),
-              userId: meta.userId,
-            }),
-          },
-          chunks: knowledgebase.map((k) => ({
-            id: k.knowledgeEntryId,
-            text: k.text,
-            meta: k.meta,
-          })),
+          sources,
         },
       };
     },
@@ -153,7 +107,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       const searchForVariable = getStringArgument(
         args,
@@ -209,21 +163,21 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         return [];
       });
 
+      const sources: SourceReturn[] = results.map((r) => ({
+        type: "knowledge-chunk",
+        id: r.id,
+        external: false,
+      }));
+      const chunksSources: SourceReturn[] = results.map((r) => ({
+        type: "knowledge-chunk",
+        id: r.id,
+        external: false,
+      }));
+
       return {
         content: results.map((r) => r.text).join("\n"),
         addToMeta: {
-          documents: {
-            knowledgeEntries: await getKnowledgeEntries({
-              organisationId: organisationId,
-              ids: results.map((r) => r.knowledgeEntryId),
-              userId: meta.userId,
-            }),
-          },
-          chunks: results.map((r) => ({
-            id: r.knowledgeEntryId,
-            text: r.text,
-            meta: r.meta,
-          })),
+          sources: [...sources, ...chunksSources],
         },
       };
     },
@@ -238,7 +192,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       if (!args.id) {
         throw new Error("id parameter is required for file placeholder");
@@ -247,45 +201,40 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const fileSource = (args.source || "db") as FileSourceType;
       const bucket = getStringArgument(args, "bucket", "default");
       const ids = getStringArrayArgument(args, "id", []);
-      const indexName = getStringArgument(args, "index", "ix_file_id");
       const organisationId = meta.organisationId;
 
-      let id = "";
-      let ixValue = getIndexValue(variables, indexName);
-      if (ids.length === 0) {
-        return { content: "" };
-      } else if (ids.length === 1) {
-        id = ids[0];
-      } else {
-        id = ids[ixValue] ?? undefined;
-        incrementIndexValue(variables, indexName);
-        log.logCustom({ name: meta.chatId }, "read file index", ixValue);
+      let text = "";
+      for (const id of ids) {
+        if (id === "") {
+          continue;
+        }
+        await log.logCustom({ name: meta.chatId }, "parse file placeholder", {
+          fileSource,
+          bucket,
+          id,
+        });
+        const document = await parseDocument({
+          sourceType: fileSource,
+          organisationId: organisationId,
+          sourceId: id,
+          sourceFileBucket: bucket,
+        }).catch((e) => {
+          log.error("Error parsing document", e);
+          return null;
+        });
+        text += document?.content ?? "";
       }
 
-      if (!id) {
-        log.logCustom({ name: meta.chatId }, "no more files to read");
-        return { content: "", skipThisBlock: true };
-      }
-
-      await log.logCustom({ name: meta.chatId }, "parse file placeholder", {
-        fileSource,
-        bucket,
+      const fileSources: SourceReturn[] = ids.map((id) => ({
+        type: "file",
         id,
-      });
-      const document = await parseDocument({
-        sourceType: fileSource,
-        organisationId: organisationId,
-        sourceId: id,
-        sourceFileBucket: bucket,
-      }).catch((e) => {
-        log.error("Error parsing document", e);
-        return null;
-      });
+        external: false,
+      }));
 
       return {
-        content: document?.content ?? "",
+        content: text,
         addToMeta: {
-          fileIds: [id],
+          sources: fileSources,
         },
       };
     },
@@ -300,7 +249,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       const url = getStringArgument(args, "url");
       if (!url) {
@@ -326,7 +275,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       const name = getStringArgument(args, "name");
       const category = getStringArgument(args, "category");
@@ -368,7 +317,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       const title = getStringArgument(args, "title");
       const organisationId = meta.organisationId;
@@ -390,37 +339,6 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
-    name: "inc_value",
-    replacerFunction: async (
-      match: string,
-      args: PlaceholderArgumentDict,
-      variables: ChatStoreVariables,
-      meta: ChatSessionContext
-    ): Promise<{
-      content: string;
-      skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
-    }> => {
-      if (!args.variable) {
-        throw new Error(
-          "variable parameter is required for inc_value placeholder"
-        );
-      }
-      const varName = getStringArgument(args, "variable");
-      if (!varName) {
-        throw new Error(
-          "variable parameter is required for inc_value placeholder"
-        );
-      }
-      const actualValue = getIndexValue(variables, varName);
-      const increaseBy: number = getNumberArgument(args, "increase", 1);
-
-      variables[varName] = actualValue + increaseBy;
-      return { content: "" };
-    },
-  },
-
-  {
     name: "stt",
     replacerFunction: async (
       match: string,
@@ -430,7 +348,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     ): Promise<{
       content: string;
       skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
+      addToMeta?: ChatMessageReplacerMeta;
     }> => {
       if (!args.id) {
         throw new Error("id parameter is required for stt placeholder");
@@ -481,55 +399,6 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       }
 
       return { content: transcription.text };
-    },
-  },
-
-  {
-    name: "iterate_array",
-    replacerFunction: async (
-      match: string,
-      args: PlaceholderArgumentDict,
-      variables: ChatStoreVariables,
-      meta: ChatSessionContext
-    ): Promise<{
-      content: string;
-      skipThisBlock?: boolean;
-      addToMeta?: Record<string, any>;
-    }> => {
-      // get name of the array variable
-      if (!args.name) {
-        log.error(
-          "parsing iterate_array placeholder: name parameter is required"
-        );
-        return { content: "" };
-      }
-      const varName = args.name + "";
-
-      if (!variables[varName] || !Array.isArray(variables[varName])) {
-        log.error(
-          "parsing iterate_array placeholder: variable not found",
-          varName
-        );
-        return { content: "" };
-      }
-
-      const ixName = "ix_" + varName;
-      const ixValue = getIndexValue(variables, ixName);
-      log.logCustom({ name: meta.chatId }, "iterate_array", {
-        ixName,
-        ixValue,
-      });
-
-      // get value from array
-      if (ixValue >= variables[varName].length) {
-        return { content: "", skipThisBlock: true };
-      }
-
-      // read value
-      const val = variables[varName][ixValue];
-      // increment index
-      incrementIndexValue(variables, ixName);
-      return { content: val + "" };
     },
   },
 ];

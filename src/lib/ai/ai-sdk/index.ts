@@ -125,7 +125,7 @@ interface Step {
 }
 
 export interface SourceReturn {
-  type: "url" | "knowledge-chunk" | "knowledge-entry";
+  type: "url" | "knowledge-chunk" | "knowledge-entry" | "file";
   id?: string;
   url?: string;
   external?: boolean;

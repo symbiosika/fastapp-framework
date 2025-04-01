@@ -44,7 +44,6 @@ import {
   getFullSourceDocumentsForSimilaritySearch,
   getNearestEmbeddings,
 } from "./lib/ai/knowledge/similarity-search";
-import { chatWithAgent } from "./lib/ai/chat";
 import {
   chatCompletion,
   generateEmbedding,
@@ -62,8 +61,6 @@ export default {
   updatePromptTemplatePlaceholder,
   deletePromptTemplatePlaceholder,
   getPlaceholdersForPromptTemplate,
-  // chat
-  chatWithAgent,
   // knowledge
   parseDocument,
   extractKnowledgeFromExistingDbEntry,

@@ -1,20 +1,50 @@
-import type {
-  ChatMessage,
-  ChatSessionContext,
-  ChatStoreVariables,
-  PlaceholderParser,
-} from "./chat-store";
 import log from "../../log";
+import type { SourceReturn } from "../ai-sdk";
+import type { ChatSessionContext } from "../chat-store";
 import { parseArgumentsWithoutLimits } from "./parse-arguments";
+import type { CoreMessage } from "ai";
+
+export type PlaceholderArgumentDict = Record<
+  string,
+  string | number | boolean | undefined
+>;
+
+export type ChatMessageReplacerMeta = {
+  sources?: SourceReturn[];
+};
+
+export type PlaceholderParser = {
+  name: string;
+  expression?: RegExp; // e.g. /{{#url="([^"]+)"(?:\s+(?:comment)=(?:"[^"]*"|[^}\s]+))*}}/
+  requiredArguments?: string[]; // a simple list of required arguments for the placeholder
+  arguments?: {
+    // a complex list of arguments for the placeholder
+    name: string;
+    required?: boolean;
+    type?: "string" | "number" | "boolean";
+    multiple?: boolean;
+    default?: string | number | boolean;
+  }[];
+  replacerFunction: (
+    match: string,
+    args: PlaceholderArgumentDict,
+    variables: Record<string, string>,
+    meta: ChatSessionContext
+  ) => Promise<{
+    content: string;
+    skipThisBlock?: boolean;
+    addToMeta?: ChatMessageReplacerMeta;
+  }>;
+};
 
 /**
  * Find all variables {{var_name}} and replace them with the actual value
  */
 export const replaceVariables = async (
-  messages: ChatMessage[],
-  variables: ChatStoreVariables
+  messages: CoreMessage[],
+  variables: Record<string, string>
 ) => {
-  const replacedMessages: ChatMessage[] = [];
+  const replacedMessages: CoreMessage[] = [];
   for (const message of messages) {
     let replacedMessage = JSON.parse(JSON.stringify(message));
     const matches = replacedMessage.content.match(/{{\s*(\w+)\s*}}/g);
@@ -48,14 +78,14 @@ export const replaceVariables = async (
  * Find all custom placeholders like {{#custom ...}} and replace them
  */
 export const replaceCustomPlaceholders = async (
-  messages: ChatMessage[],
+  messages: CoreMessage[],
   parsers: PlaceholderParser[],
-  variables: ChatStoreVariables,
+  variables: Record<string, string>,
   meta: ChatSessionContext
 ) => {
-  const replacedMessages: ChatMessage[] = [];
+  const replacedMessages: CoreMessage[] = [];
   let skipThisBlock = false;
-  const addToMeta: Record<string, any> = {};
+  const addToMeta: ChatMessageReplacerMeta = {};
 
   for (const message of messages) {
     let replacedMessage = JSON.parse(JSON.stringify(message));
@@ -82,8 +112,11 @@ export const replaceCustomPlaceholders = async (
             replacement.content
           );
           // Merge addToMeta data if present
-          if (replacement.addToMeta) {
-            Object.assign(addToMeta, replacement.addToMeta);
+          if (replacement.addToMeta?.sources) {
+            // assign sources
+            addToMeta.sources
+              ? addToMeta.sources.push(...replacement.addToMeta.sources)
+              : (addToMeta.sources = replacement.addToMeta.sources);
           }
         }
       }

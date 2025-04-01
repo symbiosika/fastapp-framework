@@ -1,8 +1,9 @@
 import { describe, test, expect } from "bun:test";
 import { replaceVariables, replaceCustomPlaceholders } from "./replacer";
-import type { ChatMessage, ChatSessionContext } from "./chat-store";
+import type { CoreMessage } from "ai";
+import type { ChatSessionContext } from "../chat-store";
 
-const mockMessages: ChatMessage[] = [
+const mockMessages: CoreMessage[] = [
   { content: "Hello, {{name}}!", role: "user" },
   { content: "Your order {{orderId}} is ready.", role: "system" },
 ];
@@ -32,7 +33,7 @@ describe("replaceVariables", () => {
   });
 });
 
-const customMessages: ChatMessage[] = [
+const customMessages: CoreMessage[] = [
   { content: "This is a {{#custom placeholder}}.", role: "user" },
 ];
 
