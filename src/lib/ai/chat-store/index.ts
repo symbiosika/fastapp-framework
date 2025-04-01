@@ -27,6 +27,10 @@ export type ChatMessage = {
     model?: string;
     human?: boolean;
     timestamp?: string;
+    knowledgeSources?: {
+      knowledgeEntries?: string[];
+      knowledgeFilters?: string[];
+    };
   };
 };
 

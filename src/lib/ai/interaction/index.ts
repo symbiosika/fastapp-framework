@@ -95,6 +95,11 @@ export async function chat(
     let messages: ChatMessage[] = [...session.messages];
     const isFirstInteraction = messages.length === 0;
 
+    let dynamicKnowledgeBaseToolName: string | undefined;
+    let usedKnowledgeSources = {
+      knowledgeEntries: <string[]>[],
+      knowledgeChunks: <string[]>[],
+    };
     if (isFirstInteraction) {
       // Use template if specified, otherwise use default
       if (options.useTemplate) {
@@ -123,6 +128,13 @@ export async function chat(
           }
         );
         if (dynamicKnowledgeBaseTool) {
+          // set state
+          dynamicKnowledgeBaseToolName = dynamicKnowledgeBaseTool.name;
+          usedKnowledgeSources.knowledgeEntries = knowledgeEntries.map(
+            (entry) => entry.id
+          );
+
+          // enable tool
           enabledToolNames.push(dynamicKnowledgeBaseTool.name);
         }
 
@@ -203,6 +215,11 @@ export async function chat(
     );
 
     // 7. Add assistant response to messages
+    // check if the dynamic tool was used
+    const dynamicToolWasUsed = dynamicKnowledgeBaseToolName
+      ? response.meta.toolsUsed?.includes(dynamicKnowledgeBaseToolName)
+      : false;
+
     const assistantMessage: ChatMessage = {
       role: "assistant",
       content: response.text,
@@ -211,6 +228,12 @@ export async function chat(
         model: response.model,
         timestamp: new Date().toISOString(),
         ...response.meta,
+        knowledgeSources: dynamicToolWasUsed
+          ? {
+              knowledgeEntries: [],
+              knowledgeFilters: [],
+            }
+          : undefined,
       },
     };
 
