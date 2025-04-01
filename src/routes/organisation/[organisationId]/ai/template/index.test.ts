@@ -13,7 +13,6 @@ let app = new Hono<{ Variables: FastAppHonoContextVariables }>();
 let TEST_USER_1_TOKEN: string;
 let createdTemplateId: string;
 let createdPlaceholderId: string;
-let createdSnippetId: string;
 
 beforeAll(async () => {
   await createDatabaseClient();
