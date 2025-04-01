@@ -33,6 +33,7 @@ import { defineSecuredUserRoutes } from "./routes/user/protected";
 import { defineFilesRoutes } from "./routes/organisation/[organisationId]/files";
 import paymentRoutes from "./routes/payment";
 import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/template";
+import aiPromptSnippetsRoutes from "./routes/organisation/[organisationId]/ai/prompt-snippets";
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
 import aiKnowledgeFiltersRoutes from "./routes/organisation/[organisationId]/ai/knowledge-filters";
@@ -272,6 +273,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiKnowledgeTextsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiPromptSnippetsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineAiUtilsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
