@@ -1,5 +1,5 @@
-import { Tool } from "ai";
-import { UserContext } from "../ai-sdk/types";
+import { type Tool } from "ai";
+import type { UserContext } from "../ai-sdk/types";
 import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base";
 
 // Execute a tool call

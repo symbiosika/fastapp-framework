@@ -10,7 +10,7 @@ import {
   invitationCodes,
   aiProviderModels,
   teams,
-  AiProviderModelsInsert,
+  type AiProviderModelsInsert,
 } from "../lib/db/db-schema";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";

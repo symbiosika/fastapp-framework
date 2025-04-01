@@ -1,6 +1,6 @@
 import { chatCompletion } from "../ai-sdk";
-import log from "../../log";
-import { UserContext } from "../ai-sdk/types";
+import log from "../../../lib/log";
+import type { UserContext } from "../ai-sdk/types";
 
 /**
  * Generates a summary for a document using LLM

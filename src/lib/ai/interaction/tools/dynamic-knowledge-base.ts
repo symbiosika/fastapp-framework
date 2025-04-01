@@ -1,4 +1,4 @@
-import { UserContext } from "../../ai-sdk/types";
+import type { UserContext } from "../../ai-sdk/types";
 import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
 

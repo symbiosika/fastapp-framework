@@ -1,6 +1,6 @@
-import { openAiSpeechToText, SpeechToTextResponse } from "./openai";
-import log from "../../log";
-import { UserContext } from "./types";
+import { openAiSpeechToText, type SpeechToTextResponse } from "./openai";
+import log from "../../../lib/log";
+import type { UserContext } from "./types";
 
 export async function speechToText(
   audioData: File | string,

@@ -24,7 +24,7 @@ import { chatSessionsSelectSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
 import {
   chat,
-  ChatInputValidation,
+  type ChatInputValidation,
   chatInputValidation,
 } from "../../../../../lib/ai/interaction";
 

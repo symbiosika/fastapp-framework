@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, mock } from "bun:test";
-import { CoreMessage } from "ai";
+import type { CoreMessage } from "ai";
 import {
   initTests,
   TEST_ORGANISATION_1,

@@ -1,4 +1,4 @@
-import { UserContext } from "../ai-sdk/types";
+import type { UserContext } from "../ai-sdk/types";
 import { addDynamicTool } from "./tools";
 import { createDynamicKnowledgeBaseTool } from "./tools/dynamic-knowledge-base";
 

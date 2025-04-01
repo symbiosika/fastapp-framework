@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { importPromptTemplate, type TemplateImportData } from "./import";
 import { initTemplateMessage } from "./init-message";
 import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 import { getDb } from "../../../lib/db/db-connection";
 import { promptTemplates } from "../../../lib/db/db-schema";
 import { eq } from "drizzle-orm";
+import { createFullPromptTemplate } from "./crud";
 
 beforeAll(async () => {
   await initTests();
@@ -17,7 +17,7 @@ describe("Prompt Template Import", () => {
   let createdTemplateId: string;
 
   // Valid template data for testing
-  const neededTemplateData: TemplateImportData = {
+  const neededTemplateData = {
     name: "test-template-1",
     label: "test-template-1",
     category: "test",
@@ -50,7 +50,7 @@ describe("Prompt Template Import", () => {
   };
 
   it("adds a template to the database", async () => {
-    const result = await importPromptTemplate(neededTemplateData);
+    const result = await createFullPromptTemplate(neededTemplateData);
     createdTemplateId = result.id;
     // Check if the template was created since this is needed for the test
     expect(result).toBeDefined();

@@ -1,4 +1,4 @@
-import { Tool } from "ai";
+import { type Tool } from "ai";
 import { getNearestEmbeddings } from "../../knowledge/similarity-search";
 
 // Knowledge base tool implementation
@@ -51,7 +51,7 @@ export const queryKnowledgeBaseTool: Tool = {
     },
     required: ["query"],
   },
-  execute: async (params, context) => {
+  execute: async (params, context: any) => {
     // Ensure the organisationId is present in the user context
     if (!context.organisationId) {
       throw new Error("Missing organisationId in user context");

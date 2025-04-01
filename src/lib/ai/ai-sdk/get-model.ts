@@ -6,7 +6,7 @@ import { azure } from "@ai-sdk/azure";
 import { perplexity } from "@ai-sdk/perplexity";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { getAllAiProviderModels } from "../models";
-import { UserContext } from "./types";
+import type { UserContext } from "./types";
 
 /**
  * Gets a Vercel AI SDK compatible model from a provider:model string

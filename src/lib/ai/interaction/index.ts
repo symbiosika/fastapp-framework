@@ -1,7 +1,11 @@
 import * as v from "valibot";
 import { nanoid } from "nanoid";
-import { ChatMessage, chatStore, ChatSession } from "../../ai/chat-store";
-import { chatCompletion, SourceReturn } from "../../ai/ai-sdk";
+import {
+  type ChatMessage,
+  chatStore,
+  type ChatSession,
+} from "../../ai/chat-store";
+import { chatCompletion, type SourceReturn } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
 import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";

@@ -1,9 +1,9 @@
-import { CoreMessage, embed, generateText } from "ai";
-import { UserContext } from "./types";
+import { type CoreMessage, embed, generateText } from "ai";
+import type { UserContext } from "./types";
 import { getAIEmbeddingModel, getAIModel } from "./get-model";
 import { encodeImageFromFile } from "./utils";
 import log from "../../log";
-import { LanguageModelV1 } from "ai";
+import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
 import { getToolsDictionary } from "../interaction/tools";
 

@@ -1,6 +1,6 @@
-import log from "../../log";
+import log from "../../../lib/log";
 import { openAiTextToSpeech } from "./openai";
-import { UserContext } from "./types";
+import type { UserContext } from "./types";
 
 /**
  * Text to Speech
