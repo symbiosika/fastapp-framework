@@ -93,13 +93,13 @@ export const initTemplateMessage = async (request: {
     systemPrompt,
     userPrompt: userPrompt || request.userInput["user_input"] || "",
     knowledgeEntries: knowledgeEntries.map((knowledgeEntry) => ({
-      id: knowledgeEntry.id,
+      id: knowledgeEntry.knowledgeEntryId,
     })),
     knowledgeFilters: knowledgeFilters.map((knowledgeFilter) => ({
-      id: knowledgeFilter.id,
+      id: knowledgeFilter.knowledgeFilterId,
     })),
     knowledgeGroups: knowledgeGroups.map((knowledgeGroup) => ({
-      id: knowledgeGroup.id,
+      id: knowledgeGroup.knowledgeGroupId,
     })),
   };
 };

@@ -97,9 +97,7 @@ export function createDynamicKnowledgeBaseTool(
 
         const formattedResults = results
           .map((chunk) => {
-            return `Eintrag: ${chunk.knowledgeEntryName} (ID: ${chunk.knowledgeEntryId})
-      Chunk ID: ${chunk.id}
-      Auszug: ${chunk.text.slice(0, 100)}...`;
+            return `KnowledgeEntry ["${chunk.knowledgeEntryName}", ${chunk.knowledgeEntryId}]:\n${chunk.text}`;
           })
           .join("\n\n");
 

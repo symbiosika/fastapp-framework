@@ -24,13 +24,12 @@ import {
 const pathToEmbeddingFile = __dirname + "/files/test-knowledge-embedding.json";
 
 export const TEST_KNOWLEDGE_TEXT = `
-Die Eichhörnchen (Sciurus) sind eine Gattung der Baumhörnchen (Sciurini) innerhalb der Familie der Hörnchen (Sciuridae).
-Ein auffälliges Merkmal ist der hochgestellte buschige Schwanz.
-Die in Mitteleuropa bekannteste Art ist das Eurasische Eichhörnchen, das gemeinhin einfach als Eichhörnchen bezeichnet wird.
-Alle Eichhörnchen sind Waldbewohner und ernähren sich primär von Samen und Früchten.
-Die meisten Arten sind auf dem amerikanischen Doppelkontinent beheimatet.
-Nur vier der 30 Arten leben in der Alten Welt, sie sind über Europa, Vorder-, Nord- und Ostasien verbreitet.
-Eine weitere Art (Grauhörnchen) ist als Neozoon in Teilen Europas eingebürgert.
+Strinz-Margarethä ist ein Ortsteil der Gemeinde Hohenstein im südhessischen Rheingau-Taunus-Kreis.
+Strinz-Margarethä liegt im westlichen Hintertaunus am Mittellauf des Aubachs.
+Die Gemarkungsfläche beträgt 890 Hektar, davon sind 424 Hektar bewaldet.
+Der Höhenzug, auf dem die Eisenstraße verläuft, bildet die westliche und die von Hennethal nach Idstein führende,
+als Hermannsweg bekannte Höhenstraße, die nördliche Gemarkungsgrenze.
+In der Ortsmitte treffen sich die Landesstraßen L 3032 und L 3274.
 `;
 
 export const TEST_KNOWLEDGE_TEXT_EMBEDDING: {
@@ -63,7 +62,7 @@ export const TEST_KNOWLEDGE_PROMPT_TEMPLATE = {
   description: "Test description",
   hidden: false,
   systemPrompt:
-    "You are a helpful assistant that can answer questions about the knowledge base.",
+    "You are a helpful assistant and will answer questions about the knowledge base. If the knowledge cannot answer the question, you will say so!",
   userPrompt: null,
   langCode: "en",
   needsInitialCall: false,

@@ -7,6 +7,118 @@ import { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
 import { getToolsDictionary } from "../interaction/tools";
 
+// Typen für die AI-Response basierend auf der Vercel AI SDK-Dokumentation
+interface TextPart {
+  type: "text";
+  text: string;
+}
+
+interface ToolCallPart {
+  type: "tool-call";
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+interface ToolResultPart {
+  type: "tool-result";
+  toolCallId: string;
+  toolName: string;
+  result: unknown;
+  isError?: boolean;
+}
+
+// Wir definieren hier unsere eigenen Nachrichtentypen, da wir die genauen SDK-Typen nicht haben
+interface AssistantMessage {
+  role: "assistant";
+  content: string | Array<TextPart | ToolCallPart>;
+  tool_calls?: Array<{
+    id: string;
+    type: "function";
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }>;
+}
+
+interface ToolMessage {
+  role: "tool";
+  tool_call_id: string;
+  content: string;
+}
+
+type AiMessage = AssistantMessage | ToolMessage;
+
+interface CompletionTokenUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+}
+
+interface AIResponseWithTools {
+  text: string;
+  toolCalls?: {
+    args: Record<string, unknown>;
+    toolCallId: string;
+    toolName: string;
+    type: string;
+  }[];
+  toolResults?: {
+    args: Record<string, unknown>;
+    result: unknown;
+    toolCallId: string;
+    toolName: string;
+    type: string;
+  }[];
+  usage?: CompletionTokenUsage;
+  finishReason?: string;
+}
+
+// First, define your custom messages to exactly match CoreMessage format
+interface CoreCompatibleAssistantMessage {
+  role: "assistant";
+  content:
+    | string
+    | {
+        type: "text" | "image" | "tool_call";
+        text?: string;
+        image_url?: string;
+        tool_call?: {
+          id: string;
+          type: "function";
+          function: {
+            name: string;
+            arguments: string;
+          };
+        };
+      }[];
+}
+
+interface CoreCompatibleToolMessage {
+  role: "tool";
+  content: string;
+  tool_call_id: string;
+}
+
+interface ToolCall {
+  toolName: string;
+  args: Record<string, unknown>;
+  toolCallId: string;
+}
+
+interface ToolResult {
+  toolName: string;
+  result: unknown;
+  toolCallId: string;
+}
+
+interface Step {
+  text: string;
+  toolCalls?: ToolCall[];
+  toolResults?: ToolResult[];
+}
+
 /**
  * Generate an embedding for the given text using AI SDK
  */
@@ -131,56 +243,44 @@ export async function chatCompletion(
 
   const model = await getAIModel(providerAndModelName, context);
 
-  // Build parameters for generateText
-  const params: any = {
+  // get all tools filtered by the provided tool names
+  const tools = options?.tools ? getToolsDictionary(options.tools) : undefined;
+
+  // Use generateText with maxSteps for automatic tool handling
+  const { text, steps, usage } = await generateText({
     model: model as LanguageModelV1,
     messages,
     temperature: options?.temperature,
     maxTokens: options?.maxTokens,
-  };
+    tools,
+    // Let the model decide when to use tools
+    toolChoice: tools && Object.keys(tools).length > 0 ? "auto" : "none",
+    // Allow multiple steps for tool usage and follow-up responses
+    maxSteps: 5,
+    // Optional: Log each step for debugging
+    onStepFinish: ({ text, toolCalls, toolResults, finishReason, usage }) => {
+      log.logToDB({
+        level: "debug",
+        organisationId: context?.organisationId,
+        sessionId: context?.userId,
+        source: "ai",
+        category: "text-generation",
+        message: "text-generation-step-complete",
+        metadata: {
+          model: providerAndModelName,
+          stepText: text,
+          toolCalls: (toolCalls as ToolCall[])?.map((call) => call.toolName),
+          toolResults: (toolResults as ToolResult[])?.map(
+            (result) => result.toolName
+          ),
+          finishReason,
+          usage,
+        },
+      });
+    },
+  });
 
-  // Add tools if provided
-  if (options?.tools && options.tools.length > 0) {
-    // Get tools from registry
-    const toolDictionary = getToolsDictionary(options.tools);
-
-    // Convert to format expected by AI SDK
-    params.tools = toolDictionary;
-
-    // Allow model to decide when to use tools
-    params.tool_choice = "auto";
-
-    // Allow multiple steps in conversation
-    params.maxSteps = 3;
-  }
-
-  const result = await generateText(params);
-
-  // Handle tool calls if present
-  let finalText = result.text;
-  let toolUsage: Array<{ toolName: string; arguments: any }> = [];
-
-  // Track tool calls if present in the response
-  if (result.toolCalls && result.toolCalls.length > 0) {
-    toolUsage = result.toolCalls.map((call) => ({
-      toolName: call.toolName,
-      arguments: call.args,
-    }));
-
-    log.logToDB({
-      level: "info",
-      organisationId: context?.organisationId,
-      sessionId: context?.userId,
-      source: "ai",
-      category: "tool-usage",
-      message: "tool-call-executed",
-      metadata: {
-        toolCalls: toolUsage,
-      },
-    });
-  }
-
-  // Log completion
+  // Log final completion
   log.logToDB({
     level: "info",
     organisationId: context?.organisationId,
@@ -190,24 +290,34 @@ export async function chatCompletion(
     message: "text-generation-complete",
     metadata: {
       model: providerAndModelName,
-      responseLength: finalText.length,
-      usedTokens: result.usage?.totalTokens,
-      promptTokens: result.usage?.promptTokens,
-      completionTokens: result.usage?.completionTokens,
-      toolsUsed: toolUsage.length > 0 ? toolUsage : undefined,
+      responseLength: text.length,
+      usedTokens: usage?.totalTokens,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      toolsUsed: tools ? Object.keys(tools) : undefined,
+      steps: (steps as Step[])?.map((step) => ({
+        text: step.text,
+        toolCalls: step.toolCalls?.map((call) => call.toolName),
+        toolResults: step.toolResults?.map((result) => result.toolName),
+      })),
     },
   });
 
   return {
     id: nanoid(6),
-    text: finalText,
+    text,
     model: providerAndModelName,
     meta: {
-      responseLength: finalText.length,
-      usedTokens: result.usage?.totalTokens,
-      promptTokens: result.usage?.promptTokens,
-      completionTokens: result.usage?.completionTokens,
-      toolsUsed: toolUsage.length > 0 ? toolUsage : undefined,
+      responseLength: text.length,
+      usedTokens: usage?.totalTokens,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      toolsUsed: tools ? Object.keys(tools) : undefined,
+      steps: (steps as Step[])?.map((step) => ({
+        text: step.text,
+        toolCalls: step.toolCalls?.map((call) => call.toolName),
+        toolResults: step.toolResults?.map((result) => result.toolName),
+      })),
     },
   };
 }

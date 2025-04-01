@@ -149,14 +149,8 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
 
   // Now we test an assistant call that needs to create a tool call itself
   it("should track tool usage in chatCompletion", async () => {
-    // Mock the AI SDK's generateText to simulate tool usage
-    const mockMessages = [
-      { role: "system", content: "You are a helpful assistant." },
-      { role: "user", content: "Was sind Eichhörnchen?" },
-    ] as any; // Type assertion as any to avoid CoreMessage type issues
-
     const result = await chat({
-      input: "Was sind Eichhörnchen?",
+      input: "Was ist Strinz?",
       context: {
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
@@ -166,5 +160,5 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
 
     // Verify the result contains metadata
     expect(result.chatId).toBeDefined();
-  }, 15000);
+  }, 60000);
 });
