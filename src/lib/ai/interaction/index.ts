@@ -253,12 +253,16 @@ export async function chat(
       usedKnowledgeSources.knowledgeEntries.forEach((entry) => {
         sources.push({
           type: "knowledge-entry",
+          external: false,
+          label: "",
           id: entry,
         });
       });
       usedKnowledgeSources.knowledgeChunks.forEach((chunk) => {
         sources.push({
           type: "knowledge-chunk",
+          external: false,
+          label: "",
           id: chunk,
         });
       });

@@ -4,9 +4,9 @@ import { createDynamicKnowledgeBaseTool } from "./tools/dynamic-knowledge-base";
 
 // Define the interface here instead of importing it
 interface KnowledgeQuery {
-  knowledgeEntries?: { id: string }[];
-  knowledgeFilters?: { id: string }[];
-  knowledgeGroups?: { id: string }[];
+  knowledgeEntries?: { id: string; label: string }[];
+  knowledgeFilters?: { id: string; label: string }[];
+  knowledgeGroups?: { id: string; label: string }[];
 }
 
 // Define the tool return type to avoid dependency on internal types

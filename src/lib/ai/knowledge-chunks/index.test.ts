@@ -69,7 +69,6 @@ describe("Knowledge Chunks CRUD Operations", () => {
       );
       expect(result.id).toBe(testKnowledgeChunkId);
       expect(result.text).toBe("Test chunk text");
-      expect(result.header).toBe("Test header");
     });
 
     test("should get a knowledge chunk by ID with admin user context", async () => {

@@ -86,6 +86,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const sources: SourceReturn[] = knowledgebase.map((k) => ({
         type: "knowledge-entry",
         id: k.knowledgeEntryId,
+        label: k.knowledgeEntryName,
         external: false,
       }));
 
@@ -164,12 +165,14 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       });
 
       const sources: SourceReturn[] = results.map((r) => ({
-        type: "knowledge-chunk",
-        id: r.id,
+        type: "knowledge-entry",
+        label: r.knowledgeEntryName,
+        id: r.knowledgeEntryId,
         external: false,
       }));
       const chunksSources: SourceReturn[] = results.map((r) => ({
         type: "knowledge-chunk",
+        label: `Chunk: ${r.knowledgeEntryName} ${r.meta.page ? `[Page ${r.meta.page}]` : ""}`,
         id: r.id,
         external: false,
       }));
@@ -228,6 +231,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const fileSources: SourceReturn[] = ids.map((id) => ({
         type: "file",
         id,
+        label: document.title,
         external: false,
       }));
 

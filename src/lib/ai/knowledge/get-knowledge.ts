@@ -35,6 +35,7 @@ type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
 type PlainKnowledgetEntry = {
   text: string;
   knowledgeEntryId: string;
+  knowledgeEntryName: string;
   chunkId: string;
   meta: KnowledgeChunkMeta;
 };
@@ -283,6 +284,7 @@ export const getPlainKnowledge = async (
     for (const chunk of entry.knowledgeChunks) {
       plainKnowledge.push({
         text: chunk.text,
+        knowledgeEntryName: entry.name,
         knowledgeEntryId: entry.id,
         chunkId: chunk.id,
         meta: chunk.meta ?? {},

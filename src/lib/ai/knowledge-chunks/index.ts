@@ -66,8 +66,18 @@ export const getKnowledgeChunkById = async (
   }
 
   const result = await getDb()
-    .select()
+    .select({
+      id: knowledgeChunks.id,
+      text: knowledgeChunks.text,
+      createdAt: knowledgeChunks.createdAt,
+      knowledgeEntryId: knowledgeEntry.id,
+      knowledgeEntryName: knowledgeEntry.name,
+    })
     .from(knowledgeChunks)
+    .leftJoin(
+      knowledgeEntry,
+      eq(knowledgeChunks.knowledgeEntryId, knowledgeEntry.id)
+    )
     .where(and(...filters));
 
   if (!result[0]) {

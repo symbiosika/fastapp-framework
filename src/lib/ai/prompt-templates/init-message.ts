@@ -34,9 +34,9 @@ export const initTemplateMessage = async (request: {
 }): Promise<{
   systemPrompt: string;
   userPrompt: string;
-  knowledgeEntries: { id: string }[];
-  knowledgeFilters: { id: string }[];
-  knowledgeGroups: { id: string }[];
+  knowledgeEntries: { id: string; label: string }[];
+  knowledgeFilters: { id: string; label: string }[];
+  knowledgeGroups: { id: string; label: string }[];
 }> => {
   // sequence of checks:
   // 1. check if "template" is a UUID
@@ -94,12 +94,15 @@ export const initTemplateMessage = async (request: {
     userPrompt: userPrompt || request.userInput["user_input"] || "",
     knowledgeEntries: knowledgeEntries.map((knowledgeEntry) => ({
       id: knowledgeEntry.knowledgeEntryId,
+      label: knowledgeEntry.knowledgeEntry.name,
     })),
     knowledgeFilters: knowledgeFilters.map((knowledgeFilter) => ({
       id: knowledgeFilter.knowledgeFilterId,
+      label: "Filter: " + knowledgeFilter.knowledgeFilter.name,
     })),
     knowledgeGroups: knowledgeGroups.map((knowledgeGroup) => ({
       id: knowledgeGroup.knowledgeGroupId,
+      label: "Group: " + knowledgeGroup.knowledgeGroup.name,
     })),
   };
 };

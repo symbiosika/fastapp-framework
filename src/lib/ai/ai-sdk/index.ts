@@ -126,6 +126,7 @@ interface Step {
 
 export interface SourceReturn {
   type: "url" | "knowledge-chunk" | "knowledge-entry" | "file";
+  label: string;
   id?: string;
   url?: string;
   external?: boolean;
@@ -321,6 +322,7 @@ export async function chatCompletion(
       if (source.sourceType === "url") {
         sources.push({
           type: "url",
+          label: source.url,
           url: source.url,
           external: true,
         });
