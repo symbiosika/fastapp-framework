@@ -117,6 +117,18 @@ interface Step {
   text: string;
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
+  sources?: {
+    sourceType: "url";
+    id: string;
+    url: string;
+  }[];
+}
+
+export interface SourceReturn {
+  type: "url" | "knowledge-chunk" | "knowledge-entry";
+  id?: string;
+  url?: string;
+  external?: boolean;
 }
 
 /**
@@ -303,6 +315,19 @@ export async function chatCompletion(
     },
   });
 
+  const sources: SourceReturn[] = [];
+  (steps as Step[])?.forEach((step) => {
+    step.sources?.forEach((source) => {
+      if (source.sourceType === "url") {
+        sources.push({
+          type: "url",
+          url: source.url,
+          external: true,
+        });
+      }
+    });
+  });
+
   return {
     id: nanoid(6),
     text,
@@ -318,6 +343,7 @@ export async function chatCompletion(
         toolCalls: step.toolCalls?.map((call) => call.toolName),
         toolResults: step.toolResults?.map((result) => result.toolName),
       })),
+      sources: sources,
     },
   };
 }

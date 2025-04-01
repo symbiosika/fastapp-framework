@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { nanoid } from "nanoid";
 import { ChatMessage, chatStore, ChatSession } from "../../ai/chat-store";
-import { chatCompletion } from "../../ai/ai-sdk";
+import { chatCompletion, SourceReturn } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
 import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";
@@ -219,6 +219,23 @@ export async function chat(
     const dynamicToolWasUsed = dynamicKnowledgeBaseToolName
       ? response.meta.toolsUsed?.includes(dynamicKnowledgeBaseToolName)
       : false;
+
+    if (dynamicToolWasUsed) {
+      let sources: SourceReturn[] = [];
+      usedKnowledgeSources.knowledgeEntries.forEach((entry) => {
+        sources.push({
+          type: "knowledge-entry",
+          id: entry,
+        });
+      });
+      usedKnowledgeSources.knowledgeChunks.forEach((chunk) => {
+        sources.push({
+          type: "knowledge-chunk",
+          id: chunk,
+        });
+      });
+      response.meta.sources.push(...sources);
+    }
 
     const assistantMessage: ChatMessage = {
       role: "assistant",
