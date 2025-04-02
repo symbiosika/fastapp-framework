@@ -64,7 +64,8 @@ export const getAvailableApiKeys = (): {
  * Get all AI provider models for an organisation
  */
 export async function getAllAiProviderModels(
-  organisationId: string
+  organisationId: string,
+  filterAvailable = false
 ): Promise<AiProviderModelsSelect[]> {
   try {
     const models = await getDb().query.aiProviderModels.findMany({
@@ -74,7 +75,10 @@ export async function getAllAiProviderModels(
     const apiKeys = getAvailableApiKeys();
     // filter models by availableApiKeys
     return models.filter((model) => {
-      return apiKeys[model.name];
+      if (!filterAvailable) {
+        return true;
+      }
+      return apiKeys[model.provider];
     });
   } catch (error) {
     throw new HTTPException(500, {
@@ -103,7 +107,7 @@ export async function getAiProviderModelById(
     }
 
     const apiKeys = getAvailableApiKeys();
-    if (!apiKeys[model.name]) {
+    if (!apiKeys[model.provider]) {
       throw new Error("Model not available");
     }
 

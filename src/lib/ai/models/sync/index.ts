@@ -23,6 +23,13 @@ export async function syncModels(
   organisationId: string
 ): Promise<SyncModelsResult> {
   try {
+    // Fetch suggestions first
+    const suggestionsResponse = await fetch(
+      "https://service-marketplace.perlecto.de/api/v1/models/suggestions"
+    );
+    const suggestionsData = await suggestionsResponse.json();
+    const activeModelNames = new Set(suggestionsData.suggestions || []);
+
     // Fetch both current organisation models and public models
     const [orgModels, publicModelsResponse] = await Promise.all([
       getAllAiProviderModels(organisationId),
@@ -63,7 +70,7 @@ export async function syncModels(
           endpoint: publicModel.endpoint,
           hostingOrigin: publicModel.hostingOrigin,
           usesInternet: publicModel.usesInternet,
-          active: true,
+          active: activeModelNames.has(publicModel.name),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           system: true,

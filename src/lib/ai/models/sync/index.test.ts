@@ -10,7 +10,7 @@ import { getDb } from "../../../db/db-connection";
 import { aiProviderModels } from "../../../db/db-schema";
 import { eq } from "drizzle-orm";
 
-beforeAll(async () => {
+beforeAll(async () => {  
   await initTests();
 });
 

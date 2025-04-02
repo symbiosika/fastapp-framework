@@ -66,11 +66,16 @@ export default function defineModelRoutes(
       },
     }),
     validator("param", v.object({ organisationId: v.string() })),
+    validator("query", v.object({ filterAvailable: v.optional(v.string()) })),
     isOrganisationMember,
     async (c) => {
       try {
         const { organisationId } = c.req.valid("param");
-        const models = await getAllAiProviderModels(organisationId);
+        const { filterAvailable } = c.req.valid("query");
+        const models = await getAllAiProviderModels(
+          organisationId,
+          filterAvailable === "true" ? true : false
+        );
         return c.json(models);
       } catch (error) {
         throw new HTTPException(500, {
