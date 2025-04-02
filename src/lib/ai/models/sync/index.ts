@@ -27,7 +27,8 @@ export async function syncModels(
     const suggestionsResponse = await fetch(
       "https://service-marketplace.perlecto.de/api/v1/models/suggestions"
     );
-    const suggestionsData = await suggestionsResponse.json();
+    const suggestionsData: { suggestions: string[] } =
+      await suggestionsResponse.json();
     const activeModelNames = new Set(suggestionsData.suggestions || []);
 
     // Fetch both current organisation models and public models

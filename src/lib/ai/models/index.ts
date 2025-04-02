@@ -130,14 +130,7 @@ export async function createAiProviderModel(
       .insert(aiProviderModels)
       .values(data)
       .returning()
-      .onConflictDoUpdate({
-        target: [
-          aiProviderModels.organisationId,
-          aiProviderModels.model,
-          aiProviderModels.provider,
-        ],
-        set: data,
-      });
+      .onConflictDoNothing();
 
     return model;
   } catch (error) {
