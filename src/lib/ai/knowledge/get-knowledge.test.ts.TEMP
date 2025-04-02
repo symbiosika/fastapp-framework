@@ -1,0 +1,711 @@
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import {
+  initTests,
+  TEST_ADMIN_USER,
+  TEST_ORGANISATION_1,
+  TEST_ORGANISATION_2,
+  TEST_USER_1,
+  TEST_USER_2,
+  TEST_USER_3,
+  TEST_TEAM_1,
+} from "../../../test/init.test";
+import { getDb } from "../../db/db-connection";
+import {
+  knowledgeEntry,
+  knowledgeChunks,
+  knowledgeGroup,
+  knowledgeGroupTeamAssignments,
+  knowledgeText,
+  knowledgeFilters,
+  knowledgeEntryFilters,
+} from "../../db/schema/knowledge";
+import {
+  getKnowledgeEntries,
+  getPlainKnowledge,
+  deleteKnowledgeEntry,
+  updateKnowledgeEntry,
+  getFullSourceDocumentsForKnowledgeEntry,
+} from "./get-knowledge";
+import { validateKnowledgeAccess } from "./permissions";
+import {
+  importTestKnowledge,
+  deleteTestKnowledge,
+  TEST_KNOWLEDGE_GROUP,
+  TEST_KNOWLEDGE_ENTRY,
+  TEST_KNOWLEDGE_TEXT_EMBEDDING,
+} from "../../../test/knowledge.test";
+import { teams, teamMembers } from "../../db/schema/users";
+import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
+
+describe("Knowledge Access and Permissions - Simple Tests", () => {
+  // Create isolated test data for this test suite
+  const orgId = TEST_ORGANISATION_1.id;
+  const ownerUserId = TEST_USER_1.id;
+  const nonOwnerUserId = TEST_USER_2.id;
+  let privateEntryId: string;
+  
+  beforeAll(async () => {
+    await initTests();
+    
+    // Create a private knowledge entry specifically owned by TEST_USER_1
+    const entryId = randomUUID();
+    await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        id: entryId,
+        name: "Private Test Entry",
+        organisationId: orgId,
+        userId: ownerUserId,
+        sourceType: "text",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    
+    privateEntryId = entryId;
+    
+    // Add a text chunk to the entry
+    await getDb()
+      .insert(knowledgeChunks)
+      .values({
+        knowledgeEntryId: privateEntryId,
+        text: "This is test content",
+        textEmbedding: TEST_KNOWLEDGE_TEXT_EMBEDDING.embedding,
+        embeddingModel: TEST_KNOWLEDGE_TEXT_EMBEDDING.model,
+        order: 0,
+        createdAt: new Date().toISOString(),
+      });
+  });
+  
+  afterAll(async () => {
+    // Clean up test data
+    await getDb()
+      .delete(knowledgeChunks)
+      .where(eq(knowledgeChunks.knowledgeEntryId, privateEntryId));
+    
+    await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, privateEntryId));
+  });
+  
+  it("validateKnowledgeAccess should return true for the owner", async () => {
+    const result = await validateKnowledgeAccess(
+      privateEntryId,
+      ownerUserId,
+      orgId
+    );
+    
+    expect(result).toBe(true);
+  });
+  
+  it("validateKnowledgeAccess should return false for non-owner", async () => {
+    const result = await validateKnowledgeAccess(
+      privateEntryId,
+      nonOwnerUserId,
+      orgId
+    );
+    
+    expect(result).toBe(false);
+  });
+  
+  it("getPlainKnowledge should throw for unauthorized user", async () => {
+    try {
+      await getPlainKnowledge({
+        id: [privateEntryId],
+        userId: nonOwnerUserId,
+        organisationId: orgId,
+      });
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(Error);
+      expect(e.message).toContain("User does not have permission to access knowledge entry");
+    }
+  });
+  
+  it("deleteKnowledgeEntry should throw for unauthorized user", async () => {
+    try {
+      await deleteKnowledgeEntry(
+        privateEntryId,
+        orgId,
+        nonOwnerUserId
+      );
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(Error);
+      expect(e.message).toContain("User does not have permission to delete this knowledge entry");
+    }
+  });
+  
+  it("updateKnowledgeEntry should throw for unauthorized user", async () => {
+    try {
+      await updateKnowledgeEntry(
+        privateEntryId,
+        orgId,
+        nonOwnerUserId,
+        { name: "Unauthorized Update" }
+      );
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(Error);
+      expect(e.message).toContain("User does not have permission to update this knowledge entry");
+    }
+  });
+  
+  it("updateKnowledgeEntry should throw when assigning to a team user is not part of", async () => {
+    // Create a test team
+    const testTeamId = randomUUID();
+    await getDb()
+      .insert(teams)
+      .values({
+        id: testTeamId,
+        name: "Test Team For Validation",
+        organisationId: orgId,
+      });
+    
+    // Add TEST_USER_2 to team but not TEST_USER_1
+    await getDb()
+      .insert(teamMembers)
+      .values({
+        userId: nonOwnerUserId,
+        teamId: testTeamId,
+        role: "member",
+      });
+    
+    try {
+      // Try to assign to a team that TEST_USER_1 is not part of
+      await updateKnowledgeEntry(
+        privateEntryId,
+        orgId,
+        ownerUserId,
+        { teamId: testTeamId }
+      );
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(Error);
+      expect(e.message).toContain("User is not part of the provided team");
+    }
+    
+    // Clean up
+    await getDb()
+      .delete(teamMembers)
+      .where(eq(teamMembers.teamId, testTeamId));
+    
+    await getDb()
+      .delete(teams)
+      .where(eq(teams.id, testTeamId));
+  });
+  
+  it("getFullSourceDocumentsForKnowledgeEntry should throw for unauthorized user", async () => {
+    try {
+      await getFullSourceDocumentsForKnowledgeEntry(
+        privateEntryId,
+        orgId,
+        nonOwnerUserId
+      );
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(Error);
+      expect(e.message).toContain("User does not have permission to access this knowledge entry");
+    }
+  });
+});
+
+describe("Knowledge Access and Permissions", () => {
+  let testKnowledgeId: string;
+  let testPrivateKnowledgeId: string;
+  let testTeamKnowledgeId: string;
+  let testGroupKnowledgeId: string;
+  let testGroupWithTeamAccessId: string;
+
+  beforeAll(async () => {
+    await initTests();
+
+    // Import the test knowledge entry (has organisation-wide access through knowledge group)
+    const knowledge = await importTestKnowledge();
+    testKnowledgeId = knowledge.id;
+
+    // Create a private knowledge entry (only for USER_1)
+    const privateKnowledgeUuid = randomUUID();
+    const privateKnowledge = await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        id: privateKnowledgeUuid,
+        name: "Private Knowledge Entry",
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id,
+        sourceType: "text",
+        userOwned: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .returning();
+    testPrivateKnowledgeId = privateKnowledge[0].id;
+
+    // Add a chunk to the private knowledge
+    await getDb().insert(knowledgeChunks).values({
+      knowledgeEntryId: testPrivateKnowledgeId,
+      text: "This is private knowledge content",
+      textEmbedding: TEST_KNOWLEDGE_TEXT_EMBEDDING.embedding,
+      embeddingModel: TEST_KNOWLEDGE_TEXT_EMBEDDING.model,
+      order: 0,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Create a team-specific knowledge entry
+    const teamKnowledgeUuid = randomUUID();
+    const teamKnowledge = await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        id: teamKnowledgeUuid,
+        name: "Team Knowledge Entry",
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id,
+        teamId: TEST_TEAM_1.id,
+        sourceType: "text",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .returning();
+    testTeamKnowledgeId = teamKnowledge[0].id;
+
+    // Add a chunk to the team knowledge
+    await getDb().insert(knowledgeChunks).values({
+      knowledgeEntryId: testTeamKnowledgeId,
+      text: "This is team knowledge content",
+      textEmbedding: TEST_KNOWLEDGE_TEXT_EMBEDDING.embedding,
+      embeddingModel: TEST_KNOWLEDGE_TEXT_EMBEDDING.model,
+      order: 0,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Create a knowledge group with org-wide access = false
+    const groupWithTeamAccessUuid = randomUUID();
+    const groupWithTeamAccess = await getDb()
+      .insert(knowledgeGroup)
+      .values({
+        id: groupWithTeamAccessUuid,
+        name: "Knowledge Group with Team Access",
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_ADMIN_USER.id,
+        organisationWideAccess: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .returning();
+    testGroupWithTeamAccessId = groupWithTeamAccess[0].id;
+
+    // Create knowledge entry in that group
+    const groupKnowledgeUuid = randomUUID();
+    const groupKnowledge = await getDb()
+      .insert(knowledgeEntry)
+      .values({
+        id: groupKnowledgeUuid,
+        name: "Group Knowledge Entry",
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_ADMIN_USER.id,
+        knowledgeGroupId: testGroupWithTeamAccessId,
+        sourceType: "text",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .returning();
+    testGroupKnowledgeId = groupKnowledge[0].id;
+
+    // Add a chunk to the group knowledge
+    await getDb().insert(knowledgeChunks).values({
+      knowledgeEntryId: testGroupKnowledgeId,
+      text: "This is group knowledge content",
+      textEmbedding: TEST_KNOWLEDGE_TEXT_EMBEDDING.embedding,
+      embeddingModel: TEST_KNOWLEDGE_TEXT_EMBEDDING.model,
+      order: 0,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Assign TEST_TEAM_1 to the knowledge group
+    await getDb().insert(knowledgeGroupTeamAssignments).values({
+      knowledgeGroupId: testGroupWithTeamAccessId,
+      teamId: TEST_TEAM_1.id,
+    });
+  });
+
+  afterAll(async () => {
+    // Clean up created test entries
+    await getDb()
+      .delete(knowledgeChunks)
+      .where(eq(knowledgeChunks.knowledgeEntryId, testPrivateKnowledgeId));
+    await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, testPrivateKnowledgeId));
+
+    await getDb()
+      .delete(knowledgeChunks)
+      .where(eq(knowledgeChunks.knowledgeEntryId, testTeamKnowledgeId));
+    await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, testTeamKnowledgeId));
+
+    await getDb()
+      .delete(knowledgeChunks)
+      .where(eq(knowledgeChunks.knowledgeEntryId, testGroupKnowledgeId));
+    await getDb()
+      .delete(knowledgeEntry)
+      .where(eq(knowledgeEntry.id, testGroupKnowledgeId));
+
+    await getDb()
+      .delete(knowledgeGroupTeamAssignments)
+      .where(
+        eq(
+          knowledgeGroupTeamAssignments.knowledgeGroupId,
+          testGroupWithTeamAccessId
+        )
+      );
+    await getDb()
+      .delete(knowledgeGroup)
+      .where(eq(knowledgeGroup.id, testGroupWithTeamAccessId));
+
+    await deleteTestKnowledge();
+  });
+
+  describe("getKnowledgeEntries", () => {
+    it("should return knowledge entries for a user with direct ownership", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id,
+      });
+
+      expect(entries.length).toBeGreaterThan(0);
+      expect(entries.some((entry) => entry.id === testPrivateKnowledgeId)).toBe(
+        true
+      );
+    });
+
+    it("should return team knowledge entries for team members", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id,
+        teamId: TEST_TEAM_1.id,
+      });
+
+      expect(entries.some((entry) => entry.id === testTeamKnowledgeId)).toBe(
+        true
+      );
+    });
+
+    it("should not return team knowledge entries for non-team members", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_2.id, // Not part of TEST_TEAM_1
+      });
+
+      expect(entries.some((entry) => entry.id === testTeamKnowledgeId)).toBe(
+        false
+      );
+    });
+
+    it("should return knowledge entries in knowledge groups with org-wide access", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_2.id, // Any user in the org
+      });
+
+      expect(entries.some((entry) => entry.id === testKnowledgeId)).toBe(true);
+    });
+
+    it("should return knowledge entries in knowledge groups with team assignments for team members", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id, // Member of TEST_TEAM_1
+      });
+
+      expect(entries.some((entry) => entry.id === testGroupKnowledgeId)).toBe(
+        true
+      );
+    });
+
+    it("should not return knowledge entries in knowledge groups with team assignments for non-team members", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_2.id, // Not part of TEST_TEAM_1
+      });
+
+      expect(entries.some((entry) => entry.id === testGroupKnowledgeId)).toBe(
+        false
+      );
+    });
+
+    it("should filter knowledge entries by userOwned flag", async () => {
+      const entries = await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_USER_1.id,
+        userOwned: true,
+      });
+
+      expect(entries.some((entry) => entry.id === testPrivateKnowledgeId)).toBe(
+        true
+      );
+      expect(entries.every((entry) => entry.userOwned === true)).toBe(true);
+    });
+  });
+
+  describe("getPlainKnowledge", () => {
+    it("should retrieve knowledge by ID when user has direct access", async () => {
+      const knowledge = await getPlainKnowledge({
+        id: [testPrivateKnowledgeId],
+        userId: TEST_USER_1.id,
+        organisationId: TEST_ORGANISATION_1.id,
+      });
+
+      expect(knowledge.length).toBeGreaterThan(0);
+      expect(knowledge[0].knowledgeEntryId).toBe(testPrivateKnowledgeId);
+      expect(knowledge[0].text).toBe("This is private knowledge content");
+    });
+
+    it("should retrieve team knowledge when user is in the team", async () => {
+      const knowledge = await getPlainKnowledge({
+        id: [testTeamKnowledgeId],
+        userId: TEST_USER_1.id, // Member of TEST_TEAM_1
+        organisationId: TEST_ORGANISATION_1.id,
+      });
+
+      expect(knowledge.length).toBeGreaterThan(0);
+      expect(knowledge[0].knowledgeEntryId).toBe(testTeamKnowledgeId);
+    });
+
+    it("should retrieve knowledge by filters with correct permissions", async () => {
+      // First create a filter
+      const filterId = await getDb()
+        .insert(knowledgeFilters)
+        .values({
+          organisationId: TEST_ORGANISATION_1.id,
+          category: "test-case",
+          name: "test-1",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .returning();
+
+      // Add the filter to the test entry
+      await getDb()
+        .insert(knowledgeEntryFilters)
+        .values({
+          knowledgeEntryId: testKnowledgeId,
+          knowledgeFilterId: filterId[0].id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+      const knowledge = await getPlainKnowledge({
+        filters: {
+          "test-case": ["test-1"],
+        },
+        userId: TEST_USER_1.id,
+        organisationId: TEST_ORGANISATION_1.id,
+      });
+
+      expect(knowledge.length).toBeGreaterThan(0);
+      expect(knowledge[0].knowledgeEntryId).toBe(testKnowledgeId);
+
+      // Clean up
+      await getDb()
+        .delete(knowledgeEntryFilters)
+        .where(eq(knowledgeEntryFilters.knowledgeEntryId, testKnowledgeId));
+      
+      await getDb()
+        .delete(knowledgeFilters)
+        .where(eq(knowledgeFilters.id, filterId[0].id));
+    });
+  });
+
+  describe("validateKnowledgeAccess", () => {
+    it("should return true when user has direct access", async () => {
+      const access = await validateKnowledgeAccess(
+        testPrivateKnowledgeId,
+        TEST_USER_1.id,
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(true);
+    });
+
+    it("should return false when user doesn't have access", async () => {
+      const access = await validateKnowledgeAccess(
+        testPrivateKnowledgeId,
+        TEST_USER_2.id, // Different user
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(false);
+    });
+
+    it("should return true when user is in the team with access", async () => {
+      const access = await validateKnowledgeAccess(
+        testTeamKnowledgeId,
+        TEST_USER_1.id, // Member of TEST_TEAM_1
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(true);
+    });
+
+    it("should return false when user is not in the team with access", async () => {
+      const access = await validateKnowledgeAccess(
+        testTeamKnowledgeId,
+        TEST_USER_2.id, // Not member of TEST_TEAM_1
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(false);
+    });
+
+    it("should return true for knowledge in groups with org-wide access", async () => {
+      const access = await validateKnowledgeAccess(
+        testKnowledgeId, // From knowledge group with org-wide access
+        TEST_USER_2.id,
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(true);
+    });
+
+    it("should return true for knowledge in groups with team access when user is in the team", async () => {
+      const access = await validateKnowledgeAccess(
+        testGroupKnowledgeId,
+        TEST_USER_1.id, // Member of TEST_TEAM_1
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(true);
+    });
+
+    it("should return false for knowledge in groups with team access when user is not in the team", async () => {
+      const access = await validateKnowledgeAccess(
+        testGroupKnowledgeId,
+        TEST_USER_2.id, // Not member of TEST_TEAM_1
+        TEST_ORGANISATION_1.id
+      );
+
+      expect(access).toBe(false);
+    });
+  });
+
+  describe("Permission Check Exceptions", () => {
+    it("getPlainKnowledge should throw an error when user doesn't have access", async () => {
+      try {
+        // Calling with a user who doesn't have access
+        await getPlainKnowledge({
+          id: [testPrivateKnowledgeId],
+          userId: TEST_USER_2.id,
+          organisationId: TEST_ORGANISATION_1.id,
+        });
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e: any) {
+        expect(e).toBeInstanceOf(Error);
+        expect(e.message).toContain(
+          "User does not have permission to access knowledge entry"
+        );
+      }
+    });
+
+    it("deleteKnowledgeEntry should throw an error when user doesn't have permission", async () => {
+      try {
+        // Try to delete with a user who doesn't have access
+        await deleteKnowledgeEntry(
+          testPrivateKnowledgeId,
+          TEST_ORGANISATION_1.id,
+          TEST_USER_2.id
+        );
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e: any) {
+        expect(e).toBeInstanceOf(Error);
+        expect(e.message).toContain(
+          "User does not have permission to delete this knowledge entry"
+        );
+      }
+    });
+
+    it("updateKnowledgeEntry should throw an error when user doesn't have permission", async () => {
+      try {
+        // Try to update with a user who doesn't have access
+        await updateKnowledgeEntry(
+          testPrivateKnowledgeId,
+          TEST_ORGANISATION_1.id,
+          TEST_USER_2.id,
+          { name: "Unauthorized Update" }
+        );
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e: any) {
+        expect(e).toBeInstanceOf(Error);
+        expect(e.message).toContain(
+          "User does not have permission to update this knowledge entry"
+        );
+      }
+    });
+
+    it("updateKnowledgeEntry should throw an error when trying to assign to a team user is not part of", async () => {
+      // Create a test team that USER_1 is not part of
+      const testTeam2Id = randomUUID();
+      const testTeam2 = await getDb()
+        .insert(teams)
+        .values({
+          id: testTeam2Id,
+          name: "Test Team 2",
+          organisationId: TEST_ORGANISATION_1.id,
+        })
+        .returning();
+
+      // Add USER_2 to that team
+      await getDb().insert(teamMembers).values({
+        userId: TEST_USER_2.id,
+        teamId: testTeam2[0].id,
+        role: "member",
+      });
+
+      try {
+        // Try to assign entry to a team USER_1 is not part of
+        await updateKnowledgeEntry(
+          testPrivateKnowledgeId,
+          TEST_ORGANISATION_1.id,
+          TEST_USER_1.id,
+          { teamId: testTeam2[0].id }
+        );
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e: any) {
+        expect(e).toBeInstanceOf(Error);
+        expect(e.message).toBe("User is not part of the provided team");
+      }
+
+      // Clean up
+      await getDb()
+        .delete(teamMembers)
+        .where(eq(teamMembers.teamId, testTeam2[0].id));
+      await getDb().delete(teams).where(eq(teams.id, testTeam2[0].id));
+    });
+
+    it("getFullSourceDocumentsForKnowledgeEntry should throw an error when user doesn't have access", async () => {
+      try {
+        // Try to get full source with a user who doesn't have access
+        await getFullSourceDocumentsForKnowledgeEntry(
+          testPrivateKnowledgeId,
+          TEST_ORGANISATION_1.id,
+          TEST_USER_2.id
+        );
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e: any) {
+        expect(e).toBeInstanceOf(Error);
+        expect(e.message).toContain(
+          "User does not have permission to access this knowledge entry"
+        );
+      }
+    });
+  });
+});
