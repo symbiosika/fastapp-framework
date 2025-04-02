@@ -1,20 +1,12 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, eq, inArray, SQL, sql, or, isNull } from "drizzle-orm";
+import { and, eq, inArray, or, isNull } from "drizzle-orm";
 import {
-  type KnowledgeChunkMeta,
-  knowledgeChunks,
   knowledgeEntry,
-  knowledgeEntryFilters,
-  knowledgeFilters,
-  knowledgeText,
-  type KnowledgeEntrySelect,
+  knowledgeGroup,
+  knowledgeGroupTeamAssignments,
 } from "../../db/schema/knowledge";
-import log from "../../../lib/log";
-import { deleteFileFromDB } from "../../storage/db";
-import { deleteFileFromLocalDisc } from "../../storage/local";
 import { workspaces } from "../../db/schema/workspaces";
 import { teamMembers } from "../../db/schema/users";
-import { isUserPartOfTeam } from "../../usermanagement/teams";
 
 /**
  * Helper function to get all team IDs a user is a member of
@@ -54,7 +46,8 @@ export const validateKnowledgeAccess = async (
     userTeams
   );
 
-  const knowledge = await getDb().query.knowledgeEntry.findFirst({
+  // First check: user has direct access to the knowledge entry
+  const directAccess = await getDb().query.knowledgeEntry.findFirst({
     where: and(
       eq(knowledgeEntry.id, knowledgeId),
       or(
@@ -73,7 +66,49 @@ export const validateKnowledgeAccess = async (
     ),
   });
 
-  return !!knowledge;
+  if (directAccess) {
+    return true;
+  }
+
+  // Second check: access through knowledge group assignments
+  // First get the entry with its knowledge group
+  const entryWithGroup = await getDb().query.knowledgeEntry.findFirst({
+    where: eq(knowledgeEntry.id, knowledgeId),
+    columns: {
+      id: true,
+      knowledgeGroupId: true,
+    },
+  });
+
+  if (!entryWithGroup?.knowledgeGroupId) {
+    return false; // No knowledge group assigned
+  }
+
+  // Check if the knowledge group is organisation-wide accessible
+  const groupWithOrgWideAccess = await getDb().query.knowledgeGroup.findFirst({
+    where: and(
+      eq(knowledgeGroup.id, entryWithGroup.knowledgeGroupId),
+      eq(knowledgeGroup.organisationWideAccess, true)
+    ),
+  });
+
+  if (groupWithOrgWideAccess) {
+    return true; // Organisation-wide access granted
+  }
+
+  // Check if any of user's teams are assigned to the knowledge group
+  const teamAssignment =
+    await getDb().query.knowledgeGroupTeamAssignments.findFirst({
+      where: and(
+        eq(
+          knowledgeGroupTeamAssignments.knowledgeGroupId,
+          entryWithGroup.knowledgeGroupId
+        ),
+        inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
+      ),
+    });
+
+  return !!teamAssignment; // Access granted if team assignment exists
 };
 
 /**

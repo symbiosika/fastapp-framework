@@ -7,6 +7,59 @@ import {
 } from "../../../dbSchema";
 import { HTTPException } from "../../../types";
 
+// Global server state
+let availableApiKeys: { [name: string]: boolean } | null = null;
+
+export const getAvailableApiKeys = (): {
+  [name: string]: boolean;
+} => {
+  if (availableApiKeys) {
+    return availableApiKeys;
+  }
+
+  const keys = {
+    openai:
+      process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== ""
+        ? true
+        : false,
+    anthropic:
+      process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== ""
+        ? true
+        : false,
+    groq:
+      process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== ""
+        ? true
+        : false,
+    gemini:
+      process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== ""
+        ? true
+        : false,
+    claude:
+      process.env.CLAUDE_API_KEY && process.env.CLAUDE_API_KEY !== ""
+        ? true
+        : false,
+    mistral:
+      process.env.MISTRAL_API_KEY && process.env.MISTRAL_API_KEY !== ""
+        ? true
+        : false,
+    azure:
+      process.env.AZURE_API_KEY && process.env.AZURE_API_KEY !== ""
+        ? true
+        : false,
+    perplexity:
+      process.env.PERPLEXITY_API_KEY && process.env.PERPLEXITY_API_KEY !== ""
+        ? true
+        : false,
+    ionos:
+      process.env.IONOS_API_KEY && process.env.IONOS_API_KEY !== ""
+        ? true
+        : false,
+  };
+
+  availableApiKeys = keys;
+  return keys;
+};
+
 /**
  * Get all AI provider models for an organisation
  */
@@ -14,8 +67,14 @@ export async function getAllAiProviderModels(
   organisationId: string
 ): Promise<AiProviderModelsSelect[]> {
   try {
-    return await getDb().query.aiProviderModels.findMany({
+    const models = await getDb().query.aiProviderModels.findMany({
       where: eq(aiProviderModels.organisationId, organisationId),
+    });
+
+    const apiKeys = getAvailableApiKeys();
+    // filter models by availableApiKeys
+    return models.filter((model) => {
+      return apiKeys[model.name];
     });
   } catch (error) {
     throw new HTTPException(500, {
@@ -41,6 +100,11 @@ export async function getAiProviderModelById(
 
     if (!model) {
       throw new Error("Model not found");
+    }
+
+    const apiKeys = getAvailableApiKeys();
+    if (!apiKeys[model.name]) {
+      throw new Error("Model not available");
     }
 
     return model;

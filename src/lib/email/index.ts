@@ -61,35 +61,55 @@ class SMTPService {
     text,
     html,
   }: EmailOptions): Promise<boolean> {
-    try {
-      v.parse(emailSchema, {
-        sender,
-        recipients,
-        subject,
-        text,
-        html,
-      });
+    const maxRetries = 3;
+    const retryInterval = 15 * 60 * 1000; // 15 minutes in milliseconds
+    let attempt = 0;
 
-      if (!text && !html) {
-        throw new Error("Text or HTML body is required");
+    while (attempt < maxRetries) {
+      try {
+        v.parse(emailSchema, {
+          sender,
+          recipients,
+          subject,
+          text,
+          html,
+        });
+
+        if (!text && !html) {
+          throw new Error("Text or HTML body is required");
+        }
+
+        const info = await this.transporter.sendMail({
+          from: sender || process.env.SMTP_DEFAULT_SENDER,
+          to: recipients.join(", "),
+          subject,
+          text,
+          html,
+        });
+
+        this.log(`Message sent: ${info.messageId}`);
+        this.log(JSON.stringify(info));
+        return true;
+      } catch (error) {
+        attempt++;
+        this.error(
+          `Failed to send email (Attempt ${attempt}/${maxRetries}): ${error}`
+        );
+        this.error(
+          JSON.stringify({ ...getMailCredentials(), auth: undefined })
+        );
+
+        if (attempt < maxRetries) {
+          this.log(
+            `Waiting ${retryInterval / 1000} seconds before next attempt...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryInterval));
+        }
       }
-
-      const info = await this.transporter.sendMail({
-        from: sender || process.env.SMTP_DEFAULT_SENDER,
-        to: recipients.join(", "),
-        subject,
-        text,
-        html,
-      });
-
-      this.log(`Message sent: ${info.messageId}`);
-      this.log(JSON.stringify(info));
-      return true;
-    } catch (error) {
-      this.error(`Failed to send email: ${error}`);
-      this.error(JSON.stringify({ ...getMailCredentials(), auth: undefined }));
-      return false;
     }
+
+    this.error(`Failed to send email after ${maxRetries} attempts`);
+    return false;
   }
 
   async sendTestMail(recipient: string): Promise<boolean> {

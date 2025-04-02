@@ -10,7 +10,7 @@ export const preRegisterCustomVerifications: CustomPreRegisterVerification[] = [
 export const postRegisterActions: CustomPostRegisterAction[] = [];
 
 /**
- * Register new verification
+ * Register a new server-wide verification
  */
 export const registerPreRegisterCustomVerification = (
   verification: CustomPreRegisterVerification
@@ -19,7 +19,7 @@ export const registerPreRegisterCustomVerification = (
 };
 
 /**
- * Register new post-register action
+ * Register a new server-wide post-register action
  */
 export const registerPostRegisterAction = (
   action: CustomPostRegisterAction

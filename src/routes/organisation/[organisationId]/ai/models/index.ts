@@ -32,7 +32,7 @@ import {
   updateAiProviderModel,
   deleteAiProviderModel,
 } from "../../../../../lib/ai/models";
-import type { SyncModelsResult } from "../../../../../lib/ai/models/types/models";
+import type { SyncModelsResult } from "../../../../../lib/ai/models/types";
 import { syncModels } from "../../../../../lib/ai/models/sync";
 
 /**

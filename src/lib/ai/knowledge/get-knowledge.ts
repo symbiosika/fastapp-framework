@@ -1,5 +1,5 @@
 import { getDb } from "../../../lib/db/db-connection";
-import { and, eq, inArray, SQL, sql, or, isNull } from "drizzle-orm";
+import { and, eq, inArray, SQL, sql, or, isNull, exists } from "drizzle-orm";
 import {
   type KnowledgeChunkMeta,
   knowledgeChunks,
@@ -8,6 +8,8 @@ import {
   knowledgeFilters,
   knowledgeText,
   type KnowledgeEntrySelect,
+  knowledgeGroup,
+  knowledgeGroupTeamAssignments,
 } from "../../db/schema/knowledge";
 import log from "../../../lib/log";
 import { deleteFileFromDB } from "../../storage/db";
@@ -111,6 +113,30 @@ const getKnowledge = async (
     or(
       isNull(knowledgeEntry.workspaceId),
       inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+    ),
+    // Knowledge group access - group has org-wide access
+    exists(
+      getDb()
+        .select()
+        .from(knowledgeGroup)
+        .where(
+          and(
+            eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
+            eq(knowledgeGroup.organisationWideAccess, true)
+          )
+        )
+    ),
+    // Knowledge group access - user's team is assigned to the group
+    exists(
+      getDb()
+        .select()
+        .from(knowledgeGroupTeamAssignments)
+        .where(
+          and(
+            eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
+            inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
+          )
+        )
     ),
   ];
 
@@ -251,6 +277,30 @@ export const getKnowledgeEntries = async (query: {
     or(
       isNull(knowledgeEntry.workspaceId),
       inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+    ),
+    // Knowledge group access - group has org-wide access
+    exists(
+      getDb()
+        .select()
+        .from(knowledgeGroup)
+        .where(
+          and(
+            eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
+            eq(knowledgeGroup.organisationWideAccess, true)
+          )
+        )
+    ),
+    // Knowledge group access - user's team is assigned to the group
+    exists(
+      getDb()
+        .select()
+        .from(knowledgeGroupTeamAssignments)
+        .where(
+          and(
+            eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
+            inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
+          )
+        )
     ),
   ];
 

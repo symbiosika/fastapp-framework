@@ -12,7 +12,7 @@ import {
   type PublicModelsResponse,
   type PublicAIModel,
   type SyncModelsResult,
-} from "../types/models";
+} from "../types";
 
 /**
  * Synchronizes AI models between the public models API and organisation models
