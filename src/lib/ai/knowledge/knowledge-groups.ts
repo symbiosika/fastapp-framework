@@ -7,6 +7,7 @@ import {
 } from "../../db/schema/knowledge";
 import { and, eq, inArray, or, SQL } from "drizzle-orm";
 import { isUserPartOfTeam } from "../../usermanagement/teams";
+import { teams } from "../../db/schema/users";
 
 /**
  * Create a new knowledge group
@@ -307,7 +308,7 @@ export const getTeamsForKnowledgeGroup = async (
     organisationId: string;
     userId: string;
   }
-): Promise<string[]> => {
+): Promise<{ id: string; teamId: string; teamName: string | null }[]> => {
   const db = getDb();
 
   // Check if user has permission to view this group
@@ -324,11 +325,20 @@ export const getTeamsForKnowledgeGroup = async (
 
   // Get all team assignments for this group
   const assignments = await db
-    .select({ teamId: knowledgeGroupTeamAssignments.teamId })
+    .select({
+      id: knowledgeGroupTeamAssignments.id,
+      teamId: knowledgeGroupTeamAssignments.teamId,
+      teamName: teams.name,
+    })
     .from(knowledgeGroupTeamAssignments)
+    .leftJoin(teams, eq(knowledgeGroupTeamAssignments.teamId, teams.id))
     .where(
       eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeGroupId)
     );
 
-  return assignments.map((a) => a.teamId);
+  return assignments.map((a) => ({
+    id: a.id,
+    teamId: a.teamId,
+    teamName: a.teamName,
+  }));
 };

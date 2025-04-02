@@ -1,7 +1,15 @@
-import { and, eq, exists, or, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  or,
+  type SQLWrapper,
+  isNull,
+  inArray,
+} from "drizzle-orm";
 import { getDb } from "../../db/db-connection";
 import { knowledgeChunks, knowledgeEntry } from "../../db/schema/knowledge";
-import { teamMembers } from "../../db/schema/users";
+import { getUserTeamIds, getUserWorkspaceIds } from "../knowledge/permissions";
 
 /**
  * Get a knowledge chunk by ID with user context validation
@@ -27,41 +35,35 @@ export const getKnowledgeChunkById = async (
   ];
 
   if (userId) {
+    const userTeams = await getUserTeamIds(userId, organisationId);
+    const usersWorkspaces = await getUserWorkspaceIds(
+      userId,
+      organisationId,
+      userTeams
+    );
+
     filters.push(
-      or(
-        exists(
-          getDb()
-            .select()
-            .from(knowledgeEntry)
-            .where(
-              and(
-                eq(knowledgeEntry.id, knowledgeChunks.knowledgeEntryId),
-                eq(knowledgeEntry.userId, userId)
-              )
-            )
-        ),
-        exists(
-          getDb()
-            .select()
-            .from(knowledgeEntry)
-            .where(
-              and(
-                eq(knowledgeEntry.id, knowledgeChunks.knowledgeEntryId),
-                exists(
-                  getDb()
-                    .select()
-                    .from(teamMembers)
-                    .where(
-                      and(
-                        eq(teamMembers.userId, userId),
-                        eq(teamMembers.teamId, knowledgeEntry.teamId)
-                      )
-                    )
+      exists(
+        getDb()
+          .select()
+          .from(knowledgeEntry)
+          .where(
+            and(
+              eq(knowledgeEntry.id, knowledgeChunks.knowledgeEntryId),
+              or(
+                eq(knowledgeEntry.userId, userId),
+                or(
+                  isNull(knowledgeEntry.teamId),
+                  inArray(knowledgeEntry.teamId, userTeams)
+                ),
+                or(
+                  isNull(knowledgeEntry.workspaceId),
+                  inArray(knowledgeEntry.workspaceId, usersWorkspaces)
                 )
               )
             )
-        )
-      )!
+          )
+      )
     );
   }
 

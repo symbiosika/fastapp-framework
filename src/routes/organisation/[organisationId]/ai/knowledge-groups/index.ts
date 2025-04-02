@@ -367,6 +367,17 @@ export default function defineKnowledgeGroupRoutes(
       responses: {
         200: {
           description: "Successful response",
+          content: {
+            "application/json": {
+              schema: v.array(
+                v.object({
+                  id: v.string(),
+                  teamId: v.string(),
+                  teamName: v.string(),
+                })
+              ),
+            },
+          },
         },
       },
     }),
