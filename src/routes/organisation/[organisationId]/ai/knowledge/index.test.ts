@@ -157,7 +157,7 @@ describe("Knowledge API Endpoints", () => {
     // This might fail in CI environments without internet access
     // So we're just checking that the endpoint responds
     expect([200, 400]).toContain(response.status);
-  });
+  },15000);
 
   test("Perform similarity search", async () => {
     const searchData = {

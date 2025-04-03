@@ -133,7 +133,10 @@ const getKnowledge = async (
         .from(knowledgeGroupTeamAssignments)
         .where(
           and(
-            eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
+            eq(
+              knowledgeGroupTeamAssignments.knowledgeGroupId,
+              knowledgeEntry.knowledgeGroupId
+            ),
             inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
           )
         )
@@ -268,41 +271,41 @@ export const getKnowledgeEntries = async (query: {
   );
 
   // Updated access conditions to include NULL values
-  const accessConditions = [
-    eq(knowledgeEntry.userId, query.userId),
-    or(
-      isNull(knowledgeEntry.teamId),
-      inArray(knowledgeEntry.teamId, userTeams)
-    ),
-    or(
-      isNull(knowledgeEntry.workspaceId),
-      inArray(knowledgeEntry.workspaceId, usersWorkspaces)
-    ),
-    // Knowledge group access - group has org-wide access
-    exists(
-      getDb()
-        .select()
-        .from(knowledgeGroup)
-        .where(
-          and(
-            eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
-            eq(knowledgeGroup.organisationWideAccess, true)
-          )
-        )
-    ),
-    // Knowledge group access - user's team is assigned to the group
-    exists(
-      getDb()
-        .select()
-        .from(knowledgeGroupTeamAssignments)
-        .where(
-          and(
-            eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
-            inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
-          )
-        )
-    ),
-  ];
+  // const accessConditions = [
+  //   eq(knowledgeEntry.userId, query.userId),
+  //   or(
+  //     isNull(knowledgeEntry.teamId),
+  //     inArray(knowledgeEntry.teamId, userTeams)
+  //   ),
+  //   or(
+  //     isNull(knowledgeEntry.workspaceId),
+  //     inArray(knowledgeEntry.workspaceId, usersWorkspaces)
+  //   ),
+  //   // Knowledge group access - group has org-wide access
+  //   exists(
+  //     getDb()
+  //       .select()
+  //       .from(knowledgeGroup)
+  //       .where(
+  //         and(
+  //           eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
+  //           eq(knowledgeGroup.organisationWideAccess, true)
+  //         )
+  //       )
+  //   ),
+  //   // Knowledge group access - user's team is assigned to the group
+  //   exists(
+  //     getDb()
+  //       .select()
+  //       .from(knowledgeGroupTeamAssignments)
+  //       .where(
+  //         and(
+  //           eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
+  //           inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
+  //         )
+  //       )
+  //   ),
+  // ];
 
   // Add optional filters if provided
   const filterConditions = [];
@@ -338,7 +341,7 @@ export const getKnowledgeEntries = async (query: {
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
     where: and(
       eq(knowledgeEntry.organisationId, query.organisationId),
-      or(...accessConditions),
+      // or(...accessConditions),
       ...filterConditions
     ),
     orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
