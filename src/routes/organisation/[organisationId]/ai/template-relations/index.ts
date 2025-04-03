@@ -343,12 +343,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.delete(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-entries",
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-entries/:knowledgeEntryIds?",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "delete",
-      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-entries",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-entries/:knowledgeEntryIds?",
       tags: ["ai"],
       summary: "Remove all knowledge entries from a prompt template",
       responses: {
@@ -367,15 +367,17 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       v.object({
         organisationId: v.string(),
         promptTemplateId: v.string(),
+        knowledgeEntryIds: v.optional(v.string()),
       })
     ),
     isOrganisationAdmin,
     async (c) => {
       try {
-        const { promptTemplateId } = c.req.valid("param");
+        const { promptTemplateId, knowledgeEntryIds } = c.req.valid("param");
+        const list = knowledgeEntryIds ? knowledgeEntryIds.split(",") : [];
         const result = await assignKnowledgeEntriesToPromptTemplate(
           promptTemplateId,
-          [] // Pass empty array to remove all entries
+          list
         );
         return c.json(result);
       } catch (e) {
@@ -389,12 +391,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.delete(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-filters",
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-filters/:knowledgeFilterIds?",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "delete",
-      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-filters",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-filters/:knowledgeFilterIds?",
       tags: ["ai"],
       summary: "Remove all knowledge filters from a prompt template",
       responses: {
@@ -413,15 +415,17 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       v.object({
         organisationId: v.string(),
         promptTemplateId: v.string(),
+        knowledgeFilterIds: v.optional(v.string()),
       })
     ),
     isOrganisationAdmin,
     async (c) => {
       try {
-        const { promptTemplateId } = c.req.valid("param");
+        const { promptTemplateId, knowledgeFilterIds } = c.req.valid("param");
+        const list = knowledgeFilterIds ? knowledgeFilterIds.split(",") : [];
         const result = await assignKnowledgeFiltersToPromptTemplate(
           promptTemplateId,
-          [] // Pass empty array to remove all filters
+          list
         );
         return c.json(result);
       } catch (e) {
@@ -435,12 +439,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
    */
   app.delete(
     API_BASE_PATH +
-      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-groups",
+      "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-groups/:knowledgeGroupIds?",
     authAndSetUsersInfo,
     checkUserPermission,
     describeRoute({
       method: "delete",
-      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-groups",
+      path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-groups/:knowledgeGroupIds?",
       tags: ["ai"],
       summary: "Remove all knowledge groups from a prompt template",
       responses: {
@@ -459,15 +463,18 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       v.object({
         organisationId: v.string(),
         promptTemplateId: v.string(),
+        knowledgeGroupIds: v.optional(v.string()),
       })
     ),
     isOrganisationAdmin,
     async (c) => {
       try {
-        const { promptTemplateId } = c.req.valid("param");
+        const { promptTemplateId, knowledgeGroupIds } = c.req.valid("param");
+        const list = knowledgeGroupIds ? knowledgeGroupIds.split(",") : [];
+
         const result = await assignKnowledgeGroupsToPromptTemplate(
           promptTemplateId,
-          [] // Pass empty array to remove all groups
+          list
         );
         return c.json(result);
       } catch (e) {
