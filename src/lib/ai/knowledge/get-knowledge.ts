@@ -424,6 +424,8 @@ export const updateKnowledgeEntry = async (
     workspaceId?: string | null;
     knowledgeGroupId?: string | null;
     userOwned?: boolean;
+    description?: string | null;
+    abstract?: string | null;
   }
 ) => {
   const canUpdate = await validateKnowledgeAccess(id, userId, organisationId);

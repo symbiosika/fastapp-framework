@@ -345,6 +345,8 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         workspaceId: v.optional(v.nullable(v.string())),
         knowledgeGroupId: v.optional(v.nullable(v.string())),
         userOwned: v.optional(v.boolean()),
+        description: v.optional(v.string()),
+        abstract: v.optional(v.string()),
       })
     ),
     isOrganisationAdmin,
