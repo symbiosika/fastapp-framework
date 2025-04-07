@@ -37,7 +37,7 @@ describe("Invitations Security Tests", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       user1Token,
       invitationData
     );
@@ -86,7 +86,7 @@ describe("Invitations Security Tests", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       user2Token,
       invitationData
     );
@@ -116,7 +116,7 @@ describe("Invitations Security Tests", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       user1Token,
       invalidData
     );
