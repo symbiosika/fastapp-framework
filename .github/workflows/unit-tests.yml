@@ -82,5 +82,8 @@ jobs:
       - name: Check connection
         run: bun test src/test/check-connection.test.ts
 
+      - name: Single test
+        run: bun test src/routes/organisation/[organisationId]/invitations/security.test.ts
+
       - name: Run tests
         run: bun test

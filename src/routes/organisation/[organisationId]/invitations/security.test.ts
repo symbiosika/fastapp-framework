@@ -9,11 +9,7 @@ import {
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import { rejectUnauthorized } from "../../../../test/reject-unauthorized.test";
-import {
-  createDatabaseClient,
-  getDb,
-  waitForDbConnection,
-} from "../../../../lib/db/db-connection";
+import { getDb } from "../../../../lib/db/db-connection";
 import { organisationInvitations } from "../../../../lib/db/schema/users";
 import { eq } from "drizzle-orm";
 
@@ -47,10 +43,6 @@ describe("Invitations Security Tests", () => {
     );
 
     createdInvitationId = response.jsonResponse.id;
-
-    await getDb()
-      .delete(organisationInvitations)
-      .where(eq(organisationInvitations.id, createdInvitationId));
   });
 
   test("should reject unauthorized requests", async () => {
