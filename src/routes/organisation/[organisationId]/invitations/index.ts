@@ -66,13 +66,20 @@ export default function defineInvitationsRoutes(
       },
     }),
     validator("json", organisationInvitationsInsertSchema),
-    validator("param", v.object({ organisationId: v.string() })),
+    validator(
+      "param",
+      v.object({ organisationId: v.string(), sendMail: v.optional(v.string()) })
+    ),
     checkOrganisationIdInBody,
     isOrganisationAdmin,
     async (c) => {
       try {
         const data = c.req.valid("json");
-        const invitation = await createOrganisationInvitation(data, true);
+        // If sendMail is not set, it defaults to true
+        const sendMail = c.req.valid("param").sendMail
+          ? c.req.valid("param").sendMail === "true"
+          : true;
+        const invitation = await createOrganisationInvitation(data, sendMail);
         return c.json(invitation);
       } catch (err) {
         throw new HTTPException(500, {
