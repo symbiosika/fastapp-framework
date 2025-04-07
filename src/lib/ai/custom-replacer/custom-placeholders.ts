@@ -30,6 +30,7 @@ export type ChatStoreVariables = Record<string, string>;
  */
 export const customAppPlaceholders: PlaceholderParser[] = [
   {
+    // {{#knowledgebase id="xxx"}}
     name: "knowledgebase",
     replacerFunction: async (
       match: string,
@@ -99,6 +100,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#similar_to count="10" before="10" after="10" id="xxx"}}
     name: "similar_to",
     replacerFunction: async (
       match: string,
@@ -186,6 +188,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#file id="xxx"}}
     name: "file",
     replacerFunction: async (
       match: string,
@@ -244,6 +247,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#url html="xxx"}}
     name: "url",
     replacerFunction: async (
       match: string,
@@ -255,7 +259,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       skipThisBlock?: boolean;
       addToMeta?: ChatMessageReplacerMeta;
     }> => {
-      const url = getStringArgument(args, "url");
+      let url = getStringArgument(args, "url");
+      if (!url) {
+        url = getStringArgument(args, "html");
+      }
       if (!url) {
         throw new Error("url parameter is required for url placeholder");
       }
@@ -270,6 +277,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#prompt_snippet name="xxx" category="xxx"}}
     name: "prompt_snippet",
     replacerFunction: async (
       match: string,
@@ -312,6 +320,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#knowledge_text title="xxx"}}
     name: "knowledge_text",
     replacerFunction: async (
       match: string,
@@ -343,6 +352,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     },
   },
   {
+    // {{#stt id="xxx"}}
     name: "stt",
     replacerFunction: async (
       match: string,
