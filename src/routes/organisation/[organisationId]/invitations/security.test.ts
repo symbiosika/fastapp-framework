@@ -13,8 +13,10 @@ import { getDb } from "../../../../lib/db/db-connection";
 import { organisationInvitations } from "../../../../lib/db/schema/users";
 import { eq } from "drizzle-orm";
 
+const app: FastAppHono = new Hono();
+defineInvitationsRoutes(app, "/api");
+
 describe("Invitations Security Tests", () => {
-  const app: FastAppHono = new Hono();
   let user1Token: string;
   let user2Token: string;
   let createdInvitationId: string;
@@ -24,8 +26,6 @@ describe("Invitations Security Tests", () => {
     const { user1Token: u1Token, user2Token: u2Token } = await initTests();
     user1Token = u1Token;
     user2Token = u2Token;
-
-    defineInvitationsRoutes(app, "/api");
 
     // Create a test invitation for security tests
     const invitationData = {
