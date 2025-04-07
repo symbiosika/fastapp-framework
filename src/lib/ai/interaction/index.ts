@@ -12,6 +12,7 @@ import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";
 import { replaceCustomPlaceholders } from "../custom-replacer/replacer";
 import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
 import type { CoreMessage } from "ai";
+import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -47,10 +48,6 @@ export type ChatWithTemplateReturn = {
   message: ChatMessage;
   messages: ChatMessage[];
 };
-
-// Default system message when no template is specified
-const DEFAULT_SYSTEM_MESSAGE =
-  "You are a helpful AI assistant that provides accurate and helpful information.";
 
 /**
  * Main chat function to handle chat interactions with AI
