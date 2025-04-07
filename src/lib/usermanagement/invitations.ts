@@ -16,6 +16,7 @@ import { getDb } from "../db/db-connection";
 import { getUserByEmail, getUserById, setUsersLastOrganisation } from "./user";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import { smtpService } from "../email";
+import log from "../log";
 
 /**
  * Get all organisation invitations
@@ -216,7 +217,8 @@ export const createOrganisationInvitation = async (
   data: OrganisationInvitationsInsert,
   sendMail = false
 ) => {
-  console.log(data);
+  log.info("Creating organisation invitation. Send Mail? " + sendMail);
+
   // Ensure data has a status field, defaulting to "pending" if not provided
   const dataWithStatus = {
     ...data,
