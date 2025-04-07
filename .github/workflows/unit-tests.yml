@@ -42,6 +42,9 @@ jobs:
           # Anthropic for Chat
           ANTHROPIC_API_KEY=${{ secrets.FASTAPP_UNITTEST_ANTHROPIC_API_KEY }}
 
+           # Perplexity
+          PERPLEXITY_API_KEY=${{ secrets.FASTAPP_UNITTEST_PERPLEXITY_API_KEY }}
+
           # Webserver Settings
           ALLOWED_ORIGINS="*"
 
@@ -58,10 +61,7 @@ jobs:
 
           # JWT
           JWT_PUBLIC_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
-          JWT_PRIVATE_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
-
-          # Perplexity
-          PERPLEXITY_API_KEY=${{ secrets.FASTAPP_UNITTEST_PERPLEXITY_API_KEY }}
+          JWT_PRIVATE_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"         
 
           # Cron
           CRON_LOG=false
