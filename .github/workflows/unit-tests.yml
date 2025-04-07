@@ -77,7 +77,7 @@ jobs:
         run: bun install
 
       - name: run migrations
-        run: npm run migrate
+        run: npm run fastapp:migrate
 
       - name: Check connection
         run: bun test src/test/check-connection.test.ts
