@@ -14,7 +14,7 @@ jobs:
 
     # Add the PostgreSQL service container
     services:
-      postgres:
+      postgres_db:
         image: pgvector/pgvector:pg17
         env:
           POSTGRES_USER: postgres
@@ -43,7 +43,7 @@ jobs:
           WRITE_DEBUG_FILES=true
 
           # Database
-          POSTGRES_HOST=postgres
+          POSTGRES_HOST=postgres_db
           POSTGRES_PORT=5432
           POSTGRES_USER=postgres
           POSTGRES_PASSWORD=postgres_password
