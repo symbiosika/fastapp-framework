@@ -29,8 +29,8 @@ services:
     volumes:
       - .:/app # Mount current directory into /app
       - /app/node_modules # Exclude node_modules from the mount to use container's version
-    # env_file:
-    #   - .env # Load environment variables from .env file
+      - ./.env.unittests:/app/.env # Map local .env.testing to container's .env
+   
     # Keep the container running
     command: tail -f /dev/null
 

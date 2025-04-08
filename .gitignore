@@ -183,3 +183,4 @@ static/upload/*
 
 lib/*
 .env.remote
+.env.unittests
