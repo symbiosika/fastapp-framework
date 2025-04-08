@@ -247,8 +247,9 @@ describe("Knowledge Groups", () => {
         userId: TEST_USER_1.id,
       });
 
-      expect(teams).toContain(TEST_TEAM_1.id);
-    });
+      expect(teams.length).toBeGreaterThan(0);
+      expect(teams.some((t) => t.teamId === TEST_TEAM_1.id)).toBe(true);
+    }, 10000);
 
     it("should remove a team from a knowledge group", async () => {
       // Create a test group

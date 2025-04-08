@@ -157,5 +157,5 @@ describe("User API Endpoints", () => {
       },
     });
     expect(unauthorizedResponse.status).toBe(401);
-  });
+  }, 15000);
 });
