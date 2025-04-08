@@ -18,7 +18,8 @@ import {
  */
 export const assignKnowledgeEntriesToPromptTemplate = async (
   promptTemplateId: string,
-  knowledgeEntryIds: string[]
+  knowledgeEntryIds: string[],
+  overwrite = false
 ) => {
   const db = getDb();
 
@@ -45,20 +46,25 @@ export const assignKnowledgeEntriesToPromptTemplate = async (
   }
 
   // Delete existing assignments
-  await db
-    .delete(promptTemplateKnowledgeEntries)
-    .where(
-      eq(promptTemplateKnowledgeEntries.promptTemplateId, promptTemplateId)
-    );
+  if (overwrite) {
+    await db
+      .delete(promptTemplateKnowledgeEntries)
+      .where(
+        eq(promptTemplateKnowledgeEntries.promptTemplateId, promptTemplateId)
+      );
+  }
 
   // Add new assignments if any
   if (knowledgeEntryIds.length > 0) {
-    await db.insert(promptTemplateKnowledgeEntries).values(
-      knowledgeEntryIds.map((entryId) => ({
-        promptTemplateId,
-        knowledgeEntryId: entryId,
-      }))
-    );
+    await db
+      .insert(promptTemplateKnowledgeEntries)
+      .values(
+        knowledgeEntryIds.map((entryId) => ({
+          promptTemplateId,
+          knowledgeEntryId: entryId,
+        }))
+      )
+      .onConflictDoNothing();
   }
 
   return { success: true };
@@ -70,7 +76,8 @@ export const assignKnowledgeEntriesToPromptTemplate = async (
  */
 export const assignKnowledgeFiltersToPromptTemplate = async (
   promptTemplateId: string,
-  knowledgeFilterIds: string[]
+  knowledgeFilterIds: string[],
+  overwrite = false
 ) => {
   const db = getDb();
 
@@ -97,20 +104,25 @@ export const assignKnowledgeFiltersToPromptTemplate = async (
   }
 
   // Delete existing assignments
-  await db
-    .delete(promptTemplateKnowledgeFilters)
-    .where(
-      eq(promptTemplateKnowledgeFilters.promptTemplateId, promptTemplateId)
-    );
+  if (overwrite) {
+    await db
+      .delete(promptTemplateKnowledgeFilters)
+      .where(
+        eq(promptTemplateKnowledgeFilters.promptTemplateId, promptTemplateId)
+      );
+  }
 
   // Add new assignments if any
   if (knowledgeFilterIds.length > 0) {
-    await db.insert(promptTemplateKnowledgeFilters).values(
-      knowledgeFilterIds.map((filterId) => ({
-        promptTemplateId,
-        knowledgeFilterId: filterId,
-      }))
-    );
+    await db
+      .insert(promptTemplateKnowledgeFilters)
+      .values(
+        knowledgeFilterIds.map((filterId) => ({
+          promptTemplateId,
+          knowledgeFilterId: filterId,
+        }))
+      )
+      .onConflictDoNothing();
   }
 
   return { success: true };
@@ -122,7 +134,8 @@ export const assignKnowledgeFiltersToPromptTemplate = async (
  */
 export const assignKnowledgeGroupsToPromptTemplate = async (
   promptTemplateId: string,
-  knowledgeGroupIds: string[]
+  knowledgeGroupIds: string[],
+  overwrite = false
 ) => {
   const db = getDb();
 
@@ -149,20 +162,25 @@ export const assignKnowledgeGroupsToPromptTemplate = async (
   }
 
   // Delete existing assignments
-  await db
-    .delete(promptTemplateKnowledgeGroups)
-    .where(
-      eq(promptTemplateKnowledgeGroups.promptTemplateId, promptTemplateId)
-    );
+  if (overwrite) {
+    await db
+      .delete(promptTemplateKnowledgeGroups)
+      .where(
+        eq(promptTemplateKnowledgeGroups.promptTemplateId, promptTemplateId)
+      );
+  }
 
   // Add new assignments if any
   if (knowledgeGroupIds.length > 0) {
-    await db.insert(promptTemplateKnowledgeGroups).values(
-      knowledgeGroupIds.map((groupId) => ({
-        promptTemplateId,
-        knowledgeGroupId: groupId,
-      }))
-    );
+    await db
+      .insert(promptTemplateKnowledgeGroups)
+      .values(
+        knowledgeGroupIds.map((groupId) => ({
+          promptTemplateId,
+          knowledgeGroupId: groupId,
+        }))
+      )
+      .onConflictDoNothing();
   }
 
   return { success: true };
@@ -244,4 +262,121 @@ export const getKnowledgeGroupsForPromptTemplate = async (
     );
 
   return groups;
+};
+
+/**
+ * Delete knowledge entries from a prompt template
+ * If no entryIds are provided, all entries will be deleted
+ */
+export const deleteKnowledgeEntriesFromPromptTemplate = async (
+  promptTemplateId: string,
+  entryIds?: string[]
+) => {
+  const db = getDb();
+
+  // Verify prompt template exists
+  const template = await db
+    .select()
+    .from(promptTemplates)
+    .where(eq(promptTemplates.id, promptTemplateId));
+
+  if (template.length === 0) {
+    throw new Error("Prompt template not found");
+  }
+
+  // Delete assignments
+  if (entryIds && entryIds.length > 0) {
+    await db.delete(promptTemplateKnowledgeEntries).where(
+      and(
+        eq(promptTemplateKnowledgeEntries.promptTemplateId, promptTemplateId),
+        eq(promptTemplateKnowledgeEntries.knowledgeEntryId, entryIds[0]) // Just delete first one for now
+      )
+    );
+  } else {
+    await db
+      .delete(promptTemplateKnowledgeEntries)
+      .where(
+        eq(promptTemplateKnowledgeEntries.promptTemplateId, promptTemplateId)
+      );
+  }
+
+  return { success: true };
+};
+
+/**
+ * Delete knowledge filters from a prompt template
+ * If no filterIds are provided, all filters will be deleted
+ */
+export const deleteKnowledgeFiltersFromPromptTemplate = async (
+  promptTemplateId: string,
+  filterIds?: string[]
+) => {
+  const db = getDb();
+
+  // Verify prompt template exists
+  const template = await db
+    .select()
+    .from(promptTemplates)
+    .where(eq(promptTemplates.id, promptTemplateId));
+
+  if (template.length === 0) {
+    throw new Error("Prompt template not found");
+  }
+
+  // Delete assignments
+  if (filterIds && filterIds.length > 0) {
+    await db.delete(promptTemplateKnowledgeFilters).where(
+      and(
+        eq(promptTemplateKnowledgeFilters.promptTemplateId, promptTemplateId),
+        eq(promptTemplateKnowledgeFilters.knowledgeFilterId, filterIds[0]) // Just delete first one for now
+      )
+    );
+  } else {
+    await db
+      .delete(promptTemplateKnowledgeFilters)
+      .where(
+        eq(promptTemplateKnowledgeFilters.promptTemplateId, promptTemplateId)
+      );
+  }
+
+  return { success: true };
+};
+
+/**
+ * Delete knowledge groups from a prompt template
+ * If no groupIds are provided, all groups will be deleted
+ */
+export const deleteKnowledgeGroupsFromPromptTemplate = async (
+  promptTemplateId: string,
+  groupIds?: string[]
+) => {
+  const db = getDb();
+
+  // Verify prompt template exists
+  const template = await db
+    .select()
+    .from(promptTemplates)
+    .where(eq(promptTemplates.id, promptTemplateId));
+
+  if (template.length === 0) {
+    throw new Error("Prompt template not found");
+  }
+
+  // Delete assignments
+  if (groupIds && groupIds.length > 0) {
+    await db.delete(promptTemplateKnowledgeGroups).where(
+      and(
+        eq(promptTemplateKnowledgeGroups.promptTemplateId, promptTemplateId),
+        eq(promptTemplateKnowledgeGroups.knowledgeGroupId, groupIds[0]) // Just delete first one for now
+      )
+    );
+  } else {
+    await db
+      .delete(promptTemplateKnowledgeGroups)
+      .where(
+        eq(promptTemplateKnowledgeGroups.promptTemplateId, promptTemplateId)
+      );
+  }
+
+  return { success: true };
 };

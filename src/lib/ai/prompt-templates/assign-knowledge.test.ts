@@ -13,6 +13,9 @@ import {
   getKnowledgeEntriesForPromptTemplate,
   getKnowledgeFiltersForPromptTemplate,
   getKnowledgeGroupsForPromptTemplate,
+  deleteKnowledgeEntriesFromPromptTemplate,
+  deleteKnowledgeFiltersFromPromptTemplate,
+  deleteKnowledgeGroupsFromPromptTemplate,
 } from "./assign-knowledge";
 import {
   initTests,
@@ -93,9 +96,11 @@ describe("Prompt Template Knowledge Assignments", () => {
 
   describe("Knowledge Entries", () => {
     test("should assign knowledge entries to prompt template", async () => {
-      const result = await assignKnowledgeEntriesToPromptTemplate(templateId, [
-        knowledgeEntryId,
-      ]);
+      const result = await assignKnowledgeEntriesToPromptTemplate(
+        templateId,
+        [knowledgeEntryId],
+        true
+      );
       expect(result.success).toBe(true);
 
       const entries = await getKnowledgeEntriesForPromptTemplate(templateId);
@@ -115,9 +120,11 @@ describe("Prompt Template Knowledge Assignments", () => {
         })
         .returning();
 
-      const result = await assignKnowledgeEntriesToPromptTemplate(templateId, [
-        newEntry[0].id,
-      ]);
+      const result = await assignKnowledgeEntriesToPromptTemplate(
+        templateId,
+        [newEntry[0].id],
+        true
+      );
       expect(result.success).toBe(true);
 
       const entries = await getKnowledgeEntriesForPromptTemplate(templateId);
@@ -128,7 +135,8 @@ describe("Prompt Template Knowledge Assignments", () => {
     test("should remove all knowledge entries", async () => {
       const result = await assignKnowledgeEntriesToPromptTemplate(
         templateId,
-        []
+        [],
+        true
       );
       expect(result.success).toBe(true);
 
@@ -139,9 +147,11 @@ describe("Prompt Template Knowledge Assignments", () => {
 
   describe("Knowledge Filters", () => {
     test("should assign knowledge filters to prompt template", async () => {
-      const result = await assignKnowledgeFiltersToPromptTemplate(templateId, [
-        knowledgeFilterId,
-      ]);
+      const result = await assignKnowledgeFiltersToPromptTemplate(
+        templateId,
+        [knowledgeFilterId],
+        true
+      );
       expect(result.success).toBe(true);
 
       const filters = await getKnowledgeFiltersForPromptTemplate(templateId);
@@ -160,9 +170,11 @@ describe("Prompt Template Knowledge Assignments", () => {
         })
         .returning();
 
-      const result = await assignKnowledgeFiltersToPromptTemplate(templateId, [
-        newFilter[0].id,
-      ]);
+      const result = await assignKnowledgeFiltersToPromptTemplate(
+        templateId,
+        [newFilter[0].id],
+        true
+      );
       expect(result.success).toBe(true);
 
       const filters = await getKnowledgeFiltersForPromptTemplate(templateId);
@@ -173,7 +185,8 @@ describe("Prompt Template Knowledge Assignments", () => {
     test("should remove all knowledge filters", async () => {
       const result = await assignKnowledgeFiltersToPromptTemplate(
         templateId,
-        []
+        [],
+        true
       );
       expect(result.success).toBe(true);
 
@@ -184,9 +197,11 @@ describe("Prompt Template Knowledge Assignments", () => {
 
   describe("Knowledge Groups", () => {
     test("should assign knowledge groups to prompt template", async () => {
-      const result = await assignKnowledgeGroupsToPromptTemplate(templateId, [
-        knowledgeGroupId,
-      ]);
+      const result = await assignKnowledgeGroupsToPromptTemplate(
+        templateId,
+        [knowledgeGroupId],
+        true
+      );
       expect(result.success).toBe(true);
 
       const groups = await getKnowledgeGroupsForPromptTemplate(templateId);
@@ -207,9 +222,11 @@ describe("Prompt Template Knowledge Assignments", () => {
         })
         .returning();
 
-      const result = await assignKnowledgeGroupsToPromptTemplate(templateId, [
-        newGroup[0].id,
-      ]);
+      const result = await assignKnowledgeGroupsToPromptTemplate(
+        templateId,
+        [newGroup[0].id],
+        true
+      );
       expect(result.success).toBe(true);
 
       const groups = await getKnowledgeGroupsForPromptTemplate(templateId);
@@ -220,7 +237,8 @@ describe("Prompt Template Knowledge Assignments", () => {
     test("should remove all knowledge groups", async () => {
       const result = await assignKnowledgeGroupsToPromptTemplate(
         templateId,
-        []
+        [],
+        true
       );
       expect(result.success).toBe(true);
 
@@ -233,29 +251,186 @@ describe("Prompt Template Knowledge Assignments", () => {
     test("should throw error for non-existent prompt template", async () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000999";
       await expect(
-        assignKnowledgeEntriesToPromptTemplate(nonExistentId, [])
+        assignKnowledgeEntriesToPromptTemplate(nonExistentId, [], true)
       ).rejects.toThrow("Prompt template not found");
     });
 
     test("should throw error for non-existent knowledge entry", async () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000999";
       await expect(
-        assignKnowledgeEntriesToPromptTemplate(templateId, [nonExistentId])
+        assignKnowledgeEntriesToPromptTemplate(
+          templateId,
+          [nonExistentId],
+          true
+        )
       ).rejects.toThrow("Knowledge entry not found");
     });
 
     test("should throw error for non-existent knowledge filter", async () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000999";
       await expect(
-        assignKnowledgeFiltersToPromptTemplate(templateId, [nonExistentId])
+        assignKnowledgeFiltersToPromptTemplate(
+          templateId,
+          [nonExistentId],
+          true
+        )
       ).rejects.toThrow("Knowledge filter not found");
     });
 
     test("should throw error for non-existent knowledge group", async () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000999";
       await expect(
-        assignKnowledgeGroupsToPromptTemplate(templateId, [nonExistentId])
+        assignKnowledgeGroupsToPromptTemplate(templateId, [nonExistentId], true)
       ).rejects.toThrow("Knowledge group not found");
+    });
+  });
+
+  describe("Delete Knowledge Assignments", () => {
+    test("should delete specific knowledge entry from prompt template", async () => {
+      // First assign an entry
+      await assignKnowledgeEntriesToPromptTemplate(
+        templateId,
+        [knowledgeEntryId],
+        true
+      );
+
+      // Verify it exists
+      let entries = await getKnowledgeEntriesForPromptTemplate(templateId);
+      expect(entries.length).toBe(1);
+
+      // Delete the entry
+      const result = await deleteKnowledgeEntriesFromPromptTemplate(
+        templateId,
+        [knowledgeEntryId]
+      );
+      expect(result.success).toBe(true);
+
+      // Verify it's gone
+      entries = await getKnowledgeEntriesForPromptTemplate(templateId);
+      expect(entries.length).toBe(0);
+    });
+
+    test("should delete all knowledge entries from prompt template", async () => {
+      // First assign an entry
+      await assignKnowledgeEntriesToPromptTemplate(
+        templateId,
+        [knowledgeEntryId],
+        true
+      );
+
+      // Verify it exists
+      let entries = await getKnowledgeEntriesForPromptTemplate(templateId);
+      expect(entries.length).toBe(1);
+
+      // Delete all entries
+      const result = await deleteKnowledgeEntriesFromPromptTemplate(templateId);
+      expect(result.success).toBe(true);
+
+      // Verify they're gone
+      entries = await getKnowledgeEntriesForPromptTemplate(templateId);
+      expect(entries.length).toBe(0);
+    });
+
+    test("should delete specific knowledge filter from prompt template", async () => {
+      // First assign a filter
+      await assignKnowledgeFiltersToPromptTemplate(
+        templateId,
+        [knowledgeFilterId],
+        true
+      );
+
+      // Verify it exists
+      let filters = await getKnowledgeFiltersForPromptTemplate(templateId);
+      expect(filters.length).toBe(1);
+
+      // Delete the filter
+      const result = await deleteKnowledgeFiltersFromPromptTemplate(
+        templateId,
+        [knowledgeFilterId]
+      );
+      expect(result.success).toBe(true);
+
+      // Verify it's gone
+      filters = await getKnowledgeFiltersForPromptTemplate(templateId);
+      expect(filters.length).toBe(0);
+    });
+
+    test("should delete all knowledge filters from prompt template", async () => {
+      // First assign a filter
+      await assignKnowledgeFiltersToPromptTemplate(
+        templateId,
+        [knowledgeFilterId],
+        true
+      );
+
+      // Verify it exists
+      let filters = await getKnowledgeFiltersForPromptTemplate(templateId);
+      expect(filters.length).toBe(1);
+
+      // Delete all filters
+      const result = await deleteKnowledgeFiltersFromPromptTemplate(templateId);
+      expect(result.success).toBe(true);
+
+      // Verify they're gone
+      filters = await getKnowledgeFiltersForPromptTemplate(templateId);
+      expect(filters.length).toBe(0);
+    });
+
+    test("should delete specific knowledge group from prompt template", async () => {
+      // First assign a group
+      await assignKnowledgeGroupsToPromptTemplate(
+        templateId,
+        [knowledgeGroupId],
+        true
+      );
+
+      // Verify it exists
+      let groups = await getKnowledgeGroupsForPromptTemplate(templateId);
+      expect(groups.length).toBe(1);
+
+      // Delete the group
+      const result = await deleteKnowledgeGroupsFromPromptTemplate(templateId, [
+        knowledgeGroupId,
+      ]);
+      expect(result.success).toBe(true);
+
+      // Verify it's gone
+      groups = await getKnowledgeGroupsForPromptTemplate(templateId);
+      expect(groups.length).toBe(0);
+    });
+
+    test("should delete all knowledge groups from prompt template", async () => {
+      // First assign a group
+      await assignKnowledgeGroupsToPromptTemplate(
+        templateId,
+        [knowledgeGroupId],
+        true
+      );
+
+      // Verify it exists
+      let groups = await getKnowledgeGroupsForPromptTemplate(templateId);
+      expect(groups.length).toBe(1);
+
+      // Delete all groups
+      const result = await deleteKnowledgeGroupsFromPromptTemplate(templateId);
+      expect(result.success).toBe(true);
+
+      // Verify they're gone
+      groups = await getKnowledgeGroupsForPromptTemplate(templateId);
+      expect(groups.length).toBe(0);
+    });
+
+    test("should throw error when deleting from non-existent prompt template", async () => {
+      const nonExistentId = "00000000-0000-0000-0000-000000000999";
+      await expect(
+        deleteKnowledgeEntriesFromPromptTemplate(nonExistentId)
+      ).rejects.toThrow("Prompt template not found");
+      await expect(
+        deleteKnowledgeFiltersFromPromptTemplate(nonExistentId)
+      ).rejects.toThrow("Prompt template not found");
+      await expect(
+        deleteKnowledgeGroupsFromPromptTemplate(nonExistentId)
+      ).rejects.toThrow("Prompt template not found");
     });
   });
 

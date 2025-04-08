@@ -20,6 +20,9 @@ import {
   getKnowledgeEntriesForPromptTemplate,
   getKnowledgeFiltersForPromptTemplate,
   getKnowledgeGroupsForPromptTemplate,
+  deleteKnowledgeEntriesFromPromptTemplate,
+  deleteKnowledgeFiltersFromPromptTemplate,
+  deleteKnowledgeGroupsFromPromptTemplate,
 } from "../../../../../lib/ai/prompt-templates/assign-knowledge";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
@@ -60,11 +63,21 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         promptTemplateId: v.string(),
       })
     ),
+    validator(
+      "query",
+      v.object({
+        overwrite: v.optional(v.string()), // defaults to true
+      })
+    ),
     isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
         const { knowledgeEntryIds } = c.req.valid("json");
+        let overwrite = c.req.query("overwrite")
+          ? c.req.query("overwrite") === "true"
+          : true;
+
         const result = await assignKnowledgeEntriesToPromptTemplate(
           promptTemplateId,
           knowledgeEntryIds
@@ -113,14 +126,25 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         promptTemplateId: v.string(),
       })
     ),
+    validator(
+      "query",
+      v.object({
+        overwrite: v.optional(v.string()), // defaults to true
+      })
+    ),
     isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
         const { knowledgeFilterIds } = c.req.valid("json");
+        let overwrite = c.req.query("overwrite")
+          ? c.req.query("overwrite") === "true"
+          : true;
+
         const result = await assignKnowledgeFiltersToPromptTemplate(
           promptTemplateId,
-          knowledgeFilterIds
+          knowledgeFilterIds,
+          overwrite
         );
         return c.json(result);
       } catch (e) {
@@ -166,14 +190,25 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         promptTemplateId: v.string(),
       })
     ),
+    validator(
+      "query",
+      v.object({
+        overwrite: v.optional(v.string()), // defaults to true
+      })
+    ),
     isOrganisationAdmin,
     async (c) => {
       try {
         const { promptTemplateId } = c.req.valid("param");
         const { knowledgeGroupIds } = c.req.valid("json");
+        let overwrite = c.req.query("overwrite")
+          ? c.req.query("overwrite") === "true"
+          : true;
+
         const result = await assignKnowledgeGroupsToPromptTemplate(
           promptTemplateId,
-          knowledgeGroupIds
+          knowledgeGroupIds,
+          overwrite
         );
         return c.json(result);
       } catch (e) {
@@ -350,7 +385,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "delete",
       path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-entries/:knowledgeEntryIds?",
       tags: ["ai"],
-      summary: "Remove all knowledge entries from a prompt template",
+      summary: "Remove knowledge entries from a prompt template",
       responses: {
         200: {
           description: "Successful response",
@@ -374,10 +409,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { promptTemplateId, knowledgeEntryIds } = c.req.valid("param");
-        const list = knowledgeEntryIds ? knowledgeEntryIds.split(",") : [];
-        const result = await assignKnowledgeEntriesToPromptTemplate(
+        const entryIds = knowledgeEntryIds
+          ? knowledgeEntryIds.split(",")
+          : undefined;
+        const result = await deleteKnowledgeEntriesFromPromptTemplate(
           promptTemplateId,
-          list
+          entryIds
         );
         return c.json(result);
       } catch (e) {
@@ -398,7 +435,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "delete",
       path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-filters/:knowledgeFilterIds?",
       tags: ["ai"],
-      summary: "Remove all knowledge filters from a prompt template",
+      summary: "Remove knowledge filters from a prompt template",
       responses: {
         200: {
           description: "Successful response",
@@ -422,10 +459,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { promptTemplateId, knowledgeFilterIds } = c.req.valid("param");
-        const list = knowledgeFilterIds ? knowledgeFilterIds.split(",") : [];
-        const result = await assignKnowledgeFiltersToPromptTemplate(
+        const filterIds = knowledgeFilterIds
+          ? knowledgeFilterIds.split(",")
+          : undefined;
+        const result = await deleteKnowledgeFiltersFromPromptTemplate(
           promptTemplateId,
-          list
+          filterIds
         );
         return c.json(result);
       } catch (e) {
@@ -446,7 +485,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "delete",
       path: "/organisation/:organisationId/ai/templates/:promptTemplateId/knowledge-groups/:knowledgeGroupIds?",
       tags: ["ai"],
-      summary: "Remove all knowledge groups from a prompt template",
+      summary: "Remove knowledge groups from a prompt template",
       responses: {
         200: {
           description: "Successful response",
@@ -470,11 +509,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     async (c) => {
       try {
         const { promptTemplateId, knowledgeGroupIds } = c.req.valid("param");
-        const list = knowledgeGroupIds ? knowledgeGroupIds.split(",") : [];
-
-        const result = await assignKnowledgeGroupsToPromptTemplate(
+        const groupIds = knowledgeGroupIds
+          ? knowledgeGroupIds.split(",")
+          : undefined;
+        const result = await deleteKnowledgeGroupsFromPromptTemplate(
           promptTemplateId,
-          list
+          groupIds
         );
         return c.json(result);
       } catch (e) {
