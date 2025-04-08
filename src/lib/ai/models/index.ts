@@ -126,11 +126,18 @@ export async function createAiProviderModel(
   data: AiProviderModelsInsert
 ): Promise<AiProviderModelsSelect> {
   try {
-    const [model] = await getDb()
+    let [model] = await getDb()
       .insert(aiProviderModels)
       .values(data)
       .returning()
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: [
+          aiProviderModels.organisationId,
+          aiProviderModels.provider,
+          aiProviderModels.model,
+        ],
+        set: data,
+      });
 
     return model;
   } catch (error) {
