@@ -9,7 +9,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { teams, users } from "./users";
+import { organisations, teams, users } from "./users";
 import { pgBaseTable } from ".";
 import {
   createSelectSchema,
@@ -106,6 +106,9 @@ export const organisationSpecificData = pgBaseTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
     category: varchar("category", { length: 100 }).notNull(),
     name: varchar("name", { length: 100 }).notNull(),
     version: integer("version").notNull().default(0),
@@ -118,7 +121,7 @@ export const organisationSpecificData = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    unique().on(table.category, table.name),
+    unique().on(table.organisationId, table.category, table.name),
     index("organisation_data_category_idx").on(table.category),
     index("organisation_data_name_idx").on(table.name),
     index("organisation_data_created_at_idx").on(table.createdAt),

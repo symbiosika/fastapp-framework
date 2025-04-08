@@ -834,6 +834,13 @@
       "when": 1743422888847,
       "tag": "0118_low_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 119,
+      "version": "7",
+      "when": 1744101666929,
+      "tag": "0119_glossy_scarecrow",
+      "breakpoints": true
     }
   ]
 }

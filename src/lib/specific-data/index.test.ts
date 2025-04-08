@@ -5,6 +5,7 @@ import {
   TEST_ORGANISATION_1,
   TEST_USER_1,
   TEST_TEAM_1,
+  dropAllUserAndOrganisationSpecificData,
 } from "../../test/init.test";
 import {
   createUserSpecificData,
@@ -32,6 +33,7 @@ import {
 
 beforeAll(async () => {
   await initTests();
+  await dropAllUserAndOrganisationSpecificData();
 });
 
 describe("User Specific Data", () => {
@@ -138,6 +140,7 @@ describe("App Specific Data", () => {
 
 describe("Organisation Specific Data", () => {
   const testData = {
+    organisationId: TEST_ORGANISATION_1.id,
     category: "test-category",
     name: "test-name",
     data: "test-value",
