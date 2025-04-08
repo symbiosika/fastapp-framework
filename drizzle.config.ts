@@ -14,7 +14,7 @@ console.log("POSTGRES_USE_SSL is", POSTGRES_USE_SSL);
 
 console.log(
   "Connect to database: ",
-  `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD.slice(0, 3)}...@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
+  `postgresql://${POSTGRES_USER}:***@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
 );
 
 const PREFIX = "base_";
