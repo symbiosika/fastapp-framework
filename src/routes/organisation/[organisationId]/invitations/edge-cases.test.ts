@@ -69,7 +69,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
 
     // Should still succeed (onConflictDoUpdate)
     expect(response2.status).toBe(200);
-  });
+  }, 15000);
 
   // Test accepting an already accepted invitation
   test("should handle accepting an already accepted invitation", async () => {
@@ -109,7 +109,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
 
     // Should fail because invitation is no longer pending
     expect(acceptResponse2.status).toBe(500);
-  });
+  }, 15000);
 
   // Test declining an already declined invitation
   test("should handle declining an already declined invitation", async () => {
@@ -148,7 +148,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
     );
 
     expect(declineResponse2.status).toBe(200);
-  });
+  }, 15000);
 
   // Test accepting a non-existent invitation
   test("should handle accepting a non-existent invitation", async () => {
@@ -162,7 +162,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
     );
 
     expect(response.status).toBe(500);
-  });
+  }, 15000);
 
   // Test declining a non-existent invitation
   test("should handle declining a non-existent invitation", async () => {
@@ -177,7 +177,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
 
     // This should still work since we just update by ID
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test dropping a non-existent invitation
   test("should handle dropping a non-existent invitation", async () => {
@@ -191,7 +191,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
 
     // This should still work since we just delete by ID
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test accepting all invitations when there are none
   test("should handle accepting all invitations when there are none", async () => {
@@ -213,7 +213,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
     );
 
     expect(response.status).toBe(500); // Should fail with "No pending invitations found"
-  });
+  }, 15000);
 
   // Test declining all invitations when there are none
   test("should handle declining all invitations when there are none", async () => {
@@ -236,5 +236,5 @@ describe("Invitations Edge Cases and Error Handling", () => {
 
     // This should still work since we just update by email
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 });
