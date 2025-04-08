@@ -38,7 +38,8 @@ export const saltAndHashPassword = async (
  */
 const getUserFromDb = async (
   email: string,
-  password: string
+  password: string,
+  sendMailIfUserNotVerified = true
 ): Promise<{
   id: string;
   email: string;
@@ -67,7 +68,9 @@ const getUserFromDb = async (
 
     if (!user[0].emailVerified) {
       // send verification email again
-      await sendVerificationEmail(email);
+      if (sendMailIfUserNotVerified) {
+        await sendVerificationEmail(email);
+      }
       throw "Email is not verified.";
     }
 
@@ -151,8 +154,12 @@ export const generateJwt = async (
 /**
  * Checks if a user exists and creates a session
  */
-const checkAndCreateSession = async (email: string, password: string) => {
-  const user = await getUserFromDb(email, password);
+const checkAndCreateSession = async (
+  email: string,
+  password: string,
+  sendVerificationEmail = true
+) => {
+  const user = await getUserFromDb(email, password, sendVerificationEmail);
 
   const { token, expiresAt } = await generateJwt(
     user,
@@ -302,8 +309,8 @@ export const LocalAuth = {
     return user;
   },
 
-  async login(email: string, password: string) {
-    return await checkAndCreateSession(email, password);
+  async login(email: string, password: string, sendVerificationEmail = true) {
+    return await checkAndCreateSession(email, password, sendVerificationEmail);
   },
 
   async loginWithMagicLink(token: string) {

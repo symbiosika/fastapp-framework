@@ -95,6 +95,12 @@ export function definePublicUserRoutes(
         redirectUrl: v.optional(v.string()),
       })
     ),
+    validator(
+      "query",
+      v.object({
+        sendVerificationEmail: v.optional(v.string()), // defaults to true
+      })
+    ),
     async (c) => {
       try {
         if (_GLOBAL_SERVER_CONFIG.authType !== "local") {
@@ -103,12 +109,15 @@ export function definePublicUserRoutes(
           });
         }
         const data = c.req.valid("json");
+        let sendVerificationEmail = c.req.query("sendVerificationEmail")
+          ? c.req.query("sendVerificationEmail") === "true"
+          : true;
 
         if (data.magicLinkToken) {
           const r = await LocalAuth.loginWithMagicLink(data.magicLinkToken);
           return c.json({ ...r, redirectUrl: data.redirectUrl });
         } else {
-          const r = await LocalAuth.login(data.email, data.password);
+          const r = await LocalAuth.login(data.email, data.password, sendVerificationEmail);
           return c.json({ ...r, redirectUrl: data.redirectUrl });
         }
       } catch (err) {

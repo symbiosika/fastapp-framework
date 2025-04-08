@@ -125,21 +125,24 @@ describe("User API Endpoints", () => {
   });
 
   // Test error cases
-  it("should handle invalid requests", async () => {
-    // Test invalid login
-    const invalidLoginResponse = await app.request("/api/user/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: TEST_EMAIL_USER,
-        password: "wrongpassword",
-      }),
-    });
+  it("should return 401 for invalid login credentials", async () => {
+    const invalidLoginResponse = await app.request(
+      "/api/user/login?sendVerificationEmail=false",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: TEST_EMAIL_USER,
+          password: "wrongpassword",
+        }),
+      }
+    );
     expect(invalidLoginResponse.status).toBe(401);
+  });
 
-    // Test search without email
+  it("should return 400 for search without email parameter", async () => {
     const invalidSearchResponse = await app.request("/api/user/search", {
       method: "GET",
       headers: {
@@ -148,8 +151,9 @@ describe("User API Endpoints", () => {
       },
     });
     expect(invalidSearchResponse.status).toBe(400);
+  });
 
-    // Test unauthorized access
+  it("should return 401 for unauthorized access to /user/me", async () => {
     const unauthorizedResponse = await app.request("/api/user/me", {
       method: "GET",
       headers: {
@@ -157,5 +161,5 @@ describe("User API Endpoints", () => {
       },
     });
     expect(unauthorizedResponse.status).toBe(401);
-  }, 15000);
+  });
 });

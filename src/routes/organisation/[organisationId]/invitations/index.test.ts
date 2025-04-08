@@ -39,7 +39,7 @@ describe("Invitations API Endpoints", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -64,7 +64,7 @@ describe("Invitations API Endpoints", () => {
 
     const response = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -78,7 +78,7 @@ describe("Invitations API Endpoints", () => {
   test("should get all invitations for an organisation", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token
     );
     expect(response.status).toBe(200);
@@ -98,7 +98,7 @@ describe("Invitations API Endpoints", () => {
 
     const createResponse = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -128,7 +128,7 @@ describe("Invitations API Endpoints", () => {
 
     await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -156,7 +156,7 @@ describe("Invitations API Endpoints", () => {
 
     const createResponse = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -186,7 +186,7 @@ describe("Invitations API Endpoints", () => {
 
     await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
@@ -214,7 +214,7 @@ describe("Invitations API Endpoints", () => {
 
     const createResponse = await testFetcher.post(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/invitations?sendMail=false`,
       u1Token,
       invitationData
     );
