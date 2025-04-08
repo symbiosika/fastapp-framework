@@ -13,6 +13,7 @@ import { replaceCustomPlaceholders } from "../custom-replacer/replacer";
 import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
 import type { CoreMessage } from "ai";
 import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
+import { createHeadlineFromChat } from "../headline";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -56,6 +57,8 @@ export async function chat(
   options: ChatInputValidation
 ): Promise<ChatWithTemplateReturn> {
   try {
+    let isNewChat = true;
+
     // 1. Normalize input
     let userInput: Record<string, string>;
     if (typeof options.input === "string") {
@@ -72,6 +75,7 @@ export async function chat(
       const existingSession = await chatStore.get(options.chatId);
       if (existingSession) {
         session = existingSession;
+        isNewChat = false;
       } else {
         session = await chatStore.create({
           chatId,
@@ -83,6 +87,7 @@ export async function chat(
         });
       }
     } else {
+      isNewChat = true;
       session = await chatStore.create({
         chatId,
         context: {
@@ -292,10 +297,21 @@ export async function chat(
 
     messages.push(assistantMessage);
 
+    let name: string | undefined;
+    if (isNewChat) {
+      // create headline
+      const headline = await createHeadlineFromChat(coreMessages, {
+        userId: options.context.userId,
+        organisationId: options.context.organisationId,
+      });
+      name = headline.headline;
+    }
+
     // 9. Update chat session in store
     await chatStore.set(chatId, {
       messages,
       updatedAt: new Date().toISOString(),
+      name,
     });
 
     // 10. Return response
