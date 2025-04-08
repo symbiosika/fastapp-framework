@@ -12,6 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # Add the PostgreSQL service container
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_password
+          POSTGRES_DB: symbiosika
+        ports:
+          - 5432:5432
+        # Add health checks to ensure the service is ready
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,12 +43,12 @@ jobs:
           WRITE_DEBUG_FILES=true
 
           # Database
-          POSTGRES_HOST=${{ secrets.FASTAPP_UNITTEST_DB_HOST }}
-          POSTGRES_PORT=${{ secrets.FASTAPP_UNITTEST_DB_PORT }}
-          POSTGRES_USER=${{ secrets.FASTAPP_UNITTEST_DB_USER }}
-          POSTGRES_PASSWORD=${{ secrets.FASTAPP_UNITTEST_DB_PASSWORD }}
-          POSTGRES_DB=${{ secrets.FASTAPP_UNITTEST_DB }}
-          POSTGRES_CA='${{ secrets.FASTAPP_UNITTEST_DB_CERT }}'
+          POSTGRES_HOST=postgres
+          POSTGRES_PORT=5432
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres_password
+          POSTGRES_DB=symbiosika
+          POSTGRES_USE_SSL=false
 
           # OpenAI for Chat,Embeddings and Text Features
           OPENAI_API_KEY=${{ secrets.FASTAPP_UNITTEST_OPENAI_API_KEY }}
