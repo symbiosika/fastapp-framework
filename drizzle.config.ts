@@ -36,7 +36,7 @@ export default defineConfig({
     ...(POSTGRES_USE_SSL && {
       ssl: {
         rejectUnauthorized: false,
-        ca: POSTGRES_CA,
+        ca: POSTGRES_CA && POSTGRES_CA.length > 0 ? POSTGRES_CA : undefined,
       },
     }),
     ...(POSTGRES_USE_SSL === false && {
