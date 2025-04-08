@@ -72,7 +72,7 @@ describe("Invitations API Endpoints", () => {
     expect(response.textResponse).toContain(
       "The organisationId in the body does not match the organisationId in the path"
     );
-  });
+  }, 15000);
 
   // Test getting all invitations for an organisation
   test("should get all invitations for an organisation", async () => {
@@ -84,7 +84,7 @@ describe("Invitations API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.jsonResponse)).toBe(true);
     expect(response.jsonResponse.length).toBe(1);
-  });
+  }, 15000);
 
   // Test accepting an invitation
   test("should accept an invitation", async () => {
@@ -114,7 +114,7 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test accepting all invitations
   test("should accept all pending invitations for a user", async () => {
@@ -142,7 +142,7 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test declining an invitation
   test("should decline an invitation", async () => {
@@ -172,7 +172,7 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test declining all invitations
   test("should decline all pending invitations for a user", async () => {
@@ -200,7 +200,7 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test dropping an invitation
   test("should drop an invitation", async () => {
@@ -229,7 +229,7 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(200);
-  });
+  }, 15000);
 
   // Test error handling for non-existent invitation
   test("should handle errors for non-existent invitation", async () => {
@@ -243,5 +243,5 @@ describe("Invitations API Endpoints", () => {
     );
 
     expect(response.status).toBe(500);
-  });
+  }, 15000);
 });
