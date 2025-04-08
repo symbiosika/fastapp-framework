@@ -11,11 +11,11 @@ import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
 import { initTests, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
-describe("upsertFilter", () => {
-  beforeAll(async () => {
-    await initTests();
-  });
+beforeAll(async () => {
+  await initTests();
+});
 
+describe("upsertFilter", () => {
   it("should create a new filter if it doesn't exist", async () => {
     const filterId = await upsertFilter(
       "test-category",
@@ -76,10 +76,6 @@ describe("upsertFilter", () => {
 });
 
 describe("updateFilterName", () => {
-  beforeAll(async () => {
-    await initTests();
-  });
-
   it("should update a filter's name while keeping its category", async () => {
     // First create a filter
     await upsertFilter("test-category", "old-name", TEST_ORGANISATION_1.id);
@@ -135,10 +131,6 @@ describe("updateFilterName", () => {
 });
 
 describe("updateFilterCategory", () => {
-  beforeAll(async () => {
-    await initTests();
-  });
-
   it("should update all filters of a specific category", async () => {
     // Create multiple filters with the same category
     await upsertFilter("old-category", "filter1", TEST_ORGANISATION_1.id);
@@ -193,10 +185,6 @@ describe("updateFilterCategory", () => {
 });
 
 describe("getFiltersByCategory", () => {
-  beforeAll(async () => {
-    await initTests();
-  });
-
   it("should return filters grouped by category", async () => {
     // Create some test filters
     await upsertFilter("category1", "filter1", TEST_ORGANISATION_1.id);
@@ -205,22 +193,22 @@ describe("getFiltersByCategory", () => {
 
     const groupedFilters = await getFiltersByCategory(TEST_ORGANISATION_1.id);
 
-    expect(groupedFilters?.category1).toContain("filter1");
-    expect(groupedFilters?.category1).toContain("filter2");
-    expect(groupedFilters?.category2).toContain("filter3");
+    expect(groupedFilters?.category1.length).toBeGreaterThanOrEqual(2);
+    expect(groupedFilters?.category1[0].name).toBe("filter1");
+    expect(groupedFilters?.category1[1].name).toBe("filter2");
+    expect(groupedFilters?.category2.length).toBeGreaterThanOrEqual(1);
+    expect(groupedFilters?.category2[0].name).toBe("filter3");
   });
 
   it("should return empty object if no filters exist", async () => {
-    const groupedFilters = await getFiltersByCategory("99000000-0000-0000-0000-000000000000");
+    const groupedFilters = await getFiltersByCategory(
+      "99000000-0000-0000-0000-000000000000"
+    );
     expect(groupedFilters).toEqual({});
   });
 });
 
 describe("deleteFilter", () => {
-  beforeAll(async () => {
-    await initTests();
-  });
-
   it("should delete a filter", async () => {
     // First create a filter
     await upsertFilter("test-category", "test-name", TEST_ORGANISATION_1.id);
