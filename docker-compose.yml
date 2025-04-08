@@ -1,7 +1,39 @@
+version: '3.8'
+
 services:
-  app:
-    build: ./backend
-    volumes:
-      - ./tmp_public:/usr/src/app/public/custom
+  postgres_db:
+    image: pgvector/pgvector:pg17
+    container_name: fastapp_postgres_test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fastapp_test
     ports:
-      - "3000:3000"
+      - "5432:5432" # Expose port 5432 locally
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fastapp_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    image: oven/bun:1
+    container_name: fastapp_app_test
+    depends_on:
+      postgres_db:
+        condition: service_healthy # Wait for postgres_db to be healthy
+    working_dir: /app
+    volumes:
+      - .:/app # Mount current directory into /app
+      - /app/node_modules # Exclude node_modules from the mount to use container's version
+    # env_file:
+    #   - .env # Load environment variables from .env file
+    # Keep the container running
+    command: tail -f /dev/null
+
+volumes:
+  postgres_data:
+    driver: local

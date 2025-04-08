@@ -46,5 +46,5 @@ describe("Knowledge Text Flow", () => {
 
     // Clean up (you might want to add cleanup functions)
     // await cleanupTestData(knowledgeText.id, result.id);
-  });
+  }, 15000);
 });

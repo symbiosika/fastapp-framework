@@ -69,5 +69,5 @@ describe("Chat", () => {
     // Verify final chat store state
     const updatedChat = await chatStore.get(predefinedChatId);
     expect(updatedChat?.messages.length).toBe(5);
-  });
+  }, 15000);
 });

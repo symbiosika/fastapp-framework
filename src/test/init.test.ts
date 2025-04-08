@@ -13,6 +13,7 @@ import {
   type AiProviderModelsInsert,
   organisationSpecificData,
   userSpecificData,
+  appSpecificData,
 } from "../lib/db/db-schema";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { addOrganisationMember } from "../lib/usermanagement/oganisations";
@@ -250,7 +251,7 @@ export const dropAllTestAiProviderModels = async () => {
 };
 
 /**
- * Drop user- and organisation-specific data
+ * Drop user-, organisation-, and app-specific data
  */
 export const dropAllUserAndOrganisationSpecificData = async () => {
   await getDb()
@@ -271,6 +272,7 @@ export const dropAllUserAndOrganisationSpecificData = async () => {
         TEST_ORGANISATION_3.id,
       ])
     );
+  await getDb().delete(appSpecificData);
 };
 
 /**

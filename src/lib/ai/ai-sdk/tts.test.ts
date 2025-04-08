@@ -39,7 +39,7 @@ describe("Text to Speech", () => {
       audioFilePath,
       Buffer.from(await result.file.arrayBuffer())
     );
-  });
+  }, 15000);
 
   it("should convert text to speech with specific model and voice", async () => {
     const text = "This is a test with a specific model and voice.";
@@ -58,7 +58,7 @@ describe("Text to Speech", () => {
     expect(result.file).toBeDefined();
     expect(result.filename).toBeDefined();
     expect(result.model).toBe("openai:gpt-4o-mini-tts");
-  });
+  }, 15000);
 
   it("should throw an error with invalid model", async () => {
     const text = "This should fail.";
@@ -75,5 +75,5 @@ describe("Text to Speech", () => {
         }
       )
     ).rejects.toThrow();
-  });
+  }, 15000);
 });
