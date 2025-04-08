@@ -80,12 +80,18 @@ export const updateFilterCategory = async (
   }
 };
 
+type Filter = {
+  filterId: string;
+  name: string;
+  category: string;
+};
+
 /**
  * Get all filters grouped by category for an organisation
  */
 export const getFiltersByCategory = async (
   organisationId: string
-): Promise<Record<string, string[]>> => {
+): Promise<Record<string, Filter[]>> => {
   const db = getDb();
   const filters = await db
     .select()
@@ -94,12 +100,16 @@ export const getFiltersByCategory = async (
     .orderBy(knowledgeFilters.category, knowledgeFilters.name);
 
   // Group filters by category
-  const groupedFilters: Record<string, string[]> = {};
+  const groupedFilters: Record<string, Filter[]> = {};
   for (const filter of filters) {
     if (!groupedFilters[filter.category]) {
       groupedFilters[filter.category] = [];
     }
-    groupedFilters[filter.category].push(filter.name);
+    groupedFilters[filter.category].push({
+      filterId: filter.id,
+      name: filter.name,
+      category: filter.category,
+    });
   }
 
   return groupedFilters;

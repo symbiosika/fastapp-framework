@@ -228,14 +228,15 @@ describe("Knowledge Filters API Endpoints", () => {
 
     expect(response.status).toBe(200);
     const filters = response.jsonResponse;
-    
+
     // Verify that our test categories exist with the correct filters
     expect(filters["test-category1"]).toBeDefined();
-    expect(filters["test-category1"]).toContain("filter1");
-    expect(filters["test-category1"]).toContain("filter2");
-    
+    expect(filters["test-category1"].length).toBe(2);
+    expect(filters["test-category1"][0].name).toBe("filter1");
+    expect(filters["test-category1"][1].name).toBe("filter2");
     expect(filters["test-category2"]).toBeDefined();
-    expect(filters["test-category2"]).toContain("filter3");
+    expect(filters["test-category2"].length).toBe(1);
+    expect(filters["test-category2"][0].name).toBe("filter3");
   });
 
   test("Delete a filter", async () => {
