@@ -49,6 +49,7 @@ jobs:
           POSTGRES_PASSWORD=postgres_password
           POSTGRES_DB=symbiosika
           POSTGRES_USE_SSL=false
+          POSTGRES_CA=''
 
           # OpenAI for Chat,Embeddings and Text Features
           OPENAI_API_KEY=${{ secrets.FASTAPP_UNITTEST_OPENAI_API_KEY }}
