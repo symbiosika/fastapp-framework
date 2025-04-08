@@ -12,10 +12,6 @@ const POSTGRES_USE_SSL = !process.env.POSTGRES_USE_SSL
 
 console.log("POSTGRES_USE_SSL is", POSTGRES_USE_SSL);
 
-if (!POSTGRES_CA) {
-  throw new Error("POSTGRES_CA is not set");
-}
-
 const PREFIX = "base_";
 
 export default defineConfig({
