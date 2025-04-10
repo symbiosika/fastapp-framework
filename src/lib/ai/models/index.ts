@@ -30,8 +30,9 @@ export const getAvailableApiKeys = (): {
       process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== ""
         ? true
         : false,
-    gemini:
-      process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== ""
+    google:
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY &&
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY !== ""
         ? true
         : false,
     claude:
