@@ -109,11 +109,15 @@ export const extractKnowledgeFromText = async (data: {
   const allEmbeddings: ChunkWithEmbedding[] = await Promise.all(
     chunks.map(async (chunk) => {
       try {
-        const embedding = await generateEmbedding(chunk.text, {
-          organisationId: data.organisationId,
-          userId: data.userId,
-        });
-        return { ...chunk, embedding };
+        if (chunk.text?.length > 10) {
+          const embedding = await generateEmbedding(chunk.text, {
+            organisationId: data.organisationId,
+            userId: data.userId,
+          });
+          return { ...chunk, embedding };
+        } else {
+          return { ...chunk, embedding: { embedding: [], model: "" } };
+        }
       } catch (e) {
         log.error(`Error generating embedding for chunk: ${chunk.text}`);
         log.debug(`Chunk length: ${chunk.text.length}`);
@@ -200,8 +204,11 @@ export const extractKnowledgeFromText = async (data: {
   // Store the chunks in the database
   await log.debug(`Store knowledge chunks: ${allEmbeddings.length}`);
   await Promise.all(
-    allEmbeddings.map((e) =>
-      storeKnowledgeChunk({
+    allEmbeddings.map((e) => {
+      if (e.embedding.model === "") {
+        return;
+      }
+      return storeKnowledgeChunk({
         knowledgeEntryId: knowledgeEntry.id,
         text: e.text,
         header: e.header,
@@ -209,8 +216,8 @@ export const extractKnowledgeFromText = async (data: {
         embeddingModel: e.embedding.model,
         textEmbedding: e.embedding.embedding,
         meta: e.meta,
-      })
-    )
+      });
+    })
   );
   return {
     id: knowledgeEntry.id,
