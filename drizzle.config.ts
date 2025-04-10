@@ -6,9 +6,13 @@ const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD ?? "";
 const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "";
 const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT ?? "5432");
 const POSTGRES_CA = process.env.POSTGRES_CA ?? "";
-const POSTGRES_USE_SSL = !process.env.POSTGRES_USE_SSL
+let POSTGRES_USE_SSL = !process.env.POSTGRES_USE_SSL
   ? true
   : process.env.POSTGRES_USE_SSL !== "false";
+
+if (POSTGRES_CA && POSTGRES_CA.length > 0 && POSTGRES_CA !== "none") {
+  POSTGRES_USE_SSL = true;
+}
 
 console.log("POSTGRES_USE_SSL is", POSTGRES_USE_SSL);
 
