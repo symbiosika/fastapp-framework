@@ -28,6 +28,7 @@ import type { PermissionDefinitionPerTable } from "./lib/types/permission-checke
 import type { JobHandlerRegister } from "./lib/jobs";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
+import type { StaticTemplate } from "./lib/ai/prompt-templates/static-templates";
 
 export type { SyncItem };
 export type { JobHandlerRegister };
@@ -93,6 +94,9 @@ export interface ServerSpecificConfig {
   // Licencing
   useLicenseSystem?: boolean;
   publicKey: string;
+
+  // Static Templates
+  staticTemplates?: StaticTemplate[];
 
   // Email Templates
   emailTemplates?: {

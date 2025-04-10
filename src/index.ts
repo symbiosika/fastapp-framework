@@ -86,6 +86,7 @@ import filesService from "./files-service";
 import middlewareService from "./middleware-service";
 import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
+import { addServerSideStaticTemplate } from "./lib/ai/prompt-templates/static-templates";
 
 /**
  * MAIN FUNCTION
@@ -176,6 +177,15 @@ export const defineServer = (config: ServerSpecificConfig) => {
    * and check if the server has external internet access
    */
   definePingRoute(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+  /**
+   * Adds static templates
+   */
+  if (config.staticTemplates) {
+    config.staticTemplates.forEach((template) => {
+      addServerSideStaticTemplate(template);
+    });
+  }
 
   /**
    * Initialize internal caches after DB is connected

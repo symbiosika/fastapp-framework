@@ -19,6 +19,17 @@ import {
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "./get-prompt-template";
 
+export type FullPromptTemplateImport = PromptTemplatesInsert & {
+  placeholders?: Array<
+    Omit<PromptTemplatePlaceholdersInsert, "promptTemplateId"> & {
+      suggestions?: string[];
+    }
+  >;
+  knowledgeEntryIds?: string[];
+  knowledgeFilterIds?: string[];
+  knowledgeGroupIds?: string[];
+};
+
 /**
  * Get all placeholders for one template as an object
  */
@@ -424,16 +435,7 @@ export const getFullPromptTemplates = async (organisationId: string) => {
  * Create a complete prompt template with all related data
  */
 export const createFullPromptTemplate = async (
-  data: PromptTemplatesInsert & {
-    placeholders?: Array<
-      Omit<PromptTemplatePlaceholdersInsert, "promptTemplateId"> & {
-        suggestions?: string[];
-      }
-    >;
-    knowledgeEntryIds?: string[];
-    knowledgeFilterIds?: string[];
-    knowledgeGroupIds?: string[];
-  },
+  data: FullPromptTemplateImport,
   overwriteExisting = false
 ) => {
   return await getDb().transaction(async (tx) => {

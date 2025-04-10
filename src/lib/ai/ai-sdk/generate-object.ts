@@ -1,12 +1,5 @@
-import {
-  CoreMessage,
-  generateObject,
-  LanguageModelV1,
-  jsonSchema,
-  Schema,
-} from "ai";
+import { CoreMessage, generateObject, LanguageModelV1, Schema } from "ai";
 import { log, UserContext } from "../../..";
-import { getToolsDictionary } from "../interaction/tools";
 import { getAIModel } from "./get-model";
 import { nanoid } from "nanoid";
 import { SourceReturn } from ".";
