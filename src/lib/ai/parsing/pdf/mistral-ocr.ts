@@ -129,20 +129,18 @@ export const parsePdfFileAsMarkdownMistral = async (
             "db"
           );
           imageMap.set(image.id, savedFile.path);
+
+          // replace the image reference with the new image path
+          const imageRef = new RegExp(
+            `!\\[${image.id}\\]\\(${image.id}\\)`,
+            "g"
+          );
+          page.markdown = page.markdown.replace(
+            imageRef,
+            `![${image.id}](${savedFile.path})`
+          );
         }
       }
-    }
-
-    // Extract content from pages and join all markdown content
-    let extractedText =
-      ocrResult.pages
-        ?.map((page: { markdown: string }) => page.markdown)
-        .join("\n") || "";
-
-    // Replace image references with URLs
-    for (const [imageId, url] of imageMap.entries()) {
-      const imageRef = new RegExp(`!\\[${imageId}\\]\\(${imageId}\\)`, "g");
-      extractedText = extractedText.replace(imageRef, `![${imageId}](${url})`);
     }
 
     // Delete the uploaded file from Mistral's servers
