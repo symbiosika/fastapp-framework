@@ -15,8 +15,9 @@ interface DynamicTool {
   tool: any;
 }
 
-export const checkAndRegisterDynamicRAGTool = async (
+export const checkAndRegisterDynamicTool = async (
   query: KnowledgeQuery,
+  type: "rag",
   context: UserContext
 ): Promise<DynamicTool | undefined> => {
   // Skip if no knowledge filters are selected

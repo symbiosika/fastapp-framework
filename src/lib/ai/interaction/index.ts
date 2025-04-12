@@ -8,7 +8,7 @@ import {
 import { chatCompletion, type SourceReturn } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
-import { checkAndRegisterDynamicRAGTool } from "./register-dynamic-tool";
+import { checkAndRegisterDynamicTool } from "./register-dynamic-tools";
 import { replaceCustomPlaceholders } from "../custom-replacer/replacer";
 import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
 import type { CoreMessage } from "ai";
@@ -123,12 +123,13 @@ export async function chat(
         });
 
         // Check and register the dynamic knowledge base tool
-        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicRAGTool(
+        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool(
           {
             knowledgeEntries,
             knowledgeFilters,
             knowledgeGroups,
           },
+          "rag",
           {
             userId: options.context.userId,
             organisationId: options.context.organisationId,

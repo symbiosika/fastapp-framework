@@ -1,5 +1,5 @@
 import { type Tool } from "ai";
-import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base";
+import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base-rag";
 import { SourceReturn } from "../ai-sdk";
 
 // Execute a tool call
@@ -20,7 +20,7 @@ export async function executeToolCall(
 
 // Tool registry
 export const toolRegistry: Record<string, Tool> = {
-  "query-knowledge-base": queryKnowledgeBaseTool,
+  "query-knowledge-base-rag": queryKnowledgeBaseTool,
   // More tools can be registered here.
 };
 
