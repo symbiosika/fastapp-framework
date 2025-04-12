@@ -15,7 +15,7 @@ interface DynamicTool {
   tool: any;
 }
 
-export const checkAndRegisterDynamicTool = async (
+export const checkAndRegisterDynamicRAGTool = async (
   query: KnowledgeQuery,
   context: UserContext
 ): Promise<DynamicTool | undefined> => {

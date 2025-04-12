@@ -8,12 +8,13 @@ import {
 import { chatCompletion, type SourceReturn } from "../../ai/ai-sdk";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
-import { checkAndRegisterDynamicTool } from "./register-dynamic-tool";
+import { checkAndRegisterDynamicRAGTool } from "./register-dynamic-tool";
 import { replaceCustomPlaceholders } from "../custom-replacer/replacer";
 import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
 import type { CoreMessage } from "ai";
 import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
 import { createHeadlineFromChat } from "../headline";
+import { getDynamicToolMemory } from "./tools";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -106,10 +107,6 @@ export async function chat(
     const isFirstInteraction = messages.length === 0;
 
     let dynamicKnowledgeBaseToolName: string | undefined;
-    let usedKnowledgeSources = {
-      knowledgeEntries: <string[]>[],
-      knowledgeChunks: <string[]>[],
-    };
     if (isFirstInteraction) {
       // Use template if specified, otherwise use default
       if (options.useTemplate) {
@@ -126,7 +123,7 @@ export async function chat(
         });
 
         // Check and register the dynamic knowledge base tool
-        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool(
+        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicRAGTool(
           {
             knowledgeEntries,
             knowledgeFilters,
@@ -140,12 +137,8 @@ export async function chat(
         if (dynamicKnowledgeBaseTool) {
           // set state
           dynamicKnowledgeBaseToolName = dynamicKnowledgeBaseTool.name;
-          usedKnowledgeSources.knowledgeEntries = knowledgeEntries.map(
-            (entry) => entry.id
-          );
-
           // enable tool
-          enabledToolNames.push(dynamicKnowledgeBaseTool.name);
+          enabledToolNames.push(dynamicKnowledgeBaseToolName);
         }
 
         // Add system message
@@ -252,22 +245,10 @@ export async function chat(
 
     if (dynamicToolWasUsed) {
       let sources: SourceReturn[] = [];
-      usedKnowledgeSources.knowledgeEntries.forEach((entry) => {
-        sources.push({
-          type: "knowledge-entry",
-          external: false,
-          label: "",
-          id: entry,
-        });
-      });
-      usedKnowledgeSources.knowledgeChunks.forEach((chunk) => {
-        sources.push({
-          type: "knowledge-chunk",
-          external: false,
-          label: "",
-          id: chunk,
-        });
-      });
+      if (dynamicKnowledgeBaseToolName) {
+        sources =
+          getDynamicToolMemory(dynamicKnowledgeBaseToolName)?.usedSources || [];
+      }
       response.meta.sources.push(...sources);
     }
 

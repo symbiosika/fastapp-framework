@@ -1,6 +1,6 @@
 import { type Tool } from "ai";
-import type { UserContext } from "../ai-sdk/types";
 import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base";
+import { SourceReturn } from "../ai-sdk";
 
 // Execute a tool call
 export async function executeToolCall(
@@ -29,6 +29,9 @@ export const dynamicToolsRegistry: Record<
   string,
   {
     registeredAt: Date;
+    memory?: {
+      usedSources?: SourceReturn[];
+    };
   }
 > = {};
 
@@ -41,6 +44,32 @@ export const addDynamicTool = (name: string, tool: Tool) => {
   dynamicToolsRegistry[name] = {
     registeredAt: new Date(),
   };
+};
+
+export const addKnowledgeSourceToDynamicToolMemory = (
+  name: string,
+  source: SourceReturn[] | SourceReturn
+) => {
+  if (!dynamicToolsRegistry[name]) {
+    return;
+  }
+  if (
+    !dynamicToolsRegistry[name].memory ||
+    !dynamicToolsRegistry[name].memory.usedSources
+  ) {
+    dynamicToolsRegistry[name].memory = {
+      usedSources: [],
+    };
+  }
+  if (Array.isArray(source)) {
+    dynamicToolsRegistry[name].memory.usedSources?.push(...source);
+  } else {
+    dynamicToolsRegistry[name].memory.usedSources?.push(source);
+  }
+};
+
+export const getDynamicToolMemory = (name: string) => {
+  return dynamicToolsRegistry[name]?.memory;
 };
 
 export const removeTool = (name: string) => {

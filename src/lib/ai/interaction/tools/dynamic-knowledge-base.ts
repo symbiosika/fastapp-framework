@@ -1,6 +1,7 @@
 import type { UserContext } from "../../ai-sdk/types";
 import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
+import { addKnowledgeSourceToDynamicToolMemory } from "../tools";
 
 interface DynamicKnowledgeBaseParams {
   // Pre-selected filters
@@ -89,6 +90,18 @@ export function createDynamicKnowledgeBaseTool(
           filterKnowledgeGroupIds: params.knowledgeGroupIds,
           filterKnowledgeFilterIds: params.knowledgeFilterIds,
         });
+
+        // Add these chunks to the tool memory
+        addKnowledgeSourceToDynamicToolMemory(
+          toolName,
+          results.map((chunk) => ({
+            type: "knowledge-chunk",
+            label: `[Chunk] ${chunk.knowledgeEntryName}`,
+            id: chunk.id,
+            external: false,
+            // url: chunk.url,
+          }))
+        );
 
         // Format results
         if (results.length === 0) {
