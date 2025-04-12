@@ -55,6 +55,7 @@ import {
   getUserProfileImage,
   upsertUserProfileImage,
 } from "../../lib/usermanagement/profile-image";
+import { validateScope } from "../../lib/utils/validate-scope";
 
 /**
  * Pre-register custom verification
@@ -109,11 +110,14 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         // check if id is set
         const uid = c.get("usersId");
         const user = await getUserById(uid);
+        const scopes = c.get("scopes");
+
         return c.json(user);
       } catch (err) {
         throw new HTTPException(500, {

@@ -33,6 +33,16 @@ export function addUserToContext(
 }
 
 /**
+ * HONO Middleware to add scopes to the context
+ */
+export function addScopesToContext(
+  c: Context,
+  decodedAndVerifiedToken: jwtlib.JwtPayload
+) {
+  c.set("scopes", decodedAndVerifiedToken.scopes ?? ["all"]);
+}
+
+/**
  * HONO Middleware to check if the user has permission for the given path and method
  */
 export async function checkUserPermission(c: Context, next: Function) {
@@ -58,8 +68,7 @@ export const checkToken = async (c: Context) => {
 
   let jwtToken = "";
 
-  // check if there is a "token" set in the URL request
-
+  // check if there is a "token=xxx" set in the URL request
   if (token) {
     // try to generate a JWT token from the token string
     const temporaryJwt = await generateTemporaryJwtFromToken(token);
@@ -86,6 +95,7 @@ export const authAndSetUsersInfo = async (c: Context, next: Function) => {
     const decodedAndVerifiedToken = await checkToken(c);
     if (typeof decodedAndVerifiedToken === "object") {
       addUserToContext(c, decodedAndVerifiedToken);
+      addScopesToContext(c, decodedAndVerifiedToken);
     } else {
       return c.text("Invalid token", 401);
     }
@@ -120,6 +130,7 @@ export const authAndSetUsersInfoOrRedirectToLogin = async (
 
     if (typeof decodedAndVerifiedToken === "object") {
       addUserToContext(c, decodedAndVerifiedToken);
+      addScopesToContext(c, decodedAndVerifiedToken);
     } else {
       return c.redirect("/manage/#/login?redirect=" + c.req.url);
     }

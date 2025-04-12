@@ -38,7 +38,7 @@ export type FastAppHonoContextVariables = {
   usersId: string;
   usersEmail: string;
   usersRoles: string[];
-  logger: typeof Logger;
+  scopes: string[];
 };
 
 export interface FastAppHono
