@@ -41,6 +41,7 @@ import aiKnowledgeGroupRoutes from "./routes/organisation/[organisationId]/ai/kn
 import aiKnowledgeTextsRoutes from "./routes/organisation/[organisationId]/ai/knowledge-texts";
 import aiKnowledgeChunksRoutes from "./routes/organisation/[organisationId]/ai/knowledge-chunks";
 import aiTemplateRelationsRoutes from "./routes/organisation/[organisationId]/ai/template-relations";
+import aiImagesRoutes from "./routes/organisation/[organisationId]/ai/images";
 import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
 import defineOrganisationRoutes from "./routes/organisation";
@@ -285,6 +286,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiKnowledgeTextsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiKnowledgeChunksRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiTemplateRelationsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiImagesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiChatRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiTemplatesRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiPromptSnippetsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);

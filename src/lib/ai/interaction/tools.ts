@@ -1,6 +1,6 @@
 import { type Tool } from "ai";
 import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base-rag";
-import { SourceReturn } from "../ai-sdk";
+import type { SourceReturn } from "../ai-sdk";
 
 // Execute a tool call
 export async function executeToolCall(

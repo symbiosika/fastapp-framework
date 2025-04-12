@@ -1,7 +1,7 @@
-import { CoreMessage } from "ai";
+import type { CoreMessage } from "ai";
 import log from "../../log";
 import { chatCompletion } from "../ai-sdk";
-import { UserContext } from "../ai-sdk/types";
+import type { UserContext } from "../ai-sdk/types";
 
 /**
  * Create a headline from a chat

@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid";
 import {
-  PromptTemplatePlaceholdersSelect,
-  PromptTemplatesSelect,
+  type PromptTemplatePlaceholdersSelect,
+  type PromptTemplatesSelect,
 } from "../../db/db-schema";
-import { FullPromptTemplateImport } from "./crud";
+import type { FullPromptTemplateImport } from "./crud";
 
 export type StaticTemplate = PromptTemplatesSelect & {
   placeholders: PromptTemplatePlaceholdersSelect[];

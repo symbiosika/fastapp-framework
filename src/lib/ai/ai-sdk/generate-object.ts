@@ -1,8 +1,13 @@
-import { CoreMessage, generateObject, LanguageModelV1, Schema } from "ai";
-import { log, UserContext } from "../../..";
+import {
+  type CoreMessage,
+  generateObject,
+  type LanguageModelV1,
+  type Schema,
+} from "ai";
+import { log, type UserContext } from "../../..";
 import { getAIModel } from "./get-model";
 import { nanoid } from "nanoid";
-import { SourceReturn } from ".";
+import type { SourceReturn } from ".";
 
 /*
 How to define a schema for the output of the AI:
