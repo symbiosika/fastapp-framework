@@ -162,4 +162,26 @@ describe("User API Endpoints", () => {
     });
     expect(unauthorizedResponse.status).toBe(401);
   });
+
+  // Test available scopes endpoint
+  it("should get available scopes for API tokens", async () => {
+    const response = await app.request(
+      "/api/user/api-tokens/available-scopes",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `jwt=${jwt}`,
+        },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toHaveProperty("all");
+    expect(Array.isArray(data.all)).toBe(true);
+    expect(data.all.length).toBeGreaterThan(0);
+    expect(data.all).toContain("user:read");
+    expect(data.all).toContain("user:write");
+  });
 });
