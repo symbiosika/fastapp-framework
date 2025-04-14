@@ -25,6 +25,7 @@ import {
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -53,6 +54,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:prompt-snippets:read"),
     validator(
       "query",
       v.object({
@@ -105,6 +107,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:prompt-snippets:read"),
     validator(
       "param",
       v.object({
@@ -151,6 +154,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:prompt-snippets:write"),
     validator("json", promptSnippetsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -194,6 +198,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:prompt-snippets:write"),
     validator("json", promptSnippetsUpdateSchema),
     validator(
       "param",
@@ -237,6 +242,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:prompt-snippets:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })

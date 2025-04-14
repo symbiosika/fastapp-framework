@@ -32,6 +32,7 @@ import {
   pluginsUpdateSchema,
 } from "../../../../dbSchema";
 import { isOrganisationMember } from "../..";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 const executeEndpoint = async (
   c: Context,
@@ -98,6 +99,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -136,6 +138,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -175,6 +178,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:write"),
     validator("param", v.object({ organisationId: v.string() })),
     validator("json", pluginsInsertSchema),
     isOrganisationMember,
@@ -219,6 +223,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), idOrName: v.string() })
@@ -265,6 +270,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), idOrName: v.string() })
@@ -310,6 +316,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), idOrName: v.string() })
@@ -352,6 +359,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator(
       "param",
       v.object({
@@ -404,6 +412,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator(
       "param",
       v.object({
@@ -457,6 +466,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator(
       "param",
       v.object({
@@ -508,6 +518,7 @@ export default function definePluginRoutes(
         },
       },
     }),
+    validateScope("plugins:read"),
     validator(
       "param",
       v.object({

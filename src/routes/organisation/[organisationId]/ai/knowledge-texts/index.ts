@@ -25,6 +25,7 @@ import {
   knowledgeTextUpdateSchema,
 } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutesForKnowledgeTexts(
   app: FastAppHono,
@@ -48,6 +49,7 @@ export default function defineRoutesForKnowledgeTexts(
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator("json", knowledgeTextInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -91,6 +93,7 @@ export default function defineRoutesForKnowledgeTexts(
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator(
       "query",
       v.object({
@@ -156,6 +159,7 @@ export default function defineRoutesForKnowledgeTexts(
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator("json", knowledgeTextUpdateSchema),
     validator(
       "query",
@@ -208,6 +212,7 @@ export default function defineRoutesForKnowledgeTexts(
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator(
       "query",
       v.object({

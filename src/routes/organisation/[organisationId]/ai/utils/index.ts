@@ -10,6 +10,7 @@ import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationMember } from "../../..";
 import { textToSpeech } from "../../../../../lib/ai/ai-sdk/tts";
 import { speechToText } from "../../../../../lib/ai/ai-sdk/stt";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -39,6 +40,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:tts"),
     validator(
       "json",
       v.object({
@@ -136,6 +138,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:stt"),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "form",

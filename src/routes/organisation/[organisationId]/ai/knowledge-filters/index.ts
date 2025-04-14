@@ -22,6 +22,7 @@ import { validateOrganisationId } from "../../../../../lib/utils/doublecheck-org
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationAdmin, isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 const upsertFilterValidation = v.object({
   category: v.string(),
@@ -76,6 +77,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator("json", upsertFilterValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
@@ -116,6 +118,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator("json", updateFilterNameValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
@@ -159,6 +162,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator("json", updateFilterCategoryValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
@@ -204,6 +208,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge-manage:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -235,6 +240,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator(
       "query",
       v.object({

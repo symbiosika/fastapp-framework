@@ -32,6 +32,7 @@ import {
 import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { RESPONSES } from "../../../../lib/responses";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 export default function definePermissionGroupRoutes(
   app: FastAppHono,
@@ -59,6 +60,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator("json", userPermissionGroupsInsertSchema),
     async (c) => {
       try {
@@ -95,6 +97,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:read"),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
@@ -131,6 +134,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -170,6 +174,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -206,6 +211,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -251,6 +257,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({
@@ -290,6 +297,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({
@@ -333,6 +341,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator("json", pathPermissionsInsertSchema),
     async (c) => {
       try {
@@ -369,6 +378,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -408,6 +418,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -444,6 +455,7 @@ export default function definePermissionGroupRoutes(
         },
       },
     }),
+    validateScope("permissions:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })

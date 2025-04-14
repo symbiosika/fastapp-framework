@@ -23,6 +23,7 @@ import {
 import { chatInitInputValidation } from "../../../../../lib/ai/chat-store/compatibility";
 import { chatWithTemplateReturnValidation } from "../../../../../lib/ai/chat-store/compatibility";
 import { chatStore } from "../../../../../lib/ai/chat-store";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -49,6 +50,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat"),
     validator("json", chatInitInputValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -135,6 +137,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat"),
     validator("json", chatInputValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -183,6 +186,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat-history:read"),
     validator(
       "param",
       v.object({
@@ -240,6 +244,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat-history:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -291,6 +296,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat-history:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -330,6 +336,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat"),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "json",
@@ -396,6 +403,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:chat-history:write"),
     validator(
       "json",
       v.object({

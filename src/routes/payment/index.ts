@@ -10,6 +10,7 @@ import log from "../../lib/log";
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
+import { validateScope } from "../../lib/utils/validate-scope";
 
 /**
  * Check if the user has an active subscription
@@ -96,6 +97,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:read"),
     validator(
       "query",
       v.object({
@@ -148,6 +150,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:read"),
     validator(
       "query",
       v.object({
@@ -190,6 +193,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:write"),
     validator(
       "query",
       v.object({
@@ -265,6 +269,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:read"),
     validator(
       "query",
       v.object({
@@ -327,6 +332,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:read"),
     validator(
       "json",
       v.object({
@@ -390,6 +396,7 @@ export default function defineRoutes(app: FastAppHono) {
         200: { description: "Successful response" },
       },
     }),
+    validateScope("payment:read"),
     validator(
       "query",
       v.object({

@@ -11,6 +11,7 @@ import * as v from "valibot";
 import log from "../../lib/log";
 import { authAndSetUsersInfo } from "../../lib/utils/hono-middlewares";
 import { chatStore } from "../../lib/ai/chat-store";
+import { validateScope } from "../../lib/utils/validate-scope";
 
 export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
   /**
@@ -38,6 +39,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
         },
       },
     }),
+    validateScope("app:logs"),
     async (c) => {
       try {
         const id = c.req.param("id");
@@ -99,6 +101,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
         },
       },
     }),
+    validateScope("app:logs"),
     validator("param", v.object({ id: v.string() })),
     async (c) => {
       try {
@@ -139,6 +142,7 @@ export default function defineAdminRoutes(app: FastAppHono, basePath: string) {
         },
       },
     }),
+    validateScope("app:logs"),
     async (c) => {
       try {
         const logFiles = await logger.getLogFilePaths();

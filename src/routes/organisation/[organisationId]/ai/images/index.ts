@@ -17,6 +17,7 @@ import {
   generateImages,
   imageGenerationValidation,
 } from "../../../../../lib/ai/ai-sdk/image";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineImageRoutes(
   app: FastAppHono,
@@ -53,6 +54,7 @@ export default function defineImageRoutes(
         },
       },
     }),
+    validateScope("ai:generate-images"),
     validator("json", imageGenerationValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,

@@ -24,6 +24,7 @@ import {
   deleteKnowledgeFiltersFromPromptTemplate,
   deleteKnowledgeGroupsFromPromptTemplate,
 } from "../../../../../lib/ai/prompt-templates/assign-knowledge";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -50,6 +51,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "json",
       v.object({
@@ -113,6 +115,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "json",
       v.object({
@@ -177,6 +180,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "json",
       v.object({
@@ -249,6 +253,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -301,6 +306,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -353,6 +359,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -397,6 +404,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({
@@ -447,6 +455,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({
@@ -497,6 +506,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({

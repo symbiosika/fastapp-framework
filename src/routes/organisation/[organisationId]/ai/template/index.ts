@@ -52,6 +52,7 @@ import {
   isOrganisationAdmin,
   checkOrganisationIdInBody,
 } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 const placeholdersSelectWithSuggestionsSchema = v.intersect([
   promptTemplatePlaceholdersSelectSchema,
@@ -103,6 +104,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "query",
       v.object({
@@ -167,6 +169,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", promptTemplatesInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
@@ -213,6 +216,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", promptTemplatesUpdateSchema),
     validator(
       "param",
@@ -260,6 +264,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({
@@ -305,6 +310,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -348,6 +354,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -392,6 +399,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", placeholdersInsertWithSuggestionsSchema),
     validator(
       "param",
@@ -442,6 +450,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", placeholdersUpdateWithSuggestionsSchema),
     validator(
       "param",
@@ -488,6 +497,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({
@@ -537,6 +547,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "query",
       v.object({
@@ -592,6 +603,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "query",
       v.object({
@@ -644,6 +656,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:read"),
     validator(
       "param",
       v.object({
@@ -690,6 +703,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", promptSnippetsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -733,6 +747,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", promptSnippetsUpdateSchema),
     validator(
       "param",
@@ -776,6 +791,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -816,6 +832,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:assistants:write"),
     validator("json", promptTemplateImportSchema),
     validator("param", v.object({ organisationId: v.string() })),
     validator(

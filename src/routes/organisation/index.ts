@@ -33,6 +33,7 @@ import {
 } from "../../dbSchema";
 import { createOrganisationInvitation } from "../../lib/usermanagement/invitations";
 import type { MiddlewareHandler } from "hono";
+import { validateScope } from "../../lib/utils/validate-scope";
 
 /**
  * Middleware to check if user is a member of the organisation
@@ -121,6 +122,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator("json", organisationsInsertSchema),
     async (c) => {
       try {
@@ -169,6 +171,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -219,6 +222,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember, // check if user is a member of the organisation
     async (c) => {
@@ -251,6 +255,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator("json", organisationsUpdateSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin, // check if user is admin or owner of the organisation
@@ -285,6 +290,7 @@ export default function defineOrganisationRoutes(
         200: { description: "Successful response" },
       },
     }),
+    validateScope("organisations:write"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin, // check if user is admin or owner of the organisation
     async (c) => {
@@ -322,6 +328,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "json",
@@ -378,6 +385,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "json",
@@ -430,6 +438,7 @@ export default function defineOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator(
       "json",
       v.object({
@@ -478,6 +487,7 @@ export default function defineOrganisationRoutes(
         200: { description: "Successful response" },
       },
     }),
+    validateScope("organisations:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), memberId: v.string() })

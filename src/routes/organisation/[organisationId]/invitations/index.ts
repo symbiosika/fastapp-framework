@@ -27,6 +27,7 @@ import {
 } from "../../../../dbSchema";
 import { RESPONSES } from "../../../../lib/responses";
 import { checkOrganisationIdInBody, isOrganisationAdmin } from "../..";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 export default function defineInvitationsRoutes(
   app: FastAppHono,
@@ -65,6 +66,7 @@ export default function defineInvitationsRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator("json", organisationInvitationsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     validator("query", v.object({ sendMail: v.optional(v.string()) })),
@@ -112,6 +114,7 @@ export default function defineInvitationsRoutes(
         },
       },
     }),
+    validateScope("organisations:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
     async (c) => {
@@ -146,6 +149,7 @@ export default function defineInvitationsRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -182,6 +186,7 @@ export default function defineInvitationsRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -223,6 +228,7 @@ export default function defineInvitationsRoutes(
         },
       },
     }),
+    validateScope("organisations:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })

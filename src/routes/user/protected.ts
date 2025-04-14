@@ -149,6 +149,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "json",
       v.object({
@@ -207,6 +208,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "form",
       v.object({
@@ -252,6 +254,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -293,6 +296,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "json",
       v.object({
@@ -341,6 +345,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "json",
       v.object({
@@ -393,6 +398,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -428,6 +434,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -456,6 +463,7 @@ export function defineSecuredUserRoutes(
         200: { description: "Successful response" },
       },
     }),
+    validateScope("user:write"),
     validator(
       "param",
       v.object({
@@ -506,6 +514,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     validator(
       "param",
       v.object({
@@ -544,6 +553,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "param",
       v.object({
@@ -592,6 +602,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -632,6 +643,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "json",
       v.object({
@@ -681,6 +693,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     validator(
       "query",
       v.object({
@@ -732,6 +745,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -773,6 +787,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "json",
       v.object({
@@ -841,6 +856,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:read"),
     async (c) => {
       try {
         const userId = c.get("usersId");
@@ -871,6 +887,7 @@ export function defineSecuredUserRoutes(
         },
       },
     }),
+    validateScope("user:write"),
     validator(
       "param",
       v.object({

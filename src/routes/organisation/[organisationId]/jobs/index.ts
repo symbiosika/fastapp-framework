@@ -25,6 +25,7 @@ import { getDb } from "../../../../lib/db/db-connection";
 import { jobs } from "../../../../lib/db/schema/jobs";
 import { eq } from "drizzle-orm";
 import { isOrganisationMember } from "../..";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 /**
  * Define the job management routes
@@ -56,6 +57,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:read"),
     validator("param", v.object({ organisationId: v.string() })),
     validator(
       "query",
@@ -119,6 +121,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), jobId: v.string() })
@@ -175,6 +178,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:write"),
     validator(
       "json",
       v.object({
@@ -229,6 +233,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), jobId: v.string() })
@@ -297,6 +302,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), jobId: v.string() })
@@ -371,6 +377,7 @@ export default function defineJobRoutes(
         },
       },
     }),
+    validateScope("jobs:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), jobId: v.string() })

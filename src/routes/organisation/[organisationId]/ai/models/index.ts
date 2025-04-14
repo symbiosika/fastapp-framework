@@ -34,6 +34,7 @@ import {
 } from "../../../../../lib/ai/models";
 import type { SyncModelsResult } from "../../../../../lib/ai/models/types";
 import { syncModels } from "../../../../../lib/ai/models/sync";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 /**
  * Define the AI provider models management routes
@@ -65,6 +66,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:read"),
     validator("param", v.object({ organisationId: v.string() })),
     validator("query", v.object({ filterAvailable: v.optional(v.string()) })),
     isOrganisationMember,
@@ -108,6 +110,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), modelId: v.string() })
@@ -150,6 +153,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:write"),
     validator("json", aiProviderModelsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
@@ -194,6 +198,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:write"),
     validator("json", aiProviderModelsUpdateSchema),
     validator(
       "param",
@@ -248,6 +253,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), modelId: v.string() })
@@ -296,6 +302,7 @@ export default function defineModelRoutes(
         },
       },
     }),
+    validateScope("ai:models:write"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationAdmin,
     async (c) => {

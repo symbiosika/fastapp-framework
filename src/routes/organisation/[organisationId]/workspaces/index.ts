@@ -37,6 +37,7 @@ import { validateOrganisationId } from "../../../../lib/utils/doublecheck-organi
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { RESPONSES } from "../../../../lib/responses";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 /**
  * Define the workspace management routes
@@ -68,6 +69,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator("query", v.object({ parentId: v.optional(v.string()) })),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
@@ -111,6 +113,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
@@ -149,6 +152,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), workspaceId: v.string() })
@@ -190,6 +194,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:write"),
     validator("json", workspacesInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
@@ -232,6 +237,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:write"),
     validator("json", workspacesUpdateSchema),
     validator(
       "param",
@@ -272,6 +278,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), workspaceId: v.string() })
@@ -309,6 +316,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:write"),
     validator("json", WorkspaceRelationsSchema),
     validator(
       "param",
@@ -347,6 +355,7 @@ export default function defineWorkspaceRoutes(
         200: { description: "Successful response" },
       },
     }),
+    validateScope("workspaces:write"),
     validator("json", WorkspaceRelationsSchema),
     validator(
       "param",
@@ -399,6 +408,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), workspaceId: v.string() })
@@ -436,6 +446,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:write"),
     validator("json", v.object({ userIds: v.array(v.string()) })),
     validator(
       "param",
@@ -474,6 +485,7 @@ export default function defineWorkspaceRoutes(
         200: { description: "Successful response" },
       },
     }),
+    validateScope("workspaces:write"),
     validator(
       "param",
       v.object({
@@ -521,6 +533,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator(
       "param",
       v.object({
@@ -577,6 +590,7 @@ export default function defineWorkspaceRoutes(
         },
       },
     }),
+    validateScope("workspaces:read"),
     validator(
       "param",
       v.object({

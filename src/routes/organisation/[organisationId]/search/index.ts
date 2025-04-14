@@ -10,6 +10,7 @@ import * as v from "valibot";
 import { describeRoute } from "hono-openapi";
 import { getUserByEmail } from "../../../../lib/usermanagement/user";
 import { isOrganisationMember } from "../..";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 /**
  * Define the backend secret management routes
@@ -47,6 +48,7 @@ export default function defineSearchInOrganisationRoutes(
         },
       },
     }),
+    validateScope("organisations:read"),
     validator(
       "query",
       v.object({

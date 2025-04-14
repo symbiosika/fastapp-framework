@@ -26,6 +26,7 @@ import {
   getTeamsForKnowledgeGroup,
 } from "../../../../../lib/ai/knowledge/knowledge-groups";
 import { RESPONSES } from "../../../../../lib/responses";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 // Add validation schema for knowledge groups
 const knowledgeGroupValidation = v.object({
@@ -63,6 +64,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator("json", knowledgeGroupValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -103,6 +105,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:read"),
     validator(
       "query",
       v.object({
@@ -149,6 +152,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:read"),
     validator(
       "query",
       v.object({
@@ -204,6 +208,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator("json", knowledgeGroupUpdateValidation),
     validator(
       "param",
@@ -245,6 +250,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -282,6 +288,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator(
       "param",
       v.object({
@@ -326,6 +333,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:write"),
     validator(
       "param",
       v.object({
@@ -381,6 +389,7 @@ export default function defineKnowledgeGroupRoutes(
         },
       },
     }),
+    validateScope("ai:knowledge-manage:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })

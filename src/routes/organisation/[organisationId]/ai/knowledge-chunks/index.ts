@@ -10,6 +10,7 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { knowledgeChunksSchema } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 export default function defineRoutesForKnowledgeChunks(
   app: FastAppHono,
@@ -38,6 +39,7 @@ export default function defineRoutesForKnowledgeChunks(
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })

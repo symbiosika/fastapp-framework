@@ -22,7 +22,7 @@ import {
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { RESPONSES } from "../../../../lib/responses";
-
+import { validateScope } from "../../../../lib/utils/validate-scope";
 export default function defineWebhookRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
@@ -49,6 +49,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:write"),
     validator("json", newWebhookSchema),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
@@ -94,6 +95,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:read"),
     validator("param", v.object({ organisationId: v.string() })),
     authAndSetUsersInfo,
     async (c) => {
@@ -132,6 +134,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:read"),
     validator("param", v.object({ organisationId: v.string() })),
     authAndSetUsersInfo,
     async (c) => {
@@ -170,6 +173,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -215,6 +219,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:write"),
     validator("json", updateWebhookSchema),
     validator(
       "param",
@@ -257,6 +262,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:write"),
     validator(
       "param",
       v.object({ id: v.string(), organisationId: v.string() })
@@ -301,6 +307,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:write"),
     validator(
       "json",
       v.object({
@@ -374,6 +381,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:read"),
     validator("json", v.object({ webhookId: v.string() })),
     validator("param", v.object({ organisationId: v.string() })),
     authAndSetUsersInfo,
@@ -409,6 +417,7 @@ export default function defineWebhookRoutes(
         },
       },
     }),
+    validateScope("webhooks:write"),
     validator("json", v.any()),
     validator(
       "param",

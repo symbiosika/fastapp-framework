@@ -27,6 +27,7 @@ import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
 import { RESPONSES } from "../../../../lib/responses";
 import type { MiddlewareHandler } from "hono";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 /**
  * Middleware to check if user is a member of the organisation
@@ -115,6 +116,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator("json", teamsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
@@ -158,6 +160,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:read"),
     validator("param", v.object({ organisationId: v.string() })),
     async (c) => {
       try {
@@ -195,6 +198,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), teamId: v.string() })
@@ -230,6 +234,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator("json", teamsInsertSchema),
     validator(
       "param",
@@ -268,6 +273,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), teamId: v.string() })
@@ -318,6 +324,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), teamId: v.string() })
@@ -370,6 +377,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator(
       "json",
       v.object({
@@ -432,6 +440,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator(
       "json",
       v.object({
@@ -487,6 +496,7 @@ export default function defineTeamRoutes(
         },
       },
     }),
+    validateScope("teams:write"),
     validator(
       "param",
       v.object({

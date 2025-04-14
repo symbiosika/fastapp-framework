@@ -31,6 +31,7 @@ import {
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { checkOrganisationIdInBody, isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 // Add these validation schemas near the top with other schemas
 const addUsersToGroupValidation = v.object({
@@ -69,6 +70,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:read"),
     validator(
       "param",
       v.object({
@@ -116,6 +118,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:write"),
     validator("json", chatSessionGroupsInsertSchema),
     validator("param", v.object({ organisationId: v.string() })),
     checkOrganisationIdInBody,
@@ -167,6 +170,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:read"),
     validator("param", v.object({ organisationId: v.string() })),
     validator("query", v.object({ workspaceId: v.optional(v.string()) })),
     isOrganisationMember,
@@ -214,6 +218,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:write"),
     validator("json", chatSessionGroupsUpdateSchema),
     validator(
       "param",
@@ -267,6 +272,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), groupId: v.string() })
@@ -313,6 +319,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:write"),
     validator("json", addUsersToGroupValidation),
     validator(
       "param",
@@ -377,6 +384,7 @@ export default function defineChatGroupRoutes(
         },
       },
     }),
+    validateScope("ai:chat-groups:write"),
     validator("query", v.object({ userIds: v.string() })),
     validator(
       "param",

@@ -27,6 +27,7 @@ import {
   isOrganisationAdmin,
   isOrganisationMember,
 } from "../../../organisation/index";
+import { validateScope } from "../../../../lib/utils/validate-scope";
 
 /**
  * Define the payment routes
@@ -59,6 +60,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("files:write"),
     validator(
       "param",
       v.object({
@@ -125,6 +127,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("files:read"),
     validator(
       "param",
       v.object({
@@ -181,6 +184,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("files:read"),
     validator(
       "param",
       v.object({
@@ -246,6 +250,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("files:write"),
     validator(
       "param",
       v.object({

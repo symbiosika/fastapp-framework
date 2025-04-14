@@ -27,6 +27,7 @@ import {
   knowledgeEntrySchema,
 } from "../../../../../dbSchema";
 import { isOrganisationMember } from "../../..";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 const fineTuningDataValidation = v.object({
   organisationId: v.string(),
@@ -67,6 +68,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:fine-tuning:read"),
     validator(
       "query",
       v.object({
@@ -113,6 +115,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:fine-tuning:read"),
     validator(
       "param",
       v.object({
@@ -155,6 +158,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:fine-tuning:write"),
     validator("json", fineTuningDataValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -192,6 +196,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:fine-tuning:write"),
     validator("json", fineTuningDataValidation),
     validator(
       "param",
@@ -231,6 +236,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:fine-tuning:write"),
     validator(
       "param",
       v.object({

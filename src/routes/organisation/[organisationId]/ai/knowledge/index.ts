@@ -43,6 +43,7 @@ import {
   removeFilterFromKnowledgeEntry,
   upsertFilter,
 } from "../../../../../lib/ai/knowledge/knowledge-filters";
+import { validateScope } from "../../../../../lib/utils/validate-scope";
 
 const FileSourceType = {
   DB: "db",
@@ -217,6 +218,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator(
       "query",
       v.object({
@@ -286,6 +288,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -333,6 +336,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -385,6 +389,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -421,6 +426,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", similaritySearchValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -489,6 +495,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", parseDocumentValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -540,6 +547,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", generateKnowledgeValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -613,6 +621,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -724,6 +733,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", addFromTextValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -781,6 +791,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", addFromUrlValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -833,6 +844,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("json", checkForSyncValidation),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
@@ -916,6 +928,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator("param", v.object({ organisationId: v.string() })),
     isOrganisationMember,
     async (c) => {
@@ -999,6 +1012,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -1055,6 +1069,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
@@ -1092,6 +1107,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
+    validateScope("ai:knowledge:write"),
     validator(
       "param",
       v.object({
