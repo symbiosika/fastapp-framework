@@ -56,6 +56,7 @@ import {
   upsertUserProfileImage,
 } from "../../lib/usermanagement/profile-image";
 import { validateScope } from "../../lib/utils/validate-scope";
+import { availableScopes } from "../../lib/auth/available-scopes";
 
 /**
  * Pre-register custom verification
@@ -757,6 +758,38 @@ export function defineSecuredUserRoutes(
           message: "Token-Refresh fehlgeschlagen: " + error,
         });
       }
+    }
+  );
+
+  /**
+   * Get all available scopes for creating a new API token
+   */
+  app.get(
+    API_BASE_PATH + "/user/api-tokens/available-scopes",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "get",
+      path: "/user/api-tokens/available-scopes",
+      tags: ["user", "api-tokens"],
+      summary: "Get all available scopes for creating a new API token",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  all: v.array(v.string()),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validateScope("user:read"),
+    async (c) => {
+      return c.json(availableScopes);
     }
   );
 
