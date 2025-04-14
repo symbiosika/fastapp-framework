@@ -23,12 +23,11 @@ export type * from "./lib/ai/ai-sdk/types";
 
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";
-import Logger from "./lib/log";
 import type { PermissionDefinitionPerTable } from "./lib/types/permission-checker";
 import type { JobHandlerRegister } from "./lib/jobs";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
-import type { StaticTemplate } from "./lib/ai/prompt-templates/static-templates";
+import type { StaticTemplateImport } from "./lib/ai/prompt-templates/static-templates";
 
 export type { SyncItem };
 export type { JobHandlerRegister };
@@ -96,7 +95,7 @@ export interface ServerSpecificConfig {
   publicKey: string;
 
   // Static Templates
-  staticTemplates?: StaticTemplate[];
+  staticTemplates?: StaticTemplateImport[];
 
   // Email Templates
   emailTemplates?: {

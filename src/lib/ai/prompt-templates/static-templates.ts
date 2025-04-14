@@ -1,12 +1,16 @@
 import { nanoid } from "nanoid";
 import {
+  type PromptTemplatesInsert,
   type PromptTemplatePlaceholdersSelect,
   type PromptTemplatesSelect,
 } from "../../db/db-schema";
-import type { FullPromptTemplateImport } from "./crud";
 
 export type StaticTemplate = PromptTemplatesSelect & {
-  placeholders: PromptTemplatePlaceholdersSelect[];
+  placeholders: Array<
+    PromptTemplatePlaceholdersSelect & {
+      suggestions: string[];
+    }
+  >;
 };
 
 /**
@@ -25,15 +29,45 @@ export const getServerSideStaticTemplates = (organisationId: string) => {
 };
 
 /**
+ * Get a static template by name
+ */
+export const getServerSideStaticTemplateByName = (name: string) => {
+  const t = serverSideStaticTemplates.find(
+    (template) => template.name === name
+  );
+  if (!t) {
+    throw new Error("Static template not found");
+  }
+  return t;
+};
+
+export type StaticTemplateImport = PromptTemplatesInsert & {
+  placeholders?: Array<{
+    name: string;
+    description: string | undefined;
+    type?: "image" | "text" | undefined;
+    label?: string | undefined;
+    hidden?: boolean | undefined;
+    requiredByUser?: boolean | undefined;
+    defaultValue?: string | null | undefined;
+    suggestions?: string[];
+  }>;
+};
+
+/**
  * Add a static template
  */
-export const addServerSideStaticTemplate = (
-  template: FullPromptTemplateImport
-) => {
-  const placeholders =
+export const addServerSideStaticTemplate = (template: StaticTemplateImport) => {
+  if (template.category !== "system") {
+    throw new Error("Static templates must be of category 'system'");
+  }
+
+  const placeholders: (PromptTemplatePlaceholdersSelect & {
+    suggestions: string[];
+  })[] =
     template.placeholders && template.placeholders.length > 0
       ? template.placeholders.map((placeholder) => ({
-          id: placeholder.id || "static-" + nanoid(6),
+          id: "static-" + nanoid(6),
           name: placeholder.name || "",
           label: placeholder.label || "",
           description: placeholder.description || "",
@@ -55,6 +89,7 @@ export const addServerSideStaticTemplate = (
             type: "text" as const,
             requiredByUser: false,
             defaultValue: null,
+            suggestions: [],
           },
         ];
 

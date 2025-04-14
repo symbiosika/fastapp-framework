@@ -18,6 +18,7 @@ import {
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "./get-prompt-template";
+import { getServerSideStaticTemplateByName } from "./static-templates";
 
 export type FullPromptTemplateImport = PromptTemplatesInsert & {
   placeholders?: Array<
@@ -346,6 +347,20 @@ export const getFullPromptTemplate = async (request: {
   promptCategory?: string;
   organisationId?: string;
 }) => {
+  if (
+    request.promptCategory &&
+    request.promptName &&
+    request.promptCategory === "system"
+  ) {
+    const template = getServerSideStaticTemplateByName(request.promptName);
+    return {
+      ...template,
+      knowledgeEntries: [],
+      knowledgeFilters: [],
+      knowledgeGroups: [],
+    };
+  }
+
   const where = request.promptId
     ? eq(promptTemplates.id, request.promptId)
     : request.promptName && request.promptCategory && request.organisationId
