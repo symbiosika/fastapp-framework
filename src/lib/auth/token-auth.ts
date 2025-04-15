@@ -6,6 +6,7 @@ import { generateJwt } from ".";
 import { _GLOBAL_SERVER_CONFIG } from "../../store";
 import * as crypto from "crypto";
 import { getUserById } from "../usermanagement/user";
+import { availableScopes } from "./available-scopes";
 
 /**
  * Generates a secure token
@@ -42,6 +43,14 @@ export const createApiToken = async ({
 }): Promise<{ token: string }> => {
   const token = generateApiToken();
   const hashedToken = hashToken(token);
+
+  // Check if all requested scopes are valid
+  const validScopes = scopes.filter((scope) =>
+    availableScopes.all.includes(scope)
+  );
+  if (validScopes.length !== scopes.length) {
+    throw new Error("Invalid requested scopes");
+  }
 
   // Optional: Calculate the expiration date
   let expiresAt = undefined;
