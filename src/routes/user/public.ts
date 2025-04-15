@@ -15,6 +15,13 @@ import { RESPONSES } from "../../lib/responses";
 import { verifyPasswordResetToken } from "../../lib/auth/magic-link";
 import { checkIfInvitationCodeIsNeededToRegister } from "../../lib/usermanagement/invitations";
 import { verifyApiTokenAndGetJwt } from "../../lib/auth/token-auth";
+import { OAuthAuth } from "../../lib/auth/oauth2";
+
+let OAUTH_REDIRECT_URI =
+  process.env.OAUTH_REDIRECT_URI || "/manage/#/oauth-callback";
+if (OAUTH_REDIRECT_URI.endsWith("/")) {
+  OAUTH_REDIRECT_URI = OAUTH_REDIRECT_URI.slice(0, -1);
+}
 
 /**
  * Define the payment routes
@@ -117,7 +124,11 @@ export function definePublicUserRoutes(
           const r = await LocalAuth.loginWithMagicLink(data.magicLinkToken);
           return c.json({ ...r, redirectUrl: data.redirectUrl });
         } else {
-          const r = await LocalAuth.login(data.email, data.password, sendVerificationEmail);
+          const r = await LocalAuth.login(
+            data.email,
+            data.password,
+            sendVerificationEmail
+          );
           return c.json({ ...r, redirectUrl: data.redirectUrl });
         }
       } catch (err) {
@@ -402,6 +413,138 @@ export function definePublicUserRoutes(
       } catch (err) {
         throw new HTTPException(401, {
           message: err + "",
+        });
+      }
+    }
+  );
+
+  /**
+   * Get available OAuth providers
+   */
+  app.get(
+    API_BASE_PATH + "/user/oauth-providers",
+    describeRoute({
+      method: "get",
+      path: "/user/oauth-providers",
+      tags: ["user"],
+      summary: "Get available OAuth providers",
+      responses: {
+        200: { description: "Successful response" },
+      },
+    }),
+    async (c) => {
+      return c.json(OAuthAuth.getAvailableOAuthProviders());
+    }
+  );
+
+  /**
+   * OAuth Google authentication redirect
+   */
+  app.get(
+    API_BASE_PATH + "/user/auth/:provider",
+    describeRoute({
+      method: "get",
+      path: "/user/auth/:provider",
+      tags: ["user"],
+      summary: "Redirect to Google authentication",
+      responses: {
+        302: { description: "Redirect to Google OAuth" },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        redirectUrl: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({
+        provider: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const provider = c.req.valid("param").provider;
+        const redirectUrl = c.req.query("redirectUrl") || "";
+        let authUrl;
+        if (provider === "google") {
+          authUrl = OAuthAuth.getGoogleAuthUrl();
+        } else if (provider === "microsoft") {
+          authUrl = OAuthAuth.getMicrosoftAuthUrl();
+        } else {
+          throw new Error("Invalid provider");
+        }
+        return c.redirect(authUrl);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error redirecting to Google auth: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * OAuth Microsoft callback
+   */
+  app.get(
+    API_BASE_PATH + "/user/auth/:provider/callback",
+    describeRoute({
+      method: "get",
+      path: "/user/auth/:provider/callback",
+      tags: ["user"],
+      summary: "Handle Microsoft OAuth callback",
+      responses: {
+        200: {
+          description: "Successful authentication",
+          content: {
+            "application/json": {
+              schema: v.object({
+                token: v.string(),
+                expiresAt: v.string(),
+                user: usersRestrictedSelectSchema,
+              }),
+            },
+          },
+        },
+      },
+    }),
+    validator(
+      "query",
+      v.object({
+        code: v.string(),
+        state: v.optional(v.string()),
+      })
+    ),
+    validator(
+      "param",
+      v.object({
+        provider: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const provider = c.req.valid("param").provider;
+        const code = c.req.query("code");
+        if (!code) {
+          throw new Error("No code provided");
+        }
+
+        let result;
+        if (provider === "microsoft") {
+          result = await OAuthAuth.handleMicrosoftCallback(code);
+        } else if (provider === "google") {
+          result = await OAuthAuth.handleGoogleCallback(code);
+        } else {
+          throw new Error("Invalid provider");
+        }
+
+        return c.redirect(
+          `${OAUTH_REDIRECT_URI}/${provider}?token=${result.token}`
+        );
+      } catch (err) {
+        throw new HTTPException(401, {
+          message: "Failed to authenticate with Microsoft: " + err,
         });
       }
     }

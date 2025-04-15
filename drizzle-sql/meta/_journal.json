@@ -841,6 +841,13 @@
       "when": 1744101666929,
       "tag": "0119_glossy_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1744650312653,
+      "tag": "0120_faulty_proteus",
+      "breakpoints": true
     }
   ]
 }

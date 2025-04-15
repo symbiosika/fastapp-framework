@@ -66,12 +66,19 @@ const bytea = customType<{
   },
 });
 
+export const userProviderEnum = pgEnum("user_provider", [
+  "local",
+  "google",
+  "microsoft",
+]);
+
 export const users = pgBaseTable(
   "users",
   {
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    provider: userProviderEnum("provider").notNull().default("local"),
     email: text("email").notNull(),
     emailVerified: boolean("email_verified").notNull().default(false),
     password: text("password"),
@@ -89,7 +96,9 @@ export const users = pgBaseTable(
     meta: jsonb("meta"),
     profileImage: bytea("profile_image"),
     profileImageName: varchar("profile_image_name", { length: 255 }),
-    profileImageContentType: varchar("profile_image_content_type", { length: 255 }),
+    profileImageContentType: varchar("profile_image_content_type", {
+      length: 255,
+    }),
     lastOrganisationId: uuid("last_organisation_id").references(
       () => organisations.id,
       {
