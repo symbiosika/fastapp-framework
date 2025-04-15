@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-  
+
   workflow_dispatch:
 
 jobs:
@@ -62,6 +62,9 @@ jobs:
 
            # Perplexity
           PERPLEXITY_API_KEY=${{ secrets.FASTAPP_UNITTEST_PERPLEXITY_API_KEY }}
+
+          # Black Forest Labs
+          BLACK_FOREST_LABS_API_KEY=${{ secrets.FASTAPP_UNITTEST_BLACK_FOREST_LABS_API_KEY }}
 
           # Webserver Settings
           ALLOWED_ORIGINS="*"

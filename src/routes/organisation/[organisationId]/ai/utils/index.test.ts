@@ -1,10 +1,7 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineRoutes from ".";
-import {
-  initTests,
-  TEST_ORGANISATION_1,
-} from "../../../../../test/init.test";
+import { initTests, TEST_ORGANISATION_1 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
 import {
@@ -40,7 +37,7 @@ describe("AI Utils API Endpoints", () => {
     expect(response.headers.get("Content-Disposition")).toContain(
       "attachment; filename="
     );
-  });
+  }, 15000);
 
   test("Text to Speech with custom voice", async () => {
     // Test with a specific voice
@@ -66,7 +63,7 @@ describe("AI Utils API Endpoints", () => {
 
     // Store for later tests
     savedTTSAudio = savedAudioFile;
-  });
+  }, 15000);
 
   test("Speech to Text endpoint", async () => {
     expect(savedTTSAudio).toBeDefined();
@@ -87,7 +84,7 @@ describe("AI Utils API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.jsonResponse).toBeDefined();
     expect(response.jsonResponse.text).toContain("Hello, this is a test");
-  });
+  }, 15000);
 
   test("Speech to Text with segments", async () => {
     expect(savedTTSAudio).toBeDefined();
@@ -133,5 +130,5 @@ describe("AI Utils API Endpoints", () => {
     expect(response.jsonResponse.text).toContain("Hello, this is a test");
     expect(response.jsonResponse.segments).toBeDefined();
     expect(response.jsonResponse.segments.length).toBe(1);
-  });
+  }, 15000);
 });
