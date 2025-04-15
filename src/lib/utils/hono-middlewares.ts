@@ -65,13 +65,15 @@ export const checkToken = async (c: Context) => {
   // get existing params
   const token = c.req.query("token");
   const authHeader = c.req.header("Authorization");
+  const xApiKey = c.req.header("X-API-KEY");
 
   let jwtToken = "";
 
   // check if there is a "token=xxx" set in the URL request
-  if (token) {
+  if (token || xApiKey) {
+    const tokenToUse: string = token || xApiKey || "";
     // try to generate a JWT token from the token string
-    const temporaryJwt = await generateTemporaryJwtFromToken(token);
+    const temporaryJwt = await generateTemporaryJwtFromToken(tokenToUse);
     jwtToken = temporaryJwt.token;
   } else if (authHeader && authHeader.startsWith("Bearer ")) {
     jwtToken = authHeader.substring(7);
