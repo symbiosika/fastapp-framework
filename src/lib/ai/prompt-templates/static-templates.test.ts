@@ -5,10 +5,6 @@ import {
   getServerSideStaticTemplates,
 } from "./static-templates";
 
-beforeAll(async () => {
-  await initTests();
-});
-
 describe("Static Templates", () => {
   test("should add a static template and retrieve it", () => {
     // Create a test template
@@ -18,7 +14,7 @@ describe("Static Templates", () => {
       description: "Test Description",
       systemPrompt: "Test System Prompt",
       userPrompt: "Test User Prompt",
-      category: "test",
+      category: "system",
       langCode: "en",
       hidden: false,
       needsInitialCall: false,
