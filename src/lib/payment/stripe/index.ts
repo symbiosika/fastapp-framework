@@ -26,7 +26,7 @@ export class StripeService {
       // throw new Error("Stripe API key is not provided");
     }
     this._stripe = new Stripe(stripeApiKey, {
-      apiVersion: "2025-03-31.basil",
+      apiVersion: "2025-02-24.acacia",
     });
   }
 
