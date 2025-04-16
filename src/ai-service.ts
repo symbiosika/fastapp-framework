@@ -63,6 +63,7 @@ import {
   removeDynamicTool,
 } from "./lib/ai/interaction/tools";
 import { initTemplateMessage } from "./lib/ai/prompt-templates/init-message";
+import { syncModels } from "./lib/ai/models/sync";
 
 export default {
   // prompt templates
@@ -115,6 +116,8 @@ export default {
   getAIModel,
   getAIEmbeddingModel,
   initTemplateMessage,
+  // models
+  syncModels,
   // chat store
   chatStore,
 };
