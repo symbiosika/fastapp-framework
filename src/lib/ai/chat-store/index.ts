@@ -46,11 +46,11 @@ export type ChatSession = ChatSessionsSelect & {
  * Chat Store
  */
 class ChatHistoryStoreInDb {
-  constructor(private maxAgeHours: number = 48) {
+  constructor(public maxAgeHours: number = 48) {
     setInterval(() => this.cleanup(), 1000 * 60 * 60);
   }
 
-  private getDeleteAt(): string | null {
+  getDeleteAt(): string | null {
     return this.maxAgeHours
       ? new Date(Date.now() + this.maxAgeHours * 60 * 60 * 1000).toISOString()
       : null;
