@@ -10,23 +10,18 @@ import {
 import {
   createUserSpecificData,
   getUserSpecificData,
-  getUserSpecificDataByKey,
   updateUserSpecificData,
   deleteUserSpecificData,
   createAppSpecificData,
   getAppSpecificData,
-  getAppSpecificDataByKey,
   updateAppSpecificData,
   deleteAppSpecificData,
   createOrganisationSpecificData,
   getOrganisationSpecificData,
-  getOrganisationSpecificDataByFilter,
   updateOrganisationSpecificData,
   deleteOrganisationSpecificData,
   createTeamSpecificData,
   getTeamSpecificData,
-  getTeamSpecificDataByKey,
-  getTeamSpecificDataByFilter,
   updateTeamSpecificData,
   deleteTeamSpecificData,
 } from "./index";
@@ -38,48 +33,47 @@ beforeAll(async () => {
 
 describe("User Specific Data", () => {
   const testData = {
-    key: "test-key",
-    data: "test-value",
     userId: TEST_USER_1.id,
+    key: "test-key",
+    data: { value: "test-value" },
   };
 
   test("should create and retrieve user specific data", async () => {
-    const created = await createUserSpecificData(TEST_USER_1.id, testData);
+    const created = await createUserSpecificData(testData);
     expect(created).toBeDefined();
     expect(created.userId).toBe(TEST_USER_1.id);
     expect(created.key).toBe(testData.key);
-    expect(created.data).toBe(testData.data);
+    expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getUserSpecificData(created.id, TEST_USER_1.id);
+    const retrieved = await getUserSpecificData(TEST_USER_1.id, testData.key);
     expect(retrieved).toEqual(created);
   });
 
-  test("should get user specific data by key", async () => {
-    const data = await getUserSpecificDataByKey(TEST_USER_1.id, testData.key);
-    expect(data).toBeDefined();
-    expect(data.key).toBe(testData.key);
-  });
-
   test("should update user specific data", async () => {
-    const created = await createUserSpecificData(TEST_USER_1.id, {
+    const created = await createUserSpecificData({
       ...testData,
       key: "update-key",
     });
-    const updated = await updateUserSpecificData(created.id, TEST_USER_1.id, {
-      data: "updated-value",
-    });
-    expect(updated.data).toBe("updated-value");
+    const updated = await updateUserSpecificData(
+      created.id,
+      TEST_USER_1.id,
+      "update-key",
+      {
+        data: { value: "updated-value" },
+      }
+    );
+    expect(updated.data).toEqual({ value: "updated-value" });
   });
 
   test("should delete user specific data", async () => {
-    const created = await createUserSpecificData(TEST_USER_1.id, {
+    const created = await createUserSpecificData({
       ...testData,
       key: "delete-key",
     });
     await deleteUserSpecificData(created.id, TEST_USER_1.id);
 
     try {
-      await getUserSpecificData(created.id, TEST_USER_1.id);
+      await getUserSpecificData(TEST_USER_1.id, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("User specific data not found");
@@ -90,25 +84,17 @@ describe("User Specific Data", () => {
 describe("App Specific Data", () => {
   const testData = {
     key: "test-key",
-    name: "test-app",
-    data: "test-value",
+    data: { value: "test-value" },
   };
 
   test("should create and retrieve app specific data", async () => {
     const created = await createAppSpecificData(testData);
     expect(created).toBeDefined();
     expect(created.key).toBe(testData.key);
-    expect(created.name).toBe(testData.name);
-    expect(created.data).toBe(testData.data);
+    expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getAppSpecificData(created.id);
+    const retrieved = await getAppSpecificData(testData.key);
     expect(retrieved).toEqual(created);
-  });
-
-  test("should get app specific data by key", async () => {
-    const data = await getAppSpecificDataByKey(testData.key, testData.name);
-    expect(data).toBeDefined();
-    expect(data.key).toBe(testData.key);
   });
 
   test("should update app specific data", async () => {
@@ -116,10 +102,10 @@ describe("App Specific Data", () => {
       ...testData,
       key: "update-key",
     });
-    const updated = await updateAppSpecificData(created.id, {
-      data: "updated-value",
+    const updated = await updateAppSpecificData("update-key", {
+      data: { value: "updated-value" },
     });
-    expect(updated.data).toBe("updated-value");
+    expect(updated.data).toEqual({ value: "updated-value" });
   });
 
   test("should delete app specific data", async () => {
@@ -127,10 +113,10 @@ describe("App Specific Data", () => {
       ...testData,
       key: "delete-key",
     });
-    await deleteAppSpecificData(created.id);
+    await deleteAppSpecificData("delete-key");
 
     try {
-      await getAppSpecificData(created.id);
+      await getAppSpecificData("delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("App specific data not found");
@@ -141,49 +127,48 @@ describe("App Specific Data", () => {
 describe("Organisation Specific Data", () => {
   const testData = {
     organisationId: TEST_ORGANISATION_1.id,
-    category: "test-category",
-    name: "test-name",
-    data: "test-value",
+    key: "test-key",
+    data: { value: "test-value" },
   };
 
   test("should create and retrieve organisation specific data", async () => {
     const created = await createOrganisationSpecificData(testData);
     expect(created).toBeDefined();
-    expect(created.category).toBe(testData.category);
-    expect(created.name).toBe(testData.name);
-    expect(created.data).toBe(testData.data);
+    expect(created.organisationId).toBe(TEST_ORGANISATION_1.id);
+    expect(created.key).toBe(testData.key);
+    expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getOrganisationSpecificData(created.id);
+    const retrieved = await getOrganisationSpecificData(
+      TEST_ORGANISATION_1.id,
+      testData.key
+    );
     expect(retrieved).toEqual(created);
-  });
-
-  test("should get organisation specific data by filter", async () => {
-    const data = await getOrganisationSpecificDataByFilter(testData.category);
-    expect(data).toBeDefined();
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0].category).toBe(testData.category);
   });
 
   test("should update organisation specific data", async () => {
     const created = await createOrganisationSpecificData({
       ...testData,
-      name: "update-name",
+      key: "update-key",
     });
-    const updated = await updateOrganisationSpecificData(created.id, {
-      data: "updated-value",
-    });
-    expect(updated.data).toBe("updated-value");
+    const updated = await updateOrganisationSpecificData(
+      TEST_ORGANISATION_1.id,
+      "update-key",
+      {
+        data: { value: "updated-value" },
+      }
+    );
+    expect(updated.data).toEqual({ value: "updated-value" });
   });
 
   test("should delete organisation specific data", async () => {
     const created = await createOrganisationSpecificData({
       ...testData,
-      name: "delete-name",
+      key: "delete-key",
     });
-    await deleteOrganisationSpecificData(created.id);
+    await deleteOrganisationSpecificData(TEST_ORGANISATION_1.id, "delete-key");
 
     try {
-      await getOrganisationSpecificData(created.id);
+      await getOrganisationSpecificData(TEST_ORGANISATION_1.id, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("Organisation specific data not found");
@@ -194,41 +179,19 @@ describe("Organisation Specific Data", () => {
 describe("Team Specific Data", () => {
   const testData = {
     teamId: TEST_TEAM_1.id,
-    category: "test-category",
     key: "test-key",
-    data: "test-value",
+    data: { value: "test-value" },
   };
 
   test("should create and retrieve team specific data", async () => {
     const created = await createTeamSpecificData(testData);
     expect(created).toBeDefined();
-    expect(created.teamId).toBe(testData.teamId);
-    expect(created.category).toBe(testData.category);
+    expect(created.teamId).toBe(TEST_TEAM_1.id);
     expect(created.key).toBe(testData.key);
-    expect(created.data).toBe(testData.data);
+    expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getTeamSpecificData(created.id);
+    const retrieved = await getTeamSpecificData(TEST_TEAM_1.id, testData.key);
     expect(retrieved).toEqual(created);
-  });
-
-  test("should get team specific data by key", async () => {
-    const data = await getTeamSpecificDataByKey(
-      testData.teamId,
-      testData.category,
-      testData.key
-    );
-    expect(data).toBeDefined();
-    expect(data.key).toBe(testData.key);
-  });
-
-  test("should get team specific data by filter", async () => {
-    const data = await getTeamSpecificDataByFilter(
-      testData.teamId,
-      testData.category
-    );
-    expect(data).toBeDefined();
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0].category).toBe(testData.category);
   });
 
   test("should update team specific data", async () => {
@@ -236,10 +199,10 @@ describe("Team Specific Data", () => {
       ...testData,
       key: "update-key",
     });
-    const updated = await updateTeamSpecificData(created.id, {
-      data: "updated-value",
+    const updated = await updateTeamSpecificData(TEST_TEAM_1.id, "update-key", {
+      data: { value: "updated-value" },
     });
-    expect(updated.data).toBe("updated-value");
+    expect(updated.data).toEqual({ value: "updated-value" });
   });
 
   test("should delete team specific data", async () => {
@@ -247,10 +210,10 @@ describe("Team Specific Data", () => {
       ...testData,
       key: "delete-key",
     });
-    await deleteTeamSpecificData(created.id);
+    await deleteTeamSpecificData(TEST_TEAM_1.id, "delete-key");
 
     try {
-      await getTeamSpecificData(created.id);
+      await getTeamSpecificData(TEST_TEAM_1.id, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("Team specific data not found");

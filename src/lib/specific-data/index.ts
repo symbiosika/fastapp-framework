@@ -16,34 +16,15 @@ import {
 } from "../db/schema/additional-data";
 
 // User Specific Data CRUD
-export const createUserSpecificData = async (
-  userId: string,
-  data: UserSpecificDataInsert
-) => {
+export const createUserSpecificData = async (data: UserSpecificDataInsert) => {
   const result = await getDb()
     .insert(userSpecificData)
-    .values({
-      ...data,
-      userId,
-    })
+    .values(data)
     .returning();
   return result[0];
 };
 
-export const getUserSpecificData = async (id: string, userId: string) => {
-  const data = await getDb()
-    .select()
-    .from(userSpecificData)
-    .where(
-      and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
-    );
-  if (data.length === 0) {
-    throw new Error("User specific data not found");
-  }
-  return data[0];
-};
-
-export const getUserSpecificDataByKey = async (userId: string, key: string) => {
+export const getUserSpecificData = async (userId: string, key: string) => {
   const data = await getDb()
     .select()
     .from(userSpecificData)
@@ -59,13 +40,18 @@ export const getUserSpecificDataByKey = async (userId: string, key: string) => {
 export const updateUserSpecificData = async (
   id: string,
   userId: string,
+  key: string,
   data: Partial<UserSpecificDataSelect>
 ) => {
   const result = await getDb()
     .update(userSpecificData)
     .set({ ...data, updatedAt: new Date().toISOString() })
     .where(
-      and(eq(userSpecificData.id, id), eq(userSpecificData.userId, userId))
+      and(
+        eq(userSpecificData.id, id),
+        eq(userSpecificData.userId, userId),
+        eq(userSpecificData.key, key)
+      )
     )
     .returning();
   return result[0];
@@ -85,22 +71,11 @@ export const createAppSpecificData = async (data: AppSpecificDataInsert) => {
   return result[0];
 };
 
-export const getAppSpecificData = async (id: string) => {
+export const getAppSpecificData = async (key: string) => {
   const data = await getDb()
     .select()
     .from(appSpecificData)
-    .where(eq(appSpecificData.id, id));
-  if (data.length === 0) {
-    throw new Error("App specific data not found");
-  }
-  return data[0];
-};
-
-export const getAppSpecificDataByKey = async (key: string, name: string) => {
-  const data = await getDb()
-    .select()
-    .from(appSpecificData)
-    .where(and(eq(appSpecificData.key, key), eq(appSpecificData.name, name)));
+    .where(eq(appSpecificData.key, key));
   if (data.length === 0) {
     throw new Error("App specific data not found");
   }
@@ -108,19 +83,19 @@ export const getAppSpecificDataByKey = async (key: string, name: string) => {
 };
 
 export const updateAppSpecificData = async (
-  id: string,
+  key: string,
   data: Partial<AppSpecificDataSelect>
 ) => {
   const result = await getDb()
     .update(appSpecificData)
     .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(appSpecificData.id, id))
+    .where(and(eq(appSpecificData.key, key)))
     .returning();
   return result[0];
 };
 
-export const deleteAppSpecificData = async (id: string) => {
-  await getDb().delete(appSpecificData).where(eq(appSpecificData.id, id));
+export const deleteAppSpecificData = async (key: string) => {
+  await getDb().delete(appSpecificData).where(eq(appSpecificData.key, key));
 };
 
 // Organisation Specific Data CRUD
@@ -134,52 +109,55 @@ export const createOrganisationSpecificData = async (
   return result[0];
 };
 
-export const getOrganisationSpecificData = async (id: string) => {
+export const getOrganisationSpecificData = async (
+  organisationId: string,
+  key: string
+) => {
   const data = await getDb()
     .select()
     .from(organisationSpecificData)
-    .where(eq(organisationSpecificData.id, id));
+    .where(
+      and(
+        eq(organisationSpecificData.organisationId, organisationId),
+        eq(organisationSpecificData.key, key)
+      )
+    );
   if (data.length === 0) {
     throw new Error("Organisation specific data not found");
   }
   return data[0];
 };
 
-export const getOrganisationSpecificDataByFilter = async (
-  category: string,
-  name?: string
-) => {
-  const data = await getDb()
-    .select()
-    .from(organisationSpecificData)
-    .where(
-      name
-        ? and(
-            eq(organisationSpecificData.category, category),
-            eq(organisationSpecificData.name, name)
-          )
-        : eq(organisationSpecificData.category, category)
-    );
-
-  return data;
-};
-
 export const updateOrganisationSpecificData = async (
-  id: string,
+  organisationId: string,
+  key: string,
   data: Partial<OrganisationSpecificDataSelect>
 ) => {
   const result = await getDb()
     .update(organisationSpecificData)
     .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(organisationSpecificData.id, id))
+    .where(
+      and(
+        eq(organisationSpecificData.organisationId, organisationId),
+        eq(organisationSpecificData.key, key)
+      )
+    )
     .returning();
   return result[0];
 };
 
-export const deleteOrganisationSpecificData = async (id: string) => {
+export const deleteOrganisationSpecificData = async (
+  organisationId: string,
+  key: string
+) => {
   await getDb()
     .delete(organisationSpecificData)
-    .where(eq(organisationSpecificData.id, id));
+    .where(
+      and(
+        eq(organisationSpecificData.organisationId, organisationId),
+        eq(organisationSpecificData.key, key)
+      )
+    );
 };
 
 // Team Specific Data CRUD
@@ -191,73 +169,38 @@ export const createTeamSpecificData = async (data: TeamSpecificDataInsert) => {
   return result[0];
 };
 
-export const getTeamSpecificData = async (id: string) => {
-  const data = await getDb()
-    .select()
-    .from(teamSpecificData)
-    .where(eq(teamSpecificData.id, id));
-  if (data.length === 0) {
-    throw new Error("Team specific data not found");
-  }
-  return data[0];
-};
-
-export const getTeamSpecificDataByKey = async (
-  teamId: string,
-  category: string,
-  key: string
-) => {
+export const getTeamSpecificData = async (teamId: string, key: string) => {
   const data = await getDb()
     .select()
     .from(teamSpecificData)
     .where(
-      and(
-        eq(teamSpecificData.teamId, teamId),
-        eq(teamSpecificData.category, category),
-        eq(teamSpecificData.key, key)
-      )
+      and(eq(teamSpecificData.teamId, teamId), eq(teamSpecificData.key, key))
     );
   if (data.length === 0) {
     throw new Error("Team specific data not found");
   }
   return data[0];
-};
-
-export const getTeamSpecificDataByFilter = async (
-  teamId: string,
-  category: string,
-  key?: string
-) => {
-  const data = await getDb()
-    .select()
-    .from(teamSpecificData)
-    .where(
-      key
-        ? and(
-            eq(teamSpecificData.teamId, teamId),
-            eq(teamSpecificData.category, category),
-            eq(teamSpecificData.key, key)
-          )
-        : and(
-            eq(teamSpecificData.teamId, teamId),
-            eq(teamSpecificData.category, category)
-          )
-    );
-  return data;
 };
 
 export const updateTeamSpecificData = async (
-  id: string,
+  teamId: string,
+  key: string,
   data: Partial<TeamSpecificDataSelect>
 ) => {
   const result = await getDb()
     .update(teamSpecificData)
     .set({ ...data, updatedAt: new Date().toISOString() })
-    .where(eq(teamSpecificData.id, id))
+    .where(
+      and(eq(teamSpecificData.teamId, teamId), eq(teamSpecificData.key, key))
+    )
     .returning();
   return result[0];
 };
 
-export const deleteTeamSpecificData = async (id: string) => {
-  await getDb().delete(teamSpecificData).where(eq(teamSpecificData.id, id));
+export const deleteTeamSpecificData = async (teamId: string, key: string) => {
+  await getDb()
+    .delete(teamSpecificData)
+    .where(
+      and(eq(teamSpecificData.teamId, teamId), eq(teamSpecificData.key, key))
+    );
 };

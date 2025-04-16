@@ -63,7 +63,6 @@ export const appSpecificData = pgBaseTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     key: varchar("key", { length: 100 }).notNull().unique(),
-    name: varchar("name", { length: 100 }).notNull(),
     version: integer("version").notNull().default(0),
     data: jsonb("data").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
@@ -74,9 +73,6 @@ export const appSpecificData = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    unique().on(table.key, table.name),
-    index("app_data_name_idx").on(table.name),
-    index("app_data_key_idx").on(table.key),
     index("app_data_created_at_idx").on(table.createdAt),
     index("app_data_version_idx").on(table.version),
   ]
@@ -109,8 +105,7 @@ export const organisationSpecificData = pgBaseTable(
     organisationId: uuid("organisation_id")
       .notNull()
       .references(() => organisations.id, { onDelete: "cascade" }),
-    category: varchar("category", { length: 100 }).notNull(),
-    name: varchar("name", { length: 100 }).notNull(),
+    key: varchar("category", { length: 100 }).notNull(),
     version: integer("version").notNull().default(0),
     data: jsonb("data").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
@@ -121,9 +116,8 @@ export const organisationSpecificData = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    unique().on(table.organisationId, table.category, table.name),
-    index("organisation_data_category_idx").on(table.category),
-    index("organisation_data_name_idx").on(table.name),
+    unique().on(table.organisationId, table.key),
+    index("organisation_data_key_idx").on(table.key),
     index("organisation_data_created_at_idx").on(table.createdAt),
     index("organisation_data_version_idx").on(table.version),
   ]
@@ -155,7 +149,6 @@ export const teamSpecificData = pgBaseTable(
     teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    category: varchar("category", { length: 100 }).notNull(),
     key: varchar("key", { length: 50 }).notNull(),
     version: integer("version").notNull().default(0),
     data: jsonb("data").notNull(),
@@ -167,7 +160,7 @@ export const teamSpecificData = pgBaseTable(
       .defaultNow(),
   },
   (table) => [
-    unique().on(table.teamId, table.category, table.key),
+    unique().on(table.teamId, table.key),
     index("team_data_key_idx").on(table.key),
     index("team_data_created_at_idx").on(table.createdAt),
     index("team_data_version_idx").on(table.version),
