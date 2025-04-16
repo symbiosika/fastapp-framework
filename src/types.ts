@@ -20,6 +20,9 @@ export type * from "./lib/db/schema/server";
 
 export type * from "./lib/types/openai";
 export type * from "./lib/ai/ai-sdk/types";
+export type * from "./lib/ai/ai-sdk/index";
+export type * from "./lib/ai/chat-store";
+export type * from "./lib/ai/interaction/index";
 
 import type { Hono } from "hono";
 import type { BlankSchema } from "hono/types";
