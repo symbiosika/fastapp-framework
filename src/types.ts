@@ -92,7 +92,7 @@ export interface ServerSpecificConfig {
 
   // Licencing
   useLicenseSystem?: boolean;
-  publicKey: string;
+  publicKey?: string;
 
   // Static Templates
   staticTemplates?: StaticTemplateImport[];
