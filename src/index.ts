@@ -197,7 +197,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
 
     const isLicenseValid = await licenseManager.isValid();
 
-    if (_GLOBAL_SERVER_CONFIG.useLicenseSystem && isLicenseValid) {
+    if (isLicenseValid) {
       console.log("License check was valid! Starting server...");
 
       /**
