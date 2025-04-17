@@ -55,7 +55,6 @@ import { speechToText } from "./lib/ai/ai-sdk/stt";
 import { chat } from "./lib/ai/interaction";
 import { chatStore } from "./lib/ai/chat-store";
 import { getAIEmbeddingModel, getAIModel } from "./lib/ai/ai-sdk/get-model";
-import { executeToolCall } from "./lib/ai/interaction/tools";
 import {
   addTool,
   addDynamicTool,
@@ -109,7 +108,6 @@ export default {
   // chat
   chat,
   chatCompletion,
-  executeToolCall,
   addTool,
   addDynamicTool,
   removeTool,

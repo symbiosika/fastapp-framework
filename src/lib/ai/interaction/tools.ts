@@ -2,22 +2,6 @@ import { type Tool } from "ai";
 import { queryKnowledgeBaseTool } from "./tools/query-knowledge-base-rag";
 import type { SourceReturn } from "../ai-sdk";
 
-// Execute a tool call
-export async function executeToolCall(
-  toolName: string,
-  args: any,
-  options: any
-) {
-  // Suche zuerst in statischen Tools, dann in dynamischen
-  const tool = toolRegistry[toolName];
-
-  if (!tool) {
-    throw new Error(`Tool not found: ${toolName}`);
-  }
-
-  return await tool.execute!(args, options);
-}
-
 // Tool registry
 export const toolRegistry: Record<string, Tool> = {
   "query-knowledge-base-rag": queryKnowledgeBaseTool,
