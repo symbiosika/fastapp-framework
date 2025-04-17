@@ -44,7 +44,7 @@ describe("Token Authentication", () => {
         name: "Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read", "write"],
+        scopes: ["user:read", "user:write"],
       });
 
       expect(result.token).toBeDefined();
@@ -56,7 +56,7 @@ describe("Token Authentication", () => {
         name: "Expiring Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read"],
+        scopes: ["user:read"],
         expiresIn: 5, // 5 minutes
       });
 
@@ -70,7 +70,7 @@ describe("Token Authentication", () => {
         name: "Search Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read"],
+        scopes: ["user:read"],
       });
 
       const result = await searchForToken(token);
@@ -94,7 +94,7 @@ describe("Token Authentication", () => {
         name: "JWT Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read", "write"],
+        scopes: ["user:read", "user:write"],
       });
 
       const result = await verifyApiTokenAndGetJwt(token);
@@ -107,10 +107,10 @@ describe("Token Authentication", () => {
         name: "Scope Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read", "write"],
+        scopes: ["user:read", "user:write"],
       });
 
-      const result = await verifyApiTokenAndGetJwt(token, ["read"]);
+      const result = await verifyApiTokenAndGetJwt(token, ["user:read"]);
       expect(result.token).toBeDefined();
     });
 
@@ -119,11 +119,11 @@ describe("Token Authentication", () => {
         name: "Scope Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read"],
+        scopes: ["user:read"],
       });
 
       try {
-        await verifyApiTokenAndGetJwt(token, ["write"]);
+        await verifyApiTokenAndGetJwt(token, ["user:write"]);
         expect(true).toBe(false); // Should not reach here
       } catch (e: any) {
         expect(e.message).toBe("Insufficient permissions");
@@ -137,7 +137,7 @@ describe("Token Authentication", () => {
         name: "Revoke Test Token",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read"],
+        scopes: ["user:read"],
       });
 
       const tokenRecord = await searchForToken(token);
@@ -159,14 +159,14 @@ describe("Token Authentication", () => {
         name: "List Test Token 1",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["read"],
+        scopes: ["user:read"],
       });
 
       await createApiToken({
         name: "List Test Token 2",
         userId: TEST_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
-        scopes: ["write"],
+        scopes: ["user:write"],
       });
 
       const tokens = await listApiTokensForUser(TEST_USER_1.id);
