@@ -64,6 +64,7 @@ import {
 } from "./lib/ai/interaction/tools";
 import { initTemplateMessage } from "./lib/ai/prompt-templates/init-message";
 import { syncModels } from "./lib/ai/models/sync";
+import { generateImages } from "./lib/ai/ai-sdk/image";
 
 export default {
   // prompt templates
@@ -116,6 +117,8 @@ export default {
   getAIModel,
   getAIEmbeddingModel,
   initTemplateMessage,
+  // images
+  generateImages,
   // models
   syncModels,
   // chat store
