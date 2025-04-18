@@ -134,7 +134,7 @@ export async function generateEmbedding(
   text: string,
   context: OrganisationContext,
   providerAndModelName?: string
-) {
+): Promise<{ embedding: number[]; model: string }> {
   if (!text || text.trim() === "") {
     throw new Error("Text is required");
   }
