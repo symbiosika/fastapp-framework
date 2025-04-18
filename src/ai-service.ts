@@ -56,10 +56,10 @@ import { chat } from "./lib/ai/interaction";
 import { chatStore } from "./lib/ai/chat-store";
 import { getAIEmbeddingModel, getAIModel } from "./lib/ai/ai-sdk/get-model";
 import {
-  addStaticTool,
-  addDynamicTool,
-  removeStaticTool,
-  removeDynamicTool,
+  addBaseTool,
+  addRuntimeTool,
+  removeBaseTool,
+  removeRuntimeTool,
 } from "./lib/ai/interaction/tools";
 import { initTemplateMessage } from "./lib/ai/prompt-templates/init-message";
 import { syncModels } from "./lib/ai/models/sync";
@@ -117,10 +117,10 @@ export default {
   // chat
   chat,
   chatCompletion,
-  addStaticTool,
-  addDynamicTool,
-  removeStaticTool,
-  removeDynamicTool,
+  addBaseTool,
+  addRuntimeTool,
+  removeBaseTool,
+  removeRuntimeTool,
   getAIModel,
   getAIEmbeddingModel,
   initTemplateMessage,

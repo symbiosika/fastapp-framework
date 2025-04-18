@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
-import type { FastAppHono } from "fastapp-framework";
 import {
   initTests,
   TEST_ORGANISATION_1,
@@ -13,6 +12,7 @@ import { inArray } from "drizzle-orm";
 import { getDb } from "../../../../../lib/db/db-connection";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineAvatarRoutes from ".";
+import type { FastAppHono } from "../../../../../types";
 
 let TEST_USER_TOKEN: string;
 

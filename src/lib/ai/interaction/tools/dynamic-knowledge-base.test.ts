@@ -15,7 +15,7 @@ import {
 import { chat } from "../index";
 import { chatStore } from "../../chat-store";
 import { createDynamicKnowledgeBaseTool } from "../tools/dynamic-knowledge-base";
-import { addDynamicTool } from "../tools";
+import { addRuntimeTool } from "../tools";
 import { chatCompletion } from "../../ai-sdk";
 
 describe("Dynamic Knowledge Base Tool Tests", () => {
@@ -40,7 +40,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Check if the tool was added to the registry
   //   expect(toolRegistry[dynamicTool.name]).toBeDefined();
@@ -76,7 +76,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Set up a chat with the dynamic tool enabled
   //   const chatResponse = await chat({
@@ -117,7 +117,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Mock the AI SDK's generateText to simulate tool usage
   //   const mockMessages = [

@@ -5,7 +5,7 @@ import { encodeImageFromFile } from "./utils";
 import log from "../../log";
 import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
-import { getToolMemory, getToolsDictionary } from "../interaction/tools";
+import { getToolMemory, getRuntimeToolsDictionary } from "../interaction/tools";
 import type { SourceReturn, ArtifactReturn } from "./types";
 
 /*
@@ -252,7 +252,7 @@ export async function chatCompletion(
   const model = await getAIModel(providerAndModelName, context);
 
   // get all tools filtered by the provided tool names
-  const tools = getToolsDictionary(context.chatId, options?.tools);
+  const tools = getRuntimeToolsDictionary(context.chatId);
   log.info(
     `Registered Tools: ${Object.keys(tools || {}).join(", ")} (ChatId: ${context.chatId})`
   );
@@ -313,7 +313,7 @@ export async function chatCompletion(
   });
 
   // store all sources and artifacts
-  const sources: SourceReturn[] = [];
+  let sources: SourceReturn[] = [];
   const artifacts: ArtifactReturn[] = [];
 
   // Add all web sources to the sources array - if set
@@ -349,6 +349,11 @@ export async function chatCompletion(
       artifacts.push(artifact);
     });
   }
+  // filter all duplicate sources (by label)
+  sources = sources.filter(
+    (source, index, self) =>
+      index === self.findIndex((t) => t.label === source.label)
+  );
 
   return {
     id: nanoid(6),

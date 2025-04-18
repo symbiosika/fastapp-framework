@@ -1,5 +1,21 @@
 import { type Tool } from "ai";
-import type { ArtifactReturn, SourceReturn } from "../ai-sdk/types";
+import type {
+  ArtifactReturn,
+  SourceReturn,
+  ToolContext,
+  ToolReturn,
+} from "../ai-sdk/types";
+
+/*
+Tool Registry and Tool Memory
+
+Base Tools are registered in the app globally.
+To give each Tool the possibility to store items it the memory 
+it must run in User Context.
+
+So it is required to register each Tool as a Dynamic Tool for each chat.
+And drop it after that.
+*/
 
 type ToolMetadata = {
   name: string;
@@ -7,8 +23,8 @@ type ToolMetadata = {
   description: string;
 };
 
-type ToolRegistryEntry = {
-  tool: Tool;
+type BaseToolRegistryEntry = {
+  toolFactory: (context: ToolContext) => ToolReturn;
   meta: ToolMetadata;
 };
 
@@ -37,11 +53,11 @@ type GlobalToolMemory = {
 export const TOOL_MEMORY: GlobalToolMemory = {};
 
 /**
- * A Tool registry for static tools
+ * A registry for static tools factory functions
  */
-export const STATIC_TOOL_REGISTRY: Record<
+export const BASE_TOOL_REGISTRY: Record<
   string, // is the tool-name
-  ToolRegistryEntry
+  BaseToolRegistryEntry
 > = {};
 
 /**
@@ -55,26 +71,26 @@ export const DYNAMIC_TOOL_REGISTRY: Record<
 /**
  * Add a static tool to the registry
  */
-export const addStaticTool = (
+export const addBaseTool = (
   name: string,
   label: string,
   description: string,
-  tool: Tool
+  toolFactory: (context: ToolContext) => ToolReturn
 ): void => {
-  STATIC_TOOL_REGISTRY[name] = {
+  BASE_TOOL_REGISTRY[name] = {
     meta: {
       name,
       label,
       description,
     },
-    tool,
+    toolFactory,
   };
 };
 
 /**
  * Add a dynamic tool to the registry
  */
-export const addDynamicTool = (
+export const addRuntimeTool = (
   chatId: string,
   name: string,
   tool: Tool
@@ -95,16 +111,33 @@ export const addDynamicTool = (
 };
 
 /**
+ * Add a dynamic tool to the registry by the name of the base-tool
+ * Will lookup in the base-tool-registry and call the factory function
+ * and register the result as a dynamic tool
+ */
+export const addRuntimeToolFromBaseRegistry = (
+  name: string,
+  context: ToolContext
+): void => {
+  const tool = BASE_TOOL_REGISTRY[name];
+  if (!tool) {
+    return;
+  }
+  const toolReturn = tool.toolFactory(context);
+  addRuntimeTool(context.chatId, toolReturn.name, toolReturn.tool);
+};
+
+/**
  * Remove a static tool from the registry
  */
-export const removeStaticTool = (name: string): void => {
-  delete STATIC_TOOL_REGISTRY[name];
+export const removeBaseTool = (name: string): void => {
+  delete BASE_TOOL_REGISTRY[name];
 };
 
 /**
  * Remove a dynamic tool from the registry
  */
-export const removeDynamicTool = (chatId: string, name: string): void => {
+export const removeRuntimeTool = (chatId: string, name: string): void => {
   delete DYNAMIC_TOOL_REGISTRY[chatId][name];
 };
 
@@ -124,7 +157,7 @@ export const cleanupDynamicTools = (): void => {
 
     // Remove each expired tool
     toolsToRemove.forEach(([toolName]) => {
-      removeDynamicTool(chatId, toolName);
+      removeRuntimeTool(chatId, toolName);
     });
   });
 };
@@ -142,64 +175,28 @@ export const registerCleanUpJob = (): void => {
 export const getStaticToolOverview = (
   organisationId: string
 ): ToolMetadata[] => {
-  return Object.values(STATIC_TOOL_REGISTRY).map((entry) => entry.meta);
-};
-
-/**
- * Get all enabled tools. To Use in AI SDK
- * Returns <tool-name, tool>
- */
-export const getEnabledTools = (
-  filter: string[] = []
-): Record<string, Tool> => {
-  if (filter.length === 0) return {};
-
-  const filteredTools: Record<string, Tool> = {};
-
-  // Add static tools
-  Object.keys(STATIC_TOOL_REGISTRY).forEach((toolName) => {
-    if (filter.includes(toolName)) {
-      filteredTools[toolName] = STATIC_TOOL_REGISTRY[toolName].tool;
-    }
-  });
-
-  return filteredTools;
+  return Object.values(BASE_TOOL_REGISTRY).map((entry) => entry.meta);
 };
 
 /**
  * Get all tools for a chat ID. To Use in AI SDK
  * Returns <tool-name, tool>
  */
-export const getDynamicToolsForChatId = (
+export const getRuntimeToolsDictionary = (
   chatId: string | undefined
-): Record<string, Tool> => {
+): Record<string, Tool> | undefined => {
   if (!chatId) return {};
 
   // Add dynamic tools
   const registry = DYNAMIC_TOOL_REGISTRY[chatId];
 
-  if (!registry) return {};
+  if (!registry) return undefined;
 
   const tools: Record<string, Tool> = {};
   Object.keys(registry).forEach((toolName) => {
     tools[toolName] = registry[toolName].tool;
   });
   return tools;
-};
-
-/**
- * Get all tools as Dict. To Use in AI SDK
- * Returns <tool-name, tool>
- */
-export const getToolsDictionary = (
-  chatId: string | undefined,
-  filter: string[] = []
-): Record<string, Tool> | undefined => {
-  const tools = getDynamicToolsForChatId(chatId);
-  const staticTools = getEnabledTools(filter);
-  const allTools = { ...tools, ...staticTools };
-  if (Object.keys(allTools).length === 0) return undefined;
-  return allTools;
 };
 
 /**

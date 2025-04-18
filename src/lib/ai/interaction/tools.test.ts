@@ -1,34 +1,43 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import {
-  STATIC_TOOL_REGISTRY,
+  BASE_TOOL_REGISTRY,
   DYNAMIC_TOOL_REGISTRY,
   TOOL_MEMORY,
-  addStaticTool,
-  addDynamicTool,
-  removeStaticTool,
-  removeDynamicTool,
+  addBaseTool,
+  addRuntimeTool,
+  removeBaseTool,
+  removeRuntimeTool,
   cleanupDynamicTools,
-  getEnabledTools,
+  getRuntimeToolsDictionary,
   addEntryToToolMemory,
   getToolMemory,
 } from "./tools";
-import type { SourceReturn, ArtifactReturn } from "../ai-sdk/types";
+import type {
+  SourceReturn,
+  ArtifactReturn,
+  ToolContext,
+  ToolReturn,
+} from "../ai-sdk/types";
+import { type Tool } from "ai";
 
 describe("Tools Registry", () => {
   // Sample tool for testing
-  const testTool = {
+  const testToolFactory = (context: ToolContext): ToolReturn => ({
     name: "test_tool",
-    description: "A test tool",
-    parameters: {
-      type: "object",
-      properties: {},
-    },
-  };
+    tool: {
+      name: "test_tool",
+      description: "A test tool",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    } as Tool,
+  });
 
   beforeAll(() => {
     // Clear registries before each test
-    Object.keys(STATIC_TOOL_REGISTRY).forEach(
-      (key) => delete STATIC_TOOL_REGISTRY[key]
+    Object.keys(BASE_TOOL_REGISTRY).forEach(
+      (key) => delete BASE_TOOL_REGISTRY[key]
     );
     Object.keys(DYNAMIC_TOOL_REGISTRY).forEach(
       (key) => delete DYNAMIC_TOOL_REGISTRY[key]
@@ -38,10 +47,10 @@ describe("Tools Registry", () => {
 
   describe("Static Tool Registry", () => {
     test("should add a static tool", () => {
-      addStaticTool("test_tool", "Test Tool", "A test tool", testTool);
-      expect(STATIC_TOOL_REGISTRY["test_tool"]).toBeDefined();
-      expect(STATIC_TOOL_REGISTRY["test_tool"].tool).toEqual(testTool);
-      expect(STATIC_TOOL_REGISTRY["test_tool"].meta).toEqual({
+      addBaseTool("test_tool", "Test Tool", "A test tool", testToolFactory);
+      expect(BASE_TOOL_REGISTRY["test_tool"]).toBeDefined();
+      expect(BASE_TOOL_REGISTRY["test_tool"].toolFactory).toBeDefined();
+      expect(BASE_TOOL_REGISTRY["test_tool"].meta).toEqual({
         name: "test_tool",
         label: "Test Tool",
         description: "A test tool",
@@ -49,18 +58,26 @@ describe("Tools Registry", () => {
     });
 
     test("should remove a static tool", () => {
-      addStaticTool("test_tool", "Test Tool", "A test tool", testTool);
-      removeStaticTool("test_tool");
-      expect(STATIC_TOOL_REGISTRY["test_tool"]).toBeUndefined();
+      addBaseTool("test_tool", "Test Tool", "A test tool", testToolFactory);
+      removeBaseTool("test_tool");
+      expect(BASE_TOOL_REGISTRY["test_tool"]).toBeUndefined();
     });
   });
 
   describe("Dynamic Tool Registry", () => {
     test("should add a dynamic tool", () => {
       const chatId = "test_chat";
-      addDynamicTool(chatId, "test_tool", testTool);
+      const tool = {
+        name: "test_tool",
+        description: "A test tool",
+        parameters: {
+          type: "object",
+          properties: {},
+        },
+      } as Tool;
+      addRuntimeTool(chatId, "test_tool", tool);
       expect(DYNAMIC_TOOL_REGISTRY[chatId]["test_tool"]).toBeDefined();
-      expect(DYNAMIC_TOOL_REGISTRY[chatId]["test_tool"].tool).toEqual(testTool);
+      expect(DYNAMIC_TOOL_REGISTRY[chatId]["test_tool"].tool).toEqual(tool);
       expect(
         DYNAMIC_TOOL_REGISTRY[chatId]["test_tool"].registeredAt
       ).toBeInstanceOf(Date);
@@ -68,8 +85,16 @@ describe("Tools Registry", () => {
 
     test("should remove a dynamic tool", () => {
       const chatId = "test_chat";
-      addDynamicTool(chatId, "test_tool", testTool);
-      removeDynamicTool(chatId, "test_tool");
+      const tool = {
+        name: "test_tool",
+        description: "A test tool",
+        parameters: {
+          type: "object",
+          properties: {},
+        },
+      } as Tool;
+      addRuntimeTool(chatId, "test_tool", tool);
+      removeRuntimeTool(chatId, "test_tool");
       expect(DYNAMIC_TOOL_REGISTRY[chatId]["test_tool"]).toBeUndefined();
     });
 
@@ -78,10 +103,19 @@ describe("Tools Registry", () => {
       const oldDate = new Date();
       oldDate.setHours(oldDate.getHours() - 2); // 2 hours old
 
+      const tool = {
+        name: "old_tool",
+        description: "A test tool",
+        parameters: {
+          type: "object",
+          properties: {},
+        },
+      } as Tool;
+
       DYNAMIC_TOOL_REGISTRY[chatId] = {
         old_tool: {
           registeredAt: oldDate,
-          tool: testTool,
+          tool: tool,
           meta: {
             name: "old_tool",
             label: "",
@@ -96,17 +130,26 @@ describe("Tools Registry", () => {
   });
 
   describe("Tool Dictionary", () => {
-    test("should return filtered tools", () => {
-      addStaticTool("tool1", "Tool 1", "First tool", testTool);
-      addStaticTool("tool2", "Tool 2", "Second tool", testTool);
+    test("should return tools for a chat ID", () => {
+      const chatId = "test_chat";
+      const tool = {
+        name: "test_tool",
+        description: "A test tool",
+        parameters: {
+          type: "object",
+          properties: {},
+        },
+      } as Tool;
+      addRuntimeTool(chatId, "test_tool", tool);
 
-      const filteredTools = getEnabledTools(["tool1", "tool2"]);
-      expect(Object.keys(filteredTools)).toEqual(["tool1", "tool2"]);
+      const tools = getRuntimeToolsDictionary(chatId);
+      expect(tools).toBeDefined();
+      expect(tools?.["test_tool"]).toEqual(tool);
     });
 
-    test("should return empty dictionary for empty filter", () => {
-      const filteredTools = getEnabledTools([]);
-      expect(Object.keys(filteredTools)).toHaveLength(0);
+    test("should return empty dictionary for undefined chat ID", () => {
+      const tools = getRuntimeToolsDictionary(undefined);
+      expect(tools).toEqual({});
     });
   });
 

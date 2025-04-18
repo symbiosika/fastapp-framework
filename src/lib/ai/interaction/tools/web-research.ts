@@ -10,7 +10,7 @@ import type { ToolContext, ToolReturn } from "../../../..";
  * Creates a general purpose web research tool
  * that can be adjusted to the needs of the user
  */
-export const getWebResearchTool = (
+const getADefinedWebResearchTool = (
   context: ToolContext,
   options: {
     description: string;
@@ -76,4 +76,13 @@ export const getWebResearchTool = (
     name: toolName,
     tool: webResearchTool,
   };
+};
+
+export const getWebResearchTool = (context: ToolContext): ToolReturn => {
+  return getADefinedWebResearchTool(context, {
+    description:
+      "Search the web for information. Can be used to get actual information or to get ideas for a blog post.",
+    model: "sonar",
+    maxTokens: 16000,
+  });
 };

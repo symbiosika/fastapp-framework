@@ -76,6 +76,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
               : body.initiateTemplate.promptId
             : undefined,
           variables: body.variables,
+          enabledTools: body.enabledTools,
           // Convert llmOptions to options
           options: body.llmOptions
             ? {

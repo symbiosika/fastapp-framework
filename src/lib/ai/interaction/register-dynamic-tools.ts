@@ -1,5 +1,5 @@
 import type { ToolContext } from "../ai-sdk/types";
-import { addDynamicTool } from "./tools";
+import { addRuntimeTool } from "./tools";
 import { createDynamicKnowledgeBaseTool } from "./tools/dynamic-knowledge-base";
 
 // Define the interface here instead of importing it
@@ -39,7 +39,7 @@ export const checkAndRegisterDynamicTool = async (
   });
 
   // Register the tool
-  addDynamicTool(context.chatId, tool.name, tool.tool);
+  addRuntimeTool(context.chatId, tool.name, tool.tool);
 
   return tool;
 };

@@ -16,6 +16,7 @@ import type { CoreMessage } from "ai";
 import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
 import { createHeadlineFromChat } from "../headline";
 import { getAvatarForChat } from "../avatars";
+import { addRuntimeToolFromBaseRegistry } from "./tools";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -95,6 +96,14 @@ export async function chat(
 
     // 3. Get the enabled tools from query or set to default
     const enabledToolNames = options.enabledTools || [];
+    for (const toolName of enabledToolNames) {
+      addRuntimeToolFromBaseRegistry(toolName, {
+        chatId,
+        organisationId: options.context.organisationId,
+        userId: options.context.userId,
+      });
+      log.debug("added tool '" + toolName + "' to chat: " + chatId);
+    }
 
     // 4. Handle initial templates or messages
     let messages: ChatMessage[] = [...session.messages];
