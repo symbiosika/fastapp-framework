@@ -24,6 +24,7 @@ import { chatInitInputValidation } from "../../../../../lib/ai/chat-store/compat
 import { chatWithTemplateReturnValidation } from "../../../../../lib/ai/chat-store/compatibility";
 import { chatStore } from "../../../../../lib/ai/chat-store";
 import { validateScope } from "../../../../../lib/utils/validate-scope";
+import { getLiveChat } from "../../../../../lib/ai/chat-store/live-chat-cache";
 
 export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   /**
@@ -433,6 +434,81 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         );
         return c.json(RESPONSES.SUCCESS);
       } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * Live Chat Status Endpoint
+   * Retrieves the current state of an ongoing chat generation
+   */
+  app.get(
+    API_BASE_PATH + "/organisation/:organisationId/ai/chat/live/:chatId",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/chat/live/:chatId",
+      tags: ["ai"],
+      summary: "Get live chat generation status",
+      responses: {
+        200: {
+          description: "Current chat generation status",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  chatId: v.string(),
+                  text: v.string(),
+                  complete: v.boolean(),
+                  meta: v.optional(
+                    v.object({
+                      toolsUsed: v.optional(v.array(v.string())),
+                      sources: v.optional(v.array(v.any())),
+                      artifacts: v.optional(v.array(v.any())),
+                    })
+                  ),
+                })
+              ),
+            },
+          },
+        },
+        404: {
+          description: "No live chat data found for the given chatId",
+        },
+      },
+    }),
+    validateScope("ai:chat"),
+    validator(
+      "param",
+      v.object({
+        organisationId: v.string(),
+        chatId: v.string(),
+      })
+    ),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        const { chatId } = c.req.valid("param");
+        const liveData = getLiveChat(chatId);
+
+        if (!liveData) {
+          throw new HTTPException(404, {
+            message: "No live chat data found",
+          });
+        }
+
+        return c.json({
+          chatId,
+          text: liveData.text,
+          complete: liveData.complete,
+          meta: liveData.meta,
+        });
+      } catch (e) {
+        if (e instanceof HTTPException) {
+          throw e;
+        }
         throw new HTTPException(400, { message: e + "" });
       }
     }

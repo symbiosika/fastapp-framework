@@ -1,4 +1,4 @@
-import { type CoreMessage, embed, generateText } from "ai";
+import { type CoreMessage, embed, generateText, streamText } from "ai";
 import type { OrganisationContext } from "./types";
 import { getAIEmbeddingModel, getAIModel } from "./get-model";
 import { encodeImageFromFile } from "./utils";
@@ -7,6 +7,7 @@ import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
 import { getToolMemory, getRuntimeToolsDictionary } from "../interaction/tools";
 import type { SourceReturn, ArtifactReturn } from "./types";
+import { updateLiveChat, clearLiveChat } from "../chat-store/live-chat-cache";
 
 /*
 // Typen für die AI-Response basierend auf der Vercel AI SDK-Dokumentation
@@ -231,7 +232,7 @@ export async function generateImageDescription(
 
 /**
  * ChatCompletion function to generate a response for the given prompt.
- * Will respond with plain Text only.
+ * Uses streaming to update the live chat cache with partial responses.
  */
 export async function chatCompletion(
   messages: CoreMessage[],
@@ -250,26 +251,68 @@ export async function chatCompletion(
   }
 
   const model = await getAIModel(providerAndModelName, context);
-
-  // get all tools filtered by the provided tool names
   const tools = getRuntimeToolsDictionary(context.chatId);
-  log.info(
-    `Registered Tools: ${Object.keys(tools || {}).join(", ")} (ChatId: ${context.chatId})`
-  );
 
-  // Use generateText with maxSteps for automatic tool handling
-  const { text, steps, usage } = await generateText({
+  // Clear any existing live chat data for this chat
+  if (context.chatId) {
+    clearLiveChat(context.chatId);
+  }
+
+  let accumulatedText = "";
+  let accumulatedSources: SourceReturn[] = [];
+  let accumulatedArtifacts: ArtifactReturn[] = [];
+  let usedTools: string[] = [];
+  let allSteps: any[] = [];
+
+  log.debug("Starting chat completion stream", {
+    category: "ai",
+    chatId: context.chatId,
+  });
+
+  const { textStream } = await streamText({
     model: model as LanguageModelV1,
     messages,
     temperature: options?.temperature,
     maxTokens: options?.maxTokens,
     tools,
-    // Let the model decide when to use tools
     toolChoice: tools && Object.keys(tools).length > 0 ? "auto" : "none",
-    // Allow multiple steps for tool usage and follow-up responses
     maxSteps: 5,
-    // Optional: Log each step for debugging
     onStepFinish: ({ text, toolCalls, toolResults, finishReason, usage }) => {
+      // Accumulate text and update live chat cache
+      accumulatedText += text;
+
+      // Store step information for final logs
+      allSteps.push({
+        text,
+        toolCalls,
+        toolResults,
+        finishReason,
+        usage,
+      });
+
+      if (context.chatId) {
+        // Collect tools used in this step
+        if (toolCalls) {
+          toolCalls.forEach((call) => {
+            if (!usedTools.includes(call.toolName)) {
+              usedTools.push(call.toolName);
+            }
+          });
+        }
+
+        // Update live chat cache with current state
+        updateLiveChat(context.chatId, {
+          text: accumulatedText,
+          complete: finishReason === "stop",
+          meta: {
+            toolsUsed: usedTools,
+            sources: accumulatedSources,
+            artifacts: accumulatedArtifacts,
+          },
+        });
+      }
+
+      // Existing logging
       log.logToDB({
         level: "debug",
         organisationId: context?.organisationId,
@@ -281,13 +324,70 @@ export async function chatCompletion(
           model: providerAndModelName,
           stepText: text,
           toolCalls: toolCalls?.map((call) => call.toolName),
-          // toolResults: toolResults?.map((result) => result.toolName),
           finishReason,
           usage,
         },
       });
     },
   });
+
+  // Process the text stream in chunks
+  for await (const textPart of textStream) {
+    // Update the accumulated text
+    accumulatedText += textPart;
+
+    // Update live chat with the latest text
+    if (context.chatId) {
+      updateLiveChat(context.chatId, {
+        text: accumulatedText,
+        complete: false,
+        meta: {
+          toolsUsed: usedTools,
+          sources: accumulatedSources,
+          artifacts: accumulatedArtifacts,
+        },
+      });
+    }
+  }
+
+  // Process tools and retrieve their data
+  // Get all used tools from tool memory
+  const toolMemory = getToolMemory(context.chatId);
+  // Iterate over all tools in memory that has been used and add possible sources and artifacts to the response
+  for (const tool in toolMemory) {
+    toolMemory[tool].usedSources?.forEach((source) => {
+      accumulatedSources.push(source);
+    });
+    toolMemory[tool].usedArtifacts?.forEach((artifact) => {
+      accumulatedArtifacts.push(artifact);
+    });
+  }
+
+  // Filter all duplicate sources (by label)
+  accumulatedSources = accumulatedSources.filter(
+    (source, index, self) =>
+      index === self.findIndex((t) => t.label === source.label)
+  );
+
+  // Get the last step's usage for final stats
+  const lastStep = allSteps[allSteps.length - 1];
+  const usage = lastStep?.usage;
+
+  // Update the live chat one last time with complete status
+  if (context.chatId) {
+    updateLiveChat(context.chatId, {
+      text: accumulatedText,
+      complete: true,
+      meta: {
+        toolsUsed: usedTools,
+        sources: accumulatedSources,
+        artifacts: accumulatedArtifacts,
+      },
+    });
+
+    // Then clear after a moment (or you might want to keep it for a while)
+    setTimeout(() => clearLiveChat(context.chatId!), 1000);
+  }
 
   // Log final completion
   log.logToDB({
@@ -299,78 +399,34 @@ export async function chatCompletion(
     message: "text-generation-complete",
     metadata: {
       model: providerAndModelName,
-      responseLength: text.length,
+      responseLength: accumulatedText.length,
       usedTokens: usage?.totalTokens,
       promptTokens: usage?.promptTokens,
       completionTokens: usage?.completionTokens,
       toolsUsed: tools ? Object.keys(tools) : undefined,
-      steps: steps?.map((step) => ({
+      steps: allSteps.map((step) => ({
         text: step.text,
-        toolCalls: step.toolCalls?.map((call) => call.toolName),
-        // toolResults: step.toolResults?.map((result) => result.toolName),
+        toolCalls: step.toolCalls?.map((call: any) => call.toolName),
       })),
     },
   });
 
-  // store all sources and artifacts
-  let sources: SourceReturn[] = [];
-  const artifacts: ArtifactReturn[] = [];
-
-  // Add all web sources to the sources array - if set
-  steps?.forEach((step) => {
-    step.sources?.forEach((source) => {
-      if (source.sourceType === "url") {
-        sources.push({
-          type: "url",
-          label: source.url,
-          url: source.url,
-          external: true,
-        });
-      }
-    });
-  });
-
-  // Get all used tools
-  const usedTools: string[] = [];
-  steps?.forEach((step) => {
-    step.toolCalls?.forEach((toolCall) => {
-      usedTools.push(toolCall.toolName);
-    });
-  });
-
-  // Get all used tools from tool memory
-  const toolMemory = getToolMemory(context.chatId);
-  // Iterate over all tools in memory that has been used and add possible sources and artifacts to the response
-  for (const tool in toolMemory) {
-    toolMemory[tool].usedSources?.forEach((source) => {
-      sources.push(source);
-    });
-    toolMemory[tool].usedArtifacts?.forEach((artifact) => {
-      artifacts.push(artifact);
-    });
-  }
-  // filter all duplicate sources (by label)
-  sources = sources.filter(
-    (source, index, self) =>
-      index === self.findIndex((t) => t.label === source.label)
-  );
-
   return {
     id: nanoid(6),
-    text,
+    text: accumulatedText,
     model: providerAndModelName,
     meta: {
-      responseLength: text.length,
+      responseLength: accumulatedText.length,
       usedTokens: usage?.totalTokens,
       promptTokens: usage?.promptTokens,
       completionTokens: usage?.completionTokens,
-      toolsUsed: tools ? Object.keys(tools) : undefined,
-      steps: steps?.map((step) => ({
+      toolsUsed: usedTools,
+      sources: accumulatedSources,
+      artifacts: accumulatedArtifacts,
+      steps: allSteps.map((step) => ({
         text: step.text,
-        toolCalls: step.toolCalls?.map((call) => call.toolName),
+        toolCalls: step.toolCalls?.map((call: any) => call.toolName),
       })),
-      sources,
-      artifacts,
     },
   };
 }
