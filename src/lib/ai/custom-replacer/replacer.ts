@@ -1,5 +1,5 @@
 import log from "../../log";
-import type { SourceReturn } from "../ai-sdk";
+import type { SourceReturn } from "../ai-sdk/types";
 import type { ChatSessionContext } from "../chat-store";
 import { parseArgumentsWithoutLimits } from "./parse-arguments";
 import type { CoreMessage } from "ai";

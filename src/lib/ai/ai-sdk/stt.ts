@@ -1,10 +1,10 @@
 import { openAiSpeechToText, type SpeechToTextResponse } from "./openai";
 import log from "../../../lib/log";
-import type { UserContext } from "./types";
+import type { OrganisationContext } from "./types";
 
 export async function speechToText(
   audioData: File | string,
-  context: UserContext,
+  context: OrganisationContext,
   options?: {
     providerAndModelName?: string;
     returnSegments?: boolean;

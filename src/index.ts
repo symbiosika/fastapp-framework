@@ -36,6 +36,7 @@ import aiTemplatesRoutes from "./routes/organisation/[organisationId]/ai/templat
 import aiPromptSnippetsRoutes from "./routes/organisation/[organisationId]/ai/prompt-snippets";
 import aiFineTuningRoutes from "./routes/organisation/[organisationId]/ai/fine-tuning";
 import aiKnowledgeRoutes from "./routes/organisation/[organisationId]/ai/knowledge";
+import aiAvatarsRoutes from "./routes/organisation/[organisationId]/ai/avatars";
 import aiKnowledgeFiltersRoutes from "./routes/organisation/[organisationId]/ai/knowledge-filters";
 import aiKnowledgeGroupRoutes from "./routes/organisation/[organisationId]/ai/knowledge-groups";
 import aiKnowledgeTextsRoutes from "./routes/organisation/[organisationId]/ai/knowledge-texts";
@@ -293,6 +294,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       defineChatGroupRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineAiUtilsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiAvatarsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
        * Adds workspace routes

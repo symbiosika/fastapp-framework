@@ -5,7 +5,8 @@ import {
   chatStore,
   type ChatSession,
 } from "../../ai/chat-store";
-import { chatCompletion, type SourceReturn } from "../../ai/ai-sdk";
+import { chatCompletion } from "../../ai/ai-sdk";
+import type { SourceReturn } from "../../ai/ai-sdk/types";
 import { initTemplateMessage } from "../../ai/prompt-templates/init-message";
 import log from "../../log";
 import { checkAndRegisterDynamicTool } from "./register-dynamic-tools";
@@ -14,7 +15,7 @@ import { customAppPlaceholders } from "../custom-replacer/custom-placeholders";
 import type { CoreMessage } from "ai";
 import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
 import { createHeadlineFromChat } from "../headline";
-import { getDynamicToolMemory } from "./tools";
+import { getAvatarForChat } from "../avatars";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -25,6 +26,7 @@ export const chatInputValidation = v.object({
   ),
   useTemplate: v.optional(v.string()),
   useTemplatePlaceholders: v.optional(v.boolean()),
+  useAvatar: v.optional(v.string()),
   variables: v.optional(v.record(v.string(), v.string())),
   options: v.optional(
     v.object({
@@ -60,7 +62,7 @@ export async function chat(
   try {
     let isNewChat = true;
 
-    // 1. Normalize input
+    // 1. Normalize input. Set user_input as default key
     let userInput: Record<string, string>;
     if (typeof options.input === "string") {
       userInput = { user_input: options.input };
@@ -69,26 +71,15 @@ export async function chat(
     }
 
     // 2. Get or create chat session
-    let session: ChatSession;
+    let session: ChatSession | null = null;
     const chatId = options.chatId || nanoid(16);
 
     if (options.chatId) {
-      const existingSession = await chatStore.get(options.chatId);
-      if (existingSession) {
-        session = existingSession;
-        isNewChat = false;
-      } else {
-        session = await chatStore.create({
-          chatId,
-          context: {
-            userId: options.context.userId,
-            organisationId: options.context.organisationId,
-          },
-          variables: userInput,
-        });
-      }
+      session = await chatStore.get(options.chatId); // check if chat exists. can be NULL
+    }
+    if (session) {
+      isNewChat = false;
     } else {
-      isNewChat = true;
       session = await chatStore.create({
         chatId,
         context: {
@@ -98,16 +89,17 @@ export async function chat(
         variables: userInput,
       });
     }
+    if (isNewChat) {
+      log.info("start new chat", chatId);
+    }
 
-    // 3. Use the central tools registry and preparation function
+    // 3. Get the enabled tools from query or set to default
     const enabledToolNames = options.enabledTools || [];
 
     // 4. Handle initial templates or messages
     let messages: ChatMessage[] = [...session.messages];
-    const isFirstInteraction = messages.length === 0;
 
-    let dynamicKnowledgeBaseToolName: string | undefined;
-    if (isFirstInteraction) {
+    if (isNewChat) {
       // Use template if specified, otherwise use default
       if (options.useTemplate) {
         const {
@@ -122,7 +114,7 @@ export async function chat(
           userInput,
         });
 
-        // Check and register the dynamic knowledge base tool
+        // Check if a dynamic knowledge base tool is needed and register it
         const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool(
           {
             knowledgeEntries,
@@ -131,18 +123,13 @@ export async function chat(
           },
           "rag",
           {
+            chatId,
             userId: options.context.userId,
             organisationId: options.context.organisationId,
           }
         );
-        if (dynamicKnowledgeBaseTool) {
-          // set state
-          dynamicKnowledgeBaseToolName = dynamicKnowledgeBaseTool.name;
-          // enable tool
-          enabledToolNames.push(dynamicKnowledgeBaseToolName);
-        }
 
-        // Add system message
+        // Add the first (system) message
         messages.push({
           role: "system",
           content: systemPrompt,
@@ -151,6 +138,17 @@ export async function chat(
             timestamp: new Date().toISOString(),
           },
         });
+
+        // Add Avatar message if specified
+        if (options.useAvatar) {
+          const avatarMessage = await getAvatarForChat(
+            options.context.userId,
+            options.context.organisationId,
+            options.useAvatar
+          );
+          messages.push(avatarMessage);
+          log.info("activated avatar " + options.useAvatar);
+        }
 
         // Add user message
         messages.push({
@@ -162,7 +160,9 @@ export async function chat(
             timestamp: new Date().toISOString(),
           },
         });
-      } else {
+      }
+      // New Chat but no template was used
+      else {
         // Add default system message
         messages.push({
           role: "system",
@@ -172,6 +172,17 @@ export async function chat(
             timestamp: new Date().toISOString(),
           },
         });
+
+        // Add Avatar message if specified
+        if (options.useAvatar) {
+          const avatarMessage = await getAvatarForChat(
+            options.context.userId,
+            options.context.organisationId,
+            options.useAvatar
+          );
+          messages.push(avatarMessage);
+          log.info("activated avatar " + options.useAvatar);
+        }
 
         // Add user message
         messages.push({
@@ -184,8 +195,9 @@ export async function chat(
           },
         });
       }
-    } else {
-      // Just add the new user message for continuing conversations
+    }
+    // Not a new chat. Only add the new user message for continuing conversations
+    else {
       messages.push({
         role: "user",
         content: userInput.user_input,
@@ -204,7 +216,7 @@ export async function chat(
     }));
 
     // 6. Replace custom placeholders if specified
-    let replacedMessagesSources: SourceReturn[] = [];
+    let sourcesFromCustomPlaceholders: SourceReturn[] = [];
     if (options.useTemplatePlaceholders ?? true) {
       const { replacedMessages, addToMeta } = await replaceCustomPlaceholders(
         coreMessages,
@@ -217,7 +229,7 @@ export async function chat(
         }
       );
       coreMessages = replacedMessages;
-      replacedMessagesSources = addToMeta?.sources || [];
+      sourcesFromCustomPlaceholders = addToMeta?.sources || [];
     }
 
     // 7. Generate response using AI SDK
@@ -226,6 +238,7 @@ export async function chat(
       {
         userId: options.context.userId,
         organisationId: options.context.organisationId,
+        chatId,
       },
       {
         providerAndModelName: options.options?.model, // "<provider>:<model>"
@@ -236,28 +249,7 @@ export async function chat(
     );
 
     // attach custom placeholders sources to the response if needed
-    response.meta.sources.push(...replacedMessagesSources);
-
-    // 8. Add assistant response to messages
-    // check if the dynamic tool was used
-    const dynamicToolWasUsed = dynamicKnowledgeBaseToolName
-      ? response.meta.toolsUsed?.includes(dynamicKnowledgeBaseToolName)
-      : false;
-
-    if (dynamicToolWasUsed) {
-      let sources: SourceReturn[] = [];
-      if (dynamicKnowledgeBaseToolName) {
-        sources =
-          getDynamicToolMemory(dynamicKnowledgeBaseToolName)?.usedSources || [];
-      }
-      response.meta.sources.push(...sources);
-    }
-
-    // drop all duplicate sources by id
-    response.meta.sources = response.meta.sources.filter(
-      (source, index, self) =>
-        index === self.findIndex((t) => t.id === source.id)
-    );
+    response.meta.sources.push(...sourcesFromCustomPlaceholders);
 
     // build message to be stored and returned
     const assistantMessage: ChatMessage = {
@@ -268,32 +260,25 @@ export async function chat(
         model: response.model,
         timestamp: new Date().toISOString(),
         ...response.meta,
-        knowledgeSources: dynamicToolWasUsed
-          ? {
-              knowledgeEntries: [],
-              knowledgeFilters: [],
-            }
-          : undefined,
       },
     };
-
     messages.push(assistantMessage);
 
-    let name: string | undefined;
+    let chatName: string | undefined;
     if (isNewChat) {
       // create headline
       const headline = await createHeadlineFromChat(coreMessages, {
         userId: options.context.userId,
         organisationId: options.context.organisationId,
       });
-      name = headline.headline;
+      chatName = headline.headline;
     }
 
     // 9. Update chat session in store
     await chatStore.set(chatId, {
       messages,
       updatedAt: new Date().toISOString(),
-      name,
+      name: chatName,
     });
 
     // 10. Return response

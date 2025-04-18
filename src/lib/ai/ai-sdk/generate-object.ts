@@ -4,10 +4,10 @@ import {
   type LanguageModelV1,
   type Schema,
 } from "ai";
-import { log, type UserContext } from "../../..";
+import { log, type OrganisationContext } from "../../..";
 import { getAIModel } from "./get-model";
 import { nanoid } from "nanoid";
-import type { SourceReturn } from ".";
+import type { SourceReturn } from "./types";
 
 /*
 How to define a schema for the output of the AI:
@@ -40,7 +40,7 @@ const demoSchema = jsonSchema<{
  */
 export async function chatCompletionWithObjectOutput(
   messages: CoreMessage[],
-  context: UserContext,
+  context: OrganisationContext,
   options: {
     providerAndModelName?: string;
     temperature?: number;

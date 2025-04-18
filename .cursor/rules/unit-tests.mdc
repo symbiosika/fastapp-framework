@@ -1,0 +1,65 @@
+---
+description: 
+globs: *.test.ts
+alwaysApply: false
+---
+# Example Unit Test
+
+- Always run unit-test from root dir like this `bun test src/fastapp-framework/src/lib/ai/a.test.ts`
+- never use "cd" command
+
+- never MOCK functions!
+- Use initTests() to initialize a database connection
+- Use the testing data for tests. many test data is found in the init.test.ts file and /test/ folder
+
+Example:
+```typescript	
+import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import {
+  initTests,
+  TEST_ADMIN_USER,
+  TEST_ORGANISATION_1,
+  TEST_USER_1,
+  TEST_ORGANISATION_2,
+} from "../../../test/init.test";
+// the base path is: "src/fastapp-framework/src/test/init.test.ts"
+
+beforeAll(async () => {
+  await initTests();
+});
+
+describe("Some Test", () => { 
+  test("Test function", async () => {
+      const result = await someFunction();
+      expect(result).toBe(true);
+    });
+});
+```
+
+- Exception test will always be done with try-catch-blocks
+
+```typescript
+try {
+  const result = await someFunction();
+} catch (e: any) {
+  expect(e).toBeInstanceOf(Error);
+}
+```
+
+- You will always wrap internal API calls with testFetcher.
+
+Example:
+```ts
+import { testFetcher } from "../../test/fetcher.test";
+const response = await testFetcher.post(
+    app, // the hono app
+    "/api/admin/logs/download", // path
+    TEST_ADMIN_TOKEN, // token
+    body || undefined
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("Content-Type")).toBe("application/gzip");
+  expect(response.jsonResponse).toBedefined(); // is null, wenn result is not json
+  expect(response.testResponse).toBedefined(); // is the body in plain text
+});
+```

@@ -1,7 +1,7 @@
-import type { UserContext } from "../../ai-sdk/types";
+import type { ToolContext } from "../../ai-sdk/types";
 import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
-import { addKnowledgeSourceToDynamicToolMemory } from "../tools";
+import { addEntryToToolMemory } from "../tools";
 
 interface DynamicKnowledgeBaseParams {
   // Pre-selected filters
@@ -17,7 +17,7 @@ interface DynamicKnowledgeBaseParams {
   addAfterN?: number;
   n?: number;
   // User context for execution
-  getUserContext: () => UserContext;
+  getUserContext: () => ToolContext;
 }
 
 interface QueryParams {
@@ -92,16 +92,16 @@ export function createDynamicKnowledgeBaseTool(
         });
 
         // Add these chunks to the tool memory
-        addKnowledgeSourceToDynamicToolMemory(
+        addEntryToToolMemory(userContext.chatId, {
           toolName,
-          results.map((chunk) => ({
+          sources: results.map((chunk) => ({
             type: "knowledge-chunk",
             label: `[Chunk] ${chunk.knowledgeEntryName}`,
             id: chunk.id,
             external: false,
             // url: chunk.url,
-          }))
-        );
+          })),
+        });
 
         // Format results
         if (results.length === 0) {

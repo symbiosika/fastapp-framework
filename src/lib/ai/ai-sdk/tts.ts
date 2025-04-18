@@ -1,13 +1,13 @@
 import log from "../../../lib/log";
 import { openAiTextToSpeech } from "./openai";
-import type { UserContext } from "./types";
+import type { OrganisationContext } from "./types";
 
 /**
  * Text to Speech
  */
 export const textToSpeech = async (
   text: string,
-  context: UserContext,
+  context: OrganisationContext,
   options?: {
     providerAndModelName?: string;
     voice?: string;

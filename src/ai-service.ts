@@ -56,14 +56,23 @@ import { chat } from "./lib/ai/interaction";
 import { chatStore } from "./lib/ai/chat-store";
 import { getAIEmbeddingModel, getAIModel } from "./lib/ai/ai-sdk/get-model";
 import {
-  addTool,
+  addStaticTool,
   addDynamicTool,
-  removeTool,
+  removeStaticTool,
   removeDynamicTool,
 } from "./lib/ai/interaction/tools";
 import { initTemplateMessage } from "./lib/ai/prompt-templates/init-message";
 import { syncModels } from "./lib/ai/models/sync";
 import { generateImages } from "./lib/ai/ai-sdk/image";
+import {
+  createAvatar,
+  getAvatarByName,
+  getAvatar,
+  listAvatars,
+  updateAvatar,
+  deleteAvatar,
+  getAvatarForChat,
+} from "./lib/ai/avatars";
 
 export default {
   // prompt templates
@@ -108,9 +117,9 @@ export default {
   // chat
   chat,
   chatCompletion,
-  addTool,
+  addStaticTool,
   addDynamicTool,
-  removeTool,
+  removeStaticTool,
   removeDynamicTool,
   getAIModel,
   getAIEmbeddingModel,
@@ -121,4 +130,12 @@ export default {
   syncModels,
   // chat store
   chatStore,
+  // avatars
+  createAvatar,
+  getAvatarByName,
+  getAvatar,
+  listAvatars,
+  updateAvatar,
+  deleteAvatar,
+  getAvatarForChat,
 };

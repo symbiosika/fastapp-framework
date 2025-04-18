@@ -19,6 +19,7 @@ import * as webhooks from "./schema/webhooks";
 import * as server from "./schema/server";
 import * as models from "./schema/models";
 import * as apiTokens from "./schema/api-tokens";
+import * as avatars from "./schema/avatars";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -38,6 +39,8 @@ export * from "./schema/webhooks";
 export * from "./schema/server";
 export * from "./schema/models";
 export * from "./schema/api-tokens";
+export * from "./schema/avatars";
+
 const baseDbSchema = {
   ...userTables,
   ...secrets,
@@ -56,6 +59,7 @@ const baseDbSchema = {
   ...server,
   ...models,
   ...apiTokens,
+  ...avatars,
 };
 
 let validTableNames: string[] = [];

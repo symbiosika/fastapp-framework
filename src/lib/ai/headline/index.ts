@@ -1,14 +1,14 @@
 import type { CoreMessage } from "ai";
 import log from "../../log";
 import { chatCompletion } from "../ai-sdk";
-import type { UserContext } from "../ai-sdk/types";
+import type { OrganisationContext } from "../ai-sdk/types";
 
 /**
  * Create a headline from a chat
  */
 export const createHeadlineFromChat = async (
   messages: CoreMessage[],
-  context: UserContext
+  context: OrganisationContext
 ) => {
   try {
     const chat: CoreMessage[] = [

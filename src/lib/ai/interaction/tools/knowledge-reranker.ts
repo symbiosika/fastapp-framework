@@ -1,4 +1,4 @@
-import type { UserContext } from "../../ai-sdk/types";
+import type { ToolContext } from "../../ai-sdk/types";
 import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
 import { getKnowledgeEntries } from "../../knowledge/get-knowledge";
@@ -13,7 +13,7 @@ interface KnowledgeRerankerParams {
   knowledgeGroupIds?: string[];
   knowledgeFilterIds?: string[];
   // User context for execution
-  getUserContext: () => UserContext;
+  getUserContext: () => ToolContext;
 }
 
 interface QueryParams {

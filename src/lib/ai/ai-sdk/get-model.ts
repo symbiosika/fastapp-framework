@@ -6,7 +6,7 @@ import { azure } from "@ai-sdk/azure";
 import { perplexity } from "@ai-sdk/perplexity";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { getAllAiProviderModels } from "../models";
-import type { UserContext } from "./types";
+import type { OrganisationContext } from "./types";
 
 /**
  * Gets a Vercel AI SDK compatible model from a provider:model string
@@ -16,7 +16,7 @@ import type { UserContext } from "./types";
  * @returns Vercel AI SDK compatible model
  * @throws Error if model is not found, not active, or provider is unsupported
  */
-export const getAIModel = async (modelString: string, context: UserContext) => {
+export const getAIModel = async (modelString: string, context: OrganisationContext) => {
   let [providerName, modelName] = modelString.split(":");
 
   if (!providerName || !modelName) {
@@ -86,13 +86,13 @@ export const getAIModel = async (modelString: string, context: UserContext) => {
  * Gets a Vercel AI SDK compatible embedding model from a provider:model string
  *
  * @param modelString - String in format "provider:model"
- * @param context - UserContext
+ * @param context - OrganisationContext
  * @returns Vercel AI SDK compatible embedding model
  * @throws Error if model is not found, not active, or provider is unsupported
  */
 export const getAIEmbeddingModel = async (
   modelString: string,
-  context: UserContext
+  context: OrganisationContext
 ) => {
   const [providerName, modelName] = modelString.split(":");
 

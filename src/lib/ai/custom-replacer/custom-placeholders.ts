@@ -22,7 +22,7 @@ import {
 import type { ChatMessageReplacerMeta, PlaceholderParser } from "./replacer";
 import type { ChatSessionContext } from "../chat-store";
 import type { PlaceholderArgumentDict } from "./replacer";
-import type { SourceReturn } from "../ai-sdk";
+import type { SourceReturn } from "../ai-sdk/types";
 
 export type ChatStoreVariables = Record<string, string>;
 /**
@@ -398,6 +398,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         {
           organisationId: meta.organisationId,
           userId: meta.userId,
+          chatId: meta.chatId,
         },
         {
           returnSegments: false,

@@ -1,5 +1,6 @@
 import { experimental_generateImage as generateImage } from "ai";
-import type { UserContext } from "./types";
+import { createReplicate } from "@ai-sdk/replicate";
+import type { OrganisationContext } from "./types";
 import log from "../../log";
 import { nanoid } from "nanoid";
 import * as v from "valibot";
@@ -27,14 +28,6 @@ interface ImageGenerationResult {
   };
 }
 
-interface BFLResponse {
-  id: string;
-  status: string;
-  result?: {
-    sample: string;
-  };
-}
-
 export const imageGenerationValidation = v.object({
   prompt: v.string(),
   width: v.number(),
@@ -43,76 +36,30 @@ export const imageGenerationValidation = v.object({
   seed: v.number(),
 });
 
+const REPLICATE_API_KEY = process.env.REPLICATE_API_KEY;
+const replicate = createReplicate({
+  apiToken: REPLICATE_API_KEY,
+});
+
 /**
  * Generate images based on a prompt
  */
 export async function generateImages(
   prompt: string,
-  context: UserContext,
+  context: OrganisationContext,
   options?: ImageGenerationOptions
 ): Promise<ImageGenerationResult> {
   try {
-    let providerAndModelName = "black-forest-labs:flux-pro-1.1";
+    const model = "black-forest-labs/flux-1.1-pro";
 
-    // HACK: Using Black Forest Labs API directly
-    const response = await fetch("https://api.us1.bfl.ai/v1/flux-pro-1.1", {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "x-key": process.env.BLACK_FOREST_LABS_API_KEY ?? "",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        width: options?.width ?? 1024,
-        height: options?.height ?? 768,
-      }),
+    const result = await generateImage({
+      model: replicate.image(model),
+      prompt,
+      size: `${options?.width ?? 1024}x${options?.height ?? 768}`,
     });
 
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const requestData = (await response.json()) as BFLResponse;
-    const requestId = requestData.id;
-
-    // Poll for the result
-    let result: BFLResponse;
-    while (true) {
-      const resultResponse = await fetch(
-        `https://api.us1.bfl.ai/v1/get_result?id=${requestId}`,
-        {
-          headers: {
-            accept: "application/json",
-            "x-key": process.env.BLACK_FOREST_LABS_API_KEY ?? "",
-          },
-        }
-      );
-
-      if (!resultResponse.ok) {
-        throw new Error(
-          `Result request failed with status ${resultResponse.status}`
-        );
-      }
-
-      result = (await resultResponse.json()) as BFLResponse;
-      if (result.status === "Ready") {
-        break;
-      }
-
-      // Wait before polling again
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-
-    if (!result.result?.sample) {
-      throw new Error("No image URL returned from API");
-    }
-
-    // Download the image from the signed URL
-    const imageResponse = await fetch(result.result.sample);
-    const imageBlob = await imageResponse.blob();
-    const arrayBuffer = await imageBlob.arrayBuffer();
-    const base64Image = `data:image/jpeg;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+    // Convert the generated image to base64
+    const base64Image = `data:${result.images[0].mimeType};base64,${Buffer.from(result.images[0].uint8Array).toString("base64")}`;
 
     // Log the image generation
     log.logToDB({
@@ -123,7 +70,7 @@ export async function generateImages(
       category: "image-generation",
       message: "image-generation-complete",
       metadata: {
-        model: "black-forest-labs:flux-pro-1.1",
+        model,
         imageCount: 1,
         width: options?.width ?? 1024,
         height: options?.height ?? 768,
@@ -133,7 +80,7 @@ export async function generateImages(
     return {
       id: nanoid(6),
       images: [base64Image],
-      model: "black-forest-labs:flux-pro-1.1",
+      model,
       meta: {
         imageCount: 1,
         width: options?.width ?? 1024,

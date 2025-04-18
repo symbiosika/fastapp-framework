@@ -1,4 +1,4 @@
-import type { UserContext } from "../ai-sdk/types";
+import type { ToolContext } from "../ai-sdk/types";
 import { addDynamicTool } from "./tools";
 import { createDynamicKnowledgeBaseTool } from "./tools/dynamic-knowledge-base";
 
@@ -18,7 +18,7 @@ interface DynamicTool {
 export const checkAndRegisterDynamicTool = async (
   query: KnowledgeQuery,
   type: "rag",
-  context: UserContext
+  context: ToolContext
 ): Promise<DynamicTool | undefined> => {
   // Skip if no knowledge filters are selected
   if (
@@ -39,7 +39,7 @@ export const checkAndRegisterDynamicTool = async (
   });
 
   // Register the tool
-  addDynamicTool(tool.name, tool.tool);
+  addDynamicTool(context.chatId, tool.name, tool.tool);
 
   return tool;
 };

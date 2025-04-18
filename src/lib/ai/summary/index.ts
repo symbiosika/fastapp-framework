@@ -1,6 +1,6 @@
 import { chatCompletion } from "../ai-sdk";
 import log from "../../../lib/log";
-import type { UserContext } from "../ai-sdk/types";
+import type { OrganisationContext } from "../ai-sdk/types";
 
 /**
  * Generates a summary for a document using LLM
@@ -8,7 +8,7 @@ import type { UserContext } from "../ai-sdk/types";
 export async function generateDocumentSummary(
   text: string,
   title: string,
-  context: UserContext,
+  context: OrganisationContext,
   options?: {
     customPrompt?: string;
     model?: string;
@@ -33,6 +33,7 @@ export async function generateDocumentSummary(
       {
         organisationId: context.organisationId,
         userId: context.userId,
+        chatId: context.chatId,
       },
       {
         providerAndModelName: options?.model,
@@ -58,7 +59,7 @@ export async function generateDocumentSummary(
 export async function generateChunkBasedSummary(
   chunks: { text: string; header?: string }[],
   title: string,
-  context: UserContext,
+  context: OrganisationContext,
   options?: {
     customPrompt?: string;
     model?: string;

@@ -1,12 +1,14 @@
 import { type CoreMessage, embed, generateText } from "ai";
-import type { UserContext } from "./types";
+import type { OrganisationContext } from "./types";
 import { getAIEmbeddingModel, getAIModel } from "./get-model";
 import { encodeImageFromFile } from "./utils";
 import log from "../../log";
 import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
-import { getToolsDictionary } from "../interaction/tools";
+import { getToolMemory, getToolsDictionary } from "../interaction/tools";
+import type { SourceReturn, ArtifactReturn } from "./types";
 
+/*
 // Typen für die AI-Response basierend auf der Vercel AI SDK-Dokumentation
 interface TextPart {
   type: "text";
@@ -123,21 +125,14 @@ interface Step {
     url: string;
   }[];
 }
-
-export interface SourceReturn {
-  type: "url" | "knowledge-chunk" | "knowledge-entry" | "file";
-  label: string;
-  id?: string;
-  url?: string;
-  external?: boolean;
-}
+*/
 
 /**
  * Generate an embedding for the given text using AI SDK
  */
 export async function generateEmbedding(
   text: string,
-  context: UserContext,
+  context: OrganisationContext,
   providerAndModelName?: string
 ) {
   if (!text || text.trim() === "") {
@@ -179,7 +174,7 @@ export async function generateEmbedding(
  */
 export async function generateImageDescription(
   image: File,
-  context: UserContext,
+  context: OrganisationContext,
   providerAndModelName?: string
 ) {
   try {
@@ -240,7 +235,7 @@ export async function generateImageDescription(
  */
 export async function chatCompletion(
   messages: CoreMessage[],
-  context: UserContext,
+  context: OrganisationContext,
   options?: {
     providerAndModelName?: string;
     temperature?: number;
@@ -257,7 +252,12 @@ export async function chatCompletion(
   const model = await getAIModel(providerAndModelName, context);
 
   // get all tools filtered by the provided tool names
-  const tools = options?.tools ? getToolsDictionary(options.tools) : undefined;
+  const tools = getToolsDictionary(context.chatId, options?.tools);
+  log.info(
+    "Registered Tools for ChatId " +
+      context.chatId +
+      Object.keys(tools || {}).join(", ")
+  );
 
   // Use generateText with maxSteps for automatic tool handling
   const { text, steps, usage } = await generateText({
@@ -282,10 +282,8 @@ export async function chatCompletion(
         metadata: {
           model: providerAndModelName,
           stepText: text,
-          toolCalls: (toolCalls as ToolCall[])?.map((call) => call.toolName),
-          toolResults: (toolResults as ToolResult[])?.map(
-            (result) => result.toolName
-          ),
+          toolCalls: toolCalls?.map((call) => call.toolName),
+          // toolResults: toolResults?.map((result) => result.toolName),
           finishReason,
           usage,
         },
@@ -308,16 +306,20 @@ export async function chatCompletion(
       promptTokens: usage?.promptTokens,
       completionTokens: usage?.completionTokens,
       toolsUsed: tools ? Object.keys(tools) : undefined,
-      steps: (steps as Step[])?.map((step) => ({
+      steps: steps?.map((step) => ({
         text: step.text,
         toolCalls: step.toolCalls?.map((call) => call.toolName),
-        toolResults: step.toolResults?.map((result) => result.toolName),
+        // toolResults: step.toolResults?.map((result) => result.toolName),
       })),
     },
   });
 
+  // store all sources and artifacts
   const sources: SourceReturn[] = [];
-  (steps as Step[])?.forEach((step) => {
+  const artifacts: ArtifactReturn[] = [];
+
+  // Add all web sources to the sources array - if set
+  steps?.forEach((step) => {
     step.sources?.forEach((source) => {
       if (source.sourceType === "url") {
         sources.push({
@@ -330,6 +332,26 @@ export async function chatCompletion(
     });
   });
 
+  // Get all used tools
+  const usedTools: string[] = [];
+  steps?.forEach((step) => {
+    step.toolCalls?.forEach((toolCall) => {
+      usedTools.push(toolCall.toolName);
+    });
+  });
+
+  // Get all used tools from tool memory
+  const toolMemory = getToolMemory(context.chatId);
+  // Iterate over all tools in memory that has been used and add possible sources and artifacts to the response
+  for (const tool in toolMemory) {
+    toolMemory[tool].usedSources?.forEach((source) => {
+      sources.push(source);
+    });
+    toolMemory[tool].usedArtifacts?.forEach((artifact) => {
+      artifacts.push(artifact);
+    });
+  }
+
   return {
     id: nanoid(6),
     text,
@@ -340,12 +362,12 @@ export async function chatCompletion(
       promptTokens: usage?.promptTokens,
       completionTokens: usage?.completionTokens,
       toolsUsed: tools ? Object.keys(tools) : undefined,
-      steps: (steps as Step[])?.map((step) => ({
+      steps: steps?.map((step) => ({
         text: step.text,
         toolCalls: step.toolCalls?.map((call) => call.toolName),
-        toolResults: step.toolResults?.map((result) => result.toolName),
       })),
-      sources: sources,
+      sources,
+      artifacts,
     },
   };
 }

@@ -15,7 +15,7 @@ import {
 import { chat } from "../index";
 import { chatStore } from "../../chat-store";
 import { createDynamicKnowledgeBaseTool } from "../tools/dynamic-knowledge-base";
-import { addDynamicTool, executeToolCall, toolRegistry } from "../tools";
+import { addDynamicTool } from "../tools";
 import { chatCompletion } from "../../ai-sdk";
 
 describe("Dynamic Knowledge Base Tool Tests", () => {
