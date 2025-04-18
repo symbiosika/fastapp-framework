@@ -254,9 +254,7 @@ export async function chatCompletion(
   // get all tools filtered by the provided tool names
   const tools = getToolsDictionary(context.chatId, options?.tools);
   log.info(
-    "Registered Tools for ChatId " +
-      context.chatId +
-      Object.keys(tools || {}).join(", ")
+    `Registered Tools: ${Object.keys(tools || {}).join(", ")} (ChatId: ${context.chatId})`
   );
 
   // Use generateText with maxSteps for automatic tool handling

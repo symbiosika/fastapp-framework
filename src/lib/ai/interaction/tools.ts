@@ -139,7 +139,9 @@ export const registerCleanUpJob = (): void => {
 /**
  * Get all static tools. For UI Display
  */
-export const getStaticToolOverview = (): ToolMetadata[] => {
+export const getStaticToolOverview = (
+  organisationId: string
+): ToolMetadata[] => {
   return Object.values(STATIC_TOOL_REGISTRY).map((entry) => entry.meta);
 };
 

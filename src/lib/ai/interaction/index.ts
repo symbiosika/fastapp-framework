@@ -115,7 +115,7 @@ export async function chat(
         });
 
         // Check if a dynamic knowledge base tool is needed and register it
-        const dynamicKnowledgeBaseTool = await checkAndRegisterDynamicTool(
+        await checkAndRegisterDynamicTool(
           {
             knowledgeEntries,
             knowledgeFilters,

@@ -20,6 +20,8 @@ export const availableScopes = {
     "ai:knowledge-manage:write",
     "ai:prompt-snippets:read",
     "ai:prompt-snippets:write",
+    "ai:tools:read",
+    "ai:tools:write",
     "app:logs",
     "files:read",
     "files:write",

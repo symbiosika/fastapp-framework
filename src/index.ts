@@ -42,6 +42,7 @@ import aiKnowledgeGroupRoutes from "./routes/organisation/[organisationId]/ai/kn
 import aiKnowledgeTextsRoutes from "./routes/organisation/[organisationId]/ai/knowledge-texts";
 import aiKnowledgeChunksRoutes from "./routes/organisation/[organisationId]/ai/knowledge-chunks";
 import aiTemplateRelationsRoutes from "./routes/organisation/[organisationId]/ai/template-relations";
+import defineToolsRoutes from "./routes/organisation/[organisationId]/ai/tools";
 import aiImagesRoutes from "./routes/organisation/[organisationId]/ai/images";
 import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
@@ -295,6 +296,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       defineAiUtilsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiAvatarsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      defineToolsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
        * Adds workspace routes
