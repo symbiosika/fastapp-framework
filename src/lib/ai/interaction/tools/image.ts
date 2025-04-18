@@ -57,7 +57,7 @@ const replicateModels = [
 /**
  * Creates an image generation tool with the provided context
  */
-export const getImageToolGen = (context: ToolContext): ToolReturn => {
+export const getImageGeneratorTool = (context: ToolContext): ToolReturn => {
   const toolName = `generate-image-${nanoid(10)}`;
 
   const imageTool: Tool = {
