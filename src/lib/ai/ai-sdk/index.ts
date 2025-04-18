@@ -278,9 +278,6 @@ export async function chatCompletion(
     toolChoice: tools && Object.keys(tools).length > 0 ? "auto" : "none",
     maxSteps: 5,
     onStepFinish: ({ text, toolCalls, toolResults, finishReason, usage }) => {
-      // Accumulate text and update live chat cache
-      accumulatedText += text;
-
       // Store step information for final logs
       allSteps.push({
         text,
