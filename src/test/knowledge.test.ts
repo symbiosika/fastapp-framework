@@ -14,22 +14,12 @@ import {
   promptTemplateKnowledgeEntries,
   promptTemplates,
 } from "../lib/db/schema/prompts";
+import {
+  TEST_KNOWLEDGE_TEXT,
+  TEST_KNOWLEDGE_TEXT_EMBEDDING,
+} from "./knowledge-entries.test";
 
 const pathToEmbeddingFile = __dirname + "/files/test-knowledge-embedding.json";
-
-export const TEST_KNOWLEDGE_TEXT = `
-Strinz-Margarethä ist ein Ortsteil der Gemeinde Hohenstein im südhessischen Rheingau-Taunus-Kreis.
-Strinz-Margarethä liegt im westlichen Hintertaunus am Mittellauf des Aubachs.
-Die Gemarkungsfläche beträgt 890 Hektar, davon sind 424 Hektar bewaldet.
-Der Höhenzug, auf dem die Eisenstraße verläuft, bildet die westliche und die von Hennethal nach Idstein führende,
-als Hermannsweg bekannte Höhenstraße, die nördliche Gemarkungsgrenze.
-In der Ortsmitte treffen sich die Landesstraßen L 3032 und L 3274.
-`;
-
-export const TEST_KNOWLEDGE_TEXT_EMBEDDING: {
-  embedding: number[];
-  model: string;
-} = JSON.parse(fs.readFileSync(pathToEmbeddingFile, "utf8"));
 
 export const TEST_KNOWLEDGE_GROUP = {
   id: "11000000-1100-1100-1100-000000000000",

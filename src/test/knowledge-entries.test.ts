@@ -2,7 +2,6 @@
  * Knowledge Entries for Testing
  */
 import fs from "fs";
-
 const pathToEmbeddingFile = __dirname + "/files/test-knowledge-embedding.json";
 
 export const TEST_KNOWLEDGE_TEXT = `

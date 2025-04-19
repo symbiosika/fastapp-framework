@@ -8,8 +8,10 @@ import {
   knowledgeGroup,
   knowledgeGroupTeamAssignments,
   workspaces,
+  type KnowledgeEntrySelect,
   type KnowledgeGroupSelect,
 } from "../dbSchema";
+import { storeKnowledgeEntry } from "../lib/ai/knowledge/add-knowledge";
 
 /**
  * Helper function to create a team
@@ -114,4 +116,29 @@ export const testing_deleteWorkspace = async (
   workspaceIds: string[]
 ): Promise<void> => {
   await getDb().delete(workspaces).where(inArray(workspaces.id, workspaceIds));
+};
+
+/**
+ * Helper function to create a knowledge entry
+ * FOR TESTING PURPOSES ONLY. WILL NOT CHECK FOR PERMISSIONS.
+ */
+export const testing_createKnowledgeEntry = async (data: {
+  organisationId: string;
+  userId: string;
+  workspaceId?: string;
+  knowledgeGroupId?: string;
+  userOwned?: boolean;
+}): Promise<KnowledgeEntrySelect> => {
+  const knowledgeEntry = await storeKnowledgeEntry(
+    {
+      ...data,
+      name: nanoid(8),
+      sourceType: "external",
+      sourceExternalId: nanoid(8),
+      sourceUrl: `https://symbiosika.com/${nanoid(8)}`,
+    },
+    {}
+  );
+
+  return knowledgeEntry;
 };
