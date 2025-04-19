@@ -111,4 +111,4 @@ jobs:
       #   run: bun test src/routes/organisation/[organisationId]/invitations/security.test.ts
 
       - name: Run tests
-        run: bun test
+        run: bun test --reporter=junit --reporter-outfile=./junit.xml
