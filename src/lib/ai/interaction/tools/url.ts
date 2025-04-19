@@ -1,9 +1,11 @@
 import { nanoid } from "nanoid";
 import { type Tool } from "ai";
 import { jsonSchema } from "ai";
-import { getMarkdownFromUrl } from "../../parsing/url";
 import log from "../../../log";
 import type { ToolReturn, ToolContext } from "../../../..";
+import { generateText } from "ai";
+import { perplexity } from "@ai-sdk/perplexity";
+import { addEntryToToolMemory } from "../tools";
 
 export type UrlTools = "parseUrl";
 
@@ -32,12 +34,32 @@ export const getUrlParserTool = (context: ToolContext): ToolReturn => {
       const { url } = params;
 
       try {
-        const markdown = await getMarkdownFromUrl(url);
-        return JSON.stringify({
-          markdown,
+        log.info("TOOL-CALL: fetching content from URL", url);
+
+        // Generate content using Perplexity's sonar model
+        const research = await generateText({
+          model: perplexity("sonar-pro"),
+          prompt: `You will return the content for this webpage: ${url}. Only return the content from this specific URL, do not include any additional information or research.`,
         });
+
+        log.info("URL content fetched successfully");
+
+        // Add the source to the tool memory
+        addEntryToToolMemory(context.chatId, {
+          toolName,
+          sources: [
+            {
+              type: "url",
+              label: url,
+              url: url,
+            },
+          ],
+        });
+
+        // Return the formatted text directly
+        return research.text;
       } catch (error: any) {
-        throw new Error(`Error parsing URL: ${error.message}`);
+        throw new Error(`Error fetching URL content: ${error.message}`);
       }
     },
   };
