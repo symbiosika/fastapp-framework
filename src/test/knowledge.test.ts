@@ -8,7 +8,7 @@ import {
   knowledgeChunks,
   knowledgeGroup,
 } from "../lib/db/schema/knowledge";
-import { TEST_ORGANISATION_1, TEST_USER_1 } from "./init.test";
+import { TEST_ORGANISATION_1, TEST_ORG1_USER_1 } from "./init.test";
 import fs from "fs";
 import {
   promptTemplateKnowledgeEntries,
@@ -25,7 +25,7 @@ export const TEST_KNOWLEDGE_GROUP = {
   id: "11000000-1100-1100-1100-000000000000",
   name: "Test Knowledge Group",
   organisationId: TEST_ORGANISATION_1.id,
-  userId: TEST_USER_1.id,
+  userId: TEST_ORG1_USER_1.id,
   organisationWideAccess: true,
 };
 

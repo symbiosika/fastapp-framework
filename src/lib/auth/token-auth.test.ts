@@ -3,7 +3,7 @@ import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../test/init.test";
 import {
   generateApiToken,
@@ -42,7 +42,7 @@ describe("Token Authentication", () => {
     test("should create a new API token", async () => {
       const result = await createApiToken({
         name: "Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read", "user:write"],
       });
@@ -54,7 +54,7 @@ describe("Token Authentication", () => {
     test("should create a token with expiration", async () => {
       const result = await createApiToken({
         name: "Expiring Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read"],
         expiresIn: 5, // 5 minutes
@@ -68,7 +68,7 @@ describe("Token Authentication", () => {
     test("should find a valid token", async () => {
       const { token } = await createApiToken({
         name: "Search Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read"],
       });
@@ -92,7 +92,7 @@ describe("Token Authentication", () => {
     test("should verify token and return JWT", async () => {
       const { token } = await createApiToken({
         name: "JWT Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read", "user:write"],
       });
@@ -105,7 +105,7 @@ describe("Token Authentication", () => {
     test("should verify token with specific scopes", async () => {
       const { token } = await createApiToken({
         name: "Scope Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read", "user:write"],
       });
@@ -117,7 +117,7 @@ describe("Token Authentication", () => {
     test("should throw error for insufficient scopes", async () => {
       const { token } = await createApiToken({
         name: "Scope Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read"],
       });
@@ -135,13 +135,13 @@ describe("Token Authentication", () => {
     test("should revoke an API token", async () => {
       const { token } = await createApiToken({
         name: "Revoke Test Token",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read"],
       });
 
       const tokenRecord = await searchForToken(token);
-      await revokeApiToken(tokenRecord.id, TEST_USER_1.id);
+      await revokeApiToken(tokenRecord.id, TEST_ORG1_USER_1.id);
 
       try {
         await searchForToken(token);
@@ -157,19 +157,19 @@ describe("Token Authentication", () => {
       // Create multiple tokens for the user
       await createApiToken({
         name: "List Test Token 1",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:read"],
       });
 
       await createApiToken({
         name: "List Test Token 2",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         scopes: ["user:write"],
       });
 
-      const tokens = await listApiTokensForUser(TEST_USER_1.id);
+      const tokens = await listApiTokensForUser(TEST_ORG1_USER_1.id);
       expect(tokens.length).toBeGreaterThanOrEqual(2);
       expect(tokens[0].name).toBeDefined();
       expect(tokens[0].scopes).toBeDefined();

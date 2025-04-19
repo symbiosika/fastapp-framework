@@ -16,7 +16,7 @@ import {
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { testing_createTeamAndAddUsers } from "../../../test/permissions.test";
 
@@ -40,7 +40,7 @@ describe("Knowledge Groups", () => {
 
     const { teamId } = await testing_createTeamAndAddUsers(
       TEST_ORGANISATION_1.id,
-      [TEST_USER_1.id]
+      [TEST_ORG1_USER_1.id]
     );
     TEST_TEAM_ID = teamId;
   });
@@ -51,7 +51,7 @@ describe("Knowledge Groups", () => {
         name: "Test Group Create",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       };
 
@@ -60,7 +60,7 @@ describe("Knowledge Groups", () => {
       expect(newGroup.name).toBe("Test Group Create");
       expect(newGroup.description).toBe("Test Description");
       expect(newGroup.organisationId).toBe(TEST_ORGANISATION_1.id);
-      expect(newGroup.userId).toBe(TEST_USER_1.id);
+      expect(newGroup.userId).toBe(TEST_ORG1_USER_1.id);
       expect(newGroup.organisationWideAccess).toBe(false);
     });
   });
@@ -72,7 +72,7 @@ describe("Knowledge Groups", () => {
         name: "Test Group List",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
@@ -87,13 +87,13 @@ describe("Knowledge Groups", () => {
     it("should filter groups by user", async () => {
       const groups = await getKnowledgeGroups({
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(
         groups.every(
           (group) =>
-            group.userId === TEST_USER_1.id || group.organisationWideAccess
+            group.userId === TEST_ORG1_USER_1.id || group.organisationWideAccess
         )
       ).toBe(true);
     });
@@ -104,14 +104,14 @@ describe("Knowledge Groups", () => {
         name: "Test Group Team Assignments",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
       // Assign a team
       await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       const groups = (await getKnowledgeGroups({
@@ -133,13 +133,13 @@ describe("Knowledge Groups", () => {
         name: "Test Group Get By ID",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
       const group = await getKnowledgeGroupById(newGroup.id, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(group).not.toBeNull();
@@ -150,7 +150,7 @@ describe("Knowledge Groups", () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000000";
       const group = await getKnowledgeGroupById(nonExistentId, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(group).toBeNull();
@@ -164,7 +164,7 @@ describe("Knowledge Groups", () => {
         name: "Test Group Update",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
@@ -176,7 +176,7 @@ describe("Knowledge Groups", () => {
         },
         {
           organisationId: TEST_ORGANISATION_1.id,
-          userId: TEST_USER_1.id,
+          userId: TEST_ORG1_USER_1.id,
         }
       );
 
@@ -192,7 +192,7 @@ describe("Knowledge Groups", () => {
           { name: "Updated Group" },
           {
             organisationId: TEST_ORGANISATION_1.id,
-            userId: TEST_USER_1.id,
+            userId: TEST_ORG1_USER_1.id,
           }
         )
       ).rejects.toThrow();
@@ -206,18 +206,18 @@ describe("Knowledge Groups", () => {
         name: "Test Group Delete",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
       await deleteKnowledgeGroup(newGroup.id, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       const deletedGroup = await getKnowledgeGroupById(newGroup.id, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(deletedGroup).toBeNull();
@@ -228,7 +228,7 @@ describe("Knowledge Groups", () => {
       await expect(
         deleteKnowledgeGroup(nonExistentId, {
           organisationId: TEST_ORGANISATION_1.id,
-          userId: TEST_USER_1.id,
+          userId: TEST_ORG1_USER_1.id,
         })
       ).rejects.toThrow();
     });
@@ -241,18 +241,18 @@ describe("Knowledge Groups", () => {
         name: "Test Group Team Assignment",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
       await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       const teams = await getTeamsForKnowledgeGroup(newGroup.id, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(teams.length).toBeGreaterThan(0);
@@ -265,25 +265,25 @@ describe("Knowledge Groups", () => {
         name: "Test Group Team Removal",
         description: "Test Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationWideAccess: false,
       });
 
       // First assign the team
       await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       // Then remove it
       await removeTeamFromKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       const teams = await getTeamsForKnowledgeGroup(newGroup.id, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
 
       expect(teams).not.toContain(TEST_TEAM_ID);

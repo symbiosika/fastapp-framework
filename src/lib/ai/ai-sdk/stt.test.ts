@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { speechToText } from "./stt";
 import { textToSpeech } from "./tts";
@@ -18,7 +18,7 @@ describe("Speech to Text", () => {
     // Create test audio file using TTS
     const ttsResult = await textToSpeech(testText, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
 
     audioFilePath = "./test_audio_stt.mp3";
@@ -46,7 +46,7 @@ describe("Speech to Text", () => {
 
     const result = await speechToText(audioFile, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
 
     expect(result.text).toBeDefined();
@@ -64,7 +64,7 @@ describe("Speech to Text", () => {
 
     const result = await speechToText(audioFile, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
 
     expect(result.text).toBeDefined();
@@ -82,7 +82,7 @@ describe("Speech to Text", () => {
       audioFile,
       {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       },
       {
         returnSegments: true,
@@ -105,7 +105,7 @@ describe("Speech to Text", () => {
       audioFile,
       {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       },
       {
         returnWords: true,
@@ -129,7 +129,7 @@ describe("Speech to Text", () => {
         audioFile,
         {
           organisationId: TEST_ORGANISATION_1.id,
-          userId: TEST_USER_1.id,
+          userId: TEST_ORG1_USER_1.id,
         },
         {
           providerAndModelName: "openai:invalid-model",

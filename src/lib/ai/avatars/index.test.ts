@@ -3,8 +3,8 @@ import {
   initTests,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
-  TEST_USER_1,
-  TEST_USER_2,
+  TEST_ORG1_USER_1,
+  TEST_ORG2_USER_1,
 } from "../../../test/init.test";
 import {
   createAvatar,
@@ -25,14 +25,14 @@ describe("Avatar Module Tests", () => {
     name: "Test Avatar",
     description: "This is a test avatar",
     organisationId: TEST_ORGANISATION_1.id,
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
   };
 
   const testOrgWideAvatar: AvatarInsert = {
     name: "Org Wide Avatar",
     description: "This is an organization-wide avatar",
     organisationId: TEST_ORGANISATION_1.id,
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
     organisationWide: true,
   };
 
@@ -58,7 +58,7 @@ describe("Avatar Module Tests", () => {
     const avatar = await getAvatarByName(
       TEST_ORGANISATION_1.id,
       testAvatar.name,
-      { userId: TEST_USER_1.id }
+      { userId: TEST_ORG1_USER_1.id }
     );
     expect(avatar).toBeDefined();
     expect(avatar.name).toBe(testAvatar.name);
@@ -68,7 +68,7 @@ describe("Avatar Module Tests", () => {
     const avatar = await getAvatarByName(
       TEST_ORGANISATION_1.id,
       testOrgWideAvatar.name,
-      { userId: TEST_USER_2.id }
+      { userId: TEST_ORG2_USER_1.id }
     );
     expect(avatar).toBeDefined();
     expect(avatar.name).toBe(testOrgWideAvatar.name);
@@ -78,7 +78,7 @@ describe("Avatar Module Tests", () => {
   test("getAvatarByName - should throw error for non-existent avatar", async () => {
     try {
       await getAvatarByName(TEST_ORGANISATION_1.id, "NonExistentAvatar", {
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
     } catch (e: any) {
       expect(e).toBeInstanceOf(Error);
@@ -88,7 +88,7 @@ describe("Avatar Module Tests", () => {
 
   test("listAvatars - should return all avatars for an organization", async () => {
     const avatars = await listAvatars(TEST_ORGANISATION_1.id, {
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
     expect(Array.isArray(avatars)).toBe(true);
     expect(avatars.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe("Avatar Module Tests", () => {
 
   test("listAvatars - should return organization-wide avatars for any user", async () => {
     const avatars = await listAvatars(TEST_ORGANISATION_1.id, {
-      userId: TEST_USER_2.id,
+      userId: TEST_ORG2_USER_1.id,
     });
     expect(Array.isArray(avatars)).toBe(true);
     const orgWideAvatars = avatars.filter((a) => a.organisationWide);
@@ -109,14 +109,14 @@ describe("Avatar Module Tests", () => {
     const avatar = await getAvatarByName(
       TEST_ORGANISATION_1.id,
       testAvatar.name,
-      { userId: TEST_USER_1.id }
+      { userId: TEST_ORG1_USER_1.id }
     );
     const updatedData = {
       description: "Updated description",
     };
     const updatedAvatar = await updateAvatar(avatar.id, updatedData, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
     expect(updatedAvatar).toBeDefined();
     expect(updatedAvatar?.description).toBe(updatedData.description);
@@ -131,7 +131,7 @@ describe("Avatar Module Tests", () => {
       updatedData,
       {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       }
     );
     expect(updatedAvatar).toBeDefined();
@@ -142,18 +142,18 @@ describe("Avatar Module Tests", () => {
     const avatar = await getAvatarByName(
       TEST_ORGANISATION_1.id,
       testAvatar.name,
-      { userId: TEST_USER_1.id }
+      { userId: TEST_ORG1_USER_1.id }
     );
     const result = await deleteAvatar(avatar.id, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
     expect(result).toBe(true);
 
     // Verify avatar is deleted
     try {
       await getAvatarByName(TEST_ORGANISATION_1.id, testAvatar.name, {
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
     } catch (e: any) {
       expect(e).toBeInstanceOf(Error);
@@ -167,11 +167,11 @@ describe("Avatar Module Tests", () => {
       name: "Chat Avatar",
       description: "This is a chat avatar",
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
 
     const chatMessage = await getAvatarForChat(
-      TEST_USER_1.id,
+      TEST_ORG1_USER_1.id,
       TEST_ORGANISATION_1.id,
       newAvatar.name
     );

@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { generateImages } from "./image";
 import fs from "fs/promises";
@@ -39,7 +39,7 @@ describe("Image Generation", () => {
     try {
       result = await generateImages(prompt, {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
     } catch (error) {
       console.error("Error generating image:", error);
@@ -76,7 +76,7 @@ describe("Image Generation", () => {
     try {
       await generateImages("", {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       });
       throw new Error("Expected an error to be thrown");
     } catch (e: any) {

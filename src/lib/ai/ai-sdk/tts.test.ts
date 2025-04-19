@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { textToSpeech } from "./tts";
 import fs from "fs/promises";
@@ -26,7 +26,7 @@ describe("Text to Speech", () => {
     const text = "Hello, this is a test for text to speech.";
     const result = await textToSpeech(text, {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
 
     expect(result.file).toBeDefined();
@@ -47,7 +47,7 @@ describe("Text to Speech", () => {
       text,
       {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       },
       {
         providerAndModelName: "openai:gpt-4o-mini-tts",
@@ -67,7 +67,7 @@ describe("Text to Speech", () => {
         text,
         {
           organisationId: TEST_ORGANISATION_1.id,
-          userId: TEST_USER_1.id,
+          userId: TEST_ORG1_USER_1.id,
         },
         {
           providerAndModelName: "openai:invalid-model",

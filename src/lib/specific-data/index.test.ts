@@ -3,7 +3,7 @@ import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
   dropAllUserAndOrganisationSpecificData,
 } from "../../test/init.test";
 import {
@@ -34,14 +34,14 @@ beforeAll(async () => {
 
   const { teamId } = await testing_createTeamAndAddUsers(
     TEST_ORGANISATION_1.id,
-    [TEST_USER_1.id]
+    [TEST_ORG1_USER_1.id]
   );
   TEST_TEAM_ID = teamId;
 });
 
 describe("User Specific Data", () => {
   const testData = {
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
     key: "test-key",
     data: { value: "test-value" },
   };
@@ -49,11 +49,11 @@ describe("User Specific Data", () => {
   test("should create and retrieve user specific data", async () => {
     const created = await createUserSpecificData(testData);
     expect(created).toBeDefined();
-    expect(created.userId).toBe(TEST_USER_1.id);
+    expect(created.userId).toBe(TEST_ORG1_USER_1.id);
     expect(created.key).toBe(testData.key);
     expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getUserSpecificData(TEST_USER_1.id, testData.key);
+    const retrieved = await getUserSpecificData(TEST_ORG1_USER_1.id, testData.key);
     expect(retrieved).toEqual(created);
   });
 
@@ -64,7 +64,7 @@ describe("User Specific Data", () => {
     });
     const updated = await updateUserSpecificData(
       created.id,
-      TEST_USER_1.id,
+      TEST_ORG1_USER_1.id,
       "update-key",
       {
         data: { value: "updated-value" },
@@ -78,10 +78,10 @@ describe("User Specific Data", () => {
       ...testData,
       key: "delete-key",
     });
-    await deleteUserSpecificData(created.id, TEST_USER_1.id);
+    await deleteUserSpecificData(created.id, TEST_ORG1_USER_1.id);
 
     try {
-      await getUserSpecificData(TEST_USER_1.id, "delete-key");
+      await getUserSpecificData(TEST_ORG1_USER_1.id, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("User specific data not found");

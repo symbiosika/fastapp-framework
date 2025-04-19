@@ -5,7 +5,7 @@ import {
   initTests,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
-  TEST_USER_2,
+  TEST_ORG2_USER_1,
 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";

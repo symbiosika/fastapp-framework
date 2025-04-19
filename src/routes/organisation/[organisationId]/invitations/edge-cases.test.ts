@@ -5,7 +5,7 @@ import type { FastAppHono } from "../../../../types";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_3,
+  TEST_ORG3_USER_1,
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import {
@@ -34,7 +34,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
       .where(
         and(
           eq(organisationInvitations.organisationId, TEST_ORGANISATION_1.id),
-          eq(organisationInvitations.email, TEST_USER_3.email)
+          eq(organisationInvitations.email, TEST_ORG3_USER_1.email)
         )
       );
   });
@@ -43,7 +43,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
   test("should handle duplicate invitations", async () => {
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -76,7 +76,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
     // Create a new invitation
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -116,7 +116,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
     // Create a new invitation
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -201,7 +201,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
       .where(
         and(
           eq(organisationInvitations.organisationId, TEST_ORGANISATION_1.id),
-          eq(organisationInvitations.email, TEST_USER_3.email)
+          eq(organisationInvitations.email, TEST_ORG3_USER_1.email)
         )
       );
 
@@ -223,7 +223,7 @@ describe("Invitations Edge Cases and Error Handling", () => {
       .where(
         and(
           eq(organisationInvitations.organisationId, TEST_ORGANISATION_1.id),
-          eq(organisationInvitations.email, TEST_USER_3.email)
+          eq(organisationInvitations.email, TEST_ORG3_USER_1.email)
         )
       );
 

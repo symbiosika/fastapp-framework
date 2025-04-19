@@ -4,8 +4,8 @@ import defineWorkspaceRoutes from "./index";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
-  TEST_USER_3,
+  TEST_ORG1_USER_1,
+  TEST_ORG3_USER_1,
 } from "../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../types";
@@ -153,7 +153,7 @@ describe("Workspace API Endpoints", () => {
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members`,
       TEST_USER_2_TOKEN,
-      { userIds: [TEST_USER_3.id] }
+      { userIds: [TEST_ORG3_USER_1.id] }
     );
     // console.log(response.textResponse);
     expect(response.status).toBe(500);
@@ -166,7 +166,7 @@ describe("Workspace API Endpoints", () => {
       app,
       `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members`,
       TEST_USER_1_TOKEN,
-      { userIds: [TEST_USER_3.id] }
+      { userIds: [TEST_ORG3_USER_1.id] }
     );
     // console.log(response.textResponse);
     expect(response.status).toBe(200);
@@ -183,7 +183,7 @@ describe("Workspace API Endpoints", () => {
     console.log("User 3 dropping member 1...");
     response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members/${TEST_USER_1.id}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members/${TEST_ORG1_USER_1.id}`,
       TEST_USER_3_TOKEN
     );
     // console.log(response.textResponse);
@@ -204,7 +204,7 @@ describe("Workspace API Endpoints", () => {
     console.log("Try to drop user 3 from workspace. Should fail...");
     response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members/${TEST_USER_3.id}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/workspaces/${childWorkspaceId}/members/${TEST_ORG3_USER_1.id}`,
       TEST_USER_3_TOKEN
     );
     // console.log(response.textResponse);

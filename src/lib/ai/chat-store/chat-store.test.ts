@@ -5,7 +5,7 @@ import {
   waitForDbConnection,
 } from "../../../lib/db/db-connection";
 import { nanoid } from "nanoid";
-import { TEST_USER_1, TEST_ORGANISATION_1 } from "../../../test/init.test";
+import { TEST_ORG1_USER_1, TEST_ORGANISATION_1 } from "../../../test/init.test";
 
 let TEST_CHAT_ID: string;
 
@@ -32,14 +32,14 @@ describe("Chat Store", () => {
         user_input: "Hello, assistant!",
       },
       context: {
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
       },
     });
 
     expect(session).toBeDefined();
     expect(session.id).toBeDefined();
-    expect(session.userId).toBe(TEST_USER_1.id);
+    expect(session.userId).toBe(TEST_ORG1_USER_1.id);
     expect(session.organisationId).toBe(TEST_ORGANISATION_1.id);
     expect(session.messages.length).toBe(1);
     expect(session.messages[0].role).toBe("system");
@@ -62,7 +62,7 @@ describe("Chat Store", () => {
     const session = await chatStore.get(TEST_CHAT_ID);
     expect(session).toBeDefined();
     expect(session?.id).toBe(TEST_CHAT_ID);
-    expect(session?.userId).toBe(TEST_USER_1.id);
+    expect(session?.userId).toBe(TEST_ORG1_USER_1.id);
     expect(session?.organisationId).toBe(TEST_ORGANISATION_1.id);
   });
 
@@ -99,7 +99,7 @@ describe("Chat Store", () => {
 
   test("Get chat history by user ID", async () => {
     const history = await chatStore.getHistoryByUserId(
-      TEST_USER_1.id,
+      TEST_ORG1_USER_1.id,
       "2000-01-01",
       { organisationId: TEST_ORGANISATION_1.id }
     );

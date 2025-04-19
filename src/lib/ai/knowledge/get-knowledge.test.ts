@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
-  TEST_USER_1,
-  TEST_USER_2,
+  TEST_ORG1_USER_1,
+  TEST_ORG2_USER_1,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
 } from "../../../test/init.test";
@@ -25,28 +25,28 @@ describe("getKnowledgeEntries Permissions", () => {
   beforeAll(async () => {
     await initTests();
 
-    // Create a team and workspace in Organisation1, add TEST_USER_1 to that team
+    // Create a team and workspace in Organisation1, add TEST_ORG1_USER_1 to that team
     const teamOrg1 = await testing_createTeamAndAddUsers(
       TEST_ORGANISATION_1.id,
-      [TEST_USER_1.id]
+      [TEST_ORG1_USER_1.id]
     );
     teamIdOrg1 = teamOrg1.teamId;
     const workspaceOrg1 = await testing_createWorkspace({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
       teamId: teamIdOrg1,
     });
     workspaceIdOrg1 = workspaceOrg1.id;
 
-    // Create a team and workspace in Organisation2, add TEST_USER_2 to that team
+    // Create a team and workspace in Organisation2, add TEST_ORG2_USER_1 to that team
     const teamOrg2 = await testing_createTeamAndAddUsers(
       TEST_ORGANISATION_2.id,
-      [TEST_USER_2.id]
+      [TEST_ORG2_USER_1.id]
     );
     teamIdOrg2 = teamOrg2.teamId;
     const workspaceOrg2 = await testing_createWorkspace({
       organisationId: TEST_ORGANISATION_2.id,
-      userId: TEST_USER_2.id,
+      userId: TEST_ORG2_USER_1.id,
       teamId: teamIdOrg2,
     });
     workspaceIdOrg2 = workspaceOrg2.id;
@@ -63,14 +63,14 @@ describe("getKnowledgeEntries Permissions", () => {
     // Create an entry in org1, with teamIdOrg1 and workspaceIdOrg1, userOwned = false
     entryOrg1 = await testing_createKnowledgeEntry({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
       workspaceId: workspaceIdOrg1,
     });
 
     // Should succeed for user1 from org1
     const result1 = await getKnowledgeEntries({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
       workspaceId: workspaceIdOrg1,
     });
     expect(result1.length).toBeGreaterThanOrEqual(1);
@@ -82,7 +82,7 @@ describe("getKnowledgeEntries Permissions", () => {
     expect(async () => {
       const result = await getKnowledgeEntries({
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_2.id,
+        userId: TEST_ORG2_USER_1.id,
         teamId: teamIdOrg1,
         workspaceId: workspaceIdOrg1,
       });
@@ -90,16 +90,16 @@ describe("getKnowledgeEntries Permissions", () => {
   });
 
   test("User-owned knowledge is only visible to that specific user", async () => {
-    // Create an entry with userOwned = true for TEST_USER_1
+    // Create an entry with userOwned = true for TEST_ORG1_USER_1
     const entryOwned = await testing_createKnowledgeEntry({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
       userOwned: true,
     });
     // Visible to the same user
     const result1 = await getKnowledgeEntries({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
       userOwned: true,
     });
     expect(result1.find((r) => r.id === entryOwned.id)).toBeDefined();
@@ -107,7 +107,7 @@ describe("getKnowledgeEntries Permissions", () => {
     // Should NOT be visible to another user
     const result2 = await getKnowledgeEntries({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_2.id,
+      userId: TEST_ORG2_USER_1.id,
       userOwned: true,
     });
     // If we get this far, user2 wrongly saw user1's userOwned entry
@@ -118,7 +118,7 @@ describe("getKnowledgeEntries Permissions", () => {
   //     // Create an entry in org2, with teamIdOrg2, workspaceIdOrg2
   //     const entryOrg2 = await testing_createKnowledgeEntry({
   //       organisationId: TEST_ORGANISATION_2.id,
-  //       userId: TEST_USER_2.id,
+  //       userId: TEST_ORG2_USER_1.id,
   //       workspaceId: workspaceIdOrg2,
   //     });
 
@@ -126,7 +126,7 @@ describe("getKnowledgeEntries Permissions", () => {
   //     try {
   //       await getKnowledgeEntries({
   //         organisationId: TEST_ORGANISATION_2.id,
-  //         userId: TEST_USER_1.id,
+  //         userId: TEST_ORG1_USER_1.id,
   //         teamId: teamIdOrg2,
   //         workspaceId: workspaceIdOrg2,
   //       });
@@ -139,7 +139,7 @@ describe("getKnowledgeEntries Permissions", () => {
   //     // user2 can see it
   //     const result2 = await getKnowledgeEntries({
   //       organisationId: TEST_ORGANISATION_2.id,
-  //       userId: TEST_USER_2.id,
+  //       userId: TEST_ORG2_USER_1.id,
   //       teamId: teamIdOrg2,
   //       workspaceId: workspaceIdOrg2,
   //     });

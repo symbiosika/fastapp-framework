@@ -55,7 +55,7 @@ export const TEST_ADMIN_USER = {
   password: TEST_PASSWORD,
 };
 
-export const TEST_USER_1 = {
+export const TEST_ORG1_USER_1 = {
   id: "00000000-2222-2222-2222-000000000001",
   email: "testuser1@symbiosika.com",
   firstname: "Test",
@@ -63,7 +63,7 @@ export const TEST_USER_1 = {
   password: TEST_PASSWORD,
 };
 
-export const TEST_USER_2 = {
+export const TEST_ORG2_USER_1 = {
   id: "00000000-2222-2222-2222-000000000002",
   email: "testuser2@symbiosika.com",
   firstname: "Test",
@@ -71,7 +71,7 @@ export const TEST_USER_2 = {
   password: TEST_PASSWORD,
 };
 
-export const TEST_USER_3 = {
+export const TEST_ORG3_USER_1 = {
   id: "00000000-2222-2222-2222-000000000003",
   email: "testuser3@symbiosika.com",
   firstname: "Test",
@@ -80,9 +80,9 @@ export const TEST_USER_3 = {
 };
 
 export const TEST_USERS = [
-  TEST_USER_1,
-  TEST_USER_2,
-  TEST_USER_3,
+  TEST_ORG1_USER_1,
+  TEST_ORG2_USER_1,
+  TEST_ORG3_USER_1,
   TEST_ADMIN_USER,
 ];
 
@@ -221,9 +221,9 @@ export const dropAllTestOrganisationMembers = async () => {
     .delete(organisationMembers)
     .where(
       inArray(organisationMembers.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
+        TEST_ORG1_USER_1.id,
+        TEST_ORG2_USER_1.id,
+        TEST_ORG3_USER_1.id,
       ])
     );
 };
@@ -236,9 +236,9 @@ export const dropAllTestTeamMembers = async () => {
     .delete(teamMembers)
     .where(
       inArray(teamMembers.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
+        TEST_ORG1_USER_1.id,
+        TEST_ORG2_USER_1.id,
+        TEST_ORG3_USER_1.id,
       ])
     );
 };
@@ -266,9 +266,9 @@ export const dropAllUserAndOrganisationSpecificData = async () => {
     .delete(userSpecificData)
     .where(
       inArray(userSpecificData.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
+        TEST_ORG1_USER_1.id,
+        TEST_ORG2_USER_1.id,
+        TEST_ORG3_USER_1.id,
       ])
     );
   await getDb()
@@ -295,16 +295,16 @@ export const initTestOrganisationMembers = async () => {
     .delete(organisationMembers)
     .where(
       inArray(organisationMembers.userId, [
-        TEST_USER_1.id,
-        TEST_USER_2.id,
-        TEST_USER_3.id,
+        TEST_ORG1_USER_1.id,
+        TEST_ORG2_USER_1.id,
+        TEST_ORG3_USER_1.id,
       ])
     );
 
   // all the users to their own organisations
-  await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_USER_1.id, "owner");
-  await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_USER_2.id, "owner");
-  await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_USER_3.id, "owner");
+  await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_ORG1_USER_1.id, "owner");
+  await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_ORG2_USER_1.id, "owner");
+  await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_ORG3_USER_1.id, "owner");
 
   // add admin to all organisations
   await addOrganisationMember(
@@ -387,9 +387,9 @@ export const initTests = async () => {
     console.info("Error initialising test AI models", err);
   });
 
-  const user1Token = await getJwtTokenForTesting(TEST_USER_1.email);
-  const user2Token = await getJwtTokenForTesting(TEST_USER_2.email);
-  const user3Token = await getJwtTokenForTesting(TEST_USER_3.email);
+  const user1Token = await getJwtTokenForTesting(TEST_ORG1_USER_1.email);
+  const user2Token = await getJwtTokenForTesting(TEST_ORG2_USER_1.email);
+  const user3Token = await getJwtTokenForTesting(TEST_ORG3_USER_1.email);
   const adminToken = await getJwtTokenForTesting(TEST_ADMIN_USER.email);
 
   return {

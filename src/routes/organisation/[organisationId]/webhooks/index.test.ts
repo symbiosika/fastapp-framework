@@ -5,7 +5,7 @@ import { testFetcher } from "../../../../test/fetcher.test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../test/init.test";
 import type { FastAppHonoContextVariables } from "../../../../types";
 import { createServer } from "http";
@@ -33,7 +33,7 @@ describe("Webhook API Endpoints", () => {
         type: "n8n",
         webhookUrl: "http://example.com",
         event: "chat-output",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         organisationWide: true,
       }
@@ -69,7 +69,7 @@ describe("Webhook API Endpoints", () => {
       `/api/organisation/${TEST_ORGANISATION_1.id}/webhooks`,
       TEST_USER_1_TOKEN,
       {
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         name: "Specific Webhook",
         type: "n8n",
@@ -100,7 +100,7 @@ describe("Webhook API Endpoints", () => {
       TEST_USER_1_TOKEN,
       {
         name: "Update Webhook",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         type: "n8n",
         webhookUrl: "http://example.com",
@@ -117,7 +117,7 @@ describe("Webhook API Endpoints", () => {
       TEST_USER_1_TOKEN,
       {
         name: "Updated Webhook",
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
         type: "n8n",
         webhookUrl: "http://example.com",
@@ -144,7 +144,7 @@ describe("Webhook API Endpoints", () => {
       TEST_USER_2_TOKEN,
       {
         name: "Unauthorized Webhook",
-        // userId: TEST_USER_2.id,
+        // userId: TEST_ORG2_USER_1.id,
         // organisationId: TEST_ORGANISATION_1.id,
         type: "n8n",
         webhookUrl: "http://example.com",

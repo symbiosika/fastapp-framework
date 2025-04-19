@@ -5,7 +5,7 @@ import type { FastAppHono } from "../../../../types";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_3,
+  TEST_ORG3_USER_1,
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 import { rejectUnauthorized } from "../../../../test/reject-unauthorized.test";
@@ -30,7 +30,7 @@ describe("Invitations Security Tests", () => {
     // Create a test invitation for security tests
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };

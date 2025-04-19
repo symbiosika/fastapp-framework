@@ -4,7 +4,7 @@ import defineRoutes from ".";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
@@ -208,7 +208,7 @@ describe("Chat Groups API Edge Cases", () => {
     const nonExistentId = "00000000-0000-0000-0000-000000000000";
 
     const userData = {
-      userIds: [TEST_USER_1.id],
+      userIds: [TEST_ORG1_USER_1.id],
     };
 
     const response = await testFetcher.post(
