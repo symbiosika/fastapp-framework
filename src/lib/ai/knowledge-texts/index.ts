@@ -14,6 +14,12 @@ export const addKnowledgeTextFromUrl = async (data: {
   workspaceId?: string;
   userOwned?: boolean;
 }) => {
+  // regex validation for the URL
+  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+  if (!urlRegex.test(data.url)) {
+    throw new Error("Invalid URL");
+  }
+
   const markdown = await getMarkdownFromUrl(data.url);
   log.debug(`Got markdown from URL: ${markdown.slice(0, 25)}`);
 

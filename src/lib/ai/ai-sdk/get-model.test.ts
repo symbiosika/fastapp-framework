@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { getAIModel, getAIEmbeddingModel } from "./get-model";
 
@@ -14,7 +14,7 @@ describe("Knowledge Text Flow", () => {
   it("should return a valid model", async () => {
     const model = await getAIModel("openai:gpt-4o-mini", {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     });
     expect(model).toBeDefined();
   });
@@ -23,7 +23,7 @@ describe("Knowledge Text Flow", () => {
     await expect(
       getAIModel("openai:gpt-4o-mini-not-found", {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       })
     ).rejects.toThrow();
   });
@@ -33,7 +33,7 @@ describe("Knowledge Text Flow", () => {
     await expect(
       getAIModel("ionos:llama-3.1-8b-instruct", {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       })
     ).rejects.toThrow("API key for ionos is not set in environment variables");
   });
@@ -43,7 +43,7 @@ describe("Knowledge Text Flow", () => {
       "openai:text-embedding-3-small",
       {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       }
     );
     expect(embeddingModel).toBeDefined();

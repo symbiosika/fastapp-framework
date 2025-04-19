@@ -6,36 +6,19 @@ import {
   knowledgeEntry,
   knowledgeEntryFilters,
   knowledgeFilters,
-  knowledgeText,
   type KnowledgeEntrySelect,
   knowledgeGroup,
   knowledgeGroupTeamAssignments,
+  type KnowledgeChunksSelect,
 } from "../../db/schema/knowledge";
 import log from "../../../lib/log";
-import { deleteFileFromDB } from "../../storage/db";
-import { deleteFileFromLocalDisc } from "../../storage/local";
-import { isUserPartOfTeam } from "../../usermanagement/teams";
 import {
+  getUserKnowledgeGroupIds,
   getUserTeamIds,
   getUserWorkspaceIds,
   validateKnowledgeAccess,
 } from "./permissions";
-
-type KnowledgeQuery = {
-  id?: string[];
-  names?: string[];
-  chunkCount?: number;
-  chunkOffset?: number;
-  filters?: Record<string, string[]>;
-  userId: string;
-  teamId?: string;
-  workspaceId?: string;
-  organisationId: string;
-};
-
-type KnowledgeEntryWithChunks = typeof knowledgeEntry.$inferSelect & {
-  knowledgeChunks: (typeof knowledgeChunks.$inferSelect)[];
-};
+import { getFilterIdsFromNames } from "./knowledge-filters";
 
 type PlainKnowledgetEntry = {
   text: string;
@@ -45,212 +28,55 @@ type PlainKnowledgetEntry = {
   meta: KnowledgeChunkMeta;
 };
 
-/**
- * Helper function to get a knowledge entry with its chunks
- */
-const getKnowledgeWithChunks = async (
-  id: string,
-  chunkOffset?: number,
-  chunkCount?: number
-) => {
-  const e = await getDb().query.knowledgeEntry.findMany({
-    where: eq(knowledgeEntry.id, id),
-  });
-  const chunks = await getDb().query.knowledgeChunks.findMany({
-    where: eq(knowledgeChunks.knowledgeEntryId, id),
-    orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
-    offset: chunkOffset,
-    limit: chunkCount,
-  });
-  return { ...e[0], knowledgeChunks: chunks };
-};
-
-/**
- * Helper function to get a knowledge entry with its chunks
- * with conditions
- */
-const getKnowledgeWithChunksWithConditions = async (
-  where: SQL<unknown> | undefined
-) => {
-  const entries = await getDb().query.knowledgeEntry.findMany({
-    where,
-  });
-
-  const entriesWithChunks = await Promise.all(
-    entries.map(async (entry) => ({
-      ...entry,
-      knowledgeChunks: await getDb().query.knowledgeChunks.findMany({
-        where: eq(knowledgeChunks.knowledgeEntryId, entry.id),
-        orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
-      }),
-    }))
-  );
-
-  return entriesWithChunks;
-};
-
-/**
- * Helper to get knowledge by an id, name(s) or filters from DB
- * Will return the knowledge as an array with the original IDs.
- */
-const getKnowledge = async (
-  query: KnowledgeQuery
-): Promise<KnowledgeEntryWithChunks[]> => {
-  const userTeams = await getUserTeamIds(query.userId, query.organisationId);
-  const usersWorkspaces = await getUserWorkspaceIds(
-    query.userId,
-    query.organisationId,
-    userTeams
-  );
-
-  // Updated access conditions to include NULL values
-  const accessConditions = [
-    eq(knowledgeEntry.userId, query.userId),
-    or(
-      isNull(knowledgeEntry.teamId),
-      inArray(knowledgeEntry.teamId, userTeams)
-    ),
-    or(
-      isNull(knowledgeEntry.workspaceId),
-      inArray(knowledgeEntry.workspaceId, usersWorkspaces)
-    ),
-    // Knowledge group access - group has org-wide access
-    exists(
-      getDb()
-        .select()
-        .from(knowledgeGroup)
-        .where(
-          and(
-            eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
-            eq(knowledgeGroup.organisationWideAccess, true)
-          )
-        )
-    ),
-    // Knowledge group access - user's team is assigned to the group
-    exists(
-      getDb()
-        .select()
-        .from(knowledgeGroupTeamAssignments)
-        .where(
-          and(
-            eq(
-              knowledgeGroupTeamAssignments.knowledgeGroupId,
-              knowledgeEntry.knowledgeGroupId
-            ),
-            inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
-          )
-        )
-    ),
-  ];
-
-  // Query based on direct ID(s)
-  if (query.id) {
-    const entries = await Promise.all(
-      query.id.map(async (id) => {
-        const hasAccess = await validateKnowledgeAccess(
-          id,
-          query.userId,
-          query.organisationId
-        );
-        if (!hasAccess) {
-          throw new Error(
-            `User does not have permission to access knowledge entry ${id}`
-          );
-        }
-        return getKnowledgeWithChunks(id, query.chunkOffset, query.chunkCount);
-      })
-    );
-    return entries;
-  }
-
-  // Query based on names or categories from fine-tuning data
-  const conditions = [or(...accessConditions)]; // Add access control as first condition
-
-  if (query.names?.length) {
-    conditions.push(inArray(knowledgeEntry.name, query.names));
-  }
-
-  if (query.filters) {
-    await log.debug(
-      `Getting knowledge filtered by: ${JSON.stringify(query.filters)}`
-    );
-
-    for (const [category, values] of Object.entries(query.filters)) {
-      if (values.length) {
-        const subquery = getDb()
-          .select({ id: knowledgeEntryFilters.knowledgeEntryId })
-          .from(knowledgeEntryFilters)
-          .innerJoin(
-            knowledgeFilters,
-            eq(knowledgeFilters.id, knowledgeEntryFilters.knowledgeFilterId)
-          )
-          .where(
-            and(
-              eq(knowledgeFilters.category, category),
-              inArray(knowledgeFilters.name, values)
-            )
-          );
-
-        conditions.push(sql`${knowledgeEntry.id} IN (${subquery})`);
-      }
-    }
-  }
-
-  if (conditions.length === 1) {
-    // Only access conditions present
-    await log.debug(
-      "No conditions to filter knowledge base are provided. At least one filter must be provided."
-    );
-    throw new Error(
-      "No conditions to filter knowledge base are provided. At least one filter must be provided."
-    );
-  }
-
-  const where = and(...conditions);
-
-  const entriesWithChunks = await getKnowledgeWithChunksWithConditions(where);
-  await log.debug(`Return ${entriesWithChunks.length} knowledge entries`);
-  return entriesWithChunks;
+type KnowledgeWithChunks = KnowledgeEntrySelect & {
+  chunks: KnowledgeChunksSelect[];
+  fullText: string;
 };
 
 /**
  * Get the full knowledge entry with all chunks.
  * This is used for RAG prompting to get knowledge as plain text.
  */
-export const getPlainKnowledge = async (
-  query: KnowledgeQuery
-): Promise<PlainKnowledgetEntry[]> => {
-  const knowledge = await getKnowledge(query);
-  const plainKnowledge: PlainKnowledgetEntry[] = [];
-  for (const entry of knowledge) {
-    for (const chunk of entry.knowledgeChunks) {
-      plainKnowledge.push({
-        text: chunk.text,
-        knowledgeEntryName: entry.name,
-        knowledgeEntryId: entry.id,
-        chunkId: chunk.id,
-        meta: chunk.meta ?? {},
-      });
-    }
+export const extendKnowledgeEntriesWithTextChunks = async (
+  entries: KnowledgeEntrySelect[]
+): Promise<KnowledgeWithChunks[]> => {
+  const entriesWithChunks: KnowledgeWithChunks[] = [];
+
+  for (const entry of entries) {
+    const chunks = await getDb().query.knowledgeChunks.findMany({
+      where: eq(knowledgeChunks.knowledgeEntryId, entry.id),
+      orderBy: (knowledgeChunks, { asc }) => [asc(knowledgeChunks.order)],
+    });
+    entriesWithChunks.push({
+      ...entry,
+      chunks,
+      fullText: chunks.map((chunk) => chunk.text).join("\n"),
+    });
   }
-  return plainKnowledge;
+  return entriesWithChunks;
 };
 
 /**
- * Get all (filtered) knowledgebase entries from DB for a user
- * with pagination
+ * Get filtered knowledgebase entries from DB for a user WITH PAGINATION
  * without the chunks/texts. only the list of knowledge entries
  */
 export const getKnowledgeEntries = async (query: {
-  limit?: number;
-  page?: number;
+  // Context
   organisationId: string;
   userId: string;
+  // Pagination
+  limit?: number; // default: 100
+  page?: number; // default: 0
+  // Filters. At least one filter must be provided.
   teamId?: string;
   workspaceId?: string;
   knowledgeGroupId?: string;
   userOwned?: boolean;
   ids?: string[];
+  filterIds?: string[];
+  filterNames?: {
+    [category: string]: string[];
+  };
 }): Promise<
   (KnowledgeEntrySelect & {
     filters: {
@@ -263,88 +89,115 @@ export const getKnowledgeEntries = async (query: {
     }[];
   })[]
 > => {
+  // 1.) convert filterNames to filterIds if set
+  if (query.filterNames) {
+    const filterIds = await getFilterIdsFromNames(query.filterNames);
+    query.filterIds = filterIds;
+  }
+
+  // 2.) Get all access conditions
   const userTeams = await getUserTeamIds(query.userId, query.organisationId);
   const usersWorkspaces = await getUserWorkspaceIds(
     query.userId,
     query.organisationId,
     userTeams
   );
+  const userKnowledgeGroupIds = await getUserKnowledgeGroupIds(
+    query.userId,
+    query.organisationId,
+    userTeams
+  );
 
-  // Updated access conditions to include NULL values
-  // const accessConditions = [
-  //   eq(knowledgeEntry.userId, query.userId),
-  //   or(
-  //     isNull(knowledgeEntry.teamId),
-  //     inArray(knowledgeEntry.teamId, userTeams)
-  //   ),
-  //   or(
-  //     isNull(knowledgeEntry.workspaceId),
-  //     inArray(knowledgeEntry.workspaceId, usersWorkspaces)
-  //   ),
-  //   // Knowledge group access - group has org-wide access
-  //   exists(
-  //     getDb()
-  //       .select()
-  //       .from(knowledgeGroup)
-  //       .where(
-  //         and(
-  //           eq(knowledgeGroup.id, knowledgeEntry.knowledgeGroupId),
-  //           eq(knowledgeGroup.organisationWideAccess, true)
-  //         )
-  //       )
-  //   ),
-  //   // Knowledge group access - user's team is assigned to the group
-  //   exists(
-  //     getDb()
-  //       .select()
-  //       .from(knowledgeGroupTeamAssignments)
-  //       .where(
-  //         and(
-  //           eq(knowledgeGroupTeamAssignments.knowledgeGroupId, knowledgeEntry.knowledgeGroupId),
-  //           inArray(knowledgeGroupTeamAssignments.teamId, userTeams)
-  //         )
-  //       )
-  //   ),
-  // ];
+  // 3.) fist fast validation: check if the filters teamId, workspaceId, knowledgeGroupId
+  // are part of the known userTeams, usersWorkspaces, userKnowledgeGroupIds
+  if (query.teamId && !userTeams.includes(query.teamId)) {
+    throw new Error(`User does not have access to team ${query.teamId}`);
+  }
+  if (query.workspaceId && !usersWorkspaces.includes(query.workspaceId)) {
+    throw new Error(
+      `User does not have access to workspace ${query.workspaceId}`
+    );
+  }
+  if (
+    query.knowledgeGroupId &&
+    !userKnowledgeGroupIds.includes(query.knowledgeGroupId)
+  ) {
+    throw new Error(
+      `User does not have access to knowledge group ${query.knowledgeGroupId}`
+    );
+  }
 
-  // Add optional filters if provided
-  const filterConditions = [];
+  // 4.) Add optional filters if provided
+  // always add the organisationId filter
+  const filterConditions: (SQL<unknown> | undefined)[] = [
+    eq(knowledgeEntry.organisationId, query.organisationId),
+  ];
+  // check for team
   if (query.teamId) {
     filterConditions.push(eq(knowledgeEntry.teamId, query.teamId));
+  } else {
+    filterConditions.push(
+      or(
+        isNull(knowledgeEntry.teamId),
+        inArray(knowledgeEntry.teamId, userTeams)
+      )
+    );
   }
+  // check for workspace
   if (query.workspaceId) {
     filterConditions.push(eq(knowledgeEntry.workspaceId, query.workspaceId));
-  }
-  if (query.ids?.length) {
-    filterConditions.push(inArray(knowledgeEntry.id, query.ids));
-  }
-  if (!query.workspaceId) {
+  } else {
     filterConditions.push(isNull(knowledgeEntry.workspaceId));
   }
-
-  // Add filter for knowledgeGroupId
+  // check for knowledge group
   if (query.knowledgeGroupId) {
     filterConditions.push(
       eq(knowledgeEntry.knowledgeGroupId, query.knowledgeGroupId)
     );
+  } else {
+    filterConditions.push(
+      or(
+        isNull(knowledgeEntry.knowledgeGroupId),
+        inArray(knowledgeEntry.knowledgeGroupId, userKnowledgeGroupIds)
+      )
+    );
   }
-
-  // Add filter for userOwned
+  // check for knowledge IDs
+  if (query.ids?.length) {
+    filterConditions.push(inArray(knowledgeEntry.id, query.ids));
+  }
+  // check for user owned
   if (query.userOwned === true) {
-    filterConditions.push(eq(knowledgeEntry.userOwned, true));
+    filterConditions.push(
+      and(
+        eq(knowledgeEntry.userOwned, true),
+        eq(knowledgeEntry.userId, query.userId)
+      )
+    );
   } else if (query.userOwned === false) {
     filterConditions.push(eq(knowledgeEntry.userOwned, false));
   }
+  // check for filter IDs - add this new condition
+  if (query.filterIds) {
+    // Subquery to get knowledgeEntry IDs that have at least one of the specified filterIds
+    const subQuery = getDb()
+      .selectDistinct({ id: knowledgeEntryFilters.knowledgeEntryId }) // Select distinct entry IDs
+      .from(knowledgeEntryFilters)
+      .where(
+        // Filter the knowledgeEntryFilters table by the provided filter IDs
+        inArray(knowledgeEntryFilters.knowledgeFilterId, query.filterIds)
+      );
+    // Add condition to the main query: knowledgeEntry.id must be in the result of the subquery
+    filterConditions.push(inArray(knowledgeEntry.id, subQuery));
+  }
 
-  const r = await getDb().query.knowledgeEntry.findMany({
+  // 5.) Get the knowledge entries
+  const entriesQuery = getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
-    where: and(
-      eq(knowledgeEntry.organisationId, query.organisationId),
-      // or(...accessConditions),
-      ...filterConditions
-    ),
-    orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
+    where: and(...filterConditions),
+    orderBy: (entry, { desc }) => [desc(entry.createdAt)], // Use 'entry' alias provided by findMany/orderBy context
+    // with filters and knowledge group
     with: {
       filters: {
         columns: {
@@ -363,97 +216,20 @@ export const getKnowledgeEntries = async (query: {
       knowledgeGroup: true,
     },
   });
-  // filter the teams by organisationId
-  return r;
-};
 
-/**
- * Delete a knowledge entry by ID
- * will check if the user has permission to delete the knowledge entry
- */
-export const deleteKnowledgeEntry = async (
-  id: string,
-  organisationId: string,
-  userId: string,
-  deleteSource = false
-) => {
-  // check the user permissions
-  const canDelete = await validateKnowledgeAccess(id, userId, organisationId);
-  if (!canDelete) {
-    throw new Error(
-      "User does not have permission to delete this knowledge entry"
-    );
+  const sql = entriesQuery.toSQL();
+  try {
+    return await entriesQuery; // Execute the query
+  } catch (error) {
+    log.error("Error executing SQL:", sql.sql, "Params:", sql.params);
+    log.error("Original Error:", error + ""); // Log the original error for more details
+    throw error;
   }
-
-  // also delete the source if requested
-  if (deleteSource) {
-    const e = await getDb().query.knowledgeEntry.findFirst({
-      where: and(
-        eq(knowledgeEntry.id, id),
-        eq(knowledgeEntry.organisationId, organisationId)
-      ),
-    });
-    if (e?.sourceType === "db" && e.sourceId && e.sourceFileBucket) {
-      await deleteFileFromDB(e.sourceId, e.sourceFileBucket, organisationId);
-    } else if (e?.sourceType === "local" && e.sourceId && e.sourceFileBucket) {
-      await deleteFileFromLocalDisc(
-        e.sourceId,
-        e.sourceFileBucket,
-        organisationId
-      );
-    } else if (e?.sourceType === "text" && e.sourceId) {
-      await getDb()
-        .delete(knowledgeText)
-        .where(eq(knowledgeText.id, e.sourceId));
-    }
-  }
-  await getDb().delete(knowledgeEntry).where(eq(knowledgeEntry.id, id));
-};
-
-/**
- * Update a knowledge entry by ID
- * Only the name can be updated
- */
-export const updateKnowledgeEntry = async (
-  id: string,
-  organisationId: string,
-  userId: string,
-  data: {
-    name?: string | undefined;
-    teamId?: string | null;
-    workspaceId?: string | null;
-    knowledgeGroupId?: string | null;
-    userOwned?: boolean;
-    description?: string | null;
-    abstract?: string | null;
-  }
-) => {
-  const canUpdate = await validateKnowledgeAccess(id, userId, organisationId);
-  if (!canUpdate) {
-    throw new Error(
-      "User does not have permission to update this knowledge entry"
-    );
-  }
-
-  // is a new teamId provided?
-  if (data.teamId) {
-    const isPartOfTeam = await isUserPartOfTeam(userId, data.teamId);
-    if (!isPartOfTeam) {
-      throw new Error("User is not part of the provided team");
-    }
-  }
-
-  const r = await getDb()
-    .update(knowledgeEntry)
-    .set(data)
-    .where(eq(knowledgeEntry.id, id))
-    .returning();
-
-  return r[0];
 };
 
 /**
  * Get the full plain source text/documents for a knowledge entry id
+ * Is used in the UI to display the full source text/documents for a knowledge entry
  */
 export const getFullSourceDocumentsForKnowledgeEntry = async (
   id: string,

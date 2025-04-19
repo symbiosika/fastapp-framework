@@ -12,13 +12,14 @@ import {
   type TeamsSelect,
   type TeamsInsert,
   users,
+  type TeamMembersSelect,
 } from "../db/schema/users";
 import { getUserOrganisations } from "./oganisations";
 
 /**
  * Create a team
  */
-export const createTeam = async (data: TeamsInsert) => {
+export const createTeam = async (data: TeamsInsert): Promise<TeamsSelect> => {
   const result = await getDb().insert(teams).values(data).returning();
   return result[0];
 };
@@ -26,9 +27,9 @@ export const createTeam = async (data: TeamsInsert) => {
 /**
  * Get a team by its ID
  */
-export const getTeam = async (teamId: string) => {
+export const getTeam = async (teamId: string): Promise<TeamsSelect | null> => {
   const team = await getDb().select().from(teams).where(eq(teams.id, teamId));
-  return team[0];
+  return team[0] ?? null;
 };
 
 /**
@@ -37,7 +38,7 @@ export const getTeam = async (teamId: string) => {
 export const updateTeam = async (
   teamId: string,
   data: Partial<TeamsSelect>
-) => {
+): Promise<TeamsSelect> => {
   const result = await getDb()
     .update(teams)
     .set({ ...data, updatedAt: new Date().toISOString() })
@@ -49,14 +50,16 @@ export const updateTeam = async (
 /**
  * Delete a team
  */
-export const deleteTeam = async (teamId: string) => {
+export const deleteTeam = async (teamId: string): Promise<void> => {
   await getDb().delete(teams).where(eq(teams.id, teamId));
 };
 
 /**
  * Get all teams by an organisation ID
  */
-export const getTeamsByOrganisation = async (orgId: string) => {
+export const getTeamsByOrganisation = async (
+  orgId: string
+): Promise<TeamsSelect[]> => {
   return await getDb()
     .select()
     .from(teams)
@@ -66,7 +69,10 @@ export const getTeamsByOrganisation = async (orgId: string) => {
 /**
  * Get all team for a specific user
  */
-export const getTeamsByUser = async (userId: string, orgId: string) => {
+export const getTeamsByUser = async (
+  userId: string,
+  orgId: string
+): Promise<{ teamId: string; name: string; role: string }[]> => {
   return await getDb()
     .select({
       teamId: teams.id,
@@ -87,7 +93,9 @@ export const getTeamMembers = async (
   userId: string,
   orgId: string,
   teamId: string
-) => {
+): Promise<
+  { teamId: string; userId: string; userEmail: string; role: string }[]
+> => {
   return await getDb()
     .select({
       teamId: teamMembers.teamId,
@@ -96,14 +104,17 @@ export const getTeamMembers = async (
       role: teamMembers.role,
     })
     .from(teamMembers)
-    .leftJoin(users, eq(teamMembers.userId, users.id))
+    .innerJoin(users, eq(teamMembers.userId, users.id))
     .where(eq(teamMembers.teamId, teamId));
 };
 
 /**
  * Drop the membership of a user from a team
  */
-export const dropUserFromTeam = async (userId: string, teamId: string) => {
+export const dropUserFromTeam = async (
+  userId: string,
+  teamId: string
+): Promise<void> => {
   // check if the team has at least one admin
   const admins = await getDb()
     .select()
@@ -134,7 +145,7 @@ export const addTeamMember = async (
   organisationId: string,
   userId: string,
   role?: "admin" | "member"
-) => {
+): Promise<TeamMembersSelect> => {
   // check if the user is part of the organisation
   const orgs = await getUserOrganisations(userId);
   const membership = orgs.find((org) => org.organisationId === organisationId);
@@ -157,7 +168,7 @@ export const checkTeamMemberRole = async (
   teamId: string,
   userId: string,
   roleToCheck: ("admin" | "member")[]
-) => {
+): Promise<boolean> => {
   // check membership
   const member = await getDb()
     .select()
@@ -179,7 +190,7 @@ export const checkTeamMemberRole = async (
 export const removeTeamMember = async (
   teamId: string,
   destinationUserId: string
-) => {
+): Promise<void> => {
   // check if the team is not empty after dropping
   const members = await getDb()
     .select()
@@ -222,7 +233,7 @@ export const updateTeamMemberRole = async (
   teamId: string,
   destinationUserId: string,
   role: "admin" | "member"
-) => {
+): Promise<TeamMembersSelect> => {
   // do the actual update
   const result = await getDb()
     .update(teamMembers)
@@ -240,7 +251,10 @@ export const updateTeamMemberRole = async (
 /**
  * Check if a user is part of a team
  */
-export const isUserPartOfTeam = async (userId: string, teamId: string) => {
+export const isUserPartOfTeam = async (
+  userId: string,
+  teamId: string
+): Promise<boolean> => {
   const result = await getDb()
     .select()
     .from(teamMembers)

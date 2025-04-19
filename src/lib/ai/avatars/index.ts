@@ -1,11 +1,10 @@
 // src/lib/avatars/index.ts
-import { and, eq, or, isNull } from "drizzle-orm";
-import { AvatarInsert, AvatarSelect } from "../../db/db-schema";
+import { and, eq, or } from "drizzle-orm";
+import type { AvatarInsert, AvatarSelect } from "../../db/db-schema";
 import { avatars } from "../../db/schema/avatars";
 import { getDb } from "../../db/db-connection";
-import { ChatMessage } from "../../../types";
+import type { ChatMessage } from "../../../types";
 import { checkOrganisationMemberRole } from "../../usermanagement/oganisations";
-import type { SQL } from "drizzle-orm";
 
 export async function createAvatar(data: AvatarInsert): Promise<AvatarSelect> {
   // Check permissions

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { chat } from "./index";
 import { chatStore } from "../chat-store";
@@ -25,7 +25,7 @@ describe("Chat", () => {
       chatId: predefinedChatId,
       context: {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       },
       options: {
         model: MODEL,
@@ -45,14 +45,14 @@ describe("Chat", () => {
     expect(storedChat).toBeTruthy();
     expect(storedChat?.messages.length).toBe(3); // System + User + Assistant messages
     expect(storedChat?.organisationId).toBe(TEST_ORGANISATION_1.id);
-    expect(storedChat?.userId).toBe(TEST_USER_1.id);
+    expect(storedChat?.userId).toBe(TEST_ORG1_USER_1.id);
 
     // Act - Send follow-up message
     const followUpResult = await chat({
       chatId: predefinedChatId,
       context: {
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       },
       options: {
         model: MODEL,

@@ -30,6 +30,10 @@ export type LLMOptions = {
   outputType?: "text" | "json" | "image" | "audio";
 };
 
+export type PromptTemplateTools = {
+  enabled?: string[];
+};
+
 // Table to store LLM Prompt templates
 export const promptTemplates = pgBaseTable(
   "prompt_templates",
@@ -55,6 +59,7 @@ export const promptTemplates = pgBaseTable(
     hidden: boolean("hidden").notNull().default(false),
     needsInitialCall: boolean("needs_initial_call").notNull().default(false),
     llmOptions: jsonb("llm_options").$type<LLMOptions>().default({}),
+    tools: jsonb("tools").$type<PromptTemplateTools>().default({}).notNull(),
     // metadata
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
@@ -92,9 +97,42 @@ export const promptTemplates = pgBaseTable(
 export type PromptTemplatesSelect = typeof promptTemplates.$inferSelect;
 export type PromptTemplatesInsert = typeof promptTemplates.$inferInsert;
 
-export const promptTemplatesSelectSchema = createSelectSchema(promptTemplates);
-export const promptTemplatesInsertSchema = createInsertSchema(promptTemplates);
-export const promptTemplatesUpdateSchema = createUpdateSchema(promptTemplates);
+const promptTemplatesBaseSelectSchema = createSelectSchema(promptTemplates);
+const promptTemplatesBaseInsertSchema = createInsertSchema(promptTemplates);
+const promptTemplatesBaseUpdateSchema = createUpdateSchema(promptTemplates);
+
+export const promptTemplatesInsertSchema = v.intersect([
+  promptTemplatesBaseInsertSchema,
+  v.object({
+    tools: v.optional(
+      v.object({
+        enabled: v.optional(v.array(v.string())),
+      })
+    ),
+  }),
+]);
+
+export const promptTemplatesSelectSchema = v.intersect([
+  promptTemplatesBaseSelectSchema,
+  v.object({
+    tools: v.optional(
+      v.object({
+        enabled: v.optional(v.array(v.string())),
+      })
+    ),
+  }),
+]);
+
+export const promptTemplatesUpdateSchema = v.intersect([
+  promptTemplatesBaseUpdateSchema,
+  v.object({
+    tools: v.optional(
+      v.object({
+        enabled: v.optional(v.array(v.string())),
+      })
+    ),
+  }),
+]);
 
 export const promptTemplatePlaceholderTypeEnum = pgEnum(
   "prompt_template_type",

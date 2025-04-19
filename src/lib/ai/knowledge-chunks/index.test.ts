@@ -4,7 +4,7 @@ import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
   TEST_ORGANISATION_2,
 } from "../../../test/init.test";
 import { getDb } from "../../../dbSchema";
@@ -102,9 +102,9 @@ describe("Knowledge Chunks CRUD Operations", () => {
     });
 
     test("should get a knowledge chunk by ID with team member context", async () => {
-      // First add TEST_USER_1 to the team
+      // First add TEST_ORG1_USER_1 to the team
       await getDb().insert(teamMembers).values({
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         teamId: testTeamId,
       });
 
@@ -117,7 +117,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
       const result = await getKnowledgeChunkById(
         testKnowledgeChunkId,
         TEST_ORGANISATION_1.id,
-        TEST_USER_1.id
+        TEST_ORG1_USER_1.id
       );
       expect(result.id).toBe(testKnowledgeChunkId);
       expect(result.text).toBe("Test chunk text");
@@ -125,7 +125,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
       // Cleanup
       await getDb()
         .delete(teamMembers)
-        .where(eq(teamMembers.userId, TEST_USER_1.id));
+        .where(eq(teamMembers.userId, TEST_ORG1_USER_1.id));
     });
 
     test("should get a knowledge chunk by ID with access through knowledge group", async () => {
@@ -155,7 +155,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
         })
         .returning();
 
-      // Add TEST_USER_1 to a new team
+      // Add TEST_ORG1_USER_1 to a new team
       const userTeam = await getDb()
         .insert(teams)
         .values({
@@ -166,7 +166,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
         .returning();
 
       await getDb().insert(teamMembers).values({
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         teamId: userTeam[0].id,
       });
 
@@ -180,7 +180,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
       const result = await getKnowledgeChunkById(
         groupChunk[0].id,
         TEST_ORGANISATION_1.id,
-        TEST_USER_1.id
+        TEST_ORG1_USER_1.id
       );
 
       expect(result.id).toBe(groupChunk[0].id);
@@ -192,7 +192,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
         .where(eq(knowledgeGroupTeamAssignments.teamId, userTeam[0].id));
       await getDb()
         .delete(teamMembers)
-        .where(eq(teamMembers.userId, TEST_USER_1.id));
+        .where(eq(teamMembers.userId, TEST_ORG1_USER_1.id));
       await getDb().delete(teams).where(eq(teams.id, userTeam[0].id));
       await getDb()
         .delete(knowledgeChunks)
@@ -245,7 +245,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
       const result = await getKnowledgeChunkById(
         orgWideChunk[0].id,
         TEST_ORGANISATION_1.id,
-        TEST_USER_1.id // Note: User is not part of any team but can access due to org-wide setting
+        TEST_ORG1_USER_1.id // Note: User is not part of any team but can access due to org-wide setting
       );
 
       expect(result.id).toBe(orgWideChunk[0].id);
@@ -409,7 +409,7 @@ describe("Knowledge Chunks CRUD Operations", () => {
         await getKnowledgeChunkById(
           nonExistentId,
           TEST_ORGANISATION_1.id,
-          TEST_USER_1.id
+          TEST_ORG1_USER_1.id
         );
       } catch (e: any) {
         expect(e).toBeInstanceOf(Error);

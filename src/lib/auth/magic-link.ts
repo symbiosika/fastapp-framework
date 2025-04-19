@@ -99,7 +99,7 @@ export const sendVerificationEmail = async (email: string) => {
 
   // Construct the magic link URL
   const frontendUrl = _GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000";
-  const magicLink = `${frontendUrl}/manage/#/verify-email?token=${encodeURIComponent(token)}`;
+  const magicLink = `${frontendUrl}/manage/#/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
 
   const { html, subject } =
     await _GLOBAL_SERVER_CONFIG.emailTemplates.verifyEmail({

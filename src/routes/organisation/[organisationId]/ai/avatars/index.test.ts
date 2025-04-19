@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { Hono } from "hono";
-import type { FastAppHono } from "fastapp-framework";
 import {
   initTests,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
   TEST_ORGANISATION_3,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../../test/init.test";
 import { avatars } from "../../../../../dbSchema";
 import { inArray } from "drizzle-orm";
 import { getDb } from "../../../../../lib/db/db-connection";
 import { testFetcher } from "../../../../../test/fetcher.test";
 import defineAvatarRoutes from ".";
+import type { FastAppHono } from "../../../../../types";
 
 let TEST_USER_TOKEN: string;
 
@@ -42,7 +42,7 @@ describe("Avatar API Endpoints", () => {
       name: "Test Avatar",
       description: "Test Description",
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     };
 
     const response = await testFetcher.post(
@@ -80,7 +80,7 @@ describe("Avatar API Endpoints", () => {
         name: "Original Avatar",
         description: "Original Description",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       }
     );
 
@@ -113,7 +113,7 @@ describe("Avatar API Endpoints", () => {
         name: "Avatar to Delete",
         description: "Will be deleted",
         organisationId: TEST_ORGANISATION_1.id,
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
       }
     );
 
@@ -134,7 +134,7 @@ describe("Avatar API Endpoints", () => {
       name: "", // Invalid empty name
       description: "Test Description",
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     };
 
     try {

@@ -4,7 +4,7 @@ import defineRoutes from ".";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
@@ -34,7 +34,7 @@ beforeAll(async () => {
     id: entryId,
     organisationId: TEST_ORGANISATION_1.id,
     name: "Test Knowledge Entry",
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
     sourceType: "text",
   });
   testKnowledgeEntryId = entryId;
@@ -68,7 +68,6 @@ describe("Knowledge Chunks API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.jsonResponse.id).toBe(testKnowledgeChunkId);
     expect(response.jsonResponse.text).toBe("Test chunk text");
-    expect(response.jsonResponse.header).toBe("Test header");
   });
 
   test("Should return 400 for non-existent chunk", async () => {

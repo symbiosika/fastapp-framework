@@ -1,0 +1,1 @@
+ALTER TABLE "base_prompt_templates" ADD COLUMN "tools" jsonb DEFAULT '{}'::jsonb NOT NULL;

@@ -4,7 +4,7 @@ import defineRoutes from ".";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../../test/init.test";
 import { Hono } from "hono";
 import type { FastAppHonoContextVariables } from "../../../../../types";
@@ -93,7 +93,7 @@ describe("Chat Groups API Endpoints", () => {
 
   test("Add users to a chat group", async () => {
     const userData = {
-      userIds: [TEST_USER_1.id], // Adding the same user for testing purposes
+      userIds: [TEST_ORG1_USER_1.id], // Adding the same user for testing purposes
     };
 
     const response = await testFetcher.post(

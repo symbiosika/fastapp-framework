@@ -4,18 +4,17 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
   TEST_ORGANISATION_1,
 } from "../../../../test/init.test";
 import {
   importTestKnowledge,
   deleteTestKnowledge,
-  TEST_KNOWLEDGE_TEXT,
 } from "../../../../test/knowledge.test";
 import { chat } from "../index";
 import { chatStore } from "../../chat-store";
 import { createDynamicKnowledgeBaseTool } from "../tools/dynamic-knowledge-base";
-import { addDynamicTool } from "../tools";
+import { addRuntimeTool } from "../tools";
 import { chatCompletion } from "../../ai-sdk";
 
 describe("Dynamic Knowledge Base Tool Tests", () => {
@@ -34,13 +33,13 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //     knowledgeEntryIds: [knowledgeEntryId],
   //     baseName: "testKnowledgeTool",
   //     getUserContext: () => ({
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     }),
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Check if the tool was added to the registry
   //   expect(toolRegistry[dynamicTool.name]).toBeDefined();
@@ -50,7 +49,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //     dynamicTool.name,
   //     { query: "Eichhörnchen" },
   //     {
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     }
   //   );
@@ -70,20 +69,20 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //     knowledgeEntryIds: [knowledgeEntryId],
   //     baseName: "chatTestKnowledgeTool",
   //     getUserContext: () => ({
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     }),
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Set up a chat with the dynamic tool enabled
   //   const chatResponse = await chat({
   //     input: "Was sind Eichhörnchen?",
   //     enabledTools: [dynamicTool.name],
   //     context: {
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     },
   //   });
@@ -111,13 +110,13 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //     knowledgeEntryIds: [knowledgeEntryId],
   //     baseName: "trackingTestTool",
   //     getUserContext: () => ({
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     }),
   //   });
 
   //   // Add the tool to the registry
-  //   addDynamicTool(dynamicTool.name, dynamicTool.tool);
+  //   addRuntimeTool(dynamicTool.name, dynamicTool.tool);
 
   //   // Mock the AI SDK's generateText to simulate tool usage
   //   const mockMessages = [
@@ -128,7 +127,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
   //   const result = await chatCompletion(
   //     mockMessages,
   //     {
-  //       userId: TEST_USER_1.id,
+  //       userId: TEST_ORG1_USER_1.id,
   //       organisationId: TEST_ORGANISATION_1.id,
   //     },
   //     {
@@ -152,7 +151,7 @@ describe("Dynamic Knowledge Base Tool Tests", () => {
     const result = await chat({
       input: "Was ist Strinz?",
       context: {
-        userId: TEST_USER_1.id,
+        userId: TEST_ORG1_USER_1.id,
         organisationId: TEST_ORGANISATION_1.id,
       },
       useTemplate: "test:test-knowledge-prompt-template",

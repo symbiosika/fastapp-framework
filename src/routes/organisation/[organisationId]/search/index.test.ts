@@ -5,7 +5,7 @@ import type { FastAppHono } from "../../../../types";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 
@@ -23,22 +23,22 @@ describe("Search API Endpoints", () => {
   });
 
   // Test searching for a user by email
-  test("should find TEST_USER_1 in ORGANISATION_1", async () => {
+  test("should find TEST_ORG1_USER_1 in ORGANISATION_1", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_USER_1.email}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_ORG1_USER_1.email}`,
       userOrg1Token
     );
     // console.log(response.textResponse);
     expect(response.status).toBe(200);
-    expect(response.jsonResponse?.email).toBe(TEST_USER_1.email);
+    expect(response.jsonResponse?.email).toBe(TEST_ORG1_USER_1.email);
   });
 
   // Test searching for a user not in the organisation
-  test("should not find TEST_USER_1 in ORGANISATION_2", async () => {
+  test("should not find TEST_ORG1_USER_1 in ORGANISATION_2", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_USER_1.email}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_ORG1_USER_1.email}`,
       userOrg2Token
     );
     console.log(response.textResponse);
@@ -52,7 +52,7 @@ describe("Search API Endpoints", () => {
   test("should not allow unauthorized access to search", async () => {
     const response = await testFetcher.get(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_USER_1.email}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/search/user?email=${TEST_ORG1_USER_1.email}`,
       undefined
     );
     // console.log(response.textResponse);

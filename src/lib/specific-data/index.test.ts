@@ -3,8 +3,7 @@ import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
-  TEST_TEAM_1,
+  TEST_ORG1_USER_1,
   dropAllUserAndOrganisationSpecificData,
 } from "../../test/init.test";
 import {
@@ -25,15 +24,24 @@ import {
   updateTeamSpecificData,
   deleteTeamSpecificData,
 } from "./index";
+import { testing_createTeamAndAddUsers } from "../../test/permissions.test";
+
+let TEST_TEAM_ID: string;
 
 beforeAll(async () => {
   await initTests();
   await dropAllUserAndOrganisationSpecificData();
+
+  const { teamId } = await testing_createTeamAndAddUsers(
+    TEST_ORGANISATION_1.id,
+    [TEST_ORG1_USER_1.id]
+  );
+  TEST_TEAM_ID = teamId;
 });
 
 describe("User Specific Data", () => {
   const testData = {
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
     key: "test-key",
     data: { value: "test-value" },
   };
@@ -41,11 +49,11 @@ describe("User Specific Data", () => {
   test("should create and retrieve user specific data", async () => {
     const created = await createUserSpecificData(testData);
     expect(created).toBeDefined();
-    expect(created.userId).toBe(TEST_USER_1.id);
+    expect(created.userId).toBe(TEST_ORG1_USER_1.id);
     expect(created.key).toBe(testData.key);
     expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getUserSpecificData(TEST_USER_1.id, testData.key);
+    const retrieved = await getUserSpecificData(TEST_ORG1_USER_1.id, testData.key);
     expect(retrieved).toEqual(created);
   });
 
@@ -56,7 +64,7 @@ describe("User Specific Data", () => {
     });
     const updated = await updateUserSpecificData(
       created.id,
-      TEST_USER_1.id,
+      TEST_ORG1_USER_1.id,
       "update-key",
       {
         data: { value: "updated-value" },
@@ -70,10 +78,10 @@ describe("User Specific Data", () => {
       ...testData,
       key: "delete-key",
     });
-    await deleteUserSpecificData(created.id, TEST_USER_1.id);
+    await deleteUserSpecificData(created.id, TEST_ORG1_USER_1.id);
 
     try {
-      await getUserSpecificData(TEST_USER_1.id, "delete-key");
+      await getUserSpecificData(TEST_ORG1_USER_1.id, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("User specific data not found");
@@ -178,7 +186,7 @@ describe("Organisation Specific Data", () => {
 
 describe("Team Specific Data", () => {
   const testData = {
-    teamId: TEST_TEAM_1.id,
+    teamId: TEST_TEAM_ID,
     key: "test-key",
     data: { value: "test-value" },
   };
@@ -186,11 +194,11 @@ describe("Team Specific Data", () => {
   test("should create and retrieve team specific data", async () => {
     const created = await createTeamSpecificData(testData);
     expect(created).toBeDefined();
-    expect(created.teamId).toBe(TEST_TEAM_1.id);
+    expect(created.teamId).toBe(TEST_TEAM_ID);
     expect(created.key).toBe(testData.key);
     expect(created.data).toEqual(testData.data);
 
-    const retrieved = await getTeamSpecificData(TEST_TEAM_1.id, testData.key);
+    const retrieved = await getTeamSpecificData(TEST_TEAM_ID, testData.key);
     expect(retrieved).toEqual(created);
   });
 
@@ -199,7 +207,7 @@ describe("Team Specific Data", () => {
       ...testData,
       key: "update-key",
     });
-    const updated = await updateTeamSpecificData(TEST_TEAM_1.id, "update-key", {
+    const updated = await updateTeamSpecificData(TEST_TEAM_ID, "update-key", {
       data: { value: "updated-value" },
     });
     expect(updated.data).toEqual({ value: "updated-value" });
@@ -210,10 +218,10 @@ describe("Team Specific Data", () => {
       ...testData,
       key: "delete-key",
     });
-    await deleteTeamSpecificData(TEST_TEAM_1.id, "delete-key");
+    await deleteTeamSpecificData(TEST_TEAM_ID, "delete-key");
 
     try {
-      await getTeamSpecificData(TEST_TEAM_1.id, "delete-key");
+      await getTeamSpecificData(TEST_TEAM_ID, "delete-key");
       expect(true).toBe(false); // Should not reach here
     } catch (e: any) {
       expect(e.message).toBe("Team specific data not found");

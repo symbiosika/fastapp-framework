@@ -3,7 +3,7 @@ import type { CoreMessage } from "ai";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import {
   generateEmbedding,
@@ -19,7 +19,7 @@ import { TEST_IMAGE } from "../../../test/files.test";
 describe("AI SDK Functions", () => {
   const userContext = {
     organisationId: TEST_ORGANISATION_1.id,
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
   };
 
   beforeAll(async () => {

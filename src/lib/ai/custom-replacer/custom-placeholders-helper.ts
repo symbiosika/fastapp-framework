@@ -120,3 +120,39 @@ export {
   getNumberArgument,
   isNumber,
 };
+
+/**
+ * Parses a comma-separated string where values can be optionally quoted.
+ * Handles commas within quoted values.
+ * Example: '"value 1","value 2, ok",value3' -> ["value 1", "value 2, ok", "value3"]
+ */
+export const parseCommaSeparatedPossiblyQuotedString = (
+  input: string | undefined
+): string[] => {
+  if (!input) {
+    return [];
+  }
+
+  const result: string[] = [];
+  // Regex to find comma-separated values, handling quotes
+  // It matches either a double-quoted string, a single-quoted string,
+  // or an unquoted value that doesn't start with space/comma/quote and contains no commas.
+  const regex = /\"([^\"]*)\"|\'([^\']*)\'|([^,\s\'\"][^,]*)/g;
+  let match;
+
+  while ((match = regex.exec(input)) !== null) {
+    // match[1] is double-quoted content (keep as is)
+    // match[2] is single-quoted content (keep as is)
+    // match[3] is unquoted content (trim this one)
+    if (match[1] !== undefined) {
+      result.push(match[1]);
+    } else if (match[2] !== undefined) {
+      result.push(match[2]);
+    } else if (match[3] !== undefined) {
+      result.push(match[3].trim()); // Trim only unquoted values
+    }
+  }
+
+  // Remove the final map trim as trimming is now done selectively
+  return result;
+};

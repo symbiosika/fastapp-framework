@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { extractKnowledgeFromExistingDbEntry } from "../knowledge/add-knowledge";
-import { getPlainKnowledge } from "../knowledge/get-knowledge";
 import { createKnowledgeText } from "./knowledge-texts";
 import { initTests } from "../../../test/init.test";
 import { TEST_ORGANISATION_1 } from "../../../test/init.test";
+import { getKnowledgeEntries } from "./get-knowledge";
 
 describe("Knowledge Text Flow", () => {
   beforeAll(async () => {
@@ -34,8 +34,8 @@ describe("Knowledge Text Flow", () => {
     expect(result.id).toBeDefined();
 
     // 3. Retrieve knowledge by filters
-    const foundKnowledge = await getPlainKnowledge({
-      filters: {
+    const foundKnowledge = await getKnowledgeEntries({
+      filterNames: {
         "test-case": ["test-1"],
       },
       userId: TEST_ORGANISATION_1.id,

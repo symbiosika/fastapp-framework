@@ -38,19 +38,31 @@ export const parseArgumentsWithoutLimits = (
     return {};
   }
 
-  const args = (argumentsString.match(/(\w+)=("[^"]*"|'[^']*'|\S+)/g) ||
-    []) as string[];
+  // Regex to match key=(quoted_value | unquoted_value) OR 'quoted key'=(quoted_value | unquoted_value)
+  const argRegex = /(\w+|'[^']+')=(\"[^\"]*\"|\'[^\']*\'|\S+)/g;
+  const args = (argumentsString.match(argRegex) || []) as string[];
+
   return args.reduce<PlaceholderArgumentDict>((acc, argument: string) => {
-    const [key, value] = argument.split("=");
-    // Remove quotes if present
-    const cleanValue = value.replace(/^["']|["']$/g, "");
+    const match = argument.match(/^(\w+|'[^']+')=(.*)$/);
+    if (!match) return acc;
 
-    // all snake_case keys are converted to camelCase
-    const camelCaseKey = key.replace(/_([a-z])/g, (_, letter) =>
-      letter.toUpperCase()
-    );
+    let key = match[1];
+    const value = match[2];
 
-    acc[camelCaseKey] = parseBoolOrNumberOrString(cleanValue);
+    // Remove quotes from value if present
+    const cleanValue = value.replace(/^[\"\']|[\"\']$/g, "");
+
+    // Check if the key is quoted
+    const isKeyQuoted = key.startsWith("'") && key.endsWith("'");
+
+    // Remove quotes from key if quoted, otherwise convert snake_case to camelCase
+    if (isKeyQuoted) {
+      key = key.slice(1, -1); // Remove the surrounding single quotes
+    } else {
+      key = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    }
+
+    acc[key] = parseBoolOrNumberOrString(cleanValue);
     return acc;
   }, {});
 };

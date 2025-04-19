@@ -3,7 +3,7 @@ import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
   TEST_ORGANISATION_2,
 } from "../../../test/init.test";
 import {

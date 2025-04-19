@@ -31,6 +31,96 @@ export const getUserTeamIds = async (
 };
 
 /**
+ * Helper function to get all workspace IDs a user has access to
+ * This includes:
+ * - Workspaces directly assigned to the user
+ * - Workspaces assigned to teams the user is a member of
+ */
+export const getUserWorkspaceIds = async (
+  userId: string,
+  organisationId: string,
+  teamIds?: string[]
+): Promise<string[]> => {
+  // Get all teams the user is a member of
+  if (!teamIds) {
+    teamIds = await getUserTeamIds(userId, organisationId);
+  }
+  // Get workspaces where:
+  // - user is directly assigned OR
+  // - workspace is assigned to one of user's teams
+  const workspaceEntries = await getDb().query.workspaces.findMany({
+    where: or(
+      eq(workspaces.userId, userId),
+      inArray(workspaces.teamId, teamIds)
+    ),
+    columns: {
+      id: true,
+    },
+  });
+  return workspaceEntries.map((w) => w.id);
+};
+
+/**
+ * Helper function  to get all knowledge-groups a user has access to
+ */
+export const getUserKnowledgeGroupIds = async (
+  userId: string,
+  organisationId: string,
+  userTeams?: string[]
+): Promise<string[]> => {
+  const db = getDb();
+
+  // Get all teams the user is a member of
+  if (!userTeams) {
+    userTeams = await getUserTeamIds(userId, organisationId);
+  }
+
+  // Get knowledge groups where:
+  // 1. The user is the direct owner, OR
+  // 2. The group has organisation-wide access, OR
+  // 3. The group is assigned to one of the user's teams
+
+  // Get directly owned and org-wide groups
+  const directGroups = await db.query.knowledgeGroup.findMany({
+    where: or(
+      eq(knowledgeGroup.userId, userId),
+      eq(knowledgeGroup.organisationWideAccess, true)
+    ),
+    columns: {
+      id: true,
+    },
+  });
+
+  // Get team-assigned groups if user has any teams
+  let teamGroups: { id: string }[] = [];
+  if (userTeams.length > 0) {
+    const teamAssignments =
+      await db.query.knowledgeGroupTeamAssignments.findMany({
+        where: inArray(knowledgeGroupTeamAssignments.teamId, userTeams),
+        columns: {
+          knowledgeGroupId: true,
+        },
+      });
+
+    if (teamAssignments.length > 0) {
+      const teamGroupIds = teamAssignments.map((t) => t.knowledgeGroupId);
+      teamGroups = await db.query.knowledgeGroup.findMany({
+        where: inArray(knowledgeGroup.id, teamGroupIds),
+        columns: {
+          id: true,
+        },
+      });
+    }
+  }
+
+  // Combine and deduplicate the results
+  const allGroups = [...directGroups, ...teamGroups];
+  const uniqueGroupIds = [...new Set(allGroups.map((g) => g.id))];
+
+  return uniqueGroupIds;
+};
+
+/**
  * Helper to validate if a user can access a knowledge entry
  * will take the knowledge id and the userid
  */
@@ -109,34 +199,4 @@ export const validateKnowledgeAccess = async (
     });
 
   return !!teamAssignment; // Access granted if team assignment exists
-};
-
-/**
- * Helper function to get all workspace IDs a user has access to
- * This includes:
- * - Workspaces directly assigned to the user
- * - Workspaces assigned to teams the user is a member of
- */
-export const getUserWorkspaceIds = async (
-  userId: string,
-  organisationId: string,
-  teamIds?: string[]
-): Promise<string[]> => {
-  // Get all teams the user is a member of
-  if (!teamIds) {
-    teamIds = await getUserTeamIds(userId, organisationId);
-  }
-  // Get workspaces where:
-  // - user is directly assigned OR
-  // - workspace is assigned to one of user's teams
-  const workspaceEntries = await getDb().query.workspaces.findMany({
-    where: or(
-      eq(workspaces.userId, userId),
-      inArray(workspaces.teamId, teamIds)
-    ),
-    columns: {
-      id: true,
-    },
-  });
-  return workspaceEntries.map((w) => w.id);
 };

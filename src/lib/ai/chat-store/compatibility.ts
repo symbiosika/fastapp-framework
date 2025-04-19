@@ -11,6 +11,7 @@ export const chatInitInputValidation = v.object({
       organisationId: v.optional(v.string()),
     })
   ),
+  enabledTools: v.optional(v.array(v.string())),
   trigger: v.optional(
     v.object({
       next: v.boolean(),

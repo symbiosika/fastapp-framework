@@ -2,7 +2,7 @@
 import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import * as v from "valibot";
-import { FastAppHono, HTTPException } from "../../../../../types";
+import  { type FastAppHono, HTTPException } from "../../../../../types";
 import { authAndSetUsersInfo } from "../../../../../lib/utils/hono-middlewares";
 import { createAvatar, listAvatars } from "../../../../../lib/ai/avatars";
 import {

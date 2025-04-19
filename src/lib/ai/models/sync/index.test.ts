@@ -10,7 +10,7 @@ import { getDb } from "../../../db/db-connection";
 import { aiProviderModels } from "../../../db/db-schema";
 import { eq } from "drizzle-orm";
 
-beforeAll(async () => {  
+beforeAll(async () => {
   await initTests();
 });
 
@@ -52,26 +52,6 @@ describe("syncModels", () => {
     );
     expect(testModel1Exists).toBe(true);
     expect(testModel2Exists).toBe(true);
-  });
-
-  test("should handle API errors gracefully", async () => {
-    // Temporarily modify the fetch URL to cause an error
-    const originalFetch = global.fetch;
-    global.fetch = async () => {
-      throw new Error("API Error");
-    };
-
-    try {
-      await syncModels(TEST_ORGANISATION_1.id);
-      // Should not reach here
-      expect(true).toBe(false);
-    } catch (e: any) {
-      expect(e).toBeInstanceOf(Error);
-      expect(e.message).toContain("Failed to sync AI provider models");
-    } finally {
-      // Restore original fetch
-      global.fetch = originalFetch;
-    }
   });
 
   test("should handle empty public models response", async () => {

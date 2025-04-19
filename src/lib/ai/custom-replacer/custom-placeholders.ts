@@ -1,6 +1,6 @@
 import {
+  extendKnowledgeEntriesWithTextChunks,
   getKnowledgeEntries,
-  getPlainKnowledge,
 } from "../knowledge/get-knowledge";
 import type { FileSourceType } from "../../../lib/storage";
 import { parseDocument } from "../parsing";
@@ -18,6 +18,7 @@ import {
   getNumberArgument,
   getStringArgument,
   getStringArrayArgument,
+  parseCommaSeparatedPossiblyQuotedString,
 } from "./custom-placeholders-helper";
 import type { ChatMessageReplacerMeta, PlaceholderParser } from "./replacer";
 import type { ChatSessionContext } from "../chat-store";
@@ -53,10 +54,10 @@ export const customAppPlaceholders: PlaceholderParser[] = [
 
       const userId = meta.userId;
       const query = {
-        id: args.id ? [args.id as string] : undefined,
-        filters,
         userId: userId + "",
         organisationId: meta.organisationId,
+        id: args.id ? [args.id as string] : undefined,
+        filters,
       };
 
       await log.logCustom(
@@ -69,12 +70,12 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         "parse knowledgebase placeholder",
         query
       );
-      const knowledgebase = await getPlainKnowledge(query).catch((e) => {
+      const knowledgeEntries = await getKnowledgeEntries(query).catch((e) => {
         log.error("Error getting plain knowledge", e);
         return [];
       });
 
-      if (knowledgebase.length === 0) {
+      if (knowledgeEntries.length === 0) {
         await log.logCustom(
           { name: meta.chatId },
           "no knowledgebase entries found",
@@ -82,17 +83,19 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         );
         return { content: "", skipThisBlock: true };
       }
+      const knowledgeEntriesWithChunks =
+        await extendKnowledgeEntriesWithTextChunks(knowledgeEntries);
 
       // attach sources to the response
-      const sources: SourceReturn[] = knowledgebase.map((k) => ({
+      const sources: SourceReturn[] = knowledgeEntries.map((k) => ({
         type: "knowledge-entry",
-        id: k.knowledgeEntryId,
-        label: k.knowledgeEntryName,
+        id: k.id,
+        label: k.name,
         external: false,
       }));
 
       return {
-        content: knowledgebase.map((k) => k.text).join("\n"),
+        content: knowledgeEntriesWithChunks.map((k) => k.fullText).join("\n"),
         addToMeta: {
           sources,
         },
@@ -114,17 +117,20 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     }> => {
       const searchForVariable = getStringArgument(
         args,
-        "search_for_variable",
+        "searchForVariable",
         "user_input"
       );
       const question = variables[searchForVariable];
 
       // Parse dynamic filters
       const filters: Record<string, string[]> = {};
+      const filterPrefix = "filter:";
       Object.entries(args).forEach(([key, value]) => {
-        if (key.startsWith("filter:")) {
-          const filterKey = key.substring(7); // Remove 'filter:' prefix
-          filters[filterKey] = String(value).split(",");
+        if (key.startsWith(filterPrefix)) {
+          const filterKey = key.substring(filterPrefix.length);
+          filters[filterKey] = parseCommaSeparatedPossiblyQuotedString(
+            String(value)
+          );
         }
       });
 
@@ -133,7 +139,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const before = getNumberArgument(args, "before");
       const after = getNumberArgument(args, "after");
       const ids = getStringArrayArgument(args, "id");
-      const workspaceId = getStringArgument(args, "workspace_id");
+      const workspaceId = getStringArgument(args, "workspaceId");
       const organisationId = meta.organisationId;
 
       await log.logCustom(

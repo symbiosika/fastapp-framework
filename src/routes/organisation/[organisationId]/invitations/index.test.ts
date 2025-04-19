@@ -6,8 +6,8 @@ import {
   initTests,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
-  TEST_USER_2,
-  TEST_USER_3,
+  TEST_ORG2_USER_1,
+  TEST_ORG3_USER_1,
 } from "../../../../test/init.test";
 import { testFetcher } from "../../../../test/fetcher.test";
 
@@ -32,7 +32,7 @@ describe("Invitations API Endpoints", () => {
   test("should create a new invitation", async () => {
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -45,7 +45,7 @@ describe("Invitations API Endpoints", () => {
     );
     expect(response.status).toBe(200);
     expect(response.jsonResponse).toBeDefined();
-    expect(response.jsonResponse.email).toBe(TEST_USER_3.email);
+    expect(response.jsonResponse.email).toBe(TEST_ORG3_USER_1.email);
     expect(response.jsonResponse.organisationId).toBe(TEST_ORGANISATION_1.id);
     expect(response.jsonResponse.status).toBe("pending");
 
@@ -57,7 +57,7 @@ describe("Invitations API Endpoints", () => {
   test("should reject invitation with mismatched organisationId", async () => {
     const invitationData = {
       organisationId: TEST_ORGANISATION_2.id, // Different from URL param
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -91,7 +91,7 @@ describe("Invitations API Endpoints", () => {
     // First, create a new invitation for user2 to accept
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_2.email,
+      email: TEST_ORG2_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -121,7 +121,7 @@ describe("Invitations API Endpoints", () => {
     // First, create multiple invitations for user3
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -149,7 +149,7 @@ describe("Invitations API Endpoints", () => {
     // First, create a new invitation
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -179,7 +179,7 @@ describe("Invitations API Endpoints", () => {
     // First, create multiple invitations for user3
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };
@@ -207,7 +207,7 @@ describe("Invitations API Endpoints", () => {
     // First, create a new invitation
     const invitationData = {
       organisationId: TEST_ORGANISATION_1.id,
-      email: TEST_USER_3.email,
+      email: TEST_ORG3_USER_1.email,
       role: "member",
       status: "pending",
     };

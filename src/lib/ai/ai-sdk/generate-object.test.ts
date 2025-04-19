@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 import { chatCompletionWithObjectOutput } from "./generate-object";
 import { jsonSchema } from "ai";
@@ -48,7 +48,7 @@ describe("chatCompletionWithObjectOutput", () => {
 
     const context = {
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_USER_1.id,
+      userId: TEST_ORG1_USER_1.id,
     };
 
     const result = await chatCompletionWithObjectOutput(messages, context, {

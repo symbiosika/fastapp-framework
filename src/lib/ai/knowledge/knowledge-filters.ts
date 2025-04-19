@@ -1,6 +1,6 @@
 import { getDb } from "../../db/db-connection";
 import { knowledgeFilters, knowledgeEntryFilters } from "../../db/db-schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 /**
  * Upsert a filter and return its ID
@@ -241,4 +241,32 @@ export const getFilterByCategoryAndName = async (
     .limit(1);
 
   return filter[0];
+};
+
+/**
+ * Get all filterIds
+ */
+export const getFilterIdsFromNames = async (query: {
+  [category: string]: string[];
+}): Promise<string[]> => {
+  const db = getDb();
+  const filterIds: string[] = [];
+
+  for (const [category, names] of Object.entries(query)) {
+    if (names.length === 0) continue;
+
+    const filters = await db
+      .select({ id: knowledgeFilters.id })
+      .from(knowledgeFilters)
+      .where(
+        and(
+          eq(knowledgeFilters.category, category),
+          inArray(knowledgeFilters.name, names)
+        )
+      );
+
+    filterIds.push(...filters.map((filter) => filter.id));
+  }
+
+  return filterIds;
 };

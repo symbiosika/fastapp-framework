@@ -3,7 +3,7 @@ import { generateDocumentSummary, generateChunkBasedSummary } from ".";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../test/init.test";
 
 describe("Summary Generation", () => {
@@ -13,7 +13,7 @@ describe("Summary Generation", () => {
 
   const testContext = {
     organisationId: TEST_ORGANISATION_1.id,
-    userId: TEST_USER_1.id,
+    userId: TEST_ORG1_USER_1.id,
   };
 
   describe("generateDocumentSummary", () => {

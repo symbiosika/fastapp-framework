@@ -1,5 +1,10 @@
 ---
 description: 
+globs: 
+alwaysApply: false
+---
+---
+description: 
 globs: *.test.ts
 alwaysApply: false
 ---
@@ -36,14 +41,15 @@ describe("Some Test", () => {
 });
 ```
 
-- Exception test will always be done with try-catch-blocks
+- Since there is a Bug in Bun all unit tests must be in a single block
 
 ```typescript
-try {
-  const result = await someFunction();
-} catch (e: any) {
-  expect(e).toBeInstanceOf(Error);
-}
+let someVarThatWasAddedBefore = { "a": 1 }
+test("", async () => {
+  expect(async () => {
+    await someTestThatFails();
+  }).toThrow();
+});
 ```
 
 - You will always wrap internal API calls with testFetcher.
@@ -62,4 +68,15 @@ const response = await testFetcher.post(
   expect(response.jsonResponse).toBedefined(); // is null, wenn result is not json
   expect(response.testResponse).toBedefined(); // is the body in plain text
 });
+```
+
+Because of a Bug in buns runtime you cannot use "async" in AfterAll.
+You will catch that like this.
+
+Example:
+```ts
+afterAll(() => {
+    // Clean up
+    deleteSomeTestData().then(() => {});
+  });
 ```

@@ -118,9 +118,9 @@ export async function getNearestEmbeddings(q: {
       ? sql`WHERE ${sql.join(filters, sql` AND `)} AND ${knowledgeEntry.organisationId} = ${q.organisationId}`
       : sql`WHERE ${knowledgeEntry.organisationId} = ${q.organisationId}`;
 
-  const result = await getDb().execute<KnowledgeChunk>(sql`
+  const rows = (await getDb().execute<KnowledgeChunk>(sql`
     SELECT
-      ${knowledgeChunks.id}, 
+      ${knowledgeChunks.id},
       ${knowledgeChunks.text},
       ${knowledgeChunks.knowledgeEntryId} AS "knowledgeEntryId",
       ${knowledgeEntry.name} AS "knowledgeEntryName",
@@ -135,10 +135,10 @@ export async function getNearestEmbeddings(q: {
       ${knowledgeChunks.textEmbedding} <-> ${sql.raw(`'[${embed.embedding}]'`)} ASC
     LIMIT
       ${q.n};
-  `);
-  log.debug(`Found ${result.rows.length} chunks by similarity search`);
+  `)) as KnowledgeChunk[];
+  log.debug(`Found ${rows.length} chunks by similarity search`);
   // log the knowledgeEntry.name of the chunks
-  for (const chunk of result.rows) {
+  for (const chunk of rows) {
     log.debug(
       `Chunk: ${chunk.knowledgeEntryName} - ${chunk.text.slice(0, 20)} - ${chunk.knowledgeEntryId}`
     );
@@ -146,7 +146,7 @@ export async function getNearestEmbeddings(q: {
 
   // return if no addBeforeN and addAfterN
   if (q.addBeforeN < 1 && q.addAfterN < 1) {
-    return result.rows;
+    return rows;
   }
 
   // Else. Also add before and after N
@@ -155,7 +155,7 @@ export async function getNearestEmbeddings(q: {
   const usedKnowledgeEntryIds = new Set<string>();
   const resultRows: KnowledgeChunk[] = [];
 
-  for (const e of result.rows) {
+  for (const e of rows) {
     if (usedKnowledgeEntryIds.has(e.knowledgeEntryId)) continue;
     usedKnowledgeEntryIds.add(e.knowledgeEntryId);
     log.debug(
@@ -163,7 +163,7 @@ export async function getNearestEmbeddings(q: {
     );
 
     // Get all entries with this knowledgeEntryId +- addBeforeN and addAfterN by SQL
-    const entries = await getDb().execute<KnowledgeChunk>(sql`
+    const entries = (await getDb().execute<KnowledgeChunk>(sql`
         SELECT
             ${knowledgeChunks.id}, 
             ${knowledgeChunks.text},
@@ -179,11 +179,12 @@ export async function getNearestEmbeddings(q: {
             AND ${knowledgeEntry.organisationId} = ${q.organisationId}
             AND ${knowledgeChunks.order} >= ${e.order - q.addBeforeN}
             AND ${knowledgeChunks.order} <= ${e.order + q.addAfterN}
-        `);
+        `)) as KnowledgeChunk[];
+
     log.debug(
-      `Found ${entries.rows.length} additional chunks for knowledgeEntryId: ${e.knowledgeEntryId}`
+      `Found ${entries.length} additional chunks for knowledgeEntryId: ${e.knowledgeEntryId}`
     );
-    resultRows.push(...entries.rows);
+    resultRows.push(...entries);
   }
   return resultRows;
 }

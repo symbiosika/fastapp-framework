@@ -2,8 +2,8 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import {
   initTests,
   TEST_ORGANISATION_1,
-  TEST_USER_2,
-  TEST_USER_1,
+  TEST_ORG2_USER_1,
+  TEST_ORG1_USER_1,
 } from "../../../../test/init.test";
 import defineTeamRoutes from "./index";
 import { testFetcher } from "../../../../test/fetcher.test";
@@ -115,7 +115,7 @@ describe("Teams API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.jsonResponse)).toBe(true);
     expect(response.jsonResponse?.length).toBe(1);
-    expect(response.jsonResponse?.[0].userId).toBe(TEST_USER_1.id);
+    expect(response.jsonResponse?.[0].userId).toBe(TEST_ORG1_USER_1.id);
 
     // ------------------------------------------------------------
     // read all members of a team with a non-admin token
@@ -141,7 +141,7 @@ describe("Teams API Endpoints", () => {
       `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members`,
       adminToken,
       {
-        userId: TEST_USER_2.id,
+        userId: TEST_ORG2_USER_1.id,
         role: "member",
       }
     );
@@ -156,7 +156,7 @@ describe("Teams API Endpoints", () => {
     // ------------------------------------------------------------
     await addOrganisationMember(
       TEST_ORGANISATION_1.id,
-      TEST_USER_2.id,
+      TEST_ORG2_USER_1.id,
       "member"
     );
 
@@ -171,13 +171,13 @@ describe("Teams API Endpoints", () => {
       `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members`,
       adminToken,
       {
-        userId: TEST_USER_2.id,
+        userId: TEST_ORG2_USER_1.id,
         role: "member",
       }
     );
     // console.log(response.textResponse);
     expect(response.status).toBe(200);
-    expect(response.jsonResponse?.userId).toBe(TEST_USER_2.id);
+    expect(response.jsonResponse?.userId).toBe(TEST_ORG2_USER_1.id);
 
     // ------------------------------------------------------------
     // change the role of a member
@@ -185,7 +185,7 @@ describe("Teams API Endpoints", () => {
     console.log("Step 8: Change the role of a member");
     response = await testFetcher.put(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members/${TEST_USER_2.id}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members/${TEST_ORG2_USER_1.id}`,
       adminToken,
       {
         role: "admin",
@@ -200,7 +200,7 @@ describe("Teams API Endpoints", () => {
     console.log("Step 9: Remove a member from a team");
     response = await testFetcher.delete(
       app,
-      `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members/${TEST_USER_2.id}`,
+      `/api/organisation/${TEST_ORGANISATION_1.id}/teams/${addedTeamId}/members/${TEST_ORG2_USER_1.id}`,
       adminToken
     );
     expect(response.status).toBe(200);
