@@ -1,12 +1,7 @@
 /**
  * Knowledge Entries for Testing
  */
-import { eq, inArray, and } from "drizzle-orm";
-import { getDb } from "../lib/db/db-connection";
-import { knowledgeEntry } from "../lib/db/schema/knowledge";
-import { TEST_ORGANISATION_1 } from "./init.test";
 import fs from "fs";
-import { extractKnowledgeFromText } from "../lib/ai/knowledge/add-knowledge";
 
 const pathToEmbeddingFile = __dirname + "/files/test-knowledge-embedding.json";
 
@@ -68,37 +63,10 @@ Die Grundlage für Down by the River war angeblich der Soulhit Sunny von Bobby H
 Billy Talbot, Bassist bei der Rockband The Rockets, aus denen Crazy Horse hervorgegangen ist, nennt eine andere Vorlage für den Song: „Man braucht sich bloß Let Me Go auf dem Album der Rockets anzuhören, und schon hat man den Ursprung von Down by the River.“[2]
 `;
 
-export const importTestKnowledge = async () => {
-  await extractKnowledgeFromText({
+/*
+ await extractKnowledgeFromText({
     organisationId: TEST_ORGANISATION_1.id,
     title: "Orphismus",
     text: TEST_KNOWLEDGE_TEXT_1,
   });
-
-  await extractKnowledgeFromText({
-    organisationId: TEST_ORGANISATION_1.id,
-    title: "Prager Brand 1689",
-    text: TEST_KNOWLEDGE_TEXT_2,
-  });
-
-  await extractKnowledgeFromText({
-    organisationId: TEST_ORGANISATION_1.id,
-    title: "Down by the River",
-    text: TEST_KNOWLEDGE_TEXT_3,
-  });
-};
-
-export const deleteTestKnowledge = async () => {
-  await getDb()
-    .delete(knowledgeEntry)
-    .where(
-      and(
-        inArray(knowledgeEntry.name, [
-          "Orphismus",
-          "Prager Brand 1689",
-          "Down by the River",
-        ]),
-        eq(knowledgeEntry.organisationId, TEST_ORGANISATION_1.id)
-      )
-    );
-};
+*/

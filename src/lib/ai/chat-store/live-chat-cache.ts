@@ -1,5 +1,5 @@
 import log from "../../log";
-import { ArtifactReturn, SourceReturn } from "../ai-sdk/types";
+import type { ArtifactReturn, SourceReturn } from "../ai-sdk/types";
 
 export interface LiveChatData {
   text: string;

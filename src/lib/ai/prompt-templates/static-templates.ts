@@ -111,6 +111,7 @@ export const addServerSideStaticTemplate = (template: StaticTemplateImport) => {
     updatedAt: template.updatedAt || new Date().toISOString(),
     llmOptions: template.llmOptions || null,
     placeholders: placeholders,
+    tools: template.tools || {},
   };
   serverSideStaticTemplates.push(staticTemplate);
 };

@@ -17,8 +17,8 @@ import {
   initTests,
   TEST_ORGANISATION_1,
   TEST_USER_1,
-  TEST_TEAM_1,
 } from "../../../test/init.test";
+import { testing_createTeamAndAddUsers } from "../../../test/permissions.test";
 
 let testTokens: {
   user1Token: string;
@@ -26,6 +26,8 @@ let testTokens: {
   user3Token: string;
   adminToken: string;
 };
+
+let TEST_TEAM_ID: string;
 
 type KnowledgeGroupWithTeams = KnowledgeGroupSelect & {
   teamAssignments?: KnowledgeGroupTeamAssignmentSelect[];
@@ -35,6 +37,12 @@ describe("Knowledge Groups", () => {
   beforeAll(async () => {
     const tokens = await initTests();
     testTokens = tokens;
+
+    const { teamId } = await testing_createTeamAndAddUsers(
+      TEST_ORGANISATION_1.id,
+      [TEST_USER_1.id]
+    );
+    TEST_TEAM_ID = teamId;
   });
 
   describe("createKnowledgeGroup", () => {
@@ -101,7 +109,7 @@ describe("Knowledge Groups", () => {
       });
 
       // Assign a team
-      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_1.id, {
+      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
         userId: TEST_USER_1.id,
       });
@@ -237,7 +245,7 @@ describe("Knowledge Groups", () => {
         organisationWideAccess: false,
       });
 
-      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_1.id, {
+      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
         userId: TEST_USER_1.id,
       });
@@ -248,7 +256,7 @@ describe("Knowledge Groups", () => {
       });
 
       expect(teams.length).toBeGreaterThan(0);
-      expect(teams.some((t) => t.teamId === TEST_TEAM_1.id)).toBe(true);
+      expect(teams.some((t) => t.teamId === TEST_TEAM_ID)).toBe(true);
     }, 10000);
 
     it("should remove a team from a knowledge group", async () => {
@@ -262,13 +270,13 @@ describe("Knowledge Groups", () => {
       });
 
       // First assign the team
-      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_1.id, {
+      await assignTeamToKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
         userId: TEST_USER_1.id,
       });
 
       // Then remove it
-      await removeTeamFromKnowledgeGroup(newGroup.id, TEST_TEAM_1.id, {
+      await removeTeamFromKnowledgeGroup(newGroup.id, TEST_TEAM_ID, {
         organisationId: TEST_ORGANISATION_1.id,
         userId: TEST_USER_1.id,
       });
@@ -278,7 +286,7 @@ describe("Knowledge Groups", () => {
         userId: TEST_USER_1.id,
       });
 
-      expect(teams).not.toContain(TEST_TEAM_1.id);
+      expect(teams).not.toContain(TEST_TEAM_ID);
     });
   });
 });

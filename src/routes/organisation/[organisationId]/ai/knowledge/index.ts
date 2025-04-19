@@ -12,11 +12,13 @@ import {
 } from "../../../../../lib/ai/knowledge/add-knowledge";
 import { parseDocument } from "../../../../../lib/ai/parsing";
 import {
-  deleteKnowledgeEntry,
   getFullSourceDocumentsForKnowledgeEntry,
   getKnowledgeEntries,
-  updateKnowledgeEntry,
 } from "../../../../../lib/ai/knowledge/get-knowledge";
+import {
+  deleteKnowledgeEntry,
+  updateKnowledgeEntry,
+} from "../../../../../lib/ai/knowledge/update-knowledge";
 import { RESPONSES } from "../../../../../lib/responses";
 import {
   getFullSourceDocumentsForSimilaritySearch,

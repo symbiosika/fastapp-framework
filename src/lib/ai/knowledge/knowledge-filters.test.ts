@@ -6,6 +6,7 @@ import {
   updateFilterCategory,
   getFiltersByCategory,
   deleteFilter,
+  getFilterIdsFromNames,
 } from "./knowledge-filters";
 import { knowledgeFilters } from "../../db/schema/knowledge";
 import { eq, and } from "drizzle-orm";
@@ -247,5 +248,58 @@ describe("deleteFilter", () => {
       .where(eq(knowledgeFilters.organisationId, TEST_ORGANISATION_1.id));
 
     expect(filters.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getFilterIdsFromNames", () => {
+  it("should return filter IDs based on category and name query", async () => {
+    // Create test filters
+    const filter1Id = await upsertFilter(
+      "category1",
+      "a",
+      TEST_ORGANISATION_1.id
+    );
+    const filter2Id = await upsertFilter(
+      "category1",
+      "b",
+      TEST_ORGANISATION_1.id
+    );
+    const filter3Id = await upsertFilter(
+      "category2",
+      "c",
+      TEST_ORGANISATION_1.id
+    );
+
+    // Test query with multiple categories
+    const query = {
+      category1: ["a", "b"],
+      category2: ["c"],
+    };
+
+    const filterIds = await getFilterIdsFromNames(query);
+
+    // Should return all three filter IDs
+    expect(filterIds.length).toBe(3);
+    expect(filterIds).toContain(filter1Id);
+    expect(filterIds).toContain(filter2Id);
+    expect(filterIds).toContain(filter3Id);
+  });
+
+  it("should return empty array for non-existent categories or names", async () => {
+    const query = {
+      "non-existent-category": ["non-existent-name"],
+    };
+
+    const filterIds = await getFilterIdsFromNames(query);
+    expect(filterIds).toEqual([]);
+  });
+
+  it("should handle empty name arrays", async () => {
+    const query = {
+      category1: [],
+    };
+
+    const filterIds = await getFilterIdsFromNames(query);
+    expect(filterIds).toEqual([]);
   });
 });

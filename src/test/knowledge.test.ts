@@ -6,15 +6,9 @@ import { getDb } from "../lib/db/db-connection";
 import {
   knowledgeEntry,
   knowledgeChunks,
-  fileSourceTypeEnum,
   knowledgeGroup,
 } from "../lib/db/schema/knowledge";
-import {
-  initTests,
-  TEST_ORGANISATION_1,
-  TEST_TEAM_1,
-  TEST_USER_1,
-} from "./init.test";
+import { TEST_ORGANISATION_1, TEST_USER_1 } from "./init.test";
 import fs from "fs";
 import {
   promptTemplateKnowledgeEntries,

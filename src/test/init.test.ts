@@ -86,11 +86,23 @@ export const TEST_USERS = [
   TEST_ADMIN_USER,
 ];
 
-export const TEST_TEAM_1 = {
-  id: "00000000-3333-3333-3333-000000000001",
-  name: "Test Team 1",
-  organisationId: TEST_ORGANISATION_1.id,
-};
+// export const TEST_TEAM_1 = {
+//   id: "00000000-3333-3333-3333-000000000001",
+//   name: "Test Team 1",
+//   organisationId: TEST_ORGANISATION_1.id,
+// };
+
+// export const TEST_TEAM_2 = {
+//   id: "00000000-3333-3333-3333-000000000002",
+//   name: "Test Team 2",
+//   organisationId: TEST_ORGANISATION_1.id,
+// };
+
+// export const TEST_TEAM_3 = {
+//   id: "00000000-3333-3333-3333-000000000003",
+//   name: "Test Team 3",
+//   organisationId: TEST_ORGANISATION_1.id,
+// };
 
 export const TEST_MODEL_1: AiProviderModelsInsert = {
   id: "00000000-0000-0000-0000-000000000001",
@@ -152,9 +164,6 @@ export const TEST_EMBEDDING_MODEL: AiProviderModelsInsert = {
   system: false,
 };
 
-/**
- * Delete all Test Organisations
- */
 export const deleteTestOrganisations = async () => {
   await getDb()
     .delete(organisations)
@@ -166,7 +175,6 @@ export const deleteTestOrganisations = async () => {
       ])
     );
 };
-
 /**
  * Init all Test Organisations
  */
@@ -317,39 +325,6 @@ export const initTestOrganisationMembers = async () => {
 };
 
 /**
- * Init all Test Teams
- */
-export const initTestTeams = async () => {
-  await dropAllTestTeamMembers();
-
-  // Create test team
-  await getDb()
-    .insert(teams)
-    .values({
-      id: TEST_TEAM_1.id,
-      name: TEST_TEAM_1.name,
-      organisationId: TEST_TEAM_1.organisationId,
-    })
-    .onConflictDoUpdate({
-      target: [teams.id],
-      set: {
-        name: TEST_TEAM_1.name,
-        organisationId: TEST_TEAM_1.organisationId,
-      },
-    });
-
-  // Add test user to team
-  await getDb()
-    .insert(teamMembers)
-    .values({
-      userId: TEST_USER_1.id,
-      teamId: TEST_TEAM_1.id,
-      role: "admin",
-    })
-    .onConflictDoNothing();
-};
-
-/**
  * Drop all invitations codes
  */
 export const dropAllInvitationsCodes = async () => {
@@ -404,9 +379,6 @@ export const initTests = async () => {
   });
   await initTestOrganisationMembers().catch((err) => {
     console.info("Error initialising test organisation members", err);
-  });
-  await initTestTeams().catch((err) => {
-    console.info("Error initialising test teams", err);
   });
   await dropAllInvitationsCodes().catch((err) => {
     console.info("Error dropping invitation codes", err);
