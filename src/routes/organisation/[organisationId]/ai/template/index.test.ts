@@ -44,6 +44,7 @@ describe("Prompt Templates API Endpoints", () => {
       systemPrompt: "You are a helpful assistant for testing.",
       userPrompt: "Please respond to: {{query}}",
       organisationId: TEST_ORGANISATION_1.id,
+      tools: { enabled: ["test_tool1", "test_tool2"] },
     };
 
     const response = await testFetcher.post(
@@ -57,6 +58,7 @@ describe("Prompt Templates API Endpoints", () => {
     expect(response.jsonResponse.name).toBe(templateData.name);
     expect(response.jsonResponse.systemPrompt).toBe(templateData.systemPrompt);
     expect(response.jsonResponse.id).toBeDefined();
+    expect(response.jsonResponse.tools).toEqual(templateData.tools);
 
     // Save the ID for later tests
     createdTemplateId = response.jsonResponse.id;
@@ -71,6 +73,9 @@ describe("Prompt Templates API Endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(response.jsonResponse.id).toBe(createdTemplateId);
+    expect(response.jsonResponse.tools).toEqual({
+      enabled: ["test_tool1", "test_tool2"],
+    });
   });
 
   test("Get a template by name and category", async () => {
@@ -95,6 +100,7 @@ describe("Prompt Templates API Endpoints", () => {
       systemPrompt: "You are an updated helpful assistant for testing.",
       userPrompt: "Please respond to: {{query}}",
       organisationId: TEST_ORGANISATION_1.id,
+      tools: { enabled: ["updated_tool1", "updated_tool2"] },
     };
 
     const response = await testFetcher.put(
@@ -107,6 +113,7 @@ describe("Prompt Templates API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.jsonResponse.label).toBe(updatedData.label);
     expect(response.jsonResponse.systemPrompt).toBe(updatedData.systemPrompt);
+    expect(response.jsonResponse.tools).toEqual(updatedData.tools);
   });
 
   test("Add a placeholder to a template", async () => {

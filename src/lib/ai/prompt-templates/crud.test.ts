@@ -42,6 +42,7 @@ describe("Prompt Template CRUD Operations", () => {
     langCode: "en",
     needsInitialCall: false,
     llmOptions: {},
+    tools: { enabled: ["tool1", "tool2"] },
   };
   const testPlaceholder = {
     name: "test_placeholder",
@@ -56,12 +57,14 @@ describe("Prompt Template CRUD Operations", () => {
     const result = await addPromptTemplate(testTemplate);
     expect(result.name).toBe(testTemplate.name);
     expect(result.id).toBeDefined();
+    expect(result.tools).toEqual(testTemplate.tools);
     createdTemplateId = result.id;
   });
 
   it("should get a template by id", async () => {
     const result = await getPlainTemplate({ promptId: createdTemplateId });
     expect(result.name).toBe(testTemplate.name);
+    expect(result.tools).toEqual(testTemplate.tools);
   });
 
   it("should update a prompt template", async () => {
@@ -74,9 +77,11 @@ describe("Prompt Template CRUD Operations", () => {
       updatedAt: new Date().toISOString(),
       userId: null,
       needsInitialCall: false,
+      tools: { enabled: ["updated_tool1", "updated_tool2"] },
     };
     const result = await updatePromptTemplate(updatedTemplate);
     expect(result.name).toBe("Updated Template");
+    expect(result.tools).toEqual(updatedTemplate.tools);
   });
 
   it("should delete a prompt template", async () => {
@@ -100,6 +105,7 @@ describe("Prompt Template Placeholders CRUD Operations", () => {
     needsInitialCall: false,
     llmOptions: {},
     hidden: false,
+    tools: { enabled: ["tool3"] },
   };
   let templateId: string;
 
@@ -184,6 +190,7 @@ describe("Prompt Template Placeholder Suggestions", () => {
     needsInitialCall: false,
     llmOptions: {},
     hidden: false,
+    tools: { enabled: ["tool4", "tool5"] },
   };
   const testPlaceholder = {
     name: "test_placeholder",
@@ -292,6 +299,7 @@ describe("Complete Prompt Template Operations", () => {
     langCode: "en",
     needsInitialCall: false,
     llmOptions: {},
+    tools: { enabled: ["tool6"] },
   };
 
   const testPlaceholders: (PromptTemplatePlaceholdersInsert & {
@@ -364,6 +372,7 @@ describe("Complete Prompt Template Operations", () => {
     expect(result).toBeDefined();
     expect(result.id).toBeDefined();
     expect(result.name).toBe(testTemplate.name);
+    expect(result.tools).toEqual(testTemplate.tools);
     expect(result.placeholders.length).toBe(1);
     expect(result.knowledgeEntries.length).toBe(1);
     expect(result.knowledgeFilters.length).toBe(1);
@@ -379,6 +388,7 @@ describe("Complete Prompt Template Operations", () => {
 
     expect(result).toBeDefined();
     expect(result.id).toBe(createdTemplateId);
+    expect(result.tools).toEqual(testTemplate.tools);
     expect(result.placeholders.length).toBe(1);
     expect(result.knowledgeEntries.length).toBe(1);
     expect(result.knowledgeFilters.length).toBe(1);
@@ -390,6 +400,7 @@ describe("Complete Prompt Template Operations", () => {
 
     expect(Array.isArray(results)).toBe(true);
     expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty("tools");
     expect(results[0]).toHaveProperty("placeholders");
     expect(results[0]).toHaveProperty("knowledgeEntries");
     expect(results[0]).toHaveProperty("knowledgeFilters");
@@ -409,6 +420,7 @@ describe("Complete Prompt Template Operations", () => {
       langCode: "en",
       needsInitialCall: false,
       llmOptions: {},
+      tools: { enabled: ["tool7"] },
     };
 
     const initialPlaceholders = [
