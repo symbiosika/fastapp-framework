@@ -66,6 +66,9 @@ jobs:
           # Black Forest Labs
           BLACK_FOREST_LABS_API_KEY=${{ secrets.FASTAPP_UNITTEST_BLACK_FOREST_LABS_API_KEY }}
 
+          # Replicate
+          REPLICATE_API_KEY=${{ secrets.FASTAPP_UNITTEST_REPLICATE_API_KEY }}
+
           # Webserver Settings
           ALLOWED_ORIGINS="*"
 
