@@ -86,7 +86,10 @@ jobs:
 
           # JWT
           JWT_PUBLIC_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
-          JWT_PRIVATE_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"         
+          JWT_PRIVATE_KEY="${{ secrets.FASTAPP_UNITTEST_JWT_KEY }}"
+
+          # Stripe
+          STRIPE_TESTING_API_KEY="${{ secrets.FASTAPP_UNITTEST_STRIPE_TESTING_API_KEY }}"
 
           # Cron
           CRON_LOG=false
