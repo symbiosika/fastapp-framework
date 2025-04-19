@@ -18,6 +18,7 @@ import {
   getNumberArgument,
   getStringArgument,
   getStringArrayArgument,
+  parseCommaSeparatedPossiblyQuotedString,
 } from "./custom-placeholders-helper";
 import type { ChatMessageReplacerMeta, PlaceholderParser } from "./replacer";
 import type { ChatSessionContext } from "../chat-store";
@@ -116,17 +117,20 @@ export const customAppPlaceholders: PlaceholderParser[] = [
     }> => {
       const searchForVariable = getStringArgument(
         args,
-        "search_for_variable",
+        "searchForVariable",
         "user_input"
       );
       const question = variables[searchForVariable];
 
       // Parse dynamic filters
       const filters: Record<string, string[]> = {};
+      const filterPrefix = "filter:";
       Object.entries(args).forEach(([key, value]) => {
-        if (key.startsWith("filter:")) {
-          const filterKey = key.substring(7); // Remove 'filter:' prefix
-          filters[filterKey] = String(value).split(",");
+        if (key.startsWith(filterPrefix)) {
+          const filterKey = key.substring(filterPrefix.length);
+          filters[filterKey] = parseCommaSeparatedPossiblyQuotedString(
+            String(value)
+          );
         }
       });
 
@@ -135,7 +139,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const before = getNumberArgument(args, "before");
       const after = getNumberArgument(args, "after");
       const ids = getStringArrayArgument(args, "id");
-      const workspaceId = getStringArgument(args, "workspace_id");
+      const workspaceId = getStringArgument(args, "workspaceId");
       const organisationId = meta.organisationId;
 
       await log.logCustom(
