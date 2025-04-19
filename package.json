@@ -106,6 +106,7 @@
   "types": "./lib/index.d.ts",
   "dependencies": {
     "@ai-sdk/replicate": "^0.2.7",
+    "postgres": "^3.4.5",
     "stripe": "17.7.0"
   }
 }
