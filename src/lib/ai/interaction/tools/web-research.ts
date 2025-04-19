@@ -82,7 +82,7 @@ export const getWebResearchTool = (context: ToolContext): ToolReturn => {
   return getADefinedWebResearchTool(context, {
     description:
       "Search the web for information. Can be used to get actual information or to get ideas for a blog post.",
-    model: "sonar",
+    model: "sonar-pro",
     maxTokens: 16000,
   });
 };
