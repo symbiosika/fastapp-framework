@@ -184,4 +184,52 @@ describe("getKnowledgeEntries Permissions", () => {
       });
     }).toThrow();
   });
+
+  let entryWithFilters: KnowledgeEntrySelect;
+  test("User can create knowledge entries with filters", async () => {
+    entryWithFilters = await testing_createKnowledgeEntry({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      teamId: teamIdOrg1,
+      filters: {
+        "test-case": "test-1",
+      },
+    });
+  });
+
+  test("User can read knowledge entries with filters", async () => {
+    const result = await getKnowledgeEntries({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      teamId: teamIdOrg1,
+      filterNames: {
+        "test-case": ["test-1", "test-2"],
+      },
+    });
+    expect(result.find((r) => r.id === entryWithFilters.id)).toBeDefined();
+  });
+
+  test("User canot read knowledge entries with wrong filters", async () => {
+    const result = await getKnowledgeEntries({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      teamId: teamIdOrg1,
+      filterNames: {
+        "test-case": ["test-3", "test-4"],
+      },
+    });
+    expect(result.find((r) => r.id === entryWithFilters.id)).toBeUndefined();
+  });
+
+  test("User canot read knowledge entries with wrong filters again", async () => {
+    const result = await getKnowledgeEntries({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      teamId: teamIdOrg1,
+      filterNames: {
+        "test-some-else": ["test"],
+      },
+    });
+    expect(result.find((r) => r.id === entryWithFilters.id)).toBeUndefined();
+  });
 });

@@ -129,6 +129,7 @@ export const testing_createKnowledgeEntry = async (data: {
   teamId?: string;
   knowledgeGroupId?: string;
   userOwned?: boolean;
+  filters?: Record<string, string>;
 }): Promise<KnowledgeEntrySelect> => {
   const knowledgeEntry = await storeKnowledgeEntry(
     {
@@ -138,7 +139,7 @@ export const testing_createKnowledgeEntry = async (data: {
       sourceExternalId: nanoid(8),
       sourceUrl: `https://symbiosika.com/${nanoid(8)}`,
     },
-    {}
+    data.filters ?? {}
   );
 
   return knowledgeEntry;

@@ -178,28 +178,25 @@ export const getKnowledgeEntries = async (query: {
     filterConditions.push(eq(knowledgeEntry.userOwned, false));
   }
   // check for filter IDs - add this new condition
-  if (query.filterIds?.length) {
-    filterConditions.push(
-      exists(
-        getDb()
-          .select({ id: knowledgeEntryFilters.id })
-          .from(knowledgeEntryFilters)
-          .where(
-            and(
-              eq(knowledgeEntryFilters.knowledgeEntryId, knowledgeEntry.id),
-              inArray(knowledgeEntryFilters.knowledgeFilterId, query.filterIds)
-            )
-          )
-      )
-    );
+  if (query.filterIds) {
+    // Subquery to get knowledgeEntry IDs that have at least one of the specified filterIds
+    const subQuery = getDb()
+      .selectDistinct({ id: knowledgeEntryFilters.knowledgeEntryId }) // Select distinct entry IDs
+      .from(knowledgeEntryFilters)
+      .where(
+        // Filter the knowledgeEntryFilters table by the provided filter IDs
+        inArray(knowledgeEntryFilters.knowledgeFilterId, query.filterIds)
+      );
+    // Add condition to the main query: knowledgeEntry.id must be in the result of the subquery
+    filterConditions.push(inArray(knowledgeEntry.id, subQuery));
   }
 
   // 5.) Get the knowledge entries
-  const entries = await getDb().query.knowledgeEntry.findMany({
+  const entriesQuery = getDb().query.knowledgeEntry.findMany({
     limit: query?.limit ?? 100,
     offset: query?.page ? query.page * (query.limit ?? 100) : undefined,
     where: and(...filterConditions),
-    orderBy: (knowledgeEntry, { desc }) => [desc(knowledgeEntry.createdAt)],
+    orderBy: (entry, { desc }) => [desc(entry.createdAt)], // Use 'entry' alias provided by findMany/orderBy context
     // with filters and knowledge group
     with: {
       filters: {
@@ -220,7 +217,14 @@ export const getKnowledgeEntries = async (query: {
     },
   });
 
-  return entries;
+  const sql = entriesQuery.toSQL();
+  try {
+    return await entriesQuery; // Execute the query
+  } catch (error) {
+    log.error("Error executing SQL:", sql.sql, "Params:", sql.params);
+    log.error("Original Error:", error + ""); // Log the original error for more details
+    throw error;
+  }
 };
 
 /**
