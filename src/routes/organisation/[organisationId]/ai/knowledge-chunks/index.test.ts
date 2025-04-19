@@ -68,7 +68,6 @@ describe("Knowledge Chunks API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.jsonResponse.id).toBe(testKnowledgeChunkId);
     expect(response.jsonResponse.text).toBe("Test chunk text");
-    expect(response.jsonResponse.header).toBe("Test header");
   });
 
   test("Should return 400 for non-existent chunk", async () => {

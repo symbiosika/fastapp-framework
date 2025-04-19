@@ -126,6 +126,7 @@ export const testing_createKnowledgeEntry = async (data: {
   organisationId: string;
   userId: string;
   workspaceId?: string;
+  teamId?: string;
   knowledgeGroupId?: string;
   userOwned?: boolean;
 }): Promise<KnowledgeEntrySelect> => {

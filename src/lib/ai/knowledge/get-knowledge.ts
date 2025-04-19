@@ -168,7 +168,12 @@ export const getKnowledgeEntries = async (query: {
   }
   // check for user owned
   if (query.userOwned === true) {
-    filterConditions.push(eq(knowledgeEntry.userOwned, true));
+    filterConditions.push(
+      and(
+        eq(knowledgeEntry.userOwned, true),
+        eq(knowledgeEntry.userId, query.userId)
+      )
+    );
   } else if (query.userOwned === false) {
     filterConditions.push(eq(knowledgeEntry.userOwned, false));
   }

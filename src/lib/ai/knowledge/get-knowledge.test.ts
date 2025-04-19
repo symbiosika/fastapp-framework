@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import {
   initTests,
   TEST_ORG1_USER_1,
+  TEST_ORG1_USER_2,
   TEST_ORG2_USER_1,
   TEST_ORGANISATION_1,
   TEST_ORGANISATION_2,
@@ -38,15 +39,15 @@ describe("getKnowledgeEntries Permissions", () => {
     });
     workspaceIdOrg1 = workspaceOrg1.id;
 
-    // Create a team and workspace in Organisation2, add TEST_ORG2_USER_1 to that team
+    // Create a team and workspace in Organisation2, add TEST_ORG1_USER_2 to that team
     const teamOrg2 = await testing_createTeamAndAddUsers(
       TEST_ORGANISATION_2.id,
-      [TEST_ORG2_USER_1.id]
+      [TEST_ORG1_USER_2.id]
     );
     teamIdOrg2 = teamOrg2.teamId;
     const workspaceOrg2 = await testing_createWorkspace({
       organisationId: TEST_ORGANISATION_2.id,
-      userId: TEST_ORG2_USER_1.id,
+      userId: TEST_ORG1_USER_2.id,
       teamId: teamIdOrg2,
     });
     workspaceIdOrg2 = workspaceOrg2.id;
@@ -96,6 +97,7 @@ describe("getKnowledgeEntries Permissions", () => {
       userId: TEST_ORG1_USER_1.id,
       userOwned: true,
     });
+
     // Visible to the same user
     const result1 = await getKnowledgeEntries({
       organisationId: TEST_ORGANISATION_1.id,
@@ -107,42 +109,79 @@ describe("getKnowledgeEntries Permissions", () => {
     // Should NOT be visible to another user
     const result2 = await getKnowledgeEntries({
       organisationId: TEST_ORGANISATION_1.id,
-      userId: TEST_ORG2_USER_1.id,
+      userId: TEST_ORG1_USER_2.id,
       userOwned: true,
     });
     // If we get this far, user2 wrongly saw user1's userOwned entry
     expect(result2.find((r) => r.id === entryOwned.id)).toBeUndefined();
   });
 
-  //   test("Users cannot read knowledge from teams they do not belong to", async () => {
-  //     // Create an entry in org2, with teamIdOrg2, workspaceIdOrg2
-  //     const entryOrg2 = await testing_createKnowledgeEntry({
-  //       organisationId: TEST_ORGANISATION_2.id,
-  //       userId: TEST_ORG2_USER_1.id,
-  //       workspaceId: workspaceIdOrg2,
-  //     });
+  let entryInTeam1InOrg1: KnowledgeEntrySelect;
+  test("Users cannot read knowledge from teams they do not belong to: create", async () => {
+    // Create an entry in org2, with teamIdOrg2, workspaceIdOrg2
+    entryInTeam1InOrg1 = await testing_createKnowledgeEntry({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG2_USER_1.id,
+      teamId: teamIdOrg1,
+    });
+  });
 
-  //     // user1 tries grabbing knowledge from org2 team => should fail
-  //     try {
-  //       await getKnowledgeEntries({
-  //         organisationId: TEST_ORGANISATION_2.id,
-  //         userId: TEST_ORG1_USER_1.id,
-  //         teamId: teamIdOrg2,
-  //         workspaceId: workspaceIdOrg2,
-  //       });
-  //       // Must not reach here
-  //       expect(false).toBe(true);
-  //     } catch (e: any) {
-  //       expect(e).toBeInstanceOf(Error);
-  //     }
+  test("Users cannot read knowledge from teams they do not belong to: read (user1)", async () => {
+    // user1 should see it
+    const result1 = await getKnowledgeEntries({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      teamId: teamIdOrg1,
+    });
+    expect(result1.find((r) => r.id === entryInTeam1InOrg1.id)).toBeDefined();
+  });
 
-  //     // user2 can see it
-  //     const result2 = await getKnowledgeEntries({
-  //       organisationId: TEST_ORGANISATION_2.id,
-  //       userId: TEST_ORG2_USER_1.id,
-  //       teamId: teamIdOrg2,
-  //       workspaceId: workspaceIdOrg2,
-  //     });
-  //     expect(result2.find((r) => r.id === entryOrg2.id)).toBeDefined();
-  //   });
+  test("Users cannot read knowledge from teams they do not belong to: read (user2)", async () => {
+    // user2 should not see it
+    expect(async () => {
+      await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_ORG1_USER_2.id,
+        teamId: teamIdOrg1,
+      });
+    }).toThrow();
+  });
+
+  test("User can access knowledge entries in workspaces they have access to: create", async () => {
+    // Create a knowledge entry in workspace1 in org1
+    const entryInWorkspace = await testing_createKnowledgeEntry({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      workspaceId: workspaceIdOrg1,
+    });
+
+    // User1 should be able to access it
+    const result = await getKnowledgeEntries({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      workspaceId: workspaceIdOrg1,
+    });
+    expect(result.find((r) => r.id === entryInWorkspace.id)).toBeDefined();
+  });
+
+  let entryInWorkspace: KnowledgeEntrySelect;
+  test("User cannot access knowledge entries in workspaces they don't have access to: create (user1)", async () => {
+    // Create a knowledge entry in the workspace
+    entryInWorkspace = await testing_createKnowledgeEntry({
+      organisationId: TEST_ORGANISATION_1.id,
+      userId: TEST_ORG1_USER_1.id,
+      workspaceId: workspaceIdOrg1,
+    });
+  });
+
+  test("User cannot access knowledge entries in workspaces they don't have access to: read (user2)", async () => {
+    // User2 should not be able to access it
+    expect(async () => {
+      await getKnowledgeEntries({
+        organisationId: TEST_ORGANISATION_1.id,
+        userId: TEST_ORG1_USER_2.id,
+        workspaceId: workspaceIdOrg1,
+      });
+    }).toThrow();
+  });
 });

@@ -63,6 +63,22 @@ export const TEST_ORG1_USER_1 = {
   password: TEST_PASSWORD,
 };
 
+export const TEST_ORG1_USER_2 = {
+  id: "00000000-2222-2222-2222-000000000021",
+  email: "testuser12@symbiosika.com",
+  firstname: "Test",
+  surname: "User 2",
+  password: TEST_PASSWORD,
+};
+
+export const TEST_ORG1_USER_3 = {
+  id: "00000000-2222-2222-2222-000000000031",
+  email: "testuser13@symbiosika.com",
+  firstname: "Test",
+  surname: "User 3",
+  password: TEST_PASSWORD,
+};
+
 export const TEST_ORG2_USER_1 = {
   id: "00000000-2222-2222-2222-000000000002",
   email: "testuser2@symbiosika.com",
@@ -81,6 +97,8 @@ export const TEST_ORG3_USER_1 = {
 
 export const TEST_USERS = [
   TEST_ORG1_USER_1,
+  TEST_ORG1_USER_2,
+  TEST_ORG1_USER_3,
   TEST_ORG2_USER_1,
   TEST_ORG3_USER_1,
   TEST_ADMIN_USER,
@@ -222,6 +240,8 @@ export const dropAllTestOrganisationMembers = async () => {
     .where(
       inArray(organisationMembers.userId, [
         TEST_ORG1_USER_1.id,
+        TEST_ORG1_USER_2.id,
+        TEST_ORG1_USER_3.id,
         TEST_ORG2_USER_1.id,
         TEST_ORG3_USER_1.id,
       ])
@@ -237,6 +257,8 @@ export const dropAllTestTeamMembers = async () => {
     .where(
       inArray(teamMembers.userId, [
         TEST_ORG1_USER_1.id,
+        TEST_ORG1_USER_2.id,
+        TEST_ORG1_USER_3.id,
         TEST_ORG2_USER_1.id,
         TEST_ORG3_USER_1.id,
       ])
@@ -296,15 +318,40 @@ export const initTestOrganisationMembers = async () => {
     .where(
       inArray(organisationMembers.userId, [
         TEST_ORG1_USER_1.id,
+        TEST_ORG1_USER_2.id,
+        TEST_ORG1_USER_3.id,
         TEST_ORG2_USER_1.id,
         TEST_ORG3_USER_1.id,
       ])
     );
 
   // all the users to their own organisations
-  await addOrganisationMember(TEST_ORGANISATION_1.id, TEST_ORG1_USER_1.id, "owner");
-  await addOrganisationMember(TEST_ORGANISATION_2.id, TEST_ORG2_USER_1.id, "owner");
-  await addOrganisationMember(TEST_ORGANISATION_3.id, TEST_ORG3_USER_1.id, "owner");
+  await addOrganisationMember(
+    TEST_ORGANISATION_1.id,
+    TEST_ORG1_USER_1.id,
+    "owner"
+  );
+  await addOrganisationMember(
+    TEST_ORGANISATION_1.id,
+    TEST_ORG1_USER_2.id,
+    "member"
+  );
+  await addOrganisationMember(
+    TEST_ORGANISATION_1.id,
+    TEST_ORG1_USER_3.id,
+    "member"
+  );
+
+  await addOrganisationMember(
+    TEST_ORGANISATION_2.id,
+    TEST_ORG2_USER_1.id,
+    "owner"
+  );
+  await addOrganisationMember(
+    TEST_ORGANISATION_3.id,
+    TEST_ORG3_USER_1.id,
+    "owner"
+  );
 
   // add admin to all organisations
   await addOrganisationMember(

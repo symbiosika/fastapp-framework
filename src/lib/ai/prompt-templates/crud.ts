@@ -453,7 +453,8 @@ export const createFullPromptTemplate = async (
   data: FullPromptTemplateImport,
   overwriteExisting = false
 ) => {
-  return await getDb().transaction(async (tx) => {
+  let id: string | null = null;
+  await getDb().transaction(async (tx) => {
     // 0. check for existing and delete if overwrite is true
     if (overwriteExisting && data.id) {
       await tx.delete(promptTemplates).where(eq(promptTemplates.id, data.id));
@@ -518,7 +519,11 @@ export const createFullPromptTemplate = async (
       );
     }
 
-    // Return the complete template with all related data
-    return await getFullPromptTemplate({ promptId: template.id });
+    id = template.id;
   });
+  // Return the complete template with all related data
+  if (!id) {
+    throw new Error("Something went wrong while creating the template.");
+  }
+  return await getFullPromptTemplate({ promptId: id });
 };
