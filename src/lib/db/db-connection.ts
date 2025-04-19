@@ -2,7 +2,8 @@
 // import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { getDbSchema, type DatabaseSchema } from "./db-schema";
 // Use BunSQL native client
-import { drizzle, type BunSQLDatabase } from "drizzle-orm/bun-sql";
+// import { drizzle, type BunSQLDatabase } from "drizzle-orm/bun-sql";
+import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { SQL } from "bun";
 
 const POSTGRES_DB = process.env.POSTGRES_DB ?? "";
@@ -17,10 +18,17 @@ const POSTGRES_USE_SSL = !process.env.POSTGRES_USE_SSL
 
 console.log("POSTGRES_USE_SSL is", POSTGRES_USE_SSL);
 
+// Buns native clien
+// let dbClient = new SQL(
+//   `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
+// );
+// let drizzleClient: BunSQLDatabase<DatabaseSchema>;
+
+// PostgresJS client
 let dbClient = new SQL(
   `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
 );
-let drizzleClient: BunSQLDatabase<DatabaseSchema>;
+let drizzleClient: PostgresJsDatabase<DatabaseSchema>;
 
 // // hold the connection
 // let drizzleClient: NodePgDatabase<DatabaseSchema>;
