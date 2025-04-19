@@ -101,6 +101,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Check version of Bun
+        run: bun --version
+
       - name: Install dependencies
         run: bun install
 
