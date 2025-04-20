@@ -57,6 +57,7 @@ import { chatStore } from "./lib/ai/chat-store";
 import { getAIEmbeddingModel, getAIModel } from "./lib/ai/ai-sdk/get-model";
 import {
   addBaseTool,
+  addEntryToToolMemory,
   addRuntimeTool,
   removeBaseTool,
   removeRuntimeTool,
@@ -73,6 +74,62 @@ import {
   deleteAvatar,
   getAvatarForChat,
 } from "./lib/ai/avatars";
+
+type AIService = {
+  addPromptTemplate: typeof addPromptTemplate;
+  updatePromptTemplate: typeof updatePromptTemplate;
+  deletePromptTemplate: typeof deletePromptTemplate;
+  getPlainPlaceholdersForPromptTemplate: typeof getPlainPlaceholdersForPromptTemplate;
+  updatePromptTemplatePlaceholder: typeof updatePromptTemplatePlaceholder;
+  deletePromptTemplatePlaceholder: typeof deletePromptTemplatePlaceholder;
+  getPlaceholdersForPromptTemplate: typeof getPlaceholdersForPromptTemplate;
+  parseDocument: typeof parseDocument;
+  extractKnowledgeFromExistingDbEntry: typeof extractKnowledgeFromExistingDbEntry;
+  getKnowledgeEntries: typeof getKnowledgeEntries;
+  addKnowledgeTextFromUrl: typeof addKnowledgeTextFromUrl;
+  getNearestEmbeddings: typeof getNearestEmbeddings;
+  getFullSourceDocumentsForSimilaritySearch: typeof getFullSourceDocumentsForSimilaritySearch;
+  createKnowledgeText: typeof createKnowledgeText;
+  getKnowledgeText: typeof getKnowledgeText;
+  updateKnowledgeText: typeof updateKnowledgeText;
+  deleteKnowledgeText: typeof deleteKnowledgeText;
+  getKnowledgeTextByTitle: typeof getKnowledgeTextByTitle;
+  getFineTuningEntryById: typeof getFineTuningEntryById;
+  getFineTuningEntries: typeof getFineTuningEntries;
+  addFineTuningData: typeof addFineTuningData;
+  updateFineTuningData: typeof updateFineTuningData;
+  deleteFineTuningData: typeof deleteFineTuningData;
+  addPromptSnippet: typeof addPromptSnippet;
+  getPromptSnippets: typeof getPromptSnippets;
+  getPromptSnippetById: typeof getPromptSnippetById;
+  updatePromptSnippet: typeof updatePromptSnippet;
+  deletePromptSnippet: typeof deletePromptSnippet;
+  getPromptSnippetByNameAndCategory: typeof getPromptSnippetByNameAndCategory;
+  generateEmbedding: typeof generateEmbedding;
+  generateImageDescription: typeof generateImageDescription;
+  speechToText: typeof speechToText;
+  textToSpeech: typeof textToSpeech;
+  chat: typeof chat;
+  chatCompletion: typeof chatCompletion;
+  addBaseTool: typeof addBaseTool;
+  addRuntimeTool: typeof addRuntimeTool;
+  removeBaseTool: typeof removeBaseTool;
+  removeRuntimeTool: typeof removeRuntimeTool;
+  addEntryToToolMemory: typeof addEntryToToolMemory;
+  getAIModel: typeof getAIModel;
+  getAIEmbeddingModel: typeof getAIEmbeddingModel;
+  initTemplateMessage: typeof initTemplateMessage;
+  generateImages: typeof generateImages;
+  syncModels: typeof syncModels;
+  chatStore: typeof chatStore;
+  createAvatar: typeof createAvatar;
+  getAvatarByName: typeof getAvatarByName;
+  getAvatar: typeof getAvatar;
+  listAvatars: typeof listAvatars;
+  updateAvatar: typeof updateAvatar;
+  deleteAvatar: typeof deleteAvatar;
+  getAvatarForChat: typeof getAvatarForChat;
+};
 
 export default {
   // prompt templates
@@ -121,6 +178,7 @@ export default {
   addRuntimeTool,
   removeBaseTool,
   removeRuntimeTool,
+  addEntryToToolMemory,
   getAIModel,
   getAIEmbeddingModel,
   initTemplateMessage,
@@ -138,4 +196,4 @@ export default {
   updateAvatar,
   deleteAvatar,
   getAvatarForChat,
-};
+} as AIService;
