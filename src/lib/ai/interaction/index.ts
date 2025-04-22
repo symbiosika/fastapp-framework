@@ -96,14 +96,6 @@ export async function chat(
 
     // 3. Get the enabled tools from query or set to default
     let enabledToolNames = options.enabledTools || [];
-    for (const toolName of enabledToolNames) {
-      addRuntimeToolFromBaseRegistry(toolName, {
-        chatId,
-        organisationId: options.context.organisationId,
-        userId: options.context.userId,
-      });
-      log.debug("added tool '" + toolName + "' to chat: " + chatId);
-    }
 
     // 4. Handle initial templates or messages
     let messages: ChatMessage[] = [...session.messages];
@@ -125,8 +117,8 @@ export async function chat(
         });
 
         // merge tools with enabledTools
-        enabledToolNames = [...(tools?.enabled ?? []), ...enabledToolNames];
-        log.debug("enabled tools: " + enabledToolNames);
+        const assistantTools = tools?.enabled ?? [];
+        enabledToolNames = [...assistantTools, ...enabledToolNames];
 
         // Check if a dynamic knowledge base tool is needed and register it
         await checkAndRegisterDynamicTool(
@@ -221,6 +213,17 @@ export async function chat(
           timestamp: new Date().toISOString(),
         },
       });
+    }
+
+    // add runtime tools to the chat
+    log.debug("enabled tools: " + enabledToolNames);
+    for (const toolName of enabledToolNames) {
+      addRuntimeToolFromBaseRegistry(toolName, {
+        chatId,
+        organisationId: options.context.organisationId,
+        userId: options.context.userId,
+      });
+      log.debug("added tool '" + toolName + "' to chat: " + chatId);
     }
 
     // 5. Convert messages to format expected by AI SDK
