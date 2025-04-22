@@ -95,7 +95,7 @@ export async function chat(
     }
 
     // 3. Get the enabled tools from query or set to default
-    const enabledToolNames = options.enabledTools || [];
+    let enabledToolNames = options.enabledTools || [];
     for (const toolName of enabledToolNames) {
       addRuntimeToolFromBaseRegistry(toolName, {
         chatId,
@@ -117,11 +117,16 @@ export async function chat(
           knowledgeEntries,
           knowledgeFilters,
           knowledgeGroups,
+          tools,
         } = await initTemplateMessage({
           organisationId: options.context.organisationId,
           template: options.useTemplate, // "<category>:<name>" or "00000000-0000-0000-0000-000000000000"
           userInput,
         });
+
+        // merge tools with enabledTools
+        enabledToolNames = [...(tools?.enabled ?? []), ...enabledToolNames];
+        log.debug("enabled tools: " + enabledToolNames);
 
         // Check if a dynamic knowledge base tool is needed and register it
         await checkAndRegisterDynamicTool(
