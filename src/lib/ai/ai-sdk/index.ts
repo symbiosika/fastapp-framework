@@ -7,7 +7,11 @@ import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
 import { getToolMemory, getRuntimeToolsDictionary } from "../interaction/tools";
 import type { SourceReturn, ArtifactReturn } from "./types";
-import { updateLiveChat, clearLiveChat } from "../chat-store/live-chat-cache";
+import {
+  updateLiveChat,
+  clearLiveChat,
+  clearAndStartNewSession,
+} from "../chat-store/live-chat-cache";
 
 /*
 // Typen für die AI-Response basierend auf der Vercel AI SDK-Dokumentation
@@ -244,6 +248,9 @@ export async function chatCompletion(
     tools?: string[];
   }
 ) {
+  // Clear any existing live chat data for this chat
+  clearAndStartNewSession(context.chatId);
+
   let providerAndModelName = options?.providerAndModelName;
   if (!providerAndModelName) {
     providerAndModelName =
@@ -252,11 +259,6 @@ export async function chatCompletion(
 
   const model = await getAIModel(providerAndModelName, context);
   const tools = getRuntimeToolsDictionary(context.chatId);
-
-  // Clear any existing live chat data for this chat
-  if (context.chatId) {
-    clearLiveChat(context.chatId);
-  }
 
   let accumulatedText = "";
   let accumulatedSources: SourceReturn[] = [];
