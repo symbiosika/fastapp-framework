@@ -123,7 +123,7 @@ export const getImageGeneratorTool = (context: ToolContext): ToolReturn => {
           toolName,
           artifacts: [
             {
-              type: "file",
+              type: "image",
               url: `${getBaseUrl()}${savedFileMeta.path}`,
             },
           ],
