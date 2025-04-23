@@ -154,7 +154,7 @@ export function defineFilesRoutes(app: FastAppHono, API_BASE_PATH: string) {
         return new Response(f, {
           status: 200,
           headers: {
-            "Content-Type": "application/octet-stream",
+            "Content-Type": f.type,
           },
         });
       } catch (err) {
