@@ -37,6 +37,7 @@ export const initTemplateMessage = async (request: {
   knowledgeEntries: { id: string; label: string }[];
   knowledgeFilters: { id: string; label: string }[];
   knowledgeGroups: { id: string; label: string }[];
+  tools: { enabled?: string[] } | undefined;
 }> => {
   // sequence of checks:
   // 1. check if "template" is a UUID
@@ -62,6 +63,7 @@ export const initTemplateMessage = async (request: {
     knowledgeEntries,
     knowledgeFilters,
     knowledgeGroups,
+    tools,
   } = await getFullPromptTemplate({
     promptCategory,
     promptName,
@@ -104,5 +106,6 @@ export const initTemplateMessage = async (request: {
       id: knowledgeGroup.knowledgeGroupId,
       label: "Group: " + knowledgeGroup.knowledgeGroup.name,
     })),
+    tools,
   };
 };
