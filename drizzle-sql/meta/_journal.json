@@ -869,6 +869,13 @@
       "when": 1745048533325,
       "tag": "0123_simple_thena",
       "breakpoints": true
+    },
+    {
+      "idx": 124,
+      "version": "7",
+      "when": 1745487831852,
+      "tag": "0124_legal_hex",
+      "breakpoints": true
     }
   ]
 }

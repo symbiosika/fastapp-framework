@@ -120,7 +120,7 @@ export interface MediaFile {
 }
 
 export interface ProcessedMessage {
-  usersNumber: string;
+  phoneNumber: string;
   messageId: string;
   text?: string;
   audio?: MediaFile;
@@ -161,7 +161,7 @@ export class WhatsAppBusinessCloud {
         // Process each message
         for (const message of change.value.messages) {
           const processedMessage: ProcessedMessage = {
-            usersNumber: message.from,
+            phoneNumber: message.from,
             messageId: message.id,
           };
 

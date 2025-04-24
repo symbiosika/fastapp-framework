@@ -86,6 +86,11 @@ export const users = pgBaseTable(
     image: text("image"),
     firstname: varchar("firstname", { length: 255 }).notNull(),
     surname: varchar("surname", { length: 255 }).notNull(),
+    phoneNumber: varchar("phone_number", { length: 255 }),
+    phoneNumberVerified: boolean("phone_number_verified")
+      .notNull()
+      .default(false),
+    phoneNumberAsNumber: integer("phone_number_as_number"),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
@@ -109,6 +114,8 @@ export const users = pgBaseTable(
   (users) => [
     index("users_email_idx").on(users.email),
     uniqueIndex("unique_email").on(users.email),
+    uniqueIndex("unique_phone_number").on(users.phoneNumber),
+    uniqueIndex("unique_phone_number_as_number").on(users.phoneNumberAsNumber),
     index("users_created_at_idx").on(users.createdAt),
     index("users_updated_at_idx").on(users.updatedAt),
     index("users_email_verified_idx").on(users.emailVerified),

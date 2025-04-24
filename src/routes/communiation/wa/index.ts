@@ -100,8 +100,8 @@ export default function defineWhatsAppRoutes(
         const body = await c.req.json();
         log.info("Received body:", { body });
 
-        const t = await whatsappBusinessCloud.processWebhook(body);
-        log.info("t", t);
+        const messages = await whatsappBusinessCloud.processWebhook(body);
+        log.info("t", messages);
 
         return c.text("OK");
       } catch (error) {
