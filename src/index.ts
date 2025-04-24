@@ -303,24 +303,26 @@ export const defineServer = (config: ServerSpecificConfig) => {
        * Add communication routes
        */
 
-      getMetaIpAddresses().then((ips) => {
-        app.use(
-          _GLOBAL_SERVER_CONFIG.basePath + "/communication/wa/*",
-          ipRestriction(
-            getConnInfo,
-            {
-              denyList: [],
-              allowList: ["*"], // ips,
-            },
-            async (remote, c) => {
-              log.debug(`Blocking access from ${remote.addr}`);
-              return c.text(`Blocking access from ${remote.addr}`, 403);
-            }
-          )
-        );
-        // console.log("restricting whatsapp endpoints to ips:", ips);
-        defineWhatsAppRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
-      });
+      if (_GLOBAL_SERVER_CONFIG.useWhatsApp) {
+        getMetaIpAddresses().then((ips) => {
+          app.use(
+            _GLOBAL_SERVER_CONFIG.basePath + "/communication/wa/*",
+            ipRestriction(
+              getConnInfo,
+              {
+                denyList: [],
+                allowList: ["*"], // ips,
+              },
+              async (remote, c) => {
+                log.debug(`Blocking access from ${remote.addr}`);
+                return c.text(`Blocking access from ${remote.addr}`, 403);
+              }
+            )
+          );
+          // console.log("restricting whatsapp endpoints to ips:", ips);
+          defineWhatsAppRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+        });
+      }
 
       /**
        * Adds workspace routes

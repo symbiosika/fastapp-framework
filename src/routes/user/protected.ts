@@ -57,6 +57,7 @@ import {
 } from "../../lib/usermanagement/profile-image";
 import { validateScope } from "../../lib/utils/validate-scope";
 import { availableScopes } from "../../lib/auth/available-scopes";
+import { sendValidationPin, validatePhoneNumber } from "../../lib/auth/phone";
 
 /**
  * Pre-register custom verification
@@ -158,18 +159,20 @@ export function defineSecuredUserRoutes(
         surname: v.optional(v.string()),
         image: v.optional(v.string()),
         lastOrganisationId: v.optional(v.nullable(v.string())),
+        phoneNumber: v.optional(v.string()),
       })
     ),
     async (c) => {
       try {
         // ensure to get only the allowed fields
-        const { firstname, surname, image, lastOrganisationId } =
+        const { firstname, surname, image, lastOrganisationId, phoneNumber } =
           c.req.valid("json");
         await updateUser(c.get("usersId"), {
           firstname,
           surname,
           image,
           lastOrganisationId,
+          phoneNumber,
         });
         const user = await getUserById(c.get("usersId"));
         return c.json(user);
@@ -937,6 +940,96 @@ export function defineSecuredUserRoutes(
       } catch (err) {
         throw new HTTPException(500, {
           message: "Error revoking API token: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Start phone number validation by sending a PIN code via WhatsApp
+   */
+  app.post(
+    API_BASE_PATH + "/user/start-phone-validation",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "post",
+      path: "/user/start-phone-validation",
+      tags: ["user"],
+      summary:
+        "Start phone number validation process by sending a PIN code via WhatsApp",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  message: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validateScope("user:write"),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const result = await sendValidationPin(userId);
+        return c.json(result);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error starting phone validation: " + err,
+        });
+      }
+    }
+  );
+
+  /**
+   * Validate phone number with PIN
+   */
+  app.get(
+    API_BASE_PATH + "/user/validate-phone",
+    authAndSetUsersInfo,
+    describeRoute({
+      method: "get",
+      path: "/user/validate-phone",
+      tags: ["user"],
+      summary: "Validate phone number with PIN",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.object({
+                  success: v.boolean(),
+                  message: v.string(),
+                })
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validateScope("user:write"),
+    validator(
+      "query",
+      v.object({
+        pin: v.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const userId = c.get("usersId");
+        const { pin } = c.req.valid("query");
+
+        const result = await validatePhoneNumber(userId, pin);
+        return c.json(result);
+      } catch (err) {
+        throw new HTTPException(500, {
+          message: "Error validating phone number: " + err,
         });
       }
     }

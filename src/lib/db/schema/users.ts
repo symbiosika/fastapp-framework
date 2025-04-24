@@ -17,6 +17,7 @@ import {
   unique,
   integer,
   customType,
+  bigint,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -90,7 +91,8 @@ export const users = pgBaseTable(
     phoneNumberVerified: boolean("phone_number_verified")
       .notNull()
       .default(false),
-    phoneNumberAsNumber: integer("phone_number_as_number"),
+    phoneNumberAsNumber: bigint("phone_number_as_number", { mode: "number" }),
+    phonePinNumber: varchar("phone_pin_number", { length: 6 }),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),

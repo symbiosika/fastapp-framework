@@ -31,6 +31,10 @@ export const getUserById = async (userId: string) => {
       surname: users.surname,
       meta: users.meta,
       lastOrganisationId: users.lastOrganisationId,
+      phoneNumber: users.phoneNumber,
+      phoneNumberAsNumber: users.phoneNumberAsNumber,
+      phoneNumberVerified: users.phoneNumberVerified,
+      phonePinNumber: users.phonePinNumber,
     })
     .from(users)
     .where(eq(users.id, userId));
@@ -72,7 +76,17 @@ export const updateUser = async (
   userId: string,
   data: Partial<UsersInsert>
 ) => {
-  await getDb().update(users).set(data).where(eq(users.id, userId));
+  let phoneNumberAsNumber: number | undefined;
+  if (data.phoneNumber) {
+    phoneNumberAsNumber = parseInt(data.phoneNumber);
+  }
+  await getDb()
+    .update(users)
+    .set({
+      ...data,
+      phoneNumberAsNumber,
+    })
+    .where(eq(users.id, userId));
 };
 
 export const getUserOrganisations = async (userId: string) => {

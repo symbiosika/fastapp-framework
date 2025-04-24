@@ -1,0 +1,1 @@
+ALTER TABLE "base_users" ALTER COLUMN "phone_number_as_number" SET DATA TYPE bigint;

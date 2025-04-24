@@ -1,4 +1,5 @@
 import { log } from "../../..";
+import { getUserIdByPhoneNumber, hasValidPhoneNumber } from "../../auth/phone";
 
 /* -----------
 A lib to handle whatsapp communication
@@ -119,148 +120,156 @@ export interface MediaFile {
   mimeType: string;
 }
 
-export interface ProcessedMessage {
+export interface ProcessedWhatsAppMessage {
   phoneNumber: string;
+  userId: string;
   messageId: string;
   text?: string;
   audio?: MediaFile;
   image?: MediaFile;
 }
 
-export class WhatsAppBusinessCloud {
-  private accessToken: string;
-  private apiVersion: string;
+const ACCESS_TOKEN = process.env.CLOUD_API_ACCESS_TOKEN || "";
+const API_VERSION = "v22.0";
 
-  constructor(accessToken: string, apiVersion: string = "v22.0") {
-    this.accessToken = accessToken;
-    this.apiVersion = apiVersion;
+/**
+ * Process incoming WhatsApp webhook data
+ * @param webhookData The webhook payload from WhatsApp
+ * @returns Array of processed messages with text or media content
+ */
+export const processWebhook = async (
+  webhookData: WhatsAppWebhook
+): Promise<ProcessedWhatsAppMessage[]> => {
+  // first check if user is registered
+  const userId = webhookData.entry[0]?.changes[0]?.value?.contacts?.[0]?.wa_id
+    ? await getUserIdByPhoneNumber(
+        webhookData.entry[0].changes[0].value.contacts[0].wa_id
+      )
+    : undefined;
+
+  if (!userId) {
+    log.debug(
+      `User not registered: ${webhookData.entry[0]?.changes[0]?.value?.contacts?.[0]?.wa_id}`
+    );
+    throw new Error("User not registered");
   }
 
-  /**
-   * Process incoming WhatsApp webhook data
-   * @param webhookData The webhook payload from WhatsApp
-   * @returns Array of processed messages with text or media content
-   */
-  async processWebhook(
-    webhookData: WhatsAppWebhook
-  ): Promise<ProcessedMessage[]> {
-    const processedMessages: ProcessedMessage[] = [];
+  const isValidPhoneNumber = await hasValidPhoneNumber(userId);
 
-    // Skip if not a WhatsApp business account object
-    if (webhookData.object !== "whatsapp_business_account") {
-      return processedMessages;
-    }
+  if (!isValidPhoneNumber) {
+    log.debug(`User has no valid phone number: ${userId}`);
+    throw new Error("User has no valid phone number");
+  }
 
-    for (const entry of webhookData.entry) {
-      for (const change of entry.changes) {
-        // Skip if not a messages field or no messages
-        if (change.field !== "messages" || !change.value.messages) {
-          continue;
-        }
+  const processedMessages: ProcessedWhatsAppMessage[] = [];
 
-        // Process each message
-        for (const message of change.value.messages) {
-          const processedMessage: ProcessedMessage = {
-            phoneNumber: message.from,
-            messageId: message.id,
-          };
-
-          switch (message.type) {
-            case "text":
-              if (message.text) {
-                processedMessage.text = message.text.body;
-                processedMessages.push(processedMessage);
-              }
-              break;
-
-            case "image":
-              if (message.image) {
-                try {
-                  processedMessage.image = await this.downloadMedia(
-                    message.image.id
-                  );
-                  processedMessages.push(processedMessage);
-                } catch (error) {
-                  log.error(`Failed to download image: ${error}`);
-                }
-              }
-              break;
-
-            case "audio":
-              if (message.audio) {
-                try {
-                  processedMessage.audio = await this.downloadMedia(
-                    message.audio.id
-                  );
-                  processedMessages.push(processedMessage);
-                } catch (error) {
-                  log.error(`Failed to download audio: ${error}`);
-                }
-              }
-              break;
-
-            default:
-              // Skip other message types
-              continue;
-          }
-        }
-      }
-    }
-
+  // Skip if not a WhatsApp business account object
+  if (webhookData.object !== "whatsapp_business_account") {
     return processedMessages;
   }
 
-  /**
-   * Download media from WhatsApp servers
-   * @param mediaId The ID of the media to download
-   * @returns MediaFile object with buffer, filename and mimeType
-   */
-  private async downloadMedia(mediaId: string): Promise<MediaFile> {
-    try {
-      // First, get the media URL
-      const mediaUrlResponse = await fetch(
-        `https://graph.facebook.com/${this.apiVersion}/${mediaId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-          },
+  for (const entry of webhookData.entry) {
+    for (const change of entry.changes) {
+      // Skip if not a messages field or no messages
+      if (change.field !== "messages" || !change.value.messages) {
+        continue;
+      }
+
+      // Process each message
+      for (const message of change.value.messages) {
+        const processedMessage: ProcessedWhatsAppMessage = {
+          phoneNumber: message.from,
+          userId,
+          messageId: message.id,
+        };
+
+        switch (message.type) {
+          case "text":
+            if (message.text) {
+              processedMessage.text = message.text.body;
+              processedMessages.push(processedMessage);
+            }
+            break;
+
+          case "image":
+            if (message.image) {
+              try {
+                processedMessage.image = await downloadMedia(message.image.id);
+                processedMessages.push(processedMessage);
+              } catch (error) {
+                log.error(`Failed to download image: ${error}`);
+              }
+            }
+            break;
+
+          case "audio":
+            if (message.audio) {
+              try {
+                processedMessage.audio = await downloadMedia(message.audio.id);
+                processedMessages.push(processedMessage);
+              } catch (error) {
+                log.error(`Failed to download audio: ${error}`);
+              }
+            }
+            break;
+
+          default:
+            // Skip other message types
+            continue;
         }
-      );
-
-      if (!mediaUrlResponse.ok) {
-        throw new Error(`Failed to get media URL: ${mediaUrlResponse.status}`);
       }
-
-      const mediaData = (await mediaUrlResponse.json()) as { url: string };
-
-      // Now download the actual media
-      const mediaResponse = await fetch(mediaData.url, {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      });
-
-      if (!mediaResponse.ok) {
-        throw new Error(`Failed to download media: ${mediaResponse.status}`);
-      }
-
-      const arrayBuffer = await mediaResponse.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const mimeType =
-        mediaResponse.headers.get("content-type") || "application/octet-stream";
-
-      return {
-        buffer,
-        filename: `whatsapp_media_${mediaId}`,
-        mimeType,
-      };
-    } catch (error) {
-      log.error("Error downloading media:", error + "");
-      throw error;
     }
   }
-}
 
-export const whatsappBusinessCloud = new WhatsAppBusinessCloud(
-  process.env.CLOUD_API_ACCESS_TOKEN || ""
-);
+  return processedMessages;
+};
+
+/**
+ * Download media from WhatsApp servers
+ * @param mediaId The ID of the media to download
+ * @returns MediaFile object with buffer, filename and mimeType
+ */
+async function downloadMedia(mediaId: string): Promise<MediaFile> {
+  try {
+    // First, get the media URL
+    const mediaUrlResponse = await fetch(
+      `https://graph.facebook.com/${API_VERSION}/${mediaId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+        },
+      }
+    );
+
+    if (!mediaUrlResponse.ok) {
+      throw new Error(`Failed to get media URL: ${mediaUrlResponse.status}`);
+    }
+
+    const mediaData = (await mediaUrlResponse.json()) as { url: string };
+
+    // Now download the actual media
+    const mediaResponse = await fetch(mediaData.url, {
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+      },
+    });
+
+    if (!mediaResponse.ok) {
+      throw new Error(`Failed to download media: ${mediaResponse.status}`);
+    }
+
+    const arrayBuffer = await mediaResponse.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const mimeType =
+      mediaResponse.headers.get("content-type") || "application/octet-stream";
+
+    return {
+      buffer,
+      filename: `whatsapp_media_${mediaId}`,
+      mimeType,
+    };
+  } catch (error) {
+    log.error("Error downloading media:", error + "");
+    throw error;
+  }
+}

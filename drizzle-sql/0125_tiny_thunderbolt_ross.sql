@@ -1,0 +1,1 @@
+ALTER TABLE "base_users" ADD COLUMN "phone_pin_number" varchar(6);
