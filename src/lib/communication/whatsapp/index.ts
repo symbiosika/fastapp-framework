@@ -1,10 +1,11 @@
-/* -----------
-A lib to handle whatsapp communication
------------- */
-
 import { log } from "../../..";
 
-/*
+/* -----------
+A lib to handle whatsapp communication
+
+Add a token:
+https://developers.facebook.com/docs/whatsapp/business-management-api/get-started#systemnutzer-zugriffstoken
+
 Example of a whatsapp webhook event "messages"
 {
   object: "whatsapp_business_account",
@@ -36,7 +37,19 @@ Example of a whatsapp webhook event "messages"
                   body: "Hello world",
                 },
                 type: "text",
-              }
+              },
+              {
+      from: "499999999999999",
+      id: "wamid.HBgNNDkxNjA5NzMyMjM1MBUCABIYFjNFQjA1NTI0QzkyREYyMkI3RDIwMzEA",
+      timestamp: "1745475039",
+      type: "audio",
+      audio: {
+        mime_type: "audio/ogg; codecs=opus",
+        sha256: "PI5YWCccMl8+BrjezPMEOzYKEfiKhfzzQpLOU2xjqm8=",
+        id: "1032371052180248",
+        voice: true,
+      },
+    }
             ],
           },
           field: "messages",
@@ -47,37 +60,207 @@ Example of a whatsapp webhook event "messages"
 }
 */
 
-/**
- * Extract unique whatsapp id from a whatsapp event
- */
-export const getProfileFromWhatsAppEvent = (event: any) => {
-  if (
-    !event.entry ||
-    !event.entry[0] ||
-    !event.entry[0].changes ||
-    !event.entry[0].changes[0] ||
-    !event.entry[0].changes[0].value ||
-    !event.entry[0].changes[0].value.contacts ||
-    !event.entry[0].changes[0].value.contacts[0] ||
-    !event.entry[0].changes[0].value.contacts[0].wa_id
-  ) {
-    log.error("Invalid event", { event });
-    throw new Error("Invalid event");
-  }
-  return event.entry[0].changes[0].value.contacts[0].wa_id;
-};
+// Types for WhatsApp webhook data
+interface WhatsAppWebhook {
+  object: string;
+  entry: Entry[];
+}
 
-export const getMessagesFromWhatsAppEvent = (event: any) => {
-  if (
-    !event.entry ||
-    !event.entry[0] ||
-    !event.entry[0].changes ||
-    !event.entry[0].changes[0] ||
-    !event.entry[0].changes[0].value ||
-    !event.entry[0].changes[0].value.messages
-  ) {
-    log.error("Invalid event", { event });
-    throw new Error("Invalid event");
+interface Entry {
+  id: string;
+  changes: Change[];
+}
+
+interface Change {
+  value: {
+    messaging_product: string;
+    metadata?: {
+      display_phone_number: string;
+      phone_number_id: string;
+    };
+    contacts?: Contact[];
+    messages?: WhatsAppMessage[];
+  };
+  field: string;
+}
+
+interface Contact {
+  profile: {
+    name: string;
+  };
+  wa_id: string;
+}
+
+interface WhatsAppMessage {
+  from: string;
+  id: string;
+  timestamp: string;
+  type: "text" | "image" | "audio" | string;
+  text?: {
+    body: string;
+  };
+  image?: {
+    mime_type: string;
+    sha256: string;
+    id: string;
+  };
+  audio?: {
+    mime_type: string;
+    sha256: string;
+    id: string;
+    voice: boolean;
+  };
+}
+
+// Types for processed messages
+export interface MediaFile {
+  buffer: Buffer;
+  filename: string;
+  mimeType: string;
+}
+
+export interface ProcessedMessage {
+  usersNumber: string;
+  messageId: string;
+  text?: string;
+  audio?: MediaFile;
+  image?: MediaFile;
+}
+
+export class WhatsAppBusinessCloud {
+  private accessToken: string;
+  private apiVersion: string;
+
+  constructor(accessToken: string, apiVersion: string = "v22.0") {
+    this.accessToken = accessToken;
+    this.apiVersion = apiVersion;
   }
-  return event.entry[0].changes[0].value.messages;
-};
+
+  /**
+   * Process incoming WhatsApp webhook data
+   * @param webhookData The webhook payload from WhatsApp
+   * @returns Array of processed messages with text or media content
+   */
+  async processWebhook(
+    webhookData: WhatsAppWebhook
+  ): Promise<ProcessedMessage[]> {
+    const processedMessages: ProcessedMessage[] = [];
+
+    // Skip if not a WhatsApp business account object
+    if (webhookData.object !== "whatsapp_business_account") {
+      return processedMessages;
+    }
+
+    for (const entry of webhookData.entry) {
+      for (const change of entry.changes) {
+        // Skip if not a messages field or no messages
+        if (change.field !== "messages" || !change.value.messages) {
+          continue;
+        }
+
+        // Process each message
+        for (const message of change.value.messages) {
+          const processedMessage: ProcessedMessage = {
+            usersNumber: message.from,
+            messageId: message.id,
+          };
+
+          switch (message.type) {
+            case "text":
+              if (message.text) {
+                processedMessage.text = message.text.body;
+                processedMessages.push(processedMessage);
+              }
+              break;
+
+            case "image":
+              if (message.image) {
+                try {
+                  processedMessage.image = await this.downloadMedia(
+                    message.image.id
+                  );
+                  processedMessages.push(processedMessage);
+                } catch (error) {
+                  log.error(`Failed to download image: ${error}`);
+                }
+              }
+              break;
+
+            case "audio":
+              if (message.audio) {
+                try {
+                  processedMessage.audio = await this.downloadMedia(
+                    message.audio.id
+                  );
+                  processedMessages.push(processedMessage);
+                } catch (error) {
+                  log.error(`Failed to download audio: ${error}`);
+                }
+              }
+              break;
+
+            default:
+              // Skip other message types
+              continue;
+          }
+        }
+      }
+    }
+
+    return processedMessages;
+  }
+
+  /**
+   * Download media from WhatsApp servers
+   * @param mediaId The ID of the media to download
+   * @returns MediaFile object with buffer, filename and mimeType
+   */
+  private async downloadMedia(mediaId: string): Promise<MediaFile> {
+    try {
+      // First, get the media URL
+      const mediaUrlResponse = await fetch(
+        `https://graph.facebook.com/${this.apiVersion}/${mediaId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      if (!mediaUrlResponse.ok) {
+        throw new Error(`Failed to get media URL: ${mediaUrlResponse.status}`);
+      }
+
+      const mediaData = (await mediaUrlResponse.json()) as { url: string };
+
+      // Now download the actual media
+      const mediaResponse = await fetch(mediaData.url, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+
+      if (!mediaResponse.ok) {
+        throw new Error(`Failed to download media: ${mediaResponse.status}`);
+      }
+
+      const arrayBuffer = await mediaResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const mimeType =
+        mediaResponse.headers.get("content-type") || "application/octet-stream";
+
+      return {
+        buffer,
+        filename: `whatsapp_media_${mediaId}`,
+        mimeType,
+      };
+    } catch (error) {
+      log.error("Error downloading media:", error + "");
+      throw error;
+    }
+  }
+}
+
+export const whatsappBusinessCloud = new WhatsAppBusinessCloud(
+  process.env.CLOUD_API_ACCESS_TOKEN || ""
+);

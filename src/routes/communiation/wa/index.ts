@@ -1,12 +1,9 @@
 import { describeRoute } from "hono-openapi";
-import { FastAppHono } from "../../../types";
+import type { FastAppHono } from "../../../types";
 import log from "../../../lib/log";
 import { validator } from "hono-openapi/valibot";
 import * as v from "valibot";
-import {
-  getMessagesFromWhatsAppEvent,
-  getProfileFromWhatsAppEvent,
-} from "../../../lib/communication/whatsapp";
+import { whatsappBusinessCloud } from "../../../lib/communication/whatsapp";
 
 export default function defineWhatsAppRoutes(
   app: FastAppHono,
@@ -103,11 +100,8 @@ export default function defineWhatsAppRoutes(
         const body = await c.req.json();
         log.info("Received body:", { body });
 
-        const user = getProfileFromWhatsAppEvent(body);
-        log.info("User:", { user });
-
-        const messages = getMessagesFromWhatsAppEvent(body);
-        log.info("Messages:", { messages });
+        const t = await whatsappBusinessCloud.processWebhook(body);
+        log.info("t", t);
 
         return c.text("OK");
       } catch (error) {

@@ -7,6 +7,7 @@ import {
   authAndSetUsersInfoOrRedirectToLogin,
   authOrRedirectToLogin,
 } from "./lib/utils/hono-middlewares";
+import { ipRestriction } from "hono/ip-restriction";
 // DB
 import {
   createDatabaseClient,
@@ -19,6 +20,7 @@ import type {
   ServerSpecificConfig,
   FastAppHonoContextVariables,
 } from "./types";
+import { getConnInfo } from "hono/bun";
 // Utils
 import log from "./lib/log";
 import { validateAllEnvVariables } from "./lib/utils/env-validate";
@@ -71,8 +73,6 @@ import scheduler from "./lib/cron";
 import { initializePluginCache } from "./lib/plugins";
 // Store
 import { _GLOBAL_SERVER_CONFIG, setGlobalServerConfig } from "./store";
-// Utils
-import { logApiRoutes } from "./lib/utils/log-api-routes";
 
 /**
  * services
@@ -90,6 +90,7 @@ import middlewareService from "./middleware-service";
 import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
 import { addServerSideStaticTemplate } from "./lib/ai/prompt-templates/static-templates";
+import { getMetaIpAddresses } from "./lib/communication/whatsapp/whitelist";
 
 /**
  * MAIN FUNCTION
@@ -223,10 +224,10 @@ export const defineServer = (config: ServerSpecificConfig) => {
       defineSearchInOrganisationRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
-   * Adds collection routes
+       * Adds collection routes
 
-   * will give simple CRUD endpoints for defined collections
-   */
+      * will give simple CRUD endpoints for defined collections
+      */
       // dropping this for now!
       // defineCollectionRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
@@ -301,7 +302,25 @@ export const defineServer = (config: ServerSpecificConfig) => {
       /**
        * Add communication routes
        */
-      defineWhatsAppRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+      getMetaIpAddresses().then((ips) => {
+        app.use(
+          _GLOBAL_SERVER_CONFIG.basePath + "/communication/wa/*",
+          ipRestriction(
+            getConnInfo,
+            {
+              denyList: [],
+              allowList: ["*"], // ips,
+            },
+            async (remote, c) => {
+              log.debug(`Blocking access from ${remote.addr}`);
+              return c.text(`Blocking access from ${remote.addr}`, 403);
+            }
+          )
+        );
+        // console.log("restricting whatsapp endpoints to ips:", ips);
+        defineWhatsAppRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      });
 
       /**
        * Adds workspace routes
