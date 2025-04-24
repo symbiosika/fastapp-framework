@@ -62,7 +62,7 @@ import defineSearchInOrganisationRoutes from "./routes/organisation/[organisatio
 import defineAiUtilsRoutes from "./routes/organisation/[organisationId]/ai/utils";
 import defineJobRoutes from "./routes/organisation/[organisationId]/jobs";
 import defineDocsRoutes from "./routes/docs";
-
+import defineWhatsAppRoutes from "./routes/communiation/wa";
 // Jobs
 import { defineJob, startJobQueue } from "./lib/jobs";
 
@@ -297,6 +297,11 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiAvatarsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineToolsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+
+      /**
+       * Add communication routes
+       */
+      defineWhatsAppRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
        * Adds workspace routes
