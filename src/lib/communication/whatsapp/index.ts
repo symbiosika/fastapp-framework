@@ -121,7 +121,7 @@ export interface MediaFile {
 }
 
 export interface ProcessedWhatsAppMessage {
-  phoneNumber: string;
+  phoneNumber: number;
   userId: string;
   messageId: string;
   text?: string;
@@ -178,7 +178,7 @@ export const processWebhook = async (
       // Process each message
       for (const message of change.value.messages) {
         const processedMessage: ProcessedWhatsAppMessage = {
-          phoneNumber: message.from,
+          phoneNumber: Number(message.from),
           userId,
           messageId: message.id,
         };
