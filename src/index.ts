@@ -325,8 +325,6 @@ export const defineServer = (config: ServerSpecificConfig) => {
           const honoApp = new Hono<{
             Variables: FastAppHonoContextVariables;
           }>();
-          // Add authOrRedirectToLogin middleware
-          honoApp.use("*", authAndSetUsersInfoOrRedirectToLogin);
           customApp(honoApp);
           app.route(_GLOBAL_SERVER_CONFIG.basePath + baseRoute, honoApp);
         });
