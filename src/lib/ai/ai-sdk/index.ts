@@ -271,7 +271,7 @@ export async function chatCompletion(
     chatId: context.chatId,
   });
 
-  const { textStream } = await streamText({
+  const { textStream, sources } = await streamText({
     model: model as LanguageModelV1,
     messages,
     temperature: options?.temperature,
@@ -348,6 +348,15 @@ export async function chatCompletion(
       });
     }
   }
+
+  const usedSources = await sources;
+  usedSources.forEach((source) => {
+    accumulatedSources.push({
+      type: "url",
+      url: source.url,
+      label: source.url,
+    });
+  });
 
   // Process tools and retrieve their data
   // Get all used tools from tool memory
