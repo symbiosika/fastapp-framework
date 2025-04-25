@@ -8,6 +8,7 @@ import {
   teams,
   type UsersInsert,
 } from "../db/schema/users";
+import { sendValidationPin } from "../auth/phone";
 
 /**
  * Get a user by its external id
@@ -98,11 +99,24 @@ export const updateUser = async (
       data.phoneNumber.replace(/\s+/g, "").replace("+", "")
     );
   }
+
+  // get actual user
+  const user = await getUserById(userId);
+
+  // check if phone number has changed
+  let phoneNumberChanged = false;
+  if (user.phoneNumberAsNumber !== phoneNumberAsNumber) {
+    phoneNumberChanged = true;
+  }
+
   await getDb()
     .update(users)
     .set({
       ...data,
       phoneNumberAsNumber,
+      phoneNumberVerified: phoneNumberChanged
+        ? false
+        : user.phoneNumberVerified,
     })
     .where(eq(users.id, userId));
 };
