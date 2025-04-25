@@ -1,8 +1,8 @@
 import { createCipheriv, createDecipheriv } from "crypto";
 import { randomBytes } from "crypto";
 
-// Generate random bytes if no key and iv are provided in .env file
-// write them in .env file and use them for encryption and decryption
+// Uses SECRETS_AES_KEY and SECRETS_AES_IV in .env file
+
 const checkSecrets = async () => {
   if (!process.env.SECRETS_AES_KEY || !process.env.SECRETS_AES_IV) {
     const key = randomBytes(32).toString("hex");
