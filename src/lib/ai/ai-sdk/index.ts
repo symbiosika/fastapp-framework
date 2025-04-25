@@ -1,7 +1,7 @@
 import { type CoreMessage, embed, generateText, streamText } from "ai";
 import type { OrganisationContext } from "./types";
 import { getAIEmbeddingModel, getAIModel } from "./get-model";
-import { encodeImageFromFile } from "./utils";
+import { encodeImageFromFile, removeMarkdownImageUrls } from "./utils";
 import log from "../../log";
 import type { LanguageModelV1 } from "ai";
 import { nanoid } from "nanoid";
@@ -418,6 +418,9 @@ export async function chatCompletion(
       })),
     },
   });
+
+  // drop images from message:
+  accumulatedText = removeMarkdownImageUrls(accumulatedText);
 
   return {
     id: nanoid(6),
