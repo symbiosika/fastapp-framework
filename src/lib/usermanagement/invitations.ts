@@ -111,6 +111,14 @@ export const acceptOrganisationInvitation = async (
       organisationId: invitation.organisationId,
       role: invitation.role,
     });
+
+    await trx
+      .update(users)
+      .set({
+        emailVerified: true,
+        lastOrganisationId: invitation.organisationId,
+      })
+      .where(eq(users.id, userId));
   });
 
   await setUsersLastOrganisation(userId, invitation.organisationId);
