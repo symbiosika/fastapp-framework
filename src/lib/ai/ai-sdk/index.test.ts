@@ -121,7 +121,7 @@ describe("AI SDK Functions", () => {
         );
         // Don't fail the test suite if this specific test has API issues
       }
-    }, 25000); 
+    }, 25000);
 
     it("should throw an error for invalid image", async () => {
       // Create an invalid File object
@@ -166,7 +166,7 @@ describe("AI SDK Functions", () => {
       expect(typeof result.text).toBe("string");
       expect(result.text.length).toBeGreaterThan(0);
       expect(result.model).toBe("openai:gpt-4o-mini");
-    });
+    }, 15000);
 
     it("should handle complex prompts with multiple messages", async () => {
       const messages: CoreMessage[] = [
