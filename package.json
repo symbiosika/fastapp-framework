@@ -1,6 +1,6 @@
 {
   "name": "fastapp-framework",
-  "version": "0.11.6",
+  "version": "0.12.1",
   "author": "Symbiosika GmbH",
   "main": "./lib/index.js",
   "devDependencies": {
