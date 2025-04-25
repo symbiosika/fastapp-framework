@@ -277,7 +277,7 @@ export const createOrganisationInvitation = async (
         await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
           appName: _GLOBAL_SERVER_CONFIG.appName,
           baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
-          link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true`,
+          link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true&email=${dataWithStatus.email}`,
         });
       await smtpService.sendMail({
         sender: process.env.SMTP_FROM,
