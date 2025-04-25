@@ -1,4 +1,7 @@
-import type { ServerSpecificConfig } from "../types";
+import type {
+  ServerSpecificConfig,
+  WhatsAppIncomingWebhookHandler,
+} from "../types";
 import {
   stdTemplateInviteToOrganization,
   stdTemplateInviteToOrganizationWhenUserExists,
@@ -33,6 +36,10 @@ export const _GLOBAL_SERVER_CONFIG = {
     inviteToOrganizationWhenUserExists:
       stdTemplateInviteToOrganizationWhenUserExists,
   },
+  useWhatsApp: false,
+  whatsAppIncomingWebhookHandler: undefined as
+    | WhatsAppIncomingWebhookHandler
+    | undefined,
 };
 
 /**
@@ -93,5 +100,12 @@ export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   if (config.emailTemplates?.resetPasswordWelcome) {
     _GLOBAL_SERVER_CONFIG.emailTemplates.resetPasswordWelcome =
       config.emailTemplates.resetPasswordWelcome;
+  }
+
+  // WhatsApp
+  _GLOBAL_SERVER_CONFIG.useWhatsApp = config.useWhatsApp ?? false;
+  if (config.whatsAppIncomingWebhookHandler) {
+    _GLOBAL_SERVER_CONFIG.whatsAppIncomingWebhookHandler =
+      config.whatsAppIncomingWebhookHandler;
   }
 };

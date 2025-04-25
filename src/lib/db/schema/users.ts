@@ -17,6 +17,7 @@ import {
   unique,
   integer,
   customType,
+  bigint,
 } from "drizzle-orm/pg-core";
 import { pgBaseTable } from ".";
 import { relations } from "drizzle-orm";
@@ -86,6 +87,12 @@ export const users = pgBaseTable(
     image: text("image"),
     firstname: varchar("firstname", { length: 255 }).notNull(),
     surname: varchar("surname", { length: 255 }).notNull(),
+    phoneNumber: varchar("phone_number", { length: 255 }),
+    phoneNumberVerified: boolean("phone_number_verified")
+      .notNull()
+      .default(false),
+    phoneNumberAsNumber: bigint("phone_number_as_number", { mode: "number" }),
+    phonePinNumber: varchar("phone_pin_number", { length: 6 }),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),
@@ -109,6 +116,8 @@ export const users = pgBaseTable(
   (users) => [
     index("users_email_idx").on(users.email),
     uniqueIndex("unique_email").on(users.email),
+    uniqueIndex("unique_phone_number").on(users.phoneNumber),
+    uniqueIndex("unique_phone_number_as_number").on(users.phoneNumberAsNumber),
     index("users_created_at_idx").on(users.createdAt),
     index("users_updated_at_idx").on(users.updatedAt),
     index("users_email_verified_idx").on(users.emailVerified),

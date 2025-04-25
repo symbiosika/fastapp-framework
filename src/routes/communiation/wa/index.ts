@@ -1,12 +1,10 @@
 import { describeRoute } from "hono-openapi";
-import { FastAppHono } from "../../../types";
+import type { FastAppHono } from "../../../types";
 import log from "../../../lib/log";
 import { validator } from "hono-openapi/valibot";
 import * as v from "valibot";
-import {
-  getMessagesFromWhatsAppEvent,
-  getProfileFromWhatsAppEvent,
-} from "../../../lib/communication/whatsapp";
+import { processWebhook } from "../../../lib/communication/whatsapp";
+import { _GLOBAL_SERVER_CONFIG } from "../../../store";
 
 export default function defineWhatsAppRoutes(
   app: FastAppHono,
@@ -101,14 +99,14 @@ export default function defineWhatsAppRoutes(
     async (c) => {
       try {
         const body = await c.req.json();
-        log.info("Received body:", { body });
-
-        const user = getProfileFromWhatsAppEvent(body);
-        log.info("User:", { user });
-
-        const messages = getMessagesFromWhatsAppEvent(body);
-        log.info("Messages:", { messages });
-
+        // log.info("Received body:", { body });
+        try {
+          const messages = await processWebhook(body);
+          // forward the messages to the handler
+          _GLOBAL_SERVER_CONFIG.whatsAppIncomingWebhookHandler?.(messages);
+        } catch (error) {
+          log.error("Error processing WhatsApp webhook", error + "");
+        }
         return c.text("OK");
       } catch (error) {
         if (error instanceof Error) {

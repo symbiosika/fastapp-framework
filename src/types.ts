@@ -31,6 +31,7 @@ import type { JobHandlerRegister } from "./lib/jobs";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
 import type { StaticTemplateImport } from "./lib/ai/prompt-templates/static-templates";
+import { ProcessedWhatsAppMessage } from "./lib/communication/whatsapp";
 
 export type { SyncItem };
 export type { JobHandlerRegister };
@@ -58,6 +59,10 @@ export type EmailTemplateFunction = (data: {
   link?: string;
   user?: UserInfo;
 }) => Promise<{ html: string; subject: string }>;
+
+export type WhatsAppIncomingWebhookHandler = (
+  messages: ProcessedWhatsAppMessage[]
+) => Promise<void>;
 
 export interface ServerSpecificConfig {
   port?: number;
@@ -96,6 +101,10 @@ export interface ServerSpecificConfig {
   // Licencing
   useLicenseSystem?: boolean;
   publicKey?: string;
+
+  // WhatsApp
+  useWhatsApp?: boolean;
+  whatsAppIncomingWebhookHandler?: WhatsAppIncomingWebhookHandler;
 
   // Static Templates
   staticTemplates?: StaticTemplateImport[];

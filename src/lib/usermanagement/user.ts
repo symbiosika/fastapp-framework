@@ -9,6 +9,9 @@ import {
   type UsersInsert,
 } from "../db/schema/users";
 
+/**
+ * Get a user by its external id
+ */
 export const getUser = async (userId: string) => {
   const user = await getDb()
     .select({
@@ -19,6 +22,9 @@ export const getUser = async (userId: string) => {
   return user[0] ?? undefined;
 };
 
+/**
+ * Get a user by its id
+ */
 export const getUserById = async (userId: string) => {
   const user = await getDb()
     .select({
@@ -31,12 +37,19 @@ export const getUserById = async (userId: string) => {
       surname: users.surname,
       meta: users.meta,
       lastOrganisationId: users.lastOrganisationId,
+      phoneNumber: users.phoneNumber,
+      phoneNumberAsNumber: users.phoneNumberAsNumber,
+      phoneNumberVerified: users.phoneNumberVerified,
+      phonePinNumber: users.phonePinNumber,
     })
     .from(users)
     .where(eq(users.id, userId));
   return user[0] ?? undefined;
 };
 
+/**
+ * Get a user by its email
+ */
 export const getUserByEmail = async (
   email: string,
   organisationId?: string
@@ -68,13 +81,30 @@ export const getUserByEmail = async (
   return user[0];
 };
 
+/**
+ * Update a user
+ * will also convert the phone number to a number
+ */
 export const updateUser = async (
   userId: string,
   data: Partial<UsersInsert>
 ) => {
-  await getDb().update(users).set(data).where(eq(users.id, userId));
+  let phoneNumberAsNumber: number | undefined;
+  if (data.phoneNumber) {
+    phoneNumberAsNumber = parseInt(data.phoneNumber);
+  }
+  await getDb()
+    .update(users)
+    .set({
+      ...data,
+      phoneNumberAsNumber,
+    })
+    .where(eq(users.id, userId));
 };
 
+/**
+ * Get the organisations of a user
+ */
 export const getUserOrganisations = async (userId: string) => {
   return await getDb()
     .select({
@@ -91,6 +121,9 @@ export const getUserOrganisations = async (userId: string) => {
     .where(eq(organisationMembers.userId, userId));
 };
 
+/**
+ * Add a user to an organisation
+ */
 export const addUserToOrganisation = async (
   userId: string,
   organisationId: string,
@@ -103,6 +136,9 @@ export const addUserToOrganisation = async (
   });
 };
 
+/**
+ * Remove a user from an organisation
+ */
 export const removeUserFromOrganisation = async (
   userId: string,
   organisationId: string
@@ -117,6 +153,9 @@ export const removeUserFromOrganisation = async (
     );
 };
 
+/**
+ * Get the teams of a user
+ */
 export const getUserTeams = async (userId: string) => {
   return await getDb()
     .select({
@@ -131,6 +170,9 @@ export const getUserTeams = async (userId: string) => {
     .where(eq(teamMembers.userId, userId));
 };
 
+/**
+ * Add a user to a team role of the user in the team
+ */
 export const addUserToTeam = async (
   userId: string,
   teamId: string,
@@ -143,12 +185,18 @@ export const addUserToTeam = async (
   });
 };
 
+/**
+ * Remove a user from a team
+ */
 export const removeUserFromTeam = async (userId: string, teamId: string) => {
   await getDb()
     .delete(teamMembers)
     .where(and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId)));
 };
 
+/**
+ * Set the last selected organisation of a user
+ */
 export const setUsersLastOrganisation = async (
   userId: string,
   organisationId?: string
@@ -178,6 +226,9 @@ export const setUsersLastOrganisation = async (
   }
 };
 
+/**
+ * Set another organisation as the last selected organisation
+ */
 export const setAnotherOrganisationAsLast = async (
   userId: string,
   organisationIdThatCannotBeLast: string
@@ -195,4 +246,27 @@ export const setAnotherOrganisationAsLast = async (
   ) {
     await setUsersLastOrganisation(userId);
   }
+};
+
+/**
+ * Get the last selected organisation of a user
+ * Will set the last selected organisation to the first organisation
+ * if the user has no last selected organisation
+ */
+export const getUsersLastSelectedOrganisation = async (
+  userId: string
+): Promise<string> => {
+  const user = await getUserById(userId);
+
+  if (!user.lastOrganisationId) {
+    const organisations = await getUserOrganisations(userId);
+    if (organisations.length > 0) {
+      await setUsersLastOrganisation(userId);
+      return organisations[0].organisationId;
+    } else {
+      throw new Error("User has no organisations");
+    }
+  }
+
+  return user.lastOrganisationId;
 };
