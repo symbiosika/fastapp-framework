@@ -216,6 +216,8 @@ export const customAppPlaceholders: PlaceholderParser[] = [
       const organisationId = meta.organisationId;
 
       let text = "";
+      const documentTitles: Record<string, string> = {};
+
       for (const id of ids) {
         if (id === "") {
           continue;
@@ -234,13 +236,17 @@ export const customAppPlaceholders: PlaceholderParser[] = [
           log.error("Error parsing document", e);
           return null;
         });
-        text += document?.content ?? "";
+        
+        if (document) {
+          text += document.content ?? "";
+          documentTitles[id] = document.title ?? id;
+        }
       }
 
       const fileSources: SourceReturn[] = ids.map((id) => ({
         type: "file",
         id,
-        label: document.title,
+        label: documentTitles[id] || id,
         external: false,
       }));
 
@@ -248,7 +254,7 @@ export const customAppPlaceholders: PlaceholderParser[] = [
         content: text,
         addToMeta: {
           sources: fileSources,
-        },
+        }
       };
     },
   },

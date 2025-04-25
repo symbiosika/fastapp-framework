@@ -58,15 +58,15 @@ describe("parseArgumentsWithoutLimits", () => {
   test("should parse basic arguments with snake_case keys converted to camelCase", () => {
     const result = parseArgumentsWithoutLimits(
       '{{#test selector key_one=value1 key_two="value two"}}',
-      'test'
+      "test"
     );
-    expect(result).toEqual({ keyOne: 'value1', keyTwo: 'value two' });
+    expect(result).toEqual({ keyOne: "value1", keyTwo: "value two" });
   });
 
   test("should parse boolean and number arguments", () => {
     const result = parseArgumentsWithoutLimits(
-      '{{#test selector flag=true count=10 price=12.5}}',
-      'test'
+      "{{#test selector flag=true count=10 price=12.5}}",
+      "test"
     );
     expect(result).toEqual({ flag: true, count: 10, price: 12.5 });
   });
@@ -74,56 +74,75 @@ describe("parseArgumentsWithoutLimits", () => {
   test("should parse single-quoted keys without case conversion", () => {
     const result = parseArgumentsWithoutLimits(
       "{{#test selector 'key one'=value1 'key_two'='value two'}}",
-      'test'
+      "test"
     );
-    expect(result).toEqual({ 'key one': 'value1', 'key_two': 'value two' });
+    expect(result).toEqual({ "key one": "value1", key_two: "value two" });
   });
 
   test("should parse mixed quoted and unquoted keys", () => {
     const result = parseArgumentsWithoutLimits(
       "{{#test selector regular_key=val1 'quoted key'=val2}}",
-      'test'
+      "test"
     );
-    expect(result).toEqual({ regularKey: 'val1', 'quoted key': 'val2' });
+    expect(result).toEqual({ regularKey: "val1", "quoted key": "val2" });
   });
 
   test("should handle quoted values for quoted keys", () => {
     const result = parseArgumentsWithoutLimits(
       "{{#test selector 'key one'=\"quoted value\"}}",
-      'test'
+      "test"
     );
-    expect(result).toEqual({ 'key one': 'quoted value' });
+    expect(result).toEqual({ "key one": "quoted value" });
   });
 
   test("should return empty object for no arguments", () => {
-    const result = parseArgumentsWithoutLimits('{{#test selector}}', 'test');
+    const result = parseArgumentsWithoutLimits("{{#test selector}}", "test");
     expect(result).toEqual({});
   });
 
   test("should return empty object for empty argument string", () => {
-    const result = parseArgumentsWithoutLimits('{{#test selector }}', 'test');
+    const result = parseArgumentsWithoutLimits("{{#test selector }}", "test");
     expect(result).toEqual({});
   });
 
   test("should ignore extra content outside placeholder", () => {
     const result = parseArgumentsWithoutLimits(
-      'Some text {{#test selector key=value}} more text',
-      'test'
+      "Some text {{#test selector key=value}} more text",
+      "test"
     );
-    expect(result).toEqual({ key: 'value' });
+    expect(result).toEqual({ key: "value" });
   });
 
   test("should parse complex example with mixed quotes and types", () => {
     const result = parseArgumentsWithoutLimits(
       "{{#test selector key_one=val1 'key two'=\"value 2\" flag=false count=99 'filter:category name'='\"val A\",\"val B, ok\"'}}",
-      'test'
+      "test"
     );
     expect(result).toEqual({
-      keyOne: 'val1',
-      'key two': 'value 2',
+      keyOne: "val1",
+      "key two": "value 2",
       flag: false,
       count: 99,
-      'filter:category name': '"val A","val B, ok"',
+      "filter:category name": '"val A","val B, ok"',
     });
+  });
+
+  test("should parse file placeholder with quoted values containing spaces", () => {
+    const result = parseArgumentsWithoutLimits(
+      "{{#file id='654787-asd asd-556561' name='ABC test 123'}}",
+      "file"
+    );
+    expect(result).toEqual({
+      id: "654787-asd asd-556561",
+      name: "ABC test 123",
+    });
+  });
+
+  test("should parse url placeholder with html parameter", () => {
+    const result = parseArgumentsWithoutLimits(
+      '{{#url html="https://www.heise.de"}}',
+      "url"
+    );
+    expect(result).toEqual({ html: "https://www.heise.de" });
   });
 });
