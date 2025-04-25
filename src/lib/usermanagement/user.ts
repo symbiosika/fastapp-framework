@@ -90,8 +90,13 @@ export const updateUser = async (
   data: Partial<UsersInsert>
 ) => {
   let phoneNumberAsNumber: number | undefined;
+
+  // phoneNumber is a string like "+49 158 997779997"
+
   if (data.phoneNumber) {
-    phoneNumberAsNumber = parseInt(data.phoneNumber);
+    phoneNumberAsNumber = parseInt(
+      data.phoneNumber.replace(/\s+/g, "").replace("+", "")
+    );
   }
   await getDb()
     .update(users)
