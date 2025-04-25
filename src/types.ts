@@ -36,6 +36,7 @@ import { ProcessedWhatsAppMessage } from "./lib/communication/whatsapp";
 export type { SyncItem };
 export type { JobHandlerRegister };
 export { HTTPException } from "hono/http-exception";
+export type { ProcessedWhatsAppMessage };
 
 export type FastAppHonoContextVariables = {
   usersId: string;

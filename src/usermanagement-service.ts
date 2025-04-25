@@ -9,6 +9,7 @@ import {
   getUserByEmail,
   getUserById,
   getUserOrganisations,
+  getUsersLastSelectedOrganisation,
   getUserTeams,
   removeUserFromOrganisation,
   removeUserFromTeam,
@@ -76,6 +77,7 @@ export default {
   getOrganisation,
   updateOrganisation,
   deleteOrganisation,
+  getUsersLastSelectedOrganisation,
   // teams
   createTeam,
   getTeam,
