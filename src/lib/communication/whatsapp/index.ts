@@ -62,7 +62,7 @@ Example of a whatsapp webhook event "messages"
 */
 
 // Types for WhatsApp webhook data
-interface WhatsAppWebhook {
+export interface WhatsAppWebhook {
   object: string;
   entry: Entry[];
 }
@@ -92,7 +92,7 @@ interface Contact {
   wa_id: string;
 }
 
-interface WhatsAppMessage {
+export interface WhatsAppMessage {
   from: string;
   id: string;
   timestamp: string;

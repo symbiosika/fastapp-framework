@@ -91,6 +91,7 @@ import jobService from "./job-service";
 import { defineLicenseRoutes, licenseManager } from "./license-service";
 import { addServerSideStaticTemplate } from "./lib/ai/prompt-templates/static-templates";
 import { getMetaIpAddresses } from "./lib/communication/whatsapp/whitelist";
+import { whatsappService } from "./whatsapp-service";
 
 /**
  * MAIN FUNCTION
@@ -434,4 +435,5 @@ export { usermanagementService };
 export { filesService };
 export { middlewareService };
 export { jobService };
+export { whatsappService };
 export const GLOBAL_SERVER_CONFIG = _GLOBAL_SERVER_CONFIG;
