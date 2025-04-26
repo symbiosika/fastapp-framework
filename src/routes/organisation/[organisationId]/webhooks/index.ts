@@ -313,9 +313,10 @@ export default function defineWebhookRoutes(
       v.object({
         name: v.string(),
         webhookUrl: v.string(),
-        event: v.string(),
+        event: v.string(), // 'chatOutput' or 'tool'
         organisationId: v.string(),
         organisationWide: v.optional(v.boolean()),
+        meta: v.optional(v.any()),
       })
     ),
     validator("param", v.object({ organisationId: v.string() })),
