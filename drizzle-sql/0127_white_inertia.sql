@@ -1,0 +1,1 @@
+ALTER TYPE "public"."webhook_event" ADD VALUE 'tool';

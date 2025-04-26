@@ -23,6 +23,8 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { RESPONSES } from "../../../../lib/responses";
 import { validateScope } from "../../../../lib/utils/validate-scope";
+import { toolValidationSchema } from "../../../../lib/webhooks/toosl";
+import log from "../../../../lib/log";
 export default function defineWebhookRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
@@ -326,29 +328,47 @@ export default function defineWebhookRoutes(
         const body = c.req.valid("json");
         const { organisationId } = c.req.valid("param");
 
+        let insertData;
+
         // check event type
-        if (body.event !== "chatOutput") {
+        if (body.event === "chatOutput") {
+          insertData = {
+            userId: userId,
+            organisationId,
+            name: body.name,
+            type: "n8n" as const,
+            event: "chat-output" as const,
+            webhookUrl: body.webhookUrl,
+            organisationWide: body.organisationWide ?? false,
+          };
+        } else if (body.event === "tool") {
+          const data = {
+            userId: userId,
+            organisationId,
+            name: body.name,
+            type: "n8n" as const,
+            event: "tool" as const,
+            webhookUrl: body.webhookUrl,
+            organisationWide: body.organisationWide ?? false,
+            meta: body.meta ?? {},
+          };
+          insertData = v.parse(toolValidationSchema, data);
+        } else {
+          log.debug("Invalid event type", { event: body.event });
           throw new HTTPException(400, {
-            message: "Event must be chatOutput",
+            message: "Invalid event type",
           });
         }
-        const parsed = v.parse(newWebhookSchema, {
-          userId: userId,
-          organisationId,
-          name: body.name,
-          type: "n8n",
-          event: "chat-output",
-          webhookUrl: body.webhookUrl,
-          organisationWide: body.organisationWide ?? false,
-        });
-        const webhook = await createWebhook(userId, parsed);
 
-        // Return format compatible with n8n expectations
+        const webhook = await createWebhook(userId, insertData);
         return c.json({
           id: webhook.id,
           success: true,
         });
+
+        // Return format compatible with n8n expectations
       } catch (err) {
+        log.error("Error registering webhook", { err });
         throw new HTTPException(500, {
           message: "Error registering webhook: " + err,
         });

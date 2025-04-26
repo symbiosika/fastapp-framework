@@ -28,7 +28,8 @@ export const triggerWebhook = async (
   const webhook = await getDb().query.webhooks.findFirst({
     where: and(
       eq(webhooks.id, webhookId),
-      eq(webhooks.organisationId, organisationId)
+      eq(webhooks.organisationId, organisationId),
+      eq(webhooks.event, "chat-output")
     ),
   });
 

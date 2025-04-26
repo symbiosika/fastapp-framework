@@ -18,7 +18,10 @@ import {
 } from "drizzle-valibot";
 
 export const webhookTypeEnum = pgEnum("webhook_type", ["n8n"]);
-export const webhookEventEnum = pgEnum("webhook_event", ["chat-output"]);
+export const webhookEventEnum = pgEnum("webhook_event", [
+  "chat-output",
+  "tool",
+]);
 export const webhookMethodEnum = pgEnum("webhook_method", ["POST", "GET"]);
 
 // Table for webhooks. Webhooks are used to send notifications to external services.
@@ -40,12 +43,12 @@ export const webhooks = pgBaseTable(
       .notNull(),
     organisationWide: boolean("organisation_wide").notNull().default(false),
     name: text("name").notNull(),
-    type: webhookTypeEnum("type").notNull(),
-    event: webhookEventEnum("event").notNull(),
+    type: webhookTypeEnum("type").notNull(), // 'n8n'
+    event: webhookEventEnum("event").notNull(), // 'chat-output' or 'tool'
     webhookUrl: text("webhook_url").notNull(),
     method: webhookMethodEnum("method").notNull().default("POST"),
     headers: jsonb("headers").default({}).notNull(),
-    meta: jsonb("meta").default({}).notNull(),
+    meta: jsonb("meta").default({}).notNull(), // additional data for the webhook
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
       .notNull(),
