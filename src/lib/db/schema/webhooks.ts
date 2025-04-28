@@ -64,6 +64,7 @@ export const webhooks = pgBaseTable(
     index("webhooks_organisation_id_idx").on(webhooks.organisationId),
     uniqueIndex("webhooks_name_organisation_id_idx").on(
       webhooks.name,
+      webhooks.webhookUrl,
       webhooks.organisationId,
       webhooks.event,
       webhooks.type

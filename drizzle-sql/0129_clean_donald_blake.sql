@@ -1,0 +1,2 @@
+DROP INDEX "webhooks_name_organisation_id_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX "webhooks_name_organisation_id_idx" ON "base_webhooks" USING btree ("name","webhook_url","organisation_id","event","type");
