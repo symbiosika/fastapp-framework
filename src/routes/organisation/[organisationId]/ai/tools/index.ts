@@ -12,7 +12,7 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { isOrganisationMember } from "../../..";
 import { validateScope } from "../../../../../lib/utils/validate-scope";
-import { getStaticToolOverview } from "../../../../../lib/ai/interaction/tools";
+import { getStaticToolOverviewForMyUser } from "../../../../../lib/ai/interaction/tools";
 
 export default function defineToolsRoutes(
   app: FastAppHono,
@@ -56,8 +56,16 @@ export default function defineToolsRoutes(
     isOrganisationMember,
     async (c) => {
       try {
+        const { organisationId } = c.req.valid("param");
+        const userId = c.get("usersId");
+
+        const tools = await getStaticToolOverviewForMyUser(
+          userId,
+          organisationId
+        );
+
         return c.json({
-          tools: getStaticToolOverview(c.req.valid("param").organisationId),
+          tools,
         });
       } catch (err) {
         throw new HTTPException(400, { message: err + "" });

@@ -248,61 +248,99 @@ export async function chatCompletion(
     tools?: string[];
   }
 ) {
-  // Clear any existing live chat data for this chat
-  clearAndStartNewSession(context.chatId);
+  try {
+    // Clear any existing live chat data for this chat
+    clearAndStartNewSession(context.chatId);
 
-  let providerAndModelName = options?.providerAndModelName;
-  if (!providerAndModelName) {
-    providerAndModelName =
-      process.env.DEFAULT_CHAT_COMPLETION_MODEL ?? "openai:gpt-4o-mini";
-  }
+    let providerAndModelName = options?.providerAndModelName;
+    if (!providerAndModelName) {
+      providerAndModelName =
+        process.env.DEFAULT_CHAT_COMPLETION_MODEL ?? "openai:gpt-4o-mini";
+    }
 
-  const model = await getAIModel(providerAndModelName, context);
-  const tools = getRuntimeToolsDictionary(context.chatId);
+    const model = await getAIModel(providerAndModelName, context);
+    const tools = getRuntimeToolsDictionary(context.chatId);
 
-  let accumulatedText = "";
-  let accumulatedSources: SourceReturn[] = [];
-  let accumulatedArtifacts: ArtifactReturn[] = [];
-  let usedTools: string[] = [];
-  let allSteps: any[] = [];
+    let accumulatedText = "";
+    let accumulatedSources: SourceReturn[] = [];
+    let accumulatedArtifacts: ArtifactReturn[] = [];
+    let usedTools: string[] = [];
+    let allSteps: any[] = [];
 
-  log.debug("Starting chat completion stream", {
-    category: "ai",
-    chatId: context.chatId,
-  });
+    log.debug("Starting chat completion stream", {
+      category: "ai",
+      chatId: context.chatId,
+    });
 
-  const { textStream, sources } = await streamText({
-    model: model as LanguageModelV1,
-    messages,
-    temperature: options?.temperature,
-    maxTokens: options?.maxTokens,
-    tools,
-    toolChoice: tools && Object.keys(tools).length > 0 ? "auto" : "none",
-    maxSteps: 5,
-    onStepFinish: ({ text, toolCalls, toolResults, finishReason, usage }) => {
-      // Store step information for final logs
-      allSteps.push({
-        text,
-        toolCalls,
-        toolResults,
-        finishReason,
-        usage,
-      });
+    const { textStream, sources } = await streamText({
+      model: model as LanguageModelV1,
+      messages,
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
+      tools,
+      toolChoice: tools && Object.keys(tools).length > 0 ? "auto" : "none",
+      maxSteps: 5,
+      onStepFinish: ({ text, toolCalls, toolResults, finishReason, usage }) => {
+        // Store step information for final logs
+        allSteps.push({
+          text,
+          toolCalls,
+          toolResults,
+          finishReason,
+          usage,
+        });
 
-      if (context.chatId) {
-        // Collect tools used in this step
-        if (toolCalls) {
-          toolCalls.forEach((call) => {
-            if (!usedTools.includes(call.toolName)) {
-              usedTools.push(call.toolName);
-            }
+        if (context.chatId) {
+          // Collect tools used in this step
+          if (toolCalls) {
+            toolCalls.forEach((call) => {
+              if (!usedTools.includes(call.toolName)) {
+                usedTools.push(call.toolName);
+              }
+            });
+          }
+
+          // Update live chat cache with current state
+          updateLiveChat(context.chatId, {
+            text: accumulatedText,
+            complete: finishReason === "stop",
+            meta: {
+              toolsUsed: usedTools,
+              sources: accumulatedSources,
+              artifacts: accumulatedArtifacts,
+            },
           });
         }
 
-        // Update live chat cache with current state
+        // Existing logging
+        log.logToDB({
+          level: "debug",
+          organisationId: context?.organisationId,
+          sessionId: context?.userId,
+          source: "ai",
+          category: "text-generation",
+          message: "text-generation-step-complete",
+          metadata: {
+            model: providerAndModelName,
+            stepText: text,
+            toolCalls: toolCalls?.map((call) => call.toolName),
+            finishReason,
+            usage,
+          },
+        });
+      },
+    });
+
+    // Process the text stream in chunks
+    for await (const textPart of textStream) {
+      // Update the accumulated text
+      accumulatedText += textPart;
+
+      // Update live chat with the latest text
+      if (context.chatId) {
         updateLiveChat(context.chatId, {
           text: accumulatedText,
-          complete: finishReason === "stop",
+          complete: false,
           meta: {
             toolsUsed: usedTools,
             sources: accumulatedSources,
@@ -310,134 +348,101 @@ export async function chatCompletion(
           },
         });
       }
+    }
 
-      // Existing logging
-      log.logToDB({
-        level: "debug",
-        organisationId: context?.organisationId,
-        sessionId: context?.userId,
-        source: "ai",
-        category: "text-generation",
-        message: "text-generation-step-complete",
-        metadata: {
-          model: providerAndModelName,
-          stepText: text,
-          toolCalls: toolCalls?.map((call) => call.toolName),
-          finishReason,
-          usage,
-        },
+    const usedSources = await sources;
+    usedSources.forEach((source) => {
+      accumulatedSources.push({
+        type: "url",
+        url: source.url,
+        label: source.url,
       });
-    },
-  });
+    });
 
-  // Process the text stream in chunks
-  for await (const textPart of textStream) {
-    // Update the accumulated text
-    accumulatedText += textPart;
+    // Process tools and retrieve their data
+    // Get all used tools from tool memory
+    const toolMemory = getToolMemory(context.chatId);
+    // Iterate over all tools in memory that has been used and add possible sources and artifacts to the response
+    for (const tool in toolMemory) {
+      toolMemory[tool].usedSources?.forEach((source) => {
+        accumulatedSources.push(source);
+      });
+      toolMemory[tool].usedArtifacts?.forEach((artifact) => {
+        accumulatedArtifacts.push(artifact);
+      });
+    }
 
-    // Update live chat with the latest text
+    // Filter all duplicate sources (by label)
+    accumulatedSources = accumulatedSources.filter(
+      (source, index, self) =>
+        index === self.findIndex((t) => t.label === source.label)
+    );
+
+    // Get the last step's usage for final stats
+    const lastStep = allSteps[allSteps.length - 1];
+    const usage = lastStep?.usage;
+
+    // Update the live chat one last time with complete status
     if (context.chatId) {
       updateLiveChat(context.chatId, {
         text: accumulatedText,
-        complete: false,
+        complete: true,
         meta: {
           toolsUsed: usedTools,
           sources: accumulatedSources,
           artifacts: accumulatedArtifacts,
         },
       });
+
+      // Then clear after a moment (or you might want to keep it for a while)
+      setTimeout(() => clearLiveChat(context.chatId!), 1000);
     }
-  }
 
-  const usedSources = await sources;
-  usedSources.forEach((source) => {
-    accumulatedSources.push({
-      type: "url",
-      url: source.url,
-      label: source.url,
-    });
-  });
-
-  // Process tools and retrieve their data
-  // Get all used tools from tool memory
-  const toolMemory = getToolMemory(context.chatId);
-  // Iterate over all tools in memory that has been used and add possible sources and artifacts to the response
-  for (const tool in toolMemory) {
-    toolMemory[tool].usedSources?.forEach((source) => {
-      accumulatedSources.push(source);
-    });
-    toolMemory[tool].usedArtifacts?.forEach((artifact) => {
-      accumulatedArtifacts.push(artifact);
-    });
-  }
-
-  // Filter all duplicate sources (by label)
-  accumulatedSources = accumulatedSources.filter(
-    (source, index, self) =>
-      index === self.findIndex((t) => t.label === source.label)
-  );
-
-  // Get the last step's usage for final stats
-  const lastStep = allSteps[allSteps.length - 1];
-  const usage = lastStep?.usage;
-
-  // Update the live chat one last time with complete status
-  if (context.chatId) {
-    updateLiveChat(context.chatId, {
-      text: accumulatedText,
-      complete: true,
-      meta: {
-        toolsUsed: usedTools,
-        sources: accumulatedSources,
-        artifacts: accumulatedArtifacts,
+    // Log final completion
+    log.logToDB({
+      level: "info",
+      organisationId: context?.organisationId,
+      sessionId: context?.userId,
+      source: "ai",
+      category: "text-generation",
+      message: "text-generation-complete",
+      metadata: {
+        model: providerAndModelName,
+        responseLength: accumulatedText.length,
+        usedTokens: usage?.totalTokens,
+        promptTokens: usage?.promptTokens,
+        completionTokens: usage?.completionTokens,
+        toolsUsed: tools ? Object.keys(tools) : undefined,
+        steps: allSteps.map((step) => ({
+          text: step.text,
+          toolCalls: step.toolCalls?.map((call: any) => call.toolName),
+        })),
       },
     });
 
-    // Then clear after a moment (or you might want to keep it for a while)
-    setTimeout(() => clearLiveChat(context.chatId!), 1000);
-  }
+    // drop images from message:
+    accumulatedText = removeMarkdownImageUrls(accumulatedText);
 
-  // Log final completion
-  log.logToDB({
-    level: "info",
-    organisationId: context?.organisationId,
-    sessionId: context?.userId,
-    source: "ai",
-    category: "text-generation",
-    message: "text-generation-complete",
-    metadata: {
+    return {
+      id: nanoid(6),
+      text: accumulatedText,
       model: providerAndModelName,
-      responseLength: accumulatedText.length,
-      usedTokens: usage?.totalTokens,
-      promptTokens: usage?.promptTokens,
-      completionTokens: usage?.completionTokens,
-      toolsUsed: tools ? Object.keys(tools) : undefined,
-      steps: allSteps.map((step) => ({
-        text: step.text,
-        toolCalls: step.toolCalls?.map((call: any) => call.toolName),
-      })),
-    },
-  });
-
-  // drop images from message:
-  accumulatedText = removeMarkdownImageUrls(accumulatedText);
-
-  return {
-    id: nanoid(6),
-    text: accumulatedText,
-    model: providerAndModelName,
-    meta: {
-      responseLength: accumulatedText.length,
-      usedTokens: usage?.totalTokens,
-      promptTokens: usage?.promptTokens,
-      completionTokens: usage?.completionTokens,
-      toolsUsed: usedTools,
-      sources: accumulatedSources,
-      artifacts: accumulatedArtifacts,
-      steps: allSteps.map((step) => ({
-        text: step.text,
-        toolCalls: step.toolCalls?.map((call: any) => call.toolName),
-      })),
-    },
-  };
+      meta: {
+        responseLength: accumulatedText.length,
+        usedTokens: usage?.totalTokens,
+        promptTokens: usage?.promptTokens,
+        completionTokens: usage?.completionTokens,
+        toolsUsed: usedTools,
+        sources: accumulatedSources,
+        artifacts: accumulatedArtifacts,
+        steps: allSteps.map((step) => ({
+          text: step.text,
+          toolCalls: step.toolCalls?.map((call: any) => call.toolName),
+        })),
+      },
+    };
+  } catch (error) {
+    log.error(`Error in chatCompletion: ${error}`);
+    throw new Error("Failed to generate chat completion");
+  }
 }

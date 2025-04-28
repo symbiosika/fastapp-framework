@@ -9,7 +9,7 @@ import {
   webhooks,
   WebhookSelect,
 } from "../db/schema/webhooks";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { WebhookTriggerError, WebhookTriggerOptions } from "./trigger";
 import * as v from "valibot";
 import { type Tool } from "ai";
@@ -42,11 +42,14 @@ const parameterSchema = v.object({
 
 // Define meta schema for tool webhooks
 const toolMetaSchema = v.object({
+  name: v.string(),
   description: v.string(),
   parameters: v.array(parameterSchema),
 });
 
 export type ToolMeta = v.InferOutput<typeof toolMetaSchema>;
+
+export type WebhookTool = WebhookSelect & { meta: ToolMeta };
 
 export const toolValidationSchema = v.intersect([
   newWebhookSchema,
@@ -58,9 +61,8 @@ export const toolValidationSchema = v.intersect([
 /**
  * Get a tool from a webhook with the provided context
  */
-export const getToolFactoryFromWebhook = (
-  webhookId: string,
-  organisationId: string,
+export const getToolFactoryFromWebhookByName = (
+  webhookName: string,
   context: ToolContext
 ): Promise<ToolReturn> => {
   return new Promise(async (resolve, reject) => {
@@ -68,14 +70,19 @@ export const getToolFactoryFromWebhook = (
       // Get webhook details
       const webhook = (await getDb().query.webhooks.findFirst({
         where: and(
-          eq(webhooks.id, webhookId),
-          eq(webhooks.organisationId, organisationId),
-          eq(webhooks.event, "tool")
+          eq(webhooks.name, webhookName),
+          eq(webhooks.organisationId, context.organisationId),
+          eq(webhooks.event, "tool"),
+          eq(webhooks.type, "n8n"),
+          or(
+            eq(webhooks.organisationWide, true),
+            eq(webhooks.userId, context.userId)
+          )
         ),
       })) as WebhookSelect & { meta: ToolMeta };
 
       if (!webhook) {
-        reject(new Error(`Tool webhook with ID ${webhookId} not found`));
+        reject(new Error(`Tool webhook with name ${webhookName} not found`));
         return;
       }
 
@@ -88,7 +95,7 @@ export const getToolFactoryFromWebhook = (
       }
 
       // Create unique tool name
-      const toolName = `webhook-tool-${webhook.name}`;
+      const toolName = `webhooktool-${webhook.name}`;
 
       // Create the tool
       const webhookTool: Tool = {
@@ -100,6 +107,7 @@ export const getToolFactoryFromWebhook = (
               props[param.name] = {
                 type: param.type,
                 description: param.name,
+                //required: param.required,
               };
               return props;
             },
@@ -115,10 +123,8 @@ export const getToolFactoryFromWebhook = (
           try {
             const result = await triggerToolWebhook(
               webhook.id,
-              organisationId,
-              {
-                payload: params,
-              }
+              context,
+              params
             );
 
             log.info(`Webhook tool executed successfully: ${webhook.id}`);
@@ -145,32 +151,49 @@ export const getToolFactoryFromWebhook = (
  */
 export const getWebhookToolsForOrganisation = async (
   organisationId: string
-) => {
-  const entries = await getDb().query.webhooks.findMany({
+): Promise<WebhookTool[]> => {
+  const entries = (await getDb().query.webhooks.findMany({
     where: and(
       eq(webhooks.organisationId, organisationId),
-      eq(webhooks.event, "tool")
+      eq(webhooks.event, "tool"),
+      eq(webhooks.organisationWide, true)
     ),
-  });
+  })) as WebhookTool[];
+
+  return entries;
+};
+
+/**
+ * Get all tool webhooks for an userId
+ */
+export const getWebhookToolsForUser = async (
+  userId: string,
+  organisationId: string
+): Promise<WebhookTool[]> => {
+  const entries = (await getDb().query.webhooks.findMany({
+    where: and(
+      eq(webhooks.organisationId, organisationId),
+      eq(webhooks.event, "tool"),
+      eq(webhooks.organisationWide, false),
+      eq(webhooks.userId, userId)
+    ),
+  })) as WebhookTool[];
 
   return entries;
 };
 
 /**
  * Trigger a tool webhook by its ID
+ * This will not check again the access rights of the user
  */
 export const triggerToolWebhook = async (
   webhookId: string,
-  organisationId: string,
-  options: WebhookTriggerOptions = {}
+  context: ToolContext,
+  payload: any
 ) => {
   // Get webhook details
   const webhook = await getDb().query.webhooks.findFirst({
-    where: and(
-      eq(webhooks.id, webhookId),
-      eq(webhooks.organisationId, organisationId),
-      eq(webhooks.event, "tool")
-    ),
+    where: and(eq(webhooks.id, webhookId)),
   });
 
   if (!webhook) {
@@ -181,7 +204,6 @@ export const triggerToolWebhook = async (
   const headers = {
     "Content-Type": "application/json",
     ...(webhook.headers || {}),
-    ...(options.headers || {}),
   };
 
   try {
@@ -190,9 +212,7 @@ export const triggerToolWebhook = async (
       method: webhook.method,
       headers,
       body:
-        webhook.method !== "GET"
-          ? JSON.stringify(options.payload || {})
-          : undefined,
+        webhook.method !== "GET" ? JSON.stringify(payload || {}) : undefined,
     });
 
     if (!response.ok) {
@@ -202,11 +222,20 @@ export const triggerToolWebhook = async (
       );
     }
 
-    return {
-      success: true,
-      statusCode: response.status,
-      response: await response.json().catch(() => null),
-    };
+    try {
+      const json = await response.json();
+      return {
+        success: true,
+        statusCode: response.status,
+        response: json,
+      };
+    } catch (error) {
+      return {
+        success: true,
+        statusCode: response.status,
+        response: await response.text(),
+      };
+    }
   } catch (error) {
     if (error instanceof WebhookTriggerError) {
       throw error;

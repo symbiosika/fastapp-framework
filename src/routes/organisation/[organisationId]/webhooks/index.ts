@@ -23,8 +23,17 @@ import { describeRoute } from "hono-openapi";
 import { resolver, validator } from "hono-openapi/valibot";
 import { RESPONSES } from "../../../../lib/responses";
 import { validateScope } from "../../../../lib/utils/validate-scope";
-import { toolValidationSchema } from "../../../../lib/webhooks/toosl";
+import { toolValidationSchema } from "../../../../lib/webhooks/tools";
 import log from "../../../../lib/log";
+
+/**
+ * Helper to replace all whitespace in a string with underscores
+ * and lowercase the string
+ */
+const normalizeToolName = (name: string): string => {
+  return name.replace(/\s+/g, "_").toLowerCase();
+};
+
 export default function defineWebhookRoutes(
   app: FastAppHono,
   API_BASE_PATH: string
@@ -345,7 +354,7 @@ export default function defineWebhookRoutes(
           const data = {
             userId: userId,
             organisationId,
-            name: body.name,
+            name: normalizeToolName(body.name),
             type: "n8n" as const,
             event: "tool" as const,
             webhookUrl: body.webhookUrl,

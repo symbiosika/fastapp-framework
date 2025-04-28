@@ -5,6 +5,10 @@ import type {
   ToolContext,
   ToolReturn,
 } from "../ai-sdk/types";
+import {
+  getWebhookToolsForOrganisation,
+  getWebhookToolsForUser,
+} from "../../webhooks/tools";
 
 /*
 Tool Registry and Tool Memory
@@ -172,10 +176,43 @@ export const registerCleanUpJob = (): void => {
 /**
  * Get all static tools. For UI Display
  */
-export const getStaticToolOverview = (
-  organisationId: string
-): ToolMetadata[] => {
+export const getStaticToolOverview = (): ToolMetadata[] => {
   return Object.values(BASE_TOOL_REGISTRY).map((entry) => entry.meta);
+};
+
+/**
+ * Get all static tools for an user. For UI Display
+ * That will be user-specific webhook tools, organisation-specific webhook tools and app-tools
+ */
+export const getStaticToolOverviewForMyUser = async (
+  userId: string,
+  organisationId: string
+): Promise<ToolMetadata[]> => {
+  const allTools: ToolMetadata[] = [];
+
+  const staticAppTools = getStaticToolOverview();
+  allTools.push(...staticAppTools);
+
+  const staticWebhookTools =
+    await getWebhookToolsForOrganisation(organisationId);
+  staticWebhookTools.map((tool) => {
+    allTools.push({
+      name: "webhook-" + tool.name,
+      label: tool.meta.name ?? tool.name,
+      description: tool.meta.description,
+    });
+  });
+
+  const userWebhookTools = await getWebhookToolsForUser(userId, organisationId);
+  userWebhookTools.map((tool) => {
+    allTools.push({
+      name: "webhook-" + tool.name,
+      label: tool.meta.name ?? tool.name,
+      description: tool.meta.description,
+    });
+  });
+
+  return allTools;
 };
 
 /**

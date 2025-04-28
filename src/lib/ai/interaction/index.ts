@@ -16,7 +16,8 @@ import type { CoreMessage } from "ai";
 import { DEFAULT_SYSTEM_MESSAGE } from "../prompt-templates/default-prompt";
 import { createHeadlineFromChat } from "../headline";
 import { getAvatarForChat } from "../avatars";
-import { addRuntimeToolFromBaseRegistry } from "./tools";
+import { addRuntimeToolFromBaseRegistry, addRuntimeTool } from "./tools";
+import { getToolFactoryFromWebhookByName } from "../../webhooks/tools";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -217,13 +218,34 @@ export async function chat(
 
     // add runtime tools to the chat
     log.debug("enabled tools: " + enabledToolNames);
-    for (const toolName of enabledToolNames) {
+
+    // Split tools into regular tools and webhook tools
+    const regularTools = enabledToolNames.filter(
+      (tool) => !tool.startsWith("webhook-")
+    );
+    const webhookTools = enabledToolNames
+      .filter((tool) => tool.startsWith("webhook-"))
+      .map((tool) => tool.replace("webhook-", ""));
+
+    // Add regular tools
+    for (const toolName of regularTools) {
       addRuntimeToolFromBaseRegistry(toolName, {
         chatId,
         organisationId: options.context.organisationId,
         userId: options.context.userId,
       });
       log.debug("added tool '" + toolName + "' to chat: " + chatId);
+    }
+
+    // Add webhook tools
+    for (const webhookName of webhookTools) {
+      const toolFactory = await getToolFactoryFromWebhookByName(webhookName, {
+        chatId,
+        organisationId: options.context.organisationId,
+        userId: options.context.userId,
+      });
+      addRuntimeTool(chatId, toolFactory.name, toolFactory.tool);
+      log.debug("added webhook tool '" + webhookName + "' to chat: " + chatId);
     }
 
     // 5. Convert messages to format expected by AI SDK

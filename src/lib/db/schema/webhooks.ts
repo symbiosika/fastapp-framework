@@ -7,6 +7,7 @@ import {
   timestamp,
   jsonb,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { organisations, users } from "./users";
@@ -61,6 +62,12 @@ export const webhooks = pgBaseTable(
   },
   (webhooks) => [
     index("webhooks_organisation_id_idx").on(webhooks.organisationId),
+    uniqueIndex("webhooks_name_organisation_id_idx").on(
+      webhooks.name,
+      webhooks.organisationId,
+      webhooks.event,
+      webhooks.type
+    ),
   ]
 );
 
