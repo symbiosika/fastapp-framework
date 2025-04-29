@@ -336,6 +336,12 @@ export async function chatCompletion(
       // Update the accumulated text
       accumulatedText += textPart;
 
+      log.debug("Accumulated text", {
+        category: "ai",
+        chatId: context.chatId,
+        text: textPart,
+      });
+
       // Update live chat with the latest text
       if (context.chatId) {
         updateLiveChat(context.chatId, {
@@ -395,7 +401,7 @@ export async function chatCompletion(
       });
 
       // Then clear after a moment (or you might want to keep it for a while)
-      setTimeout(() => clearLiveChat(context.chatId!), 1000);
+      setTimeout(() => clearLiveChat(context.chatId!), 2000);
     }
 
     // Log final completion
@@ -413,6 +419,7 @@ export async function chatCompletion(
         promptTokens: usage?.promptTokens,
         completionTokens: usage?.completionTokens,
         toolsUsed: tools ? Object.keys(tools) : undefined,
+        textLength: accumulatedText.length,
         steps: allSteps.map((step) => ({
           text: step.text,
           toolCalls: step.toolCalls?.map((call: any) => call.toolName),
@@ -422,6 +429,11 @@ export async function chatCompletion(
 
     // drop images from message:
     accumulatedText = removeMarkdownImageUrls(accumulatedText);
+    log.debug("Accumulated text", {
+      category: "ai",
+      chatId: context.chatId,
+      text: accumulatedText,
+    });
 
     return {
       id: nanoid(6),
