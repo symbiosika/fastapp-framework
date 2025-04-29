@@ -71,7 +71,8 @@ export const promptTemplates = pgBaseTable(
   (promptTemplates) => [
     unique("prompt_templates_name_category_idx").on(
       promptTemplates.name,
-      promptTemplates.category
+      promptTemplates.category,
+      promptTemplates.organisationId
     ),
     index("prompt_templates_name_idx").on(promptTemplates.name),
     index("prompt_templates_type_idx").on(promptTemplates.category),

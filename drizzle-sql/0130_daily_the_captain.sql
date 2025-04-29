@@ -1,0 +1,2 @@
+ALTER TABLE "base_prompt_templates" DROP CONSTRAINT "prompt_templates_name_category_idx";--> statement-breakpoint
+ALTER TABLE "base_prompt_templates" ADD CONSTRAINT "prompt_templates_name_category_idx" UNIQUE("name","category","organisation_id");
