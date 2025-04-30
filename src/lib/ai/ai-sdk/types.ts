@@ -37,3 +37,10 @@ export type ArtifactReturn = {
   label?: string;
   external?: boolean;
 };
+
+export type ArtifactInput = {
+  type: "image" | "audio" | "video" | "file";
+  url?: string;
+  label?: string;
+  external?: boolean;
+};

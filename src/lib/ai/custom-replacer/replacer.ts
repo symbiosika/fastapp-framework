@@ -95,6 +95,13 @@ export const replaceCustomPlaceholders = async (
         parser.expression = new RegExp(`{{#${parser.name}([^}]*?)}}`, "g");
       }
 
+      if (
+        !replacedMessage.content ||
+        typeof replacedMessage.content !== "string"
+      ) {
+        continue;
+      }
+
       const matches = replacedMessage.content.match(parser.expression);
       if (matches) {
         // Process all matches sequentially

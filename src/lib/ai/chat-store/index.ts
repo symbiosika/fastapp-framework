@@ -7,6 +7,7 @@ import {
 import { getDb } from "../../../lib/db/db-connection";
 import log from "../../../lib/log";
 import { nanoid } from "nanoid";
+import type { ArtifactReturn } from "../ai-sdk/types";
 
 export type NewChatSessionContext = {
   userId: string;
@@ -25,9 +26,11 @@ export type ChatMessage = {
   content?: string | any;
   meta?: {
     id: string;
+    visible?: boolean;
     model?: string;
     human?: boolean;
     timestamp?: string;
+    artifacts?: ArtifactReturn[];
     knowledgeSources?: {
       knowledgeEntries?: string[];
       knowledgeFilters?: string[];

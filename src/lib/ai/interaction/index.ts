@@ -18,6 +18,7 @@ import { createHeadlineFromChat } from "../headline";
 import { getAvatarForChat } from "../avatars";
 import { addRuntimeToolFromBaseRegistry, addRuntimeTool } from "./tools";
 import { getToolFactoryFromWebhookByName } from "../../webhooks/tools";
+import { getArtifacts } from "./artifacts";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -39,6 +40,21 @@ export const chatInputValidation = v.object({
   ),
   enabledTools: v.optional(v.array(v.string())),
   input: v.union([v.string(), v.record(v.string(), v.string())]),
+  artifacts: v.optional(
+    v.array(
+      v.object({
+        type: v.union([
+          v.literal("image"),
+          v.literal("audio"),
+          v.literal("video"),
+          v.literal("file"),
+        ]),
+        url: v.string(),
+        label: v.optional(v.string()),
+        external: v.optional(v.boolean()),
+      })
+    )
+  ),
 });
 
 export type ChatInput = v.InferOutput<typeof chatInputValidation>;
@@ -199,6 +215,7 @@ export async function chat(
             id: nanoid(10),
             human: true,
             timestamp: new Date().toISOString(),
+            artifacts: options.artifacts,
           },
         });
       }
@@ -212,8 +229,21 @@ export async function chat(
           id: nanoid(10),
           human: true,
           timestamp: new Date().toISOString(),
+          artifacts: options.artifacts,
         },
       });
+    }
+
+    // add artifacts to the chat
+    try {
+      const artifactMessages = await getArtifacts(options.artifacts, {
+        organisationId: options.context.organisationId,
+        userId: options.context.userId,
+      });
+      messages.push(...artifactMessages);
+    } catch (error) {
+      log.error(`Error processing artifacts: ${error}`);
+      throw error;
     }
 
     // add runtime tools to the chat
