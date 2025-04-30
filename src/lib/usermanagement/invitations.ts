@@ -277,7 +277,7 @@ export const createOrganisationInvitation = async (
         await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
           appName: _GLOBAL_SERVER_CONFIG.appName,
           baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
-          link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true&email=${dataWithStatus.email}`,
+          link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true&email=${dataWithStatus.email}&hideInvitationCode=true`,
         });
       await smtpService.sendMail({
         sender: process.env.SMTP_FROM,
@@ -301,4 +301,29 @@ export const checkIfInvitationCodeIsNeededToRegister = async () => {
     .where(eq(invitationCodes.isActive, true));
 
   return codes.length > 0;
+};
+
+/**
+ * Get all pending invitations for a email address
+ */
+export const getPendingInvitationsForEmail = async (
+  email: string
+): Promise<{
+  invitedInOrganisationIds: string[];
+}> => {
+  const invitations = await getDb()
+    .select()
+    .from(organisationInvitations)
+    .where(
+      and(
+        eq(organisationInvitations.email, email),
+        eq(organisationInvitations.status, "pending")
+      )
+    );
+
+  return {
+    invitedInOrganisationIds: invitations.map(
+      (invitation) => invitation.organisationId
+    ),
+  };
 };
