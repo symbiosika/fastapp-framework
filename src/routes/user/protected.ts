@@ -58,6 +58,7 @@ import {
 import { validateScope } from "../../lib/utils/validate-scope";
 import { availableScopes } from "../../lib/auth/available-scopes";
 import { sendValidationPin, validatePhoneNumber } from "../../lib/auth/phone";
+import { syncModels } from "../../lib/ai/models/sync";
 
 /**
  * Pre-register custom verification
@@ -322,6 +323,7 @@ export function defineSecuredUserRoutes(
         });
         await addOrganisationMember(org.id, userId, "admin");
         await setLastOrganisation(userId, org.id);
+        await syncModels(org.id);
 
         return c.json(org);
       } catch (err) {

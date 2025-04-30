@@ -34,6 +34,7 @@ import {
 import { createOrganisationInvitation } from "../../lib/usermanagement/invitations";
 import type { MiddlewareHandler } from "hono";
 import { validateScope } from "../../lib/utils/validate-scope";
+import { syncModels } from "../../lib/ai/models/sync";
 
 /**
  * Middleware to check if user is a member of the organisation
@@ -140,6 +141,7 @@ export default function defineOrganisationRoutes(
         const org = await createOrganisation(data);
         // put the user in the organisation
         await addOrganisationMember(org.id, userId, "owner");
+        await syncModels(org.id);
         return c.json(org);
       } catch (err) {
         throw new HTTPException(500, {
