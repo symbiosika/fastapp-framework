@@ -4,7 +4,7 @@ import { jsonSchema } from "ai";
 import { _GLOBAL_SERVER_CONFIG } from "../../../../store";
 import log from "../../../log";
 import { saveFile } from "../../../storage";
-import { addEntryToToolMemory } from "../tools";
+import { addEntryToToolMemory, getShortTermMemory } from "../tools";
 import type { ToolReturn, ToolContext } from "../../../..";
 import { getBaseUrl } from "./utils";
 
@@ -18,7 +18,7 @@ export const getGptImage1Tool = (context: ToolContext): ToolReturn => {
 
   const imageTool: Tool = {
     description:
-      "Generate images based on text prompts using OpenAI's gpt-image-1 model",
+      "Generate images based on text prompts. Can create and edit images.",
     parameters: jsonSchema({
       type: "object",
       properties: {
@@ -78,31 +78,67 @@ export const getGptImage1Tool = (context: ToolContext): ToolReturn => {
         output_format = "png",
         quality = "auto",
         size = "auto",
+        useInputImages = false,
       } = params;
 
-      const body = {
-        model: "gpt-image-1",
-        prompt,
-        background,
-        n,
-        output_compression,
-        output_format,
-        quality,
-        size,
-      };
+      // Get input images from short term memory if useInputImages is true
+      const shortTermMemory = getShortTermMemory(context.chatId);
+      const inputArtifacts = shortTermMemory.inputArtifacts || [];
+      const hasInputImages = inputArtifacts.length > 0;
 
       try {
-        const response = await fetch(
-          "https://api.openai.com/v1/images/generations",
-          {
+        let response;
+
+        if (hasInputImages) {
+          // Use the edits endpoint when input images are available
+          const formData = new FormData();
+          formData.append("prompt", prompt);
+          formData.append("model", "gpt-image-1");
+
+          // Add all available input images to the formData
+          inputArtifacts.forEach((artifact, index) => {
+            if (artifact.type === "image" && artifact.file instanceof File) {
+              formData.append("image", artifact.file);
+            }
+          });
+
+          // Include other parameters
+          if (n !== 1) formData.append("n", n.toString());
+          if (quality !== "auto") formData.append("quality", quality);
+          if (size !== "auto") formData.append("size", size);
+
+          response = await fetch("https://api.openai.com/v1/images/edits", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Bearer ${OPENAI_API_KEY}`,
             },
-            body: JSON.stringify(body),
-          }
-        );
+            body: formData,
+          });
+        } else {
+          // Use the generations endpoint when no input images
+          const body = {
+            model: "gpt-image-1",
+            prompt,
+            background,
+            n,
+            output_compression,
+            output_format,
+            quality,
+            size,
+          };
+
+          response = await fetch(
+            "https://api.openai.com/v1/images/generations",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${OPENAI_API_KEY}`,
+              },
+              body: JSON.stringify(body),
+            }
+          );
+        }
 
         if (!response.ok) {
           log.error("OpenAI API error", response);
@@ -147,6 +183,7 @@ export const getGptImage1Tool = (context: ToolContext): ToolReturn => {
         });
 
         return JSON.stringify({
+          success: true,
           url: `${getBaseUrl()}${savedFileMeta.path}`,
         });
       } catch (error: any) {

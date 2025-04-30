@@ -1,5 +1,6 @@
 import { type Tool } from "ai";
 import type {
+  ArtifactInput,
   ArtifactReturn,
   SourceReturn,
   ToolContext,
@@ -41,6 +42,7 @@ type DynamicToolRegistryEntry = {
 type ToolMemoryEntries = {
   usedSources?: SourceReturn[];
   usedArtifacts?: ArtifactReturn[];
+  inputArtifacts?: ArtifactInput[];
 };
 
 type ChatToolMemory = {
@@ -50,6 +52,22 @@ type ChatToolMemory = {
 type GlobalToolMemory = {
   [chatId: string]: ChatToolMemory;
 };
+
+type ChatShortTermMemoryArtifact = {
+  type: "image";
+  file: File;
+};
+
+type ChatShortTermMemory = {
+  [chatId: string]: {
+    inputArtifacts?: ChatShortTermMemoryArtifact[];
+  };
+};
+
+/**
+ * Short Term Memory for all chats
+ */
+export const SHORT_TERM_MEMORY: ChatShortTermMemory = {};
 
 /**
  * The Memory for all tools
@@ -245,6 +263,7 @@ export const addEntryToToolMemory = (
     toolName: string;
     sources?: SourceReturn[] | SourceReturn;
     artifacts?: ArtifactReturn[] | ArtifactReturn;
+    inputArtifacts?: ArtifactInput[] | ArtifactInput;
   }
 ): void => {
   if (!chatId || chatId === "") {
@@ -300,4 +319,39 @@ export const addEntryToToolMemory = (
 export const getToolMemory = (chatId: string | undefined): ChatToolMemory => {
   if (!chatId) return {};
   return TOOL_MEMORY[chatId] ?? {};
+};
+
+/**
+ * Get the short term memory for a chat ID
+ */
+export const getShortTermMemory = (
+  chatId: string | undefined
+): { inputArtifacts?: ChatShortTermMemoryArtifact[] } => {
+  if (!chatId) return {};
+  return SHORT_TERM_MEMORY[chatId] ?? {};
+};
+
+/**
+ * Add an entry to the short term memory
+ */
+export const addEntryToShortTermMemory = (
+  chatId: string,
+  data: {
+    inputArtifacts?: ChatShortTermMemoryArtifact[];
+  }
+): void => {
+  if (!chatId) return;
+
+  if (!SHORT_TERM_MEMORY[chatId]) {
+    SHORT_TERM_MEMORY[chatId] = {};
+  }
+
+  SHORT_TERM_MEMORY[chatId].inputArtifacts = data.inputArtifacts;
+};
+
+/**
+ * Delete the short term memory for a chat ID
+ */
+export const deleteShortTermMemory = (chatId: string): void => {
+  delete SHORT_TERM_MEMORY[chatId];
 };

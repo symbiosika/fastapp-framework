@@ -239,6 +239,7 @@ export async function chat(
       const artifactMessages = await getArtifacts(options.artifacts, {
         organisationId: options.context.organisationId,
         userId: options.context.userId,
+        chatId,
       });
       messages.push(...artifactMessages);
     } catch (error) {

@@ -5,6 +5,7 @@ import log from "../../log";
 import type { ChatMessage } from "../../ai/chat-store";
 import { nanoid } from "nanoid";
 import { parseFile } from "../parsing";
+import { addEntryToShortTermMemory } from "./tools";
 
 /**
  * Extracts organization ID and file ID from a valid file URL
@@ -66,7 +67,7 @@ export const getFileFromUrl = async (
  */
 export async function getArtifacts(
   artifacts: ChatInput["artifacts"],
-  context: { organisationId: string; userId: string }
+  context: { organisationId: string; userId: string; chatId: string }
 ): Promise<ChatMessage[]> {
   if (!artifacts || artifacts.length === 0) {
     return [];
@@ -84,6 +85,16 @@ export async function getArtifacts(
         // Convert file to base64 using Node.js Buffer
         const arrayBuffer = await file.arrayBuffer();
         const base64Content = `data:${file.type};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+
+        // Add image to imageArtifacts to short term memory
+        addEntryToShortTermMemory(context.chatId, {
+          inputArtifacts: [
+            {
+              type: "image",
+              file,
+            },
+          ],
+        });
 
         messages.push({
           role: "user",
