@@ -31,7 +31,7 @@ import type { JobHandlerRegister } from "./lib/jobs";
 import type { Task } from "./lib/cron";
 import type { SyncItem } from "./lib/types/sync";
 import type { StaticTemplateImport } from "./lib/ai/prompt-templates/static-templates";
-import { ProcessedWhatsAppMessage } from "./lib/communication/whatsapp";
+import type { ProcessedWhatsAppMessage } from "./lib/communication/whatsapp";
 
 export type { SyncItem };
 export type { JobHandlerRegister };

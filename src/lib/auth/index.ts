@@ -20,6 +20,11 @@ import { preRegisterCustomVerifications, postRegisterActions } from "./actions";
 import log from "../log";
 import { addOrganisationMember } from "../usermanagement/oganisations";
 import { updateUser } from "../usermanagement/user";
+import {
+  acceptAllPendingInvitationsForUser,
+  acceptOrganisationInvitation,
+  getPendingInvitationsForEmail,
+} from "../usermanagement/invitations";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY || "";
 
@@ -265,7 +270,9 @@ export const LocalAuth = {
     email: string,
     password: string,
     sendVerificationEmail: boolean,
-    meta: any
+    meta: {
+      invitationCode?: string;
+    }
   ) {
     // go through all pre-register custom verifications
     for (const verification of preRegisterCustomVerifications) {
@@ -275,30 +282,46 @@ export const LocalAuth = {
       }
     }
 
+    // check if the user has pending invitations
+    const { invitedInOrganisationIds } =
+      await getPendingInvitationsForEmail(email);
+
     // check if we can register without an invitation code
-    const { usedInvitationCode, setOrganisationId } =
-      await checkGeneralInvitationCode(meta?.invitationCode);
+    // then we can skip the invitation code check
+    let firstOrganisationId: string | null = null;
+    if (invitedInOrganisationIds.length < 1) {
+      const { usedInvitationCode, setOrganisationId } =
+        await checkGeneralInvitationCode(meta?.invitationCode);
+      firstOrganisationId = setOrganisationId;
+    }
 
     // add user to db
     const user = await setUserInDb(email, password, sendVerificationEmail);
     log.info(`New user registered: ${user.id}`);
 
     // check if an organisation was provided via invitation code
-    if (setOrganisationId) {
+    if (firstOrganisationId) {
       // check if the organisation has already members
       const members = await getDb()
         .select()
         .from(organisationMembers)
-        .where(eq(organisationMembers.organisationId, setOrganisationId));
+        .where(eq(organisationMembers.organisationId, firstOrganisationId));
 
       let role: "member" | "owner" = "member";
       if (members.length === 0) {
         role = "owner";
       }
-      await addOrganisationMember(setOrganisationId, user.id, role);
+      await addOrganisationMember(firstOrganisationId, user.id, role);
       await updateUser(user.id, {
-        lastOrganisationId: setOrganisationId,
+        lastOrganisationId: firstOrganisationId,
       });
+    }
+
+    // accept all pending invitations if there are any
+    if (invitedInOrganisationIds.length > 0) {
+      for (const organisationId of invitedInOrganisationIds) {
+        await acceptAllPendingInvitationsForUser(user.id, organisationId);
+      }
     }
 
     // go through all post-register actions

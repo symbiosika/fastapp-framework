@@ -1,4 +1,4 @@
-import { CoreMessage } from "ai";
+import type { CoreMessage } from "ai";
 
 /**
  * Helper to encode a File object as a base64 string.

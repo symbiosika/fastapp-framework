@@ -7,16 +7,15 @@ import { getDb } from "../db/db-connection";
 import {
   newWebhookSchema,
   webhooks,
-  WebhookSelect,
+  type WebhookSelect,
 } from "../db/schema/webhooks";
 import { and, eq, or } from "drizzle-orm";
-import { WebhookTriggerError, WebhookTriggerOptions } from "./trigger";
+import { WebhookTriggerError } from "./trigger";
 import * as v from "valibot";
-import { type Tool } from "ai";
+import type { Tool } from "ai";
 import { jsonSchema } from "ai";
 import log from "../log";
 import type { ToolContext, ToolReturn } from "../ai/ai-sdk/types";
-import { addBaseTool } from "../ai/interaction/tools";
 
 // Define parameter type options
 const parameterTypeSchema = v.union([
