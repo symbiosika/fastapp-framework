@@ -46,8 +46,29 @@ export const registerPhoneNumerInWhatsAppAPI = async () => {
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      pin: "111111",
+      pin: "000000",
+      // cert: "CnMK...",
     }),
+  });
+  return await response.json();
+};
+
+/**
+ * Get the list of phone numbers associated with a WhatsApp Business Account
+ */
+export const getTelephoneNumber = async () => {
+  if (!process.env.WA_BUSINESS_ACCOUNT_ID) {
+    throw new Error(
+      "WA_BUSINESS_ACCOUNT_ID is not set in the environment variables"
+    );
+  }
+  const url = `https://graph.facebook.com/v22.0/${process.env.WA_BUSINESS_ACCOUNT_ID}/phone_numbers`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${process.env.CLOUD_API_ACCESS_TOKEN}`,
+      "Content-Type": "application/json",
+    },
   });
   return await response.json();
 };
