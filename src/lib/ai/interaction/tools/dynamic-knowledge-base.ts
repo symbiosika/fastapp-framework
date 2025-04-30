@@ -2,6 +2,7 @@ import type { ToolContext } from "../../ai-sdk/types";
 import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
 import { addEntryToToolMemory } from "../tools";
+import log from "../../../log";
 
 interface DynamicKnowledgeBaseParams {
   // Pre-selected filters
@@ -67,7 +68,8 @@ export function createDynamicKnowledgeBaseTool(
       // Get user context from the provided function
       const userContext = params.getUserContext();
       if (!userContext?.organisationId) {
-        throw new Error("Missing organisationId in user context");
+        log.error("Missing organisationId in user context");
+        return "Missing organisationId in user context";
       }
 
       try {
@@ -116,7 +118,8 @@ export function createDynamicKnowledgeBaseTool(
 
         return formattedResults;
       } catch (error: any) {
-        throw new Error(`Error querying knowledge base: ${error.message}`);
+        log.error("Error querying knowledge base", error);
+        return "Error querying knowledge base: " + error.message;
       }
     },
   });

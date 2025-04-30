@@ -59,8 +59,9 @@ export const getUrlParserTool = (context: ToolContext): ToolReturn => {
         // Return the formatted text directly
         return research.text;
       } catch (error: any) {
-        throw new Error(`Error fetching URL content: ${error.message}`);
-      }
+        log.error("Error fetching URL content", error);
+        return "Error fetching URL content: " + error.message;
+      } 
     },
   };
 

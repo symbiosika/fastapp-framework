@@ -3,21 +3,13 @@ import { type Tool } from "ai";
 import { jsonSchema } from "ai";
 import { createReplicate } from "@ai-sdk/replicate";
 import { experimental_generateImage as generateImage } from "ai";
-import { _GLOBAL_SERVER_CONFIG } from "../../../../store";
 import log from "../../../log";
 import { saveFile } from "../../../storage";
 import { addEntryToToolMemory } from "../tools";
 import type { ToolReturn, ToolContext } from "../../../..";
+import { getBaseUrl } from "./utils";
 
 export type ReplicateTools = "createImage";
-
-const getBaseUrl = () => {
-  let BASE_URL = _GLOBAL_SERVER_CONFIG.baseUrl;
-  if (BASE_URL.endsWith("/")) {
-    BASE_URL = BASE_URL.slice(0, -1);
-  }
-  return BASE_URL;
-};
 
 const REPLICATE_API_KEY = process.env.REPLICATE_API_KEY;
 const replicate = createReplicate({
@@ -133,7 +125,8 @@ export const getImageGeneratorTool = (context: ToolContext): ToolReturn => {
           url: `${getBaseUrl()}${savedFileMeta.path}`,
         });
       } catch (error: any) {
-        throw new Error(`Error generating images: ${error.message}`);
+        log.error("Error generating images", error);
+        return "Error generating images: " + error.message;
       }
     },
   };

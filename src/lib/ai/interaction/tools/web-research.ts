@@ -67,7 +67,8 @@ const getADefinedWebResearchTool = (
         // Return the formatted text directly
         return research.text;
       } catch (error: any) {
-        throw new Error(`Error researching web: ${error.message}`);
+        log.error("Error researching web", error);
+        return "Error researching web: " + error.message;
       }
     },
   };

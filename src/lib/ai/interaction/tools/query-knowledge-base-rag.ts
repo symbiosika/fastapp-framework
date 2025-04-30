@@ -1,5 +1,6 @@
 import { type Tool } from "ai";
 import { getNearestEmbeddings } from "../../knowledge/similarity-search";
+import log from "../../../log";
 
 // Knowledge base tool implementation
 export const queryKnowledgeBaseTool: Tool = {
@@ -96,7 +97,8 @@ export const queryKnowledgeBaseTool: Tool = {
 
       return formattedResults;
     } catch (error: any) {
-      throw new Error(`Error querying knowledge base: ${error.message}`);
+      log.error("Error querying knowledge base", error);
+      return "Error querying knowledge base: " + error.message;
     }
   },
 };

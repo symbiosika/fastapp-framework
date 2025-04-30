@@ -4,7 +4,7 @@ import { tool, jsonSchema } from "ai";
 import { getKnowledgeEntries } from "../../knowledge/get-knowledge";
 import { chatCompletionWithObjectOutput } from "../../ai-sdk/generate-object";
 import type { CoreMessage } from "ai";
-
+import log from "../../../log";
 const BASE_NAME = "rerankKnowledge";
 
 interface KnowledgeRerankerParams {
@@ -70,7 +70,8 @@ export function createKnowledgeRerankerTool(params: KnowledgeRerankerParams) {
       const { query } = args as QueryParams;
       const userContext = params.getUserContext();
       if (!userContext?.organisationId || !userContext?.userId) {
-        throw new Error("Missing organisationId or userId in user context");
+        log.error("Missing organisationId or userId in user context");
+        return "Missing organisationId or userId in user context";
       }
 
       try {
