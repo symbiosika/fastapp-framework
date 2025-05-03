@@ -34,7 +34,7 @@ export function createDynamicKnowledgeBaseTool(
   params: DynamicKnowledgeBaseParams
 ) {
   const toolId = nanoid(8);
-  const baseName = params.baseName || "queryKnowledgeBase";
+  const baseName = params.baseName || "query-knowledge-base";
   const toolName = `${baseName}_${toolId}`;
 
   const description =
