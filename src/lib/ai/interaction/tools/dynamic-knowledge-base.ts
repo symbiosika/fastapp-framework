@@ -3,6 +3,11 @@ import { nanoid } from "nanoid";
 import { tool, jsonSchema } from "ai";
 import { addEntryToToolMemory } from "../tools";
 import log from "../../../log";
+import {
+  getAiProviderModelByProviderAndModel,
+  splitModelString,
+} from "../../models";
+import { getNearestEmbeddings } from "../../knowledge/similarity-search";
 
 interface DynamicKnowledgeBaseParams {
   // Pre-selected filters
@@ -17,6 +22,8 @@ interface DynamicKnowledgeBaseParams {
   addBeforeN?: number;
   addAfterN?: number;
   n?: number;
+  // AI model
+  model?: string;
   // User context for execution
   getUserContext: () => ToolContext;
 }
@@ -30,12 +37,23 @@ interface QueryParams {
  * The tool ID is used as a unique name to create multiple tools with
  * different filter configurations
  */
-export function createDynamicKnowledgeBaseTool(
+export async function createDynamicKnowledgeBaseTool(
   params: DynamicKnowledgeBaseParams
 ) {
   const toolId = nanoid(8);
   const baseName = params.baseName || "query-knowledge-base";
   const toolName = `${baseName}_${toolId}`;
+
+  const modelString =
+    params.model ||
+    (process.env.DEFAULT_CHAT_COMPLETION_MODEL ?? "openai:gpt-4o-mini");
+  const { provider, model } = splitModelString(modelString);
+
+  const modelConfig = await getAiProviderModelByProviderAndModel(
+    params.getUserContext().organisationId,
+    provider,
+    model
+  );
 
   const description =
     params.customDescription ||
@@ -74,9 +92,6 @@ export function createDynamicKnowledgeBaseTool(
 
       try {
         // Import getNearestEmbeddings from the original tool
-        const { getNearestEmbeddings } = await import(
-          "../../knowledge/similarity-search"
-        );
 
         // Combine parameters with pre-selected filters
         const { n = 3, addBeforeN = 0, addAfterN = 0 } = params;

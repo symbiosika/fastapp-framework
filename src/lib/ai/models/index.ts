@@ -62,6 +62,17 @@ export const getAvailableApiKeys = (): {
 };
 
 /**
+ * Get provider and model from modelString
+ */
+export function splitModelString(modelString: string): {
+  provider: string;
+  model: string;
+} {
+  const [provider, model] = modelString.split(":");
+  return { provider, model };
+}
+
+/**
  * Get all AI provider models for an organisation
  */
 export async function getAllAiProviderModels(

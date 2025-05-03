@@ -18,7 +18,8 @@ interface DynamicTool {
 export const checkAndRegisterDynamicTool = async (
   query: KnowledgeQuery,
   type: "rag",
-  context: ToolContext
+  context: ToolContext,
+  model?: string
 ): Promise<DynamicTool | undefined> => {
   // Skip if no knowledge filters are selected
   if (
@@ -30,12 +31,13 @@ export const checkAndRegisterDynamicTool = async (
   }
 
   // Create the tool with explicit parameters
-  const tool = createDynamicKnowledgeBaseTool({
+  const tool = await createDynamicKnowledgeBaseTool({
     knowledgeEntryIds: query.knowledgeEntries?.map((entry) => entry.id) || [],
     knowledgeFilterIds:
       query.knowledgeFilters?.map((filter) => filter.id) || [],
     knowledgeGroupIds: query.knowledgeGroups?.map((group) => group.id) || [],
     getUserContext: () => context,
+    model: model,
   });
 
   // Register the tool
