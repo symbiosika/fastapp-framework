@@ -329,6 +329,26 @@ export async function chatCompletion(
           },
         });
       },
+
+      onError: (error) => {
+        log.error("Error in chat completion", {
+          category: "ai",
+          chatId: context.chatId,
+          error,
+        });
+        log.logToDB({
+          level: "error",
+          organisationId: context?.organisationId,
+          sessionId: context?.userId,
+          source: "ai",
+          category: "text-generation",
+          message: "text-generation-error",
+          metadata: {
+            error,
+          },
+        });
+        throw new Error("Failed to generate chat completion");
+      },
     });
 
     // Process the text stream in chunks
