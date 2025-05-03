@@ -121,6 +121,29 @@ export async function getAiProviderModelById(
 }
 
 /**
+ * Get a single AI model by provider and model name
+ */
+export async function getAiProviderModelByProviderAndModel(
+  organisationId: string,
+  provider: string,
+  model: string
+): Promise<AiProviderModelsSelect> {
+  const selectedModel = await getDb().query.aiProviderModels.findFirst({
+    where: and(
+      eq(aiProviderModels.organisationId, organisationId),
+      eq(aiProviderModels.provider, provider),
+      eq(aiProviderModels.model, model)
+    ),
+  });
+
+  if (!selectedModel) {
+    throw new Error("Model not found");
+  }
+
+  return selectedModel;
+}
+
+/**
  * Create a new AI provider model
  */
 export async function createAiProviderModel(

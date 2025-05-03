@@ -5,8 +5,12 @@ import { google } from "@ai-sdk/google";
 import { azure } from "@ai-sdk/azure";
 import { perplexity } from "@ai-sdk/perplexity";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { getAllAiProviderModels } from "../models";
+import {
+  getAiProviderModelByProviderAndModel,
+  getAllAiProviderModels,
+} from "../models";
 import type { OrganisationContext } from "./types";
+import log from "../../log";
 
 /**
  * Gets a Vercel AI SDK compatible model from a provider:model string
@@ -16,7 +20,10 @@ import type { OrganisationContext } from "./types";
  * @returns Vercel AI SDK compatible model
  * @throws Error if model is not found, not active, or provider is unsupported
  */
-export const getAIModel = async (modelString: string, context: OrganisationContext) => {
+export const getAIModel = async (
+  modelString: string,
+  context: OrganisationContext
+) => {
   let [providerName, modelName] = modelString.split(":");
 
   if (!providerName || !modelName) {
@@ -29,16 +36,11 @@ export const getAIModel = async (modelString: string, context: OrganisationConte
   }
 
   // Get all models from DB
-  const allModels = await getAllAiProviderModels(context.organisationId);
-
-  // Find the requested model
-  const modelConfig = allModels.find(
-    (m) => m.provider === providerName && m.model === modelName && m.active
+  const modelConfig = await getAiProviderModelByProviderAndModel(
+    context.organisationId,
+    providerName,
+    modelName
   );
-
-  if (!modelConfig) {
-    throw new Error(`Model ${modelString} not found or not active`);
-  }
 
   // Create and return the appropriate model based on provider
   switch (providerName.toLowerCase()) {
@@ -71,6 +73,12 @@ export const getAIModel = async (modelString: string, context: OrganisationConte
             `API key for ${modelConfig.provider} is not set in environment variables`
           );
         }
+        log.debug(
+          "Creating OpenAI compatible model " +
+            modelName +
+            " for " +
+            providerName
+        );
         return createOpenAICompatible({
           baseURL: modelConfig.endpoint,
           name: providerName,
@@ -93,7 +101,7 @@ export const getAIModel = async (modelString: string, context: OrganisationConte
 export const getAIEmbeddingModel = async (
   modelString: string,
   context: OrganisationContext
-) => {
+): Promise<ReturnType<typeof openai.textEmbeddingModel>> => {
   const [providerName, modelName] = modelString.split(":");
 
   if (!providerName || !modelName) {
