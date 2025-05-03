@@ -246,11 +246,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         },
       },
     }),
-    validateScope("ai:chat-history:read"),
     validator(
       "param",
       v.object({ organisationId: v.string(), id: v.string() })
     ),
+    validateScope("ai:chat-history:read"),
+    validateScope("ai:chat-history:{{id}}", true),
     isOrganisationMember,
     async (c) => {
       try {
