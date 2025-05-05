@@ -57,6 +57,7 @@ type UserInfo = {
 export type EmailTemplateFunction = (data: {
   appName: string;
   baseUrl: string;
+  logoUrl?: string;
   link?: string;
   user?: UserInfo;
   organisation?: {
@@ -74,6 +75,7 @@ export interface ServerSpecificConfig {
   appName?: string;
   basePath?: string;
   baseUrl?: string;
+  logoUrl?: string;
 
   authType?: "local" | "auth0";
   jwtExpiresAfter?: number;

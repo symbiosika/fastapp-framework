@@ -20,6 +20,7 @@ export const _GLOBAL_SERVER_CONFIG = {
   port: 3000,
   basePath: "/api/v1/",
   baseUrl: "http://localhost:3000",
+  logoUrl: undefined as string | undefined,
   allowedOrigins: <string[]>[],
   authType: <"local" | "auth0">"local",
   jwtExpiresAfter: 60 * 60 * 24 * 30, // 30 days
@@ -52,6 +53,7 @@ export const setGlobalServerConfig = (config: ServerSpecificConfig) => {
   _GLOBAL_SERVER_CONFIG.basePath = config.basePath ?? "/api/v1";
   _GLOBAL_SERVER_CONFIG.baseUrl =
     config.baseUrl ?? process.env.BASE_URL ?? "http://localhost:3000";
+  _GLOBAL_SERVER_CONFIG.logoUrl = config.logoUrl ?? undefined;
 
   if (_GLOBAL_SERVER_CONFIG.basePath.endsWith("/")) {
     _GLOBAL_SERVER_CONFIG.basePath = _GLOBAL_SERVER_CONFIG.basePath.slice(

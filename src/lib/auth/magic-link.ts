@@ -78,6 +78,7 @@ export const sendMagicLink = async (
   const { html, subject } =
     await _GLOBAL_SERVER_CONFIG.emailTemplates.magicLink({
       appName: _GLOBAL_SERVER_CONFIG.appName,
+      logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
       baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
       link: magicLink,
     });
@@ -104,6 +105,7 @@ export const sendVerificationEmail = async (email: string) => {
   const { html, subject } =
     await _GLOBAL_SERVER_CONFIG.emailTemplates.verifyEmail({
       appName: _GLOBAL_SERVER_CONFIG.appName,
+      logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
       baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
       link: magicLink,
     });
@@ -246,6 +248,7 @@ export const sendResetPasswordLink = async (
     const welcomeMail =
       await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPasswordWelcome({
         appName: _GLOBAL_SERVER_CONFIG.appName,
+        logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
         baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
         link: resetLink,
       });
@@ -254,6 +257,7 @@ export const sendResetPasswordLink = async (
   } else {
     const resetMail = await _GLOBAL_SERVER_CONFIG.emailTemplates.resetPassword({
       appName: _GLOBAL_SERVER_CONFIG.appName,
+      logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
       baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
       link: resetLink,
     });

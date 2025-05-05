@@ -269,6 +269,7 @@ export const createOrganisationInvitation = async (
           {
             appName: _GLOBAL_SERVER_CONFIG.appName,
             baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+            logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
             link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/static/app/#/shared/organisations`,
             user: {
               firstname: user.firstname,
@@ -294,6 +295,7 @@ export const createOrganisationInvitation = async (
         await _GLOBAL_SERVER_CONFIG.emailTemplates.inviteToOrganization({
           appName: _GLOBAL_SERVER_CONFIG.appName,
           baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
+          logoUrl: _GLOBAL_SERVER_CONFIG.logoUrl,
           link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true&email=${encodeURIComponent(dataWithStatus.email)}&hideInvitationCode=true`,
           organisation: {
             id: dataWithStatus.organisationId,
