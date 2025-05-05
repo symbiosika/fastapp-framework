@@ -59,6 +59,10 @@ export type EmailTemplateFunction = (data: {
   baseUrl: string;
   link?: string;
   user?: UserInfo;
+  organisation?: {
+    id: string;
+    name: string;
+  };
 }) => Promise<{ html: string; subject: string }>;
 
 export type WhatsAppIncomingWebhookHandler = (

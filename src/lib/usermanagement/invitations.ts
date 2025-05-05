@@ -233,6 +233,14 @@ export const createOrganisationInvitation = async (
     status: data.status || "pending",
   };
 
+  const [org] = await getDb()
+    .select({
+      name: organisations.name,
+    })
+    .from(organisations)
+    .where(eq(organisations.id, dataWithStatus.organisationId))
+    .limit(1);
+
   const [result] = await getDb()
     .insert(organisationInvitations)
     .values(dataWithStatus)
@@ -262,6 +270,15 @@ export const createOrganisationInvitation = async (
             appName: _GLOBAL_SERVER_CONFIG.appName,
             baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
             link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/static/app/#/shared/organisations`,
+            user: {
+              firstname: user.firstname,
+              surname: user.surname,
+              email: user.email,
+            },
+            organisation: {
+              id: dataWithStatus.organisationId,
+              name: org.name,
+            },
           }
         );
       await smtpService.sendMail({
@@ -278,6 +295,10 @@ export const createOrganisationInvitation = async (
           appName: _GLOBAL_SERVER_CONFIG.appName,
           baseUrl: _GLOBAL_SERVER_CONFIG.baseUrl,
           link: `${_GLOBAL_SERVER_CONFIG.baseUrl || "http://localhost:3000"}/manage/#/login?register=true&email=${encodeURIComponent(dataWithStatus.email)}&hideInvitationCode=true`,
+          organisation: {
+            id: dataWithStatus.organisationId,
+            name: org.name,
+          },
         });
       await smtpService.sendMail({
         sender: process.env.SMTP_FROM,
