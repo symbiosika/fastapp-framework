@@ -274,8 +274,11 @@ export const LocalAuth = {
       invitationCode?: string;
     }
   ) {
+    log.info(`Registering user: ${email}`);
+    
     // go through all pre-register custom verifications
     for (const verification of preRegisterCustomVerifications) {
+      log.info(`Running pre-register custom verification`);
       const r = await verification(email, meta);
       if (!r.success) {
         throw "Custom verification failed: " + r.message;
@@ -326,6 +329,7 @@ export const LocalAuth = {
 
     // go through all post-register actions
     for (const action of postRegisterActions) {
+      log.info(`Running post-register action`);
       await action(user.id, user.email);
     }
 
