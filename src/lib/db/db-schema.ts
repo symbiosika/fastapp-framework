@@ -20,6 +20,7 @@ import * as server from "./schema/server";
 import * as models from "./schema/models";
 import * as apiTokens from "./schema/api-tokens";
 import * as avatars from "./schema/avatars";
+import * as mcp from "./schema/mcp";
 
 // export all tables for drizzle-kit
 export * from "./schema/users";
@@ -40,6 +41,7 @@ export * from "./schema/server";
 export * from "./schema/models";
 export * from "./schema/api-tokens";
 export * from "./schema/avatars";
+export * from "./schema/mcp";
 
 const baseDbSchema = {
   ...userTables,
@@ -60,6 +62,7 @@ const baseDbSchema = {
   ...models,
   ...apiTokens,
   ...avatars,
+  ...mcp,
 };
 
 let validTableNames: string[] = [];
