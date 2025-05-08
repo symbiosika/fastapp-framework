@@ -18,43 +18,7 @@ import {
   getMcpConfigForUser,
   saveMcpTokensForUser,
 } from "../../../../../lib/ai/mcp/crud";
-
-
-/*
-
-https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
-/.well-known/oauth-authorization-server
-https://mcp.atlassian.com/.well-known/oauth-authorization-server
-
-
-{
-  "issuer": "https://atlassian-remote-mcp-production.atlassian-remote-mcp-server-production.workers.dev",
-  "authorization_endpoint": "https://mcp.atlassian.com/v1/authorize",
-  "token_endpoint": "https://atlassian-remote-mcp-production.atlassian-remote-mcp-server-production.workers.dev/v1/token",
-  "registration_endpoint": "https://atlassian-remote-mcp-production.atlassian-remote-mcp-server-production.workers.dev/v1/register",
-  "response_types_supported": [
-    "code"
-  ],
-  "response_modes_supported": [
-    "query"
-  ],
-  "grant_types_supported": [
-    "authorization_code",
-    "refresh_token"
-  ],
-  "token_endpoint_auth_methods_supported": [
-    "client_secret_basic",
-    "client_secret_post",
-    "none"
-  ],
-  "revocation_endpoint": "https://atlassian-remote-mcp-production.atlassian-remote-mcp-server-production.workers.dev/v1/token",
-  "code_challenge_methods_supported": [
-    "plain",
-    "S256"
-  ]
-}
-
- */
+import { getMcpEndpoints } from "../../../../../lib/ai/mcp/discover";
 
 /**
  * Define the AI provider models management routes
@@ -66,12 +30,12 @@ export default function defineModelRoutes(
   /**
    * MCP Start Auth Flow
    */
-  app.post(
-    API_BASE_PATH + "/organisation/ai/mcp/start",
+  app.get(
+    API_BASE_PATH + "/oauth/start/:mcpServerId",
     authAndSetUsersInfo,
     describeRoute({
-      method: "post",
-      path: "/organisation/ai/mcp/start",
+      method: "get",
+      path: "/oauth/start/:mcpServerId",
       tags: ["ai", "mcp"],
       summary: "MCP Start Auth Flow",
       responses: {
@@ -81,31 +45,33 @@ export default function defineModelRoutes(
       },
     }),
     validator(
-      "json",
+      "param",
       v.object({
         mcpServerId: v.string(),
       })
     ),
-    isOrganisationMember,
     async (c) => {
       try {
-        const { mcpServerId } = c.req.valid("json");
+        const { mcpServerId } = c.req.valid("param");
         const userId = c.get("usersId");
 
         const mcpConfig = await getMcpConfigForUser(userId, mcpServerId);
-
         const state = await sign({ mcpConfig, userId: userId }, "secret");
+        const endpoints = await getMcpEndpoints(mcpConfig.mcpServerUrl);
 
         const authorizeUrl =
-          `${mcpConfig.authorizeUrl}?` +
+          endpoints.authorizationEndpoint +
+          "?" +
           new URLSearchParams({
             response_type: "code",
             client_id: mcpConfig.clientId,
-            redirect_uri: `${_GLOBAL_SERVER_CONFIG.baseUrl}/organisation/ai/mcp`,
+            redirect_uri: `${_GLOBAL_SERVER_CONFIG.baseUrl}${API_BASE_PATH}/oauth/callback`,
             state,
-            scope: "mcp.read mcp.write", // TO BE CHANGED!
+            scope: "read:me", // TO BE CHANGED!
           });
 
+        log.debug("authorizeUrl", authorizeUrl);
+        // return c.redirect(authorizeUrl);
         return c.json({ authorizeUrl });
       } catch (error) {
         throw new HTTPException(500, {
@@ -119,10 +85,10 @@ export default function defineModelRoutes(
    * MCP Auth Callback
    */
   app.get(
-    API_BASE_PATH + "/organisation//ai/mcp",
+    API_BASE_PATH + "/oauth/callback",
     describeRoute({
       method: "get",
-      path: "/organisation/ai/mcp",
+      path: "/oauth/callback",
       tags: ["ai", "mcp"],
       summary: "MCP Auth Callback",
       responses: {
@@ -136,9 +102,12 @@ export default function defineModelRoutes(
     async (c) => {
       try {
         const { code, state } = c.req.valid("query");
-        const { mcpConfig, userId } = JSON.parse(state); // Aus Sicherheitsgründen vorher in JWT packen!
+        log.debug("MCP Auth Callback", { code, state });
 
-        // Token anfordern
+        const { mcpConfig, userId } = JSON.parse(state); // Aus Sicherheitsgründen vorher in JWT packen!
+        log.debug("MCP Auth Callback", { mcpConfig, userId });
+
+        // Get Access Token
         const request = {
           method: "POST",
           headers: {
@@ -147,18 +116,28 @@ export default function defineModelRoutes(
           body: new URLSearchParams({
             grant_type: "authorization_code",
             code,
-            redirect_uri: `${_GLOBAL_SERVER_CONFIG.baseUrl}/organisation/ai/mcp`,
+            redirect_uri: `${_GLOBAL_SERVER_CONFIG.baseUrl}${API_BASE_PATH}/oauth/callback`,
             client_id: mcpConfig.clientId,
             client_secret: mcpConfig.clientSecret,
           }),
         };
         log.debug("MCP Auth Callback", request);
-        const response = await fetch(mcpConfig.tokenUrl, request);
+        const response = await fetch(mcpConfig.tokenEndpoint, request);
 
+        if (!response.ok) {
+          throw new HTTPException(500, {
+            message:
+              "Failed to get access token." +
+              (await response.text()) +
+              " " +
+              JSON.stringify(request),
+          });
+        }
         const tokens = await response.json();
 
         // Tokens sicher speichern, z.B. in DB
-        await saveMcpTokensForUser(userId, mcpConfig.baseUrl, tokens);
+        await saveMcpTokensForUser(userId, mcpConfig.mcpServerUrl, tokens);
+        log.debug("MCP Auth Callback", { tokens });
 
         return c.redirect("/");
       } catch (error) {

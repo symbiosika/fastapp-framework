@@ -106,7 +106,7 @@ export async function getValidAccessToken(
 
     if (!server) throw new Error("Server not found");
 
-    const res = await fetch(server.tokenUrl, {
+    const res = await fetch(server.mcpServerUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({

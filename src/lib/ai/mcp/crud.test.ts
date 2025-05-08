@@ -32,11 +32,9 @@ describe("MCP CRUD", () => {
       userId: TEST_ORG1_USER_1.id,
       organisationId: TEST_ORGANISATION_1.id,
       name: "Test MCP Server",
-      baseUrl: "https://example.com",
+      mcpServerUrl: "https://example.com",
       clientId: "client-id",
       clientSecret: "client-secret",
-      authorizeUrl: "https://example.com/auth",
-      tokenUrl: "https://example.com/token",
     });
     expect(server).toBeDefined();
     expect(server.userId).toBe(TEST_ORG1_USER_1.id);
@@ -69,11 +67,9 @@ describe("MCP CRUD", () => {
       userId: TEST_ORG1_USER_2.id,
       organisationId: TEST_ORGANISATION_1.id,
       name: "Token Test Server",
-      baseUrl: "https://example.com",
+      mcpServerUrl: "https://example.com",
       clientId: "client-id",
       clientSecret: "client-secret",
-      authorizeUrl: "https://example.com/auth",
-      tokenUrl: "https://example.com/token",
     });
     expect(server2).toBeDefined();
     server2Id = server2.id;

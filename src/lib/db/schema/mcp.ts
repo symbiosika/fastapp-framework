@@ -19,11 +19,9 @@ export const mcpServers = pgBaseTable(
       .notNull()
       .references(() => organisations.id),
     name: text("name").notNull(),
-    baseUrl: text("base_url").notNull(),
+    mcpServerUrl: text("mcp_server_url").notNull(),
     clientId: text("client_id").notNull(),
     clientSecret: text("client_secret").notNull(),
-    authorizeUrl: text("authorize_url").notNull(),
-    tokenUrl: text("token_url").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => [

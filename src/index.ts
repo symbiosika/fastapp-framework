@@ -48,6 +48,7 @@ import defineToolsRoutes from "./routes/organisation/[organisationId]/ai/tools";
 import aiImagesRoutes from "./routes/organisation/[organisationId]/ai/images";
 import aiModelsRoutes from "./routes/organisation/[organisationId]/ai/models";
 import aiChatRoutes from "./routes/organisation/[organisationId]/ai/chat";
+import aiMcpRoutes from "./routes/organisation/[organisationId]/ai/mcp";
 import defineOrganisationRoutes from "./routes/organisation";
 import defineTeamRoutes from "./routes/organisation/[organisationId]/teams";
 import definePermissionGroupRoutes from "./routes/organisation/[organisationId]/permission-groups";
@@ -299,6 +300,7 @@ export const defineServer = (config: ServerSpecificConfig) => {
       aiModelsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       aiAvatarsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
       defineToolsRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
+      aiMcpRoutes(app, _GLOBAL_SERVER_CONFIG.basePath);
 
       /**
        * Add communication routes
