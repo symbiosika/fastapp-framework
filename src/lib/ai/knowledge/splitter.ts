@@ -43,45 +43,57 @@ export const splitTextIntoSectionsOrChunks = (
   return chunks;
 };
 
+// Helper function to join tokens with spaces between words, preserving newlines
+function joinTokensWithSpacesAndNewlines(tokens: string[]): string {
+  let result = "";
+  for (let i = 0; i < tokens.length; i++) {
+    result += tokens[i];
+    // Add a space if both current and next token are not newlines
+    if (
+      tokens[i] !== "\n" &&
+      tokens[i + 1] !== undefined &&
+      tokens[i + 1] !== "\n"
+    ) {
+      result += " ";
+    }
+  }
+  return result;
+}
+
 /**
  * Helper function to split a single text string into chunks
  */
 const splitSingleTextIntoChunks = (text: string): Chunk[] => {
-  // Count words in text
-  const totalWords = text.trim().split(/\s+/).length;
-
-  // If text is short enough, return it as one chunk
-  if (totalWords <= MAX_WORDS_PER_CHUNK) {
-    return [{ text, header: undefined, order: 0 }];
-  }
-
-  // Split text into chunks
-  const chunks: Chunk[] = [];
-  const words = text.split(/\s+/);
-  let currentChunkWords: string[] = [];
+  // Split text into tokens, wobei Zeilenumbrüche als eigene Tokens erhalten bleiben
+  const tokens = text.match(/[^\s\n]+|\n/g) || [];
+  let currentChunkTokens: string[] = [];
   let order = 0;
+  const chunks: Chunk[] = [];
+  let wordCount = 0;
 
-  for (const word of words) {
-    currentChunkWords.push(word);
-
-    if (currentChunkWords.length >= MAX_WORDS_PER_CHUNK) {
+  for (const token of tokens) {
+    currentChunkTokens.push(token);
+    // Zähle nur echte Wörter, keine Zeilenumbrüche
+    if (token !== "\n") {
+      wordCount++;
+    }
+    if (wordCount >= MAX_WORDS_PER_CHUNK) {
       chunks.push({
-        text: currentChunkWords.join(" "),
+        text: joinTokensWithSpacesAndNewlines(currentChunkTokens),
         header: undefined,
         order: order++,
       });
-      currentChunkWords = [];
+      currentChunkTokens = [];
+      wordCount = 0;
     }
   }
-
   // Add the last chunk if not empty
-  if (currentChunkWords.length > 0) {
+  if (currentChunkTokens.length > 0) {
     chunks.push({
-      text: currentChunkWords.join(" "),
+      text: joinTokensWithSpacesAndNewlines(currentChunkTokens),
       header: undefined,
       order: order,
     });
   }
-
   return chunks;
 };
