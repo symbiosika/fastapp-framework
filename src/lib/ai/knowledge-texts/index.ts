@@ -1,5 +1,6 @@
 import log from "../../log";
 import { extractKnowledgeFromText } from "../knowledge/add-knowledge";
+import { applyPostProcessors } from "../parsing/pre-processors";
 import { getMarkdownFromUrl } from "../parsing/url";
 
 /**
@@ -13,6 +14,7 @@ export const addKnowledgeTextFromUrl = async (data: {
   teamId?: string;
   workspaceId?: string;
   userOwned?: boolean;
+  usePostProcessors?: string[];
 }) => {
   // regex validation for the URL
   const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
@@ -21,6 +23,13 @@ export const addKnowledgeTextFromUrl = async (data: {
   }
 
   const markdown = await getMarkdownFromUrl(data.url);
+
+  const processedMarkdown = await applyPostProcessors(
+    markdown,
+    data.organisationId,
+    data.usePostProcessors
+  );
+
   log.debug(`Got markdown from URL: ${markdown.slice(0, 25)}`);
 
   return extractKnowledgeFromText({
@@ -31,7 +40,7 @@ export const addKnowledgeTextFromUrl = async (data: {
     userId: data.userId,
     userOwned: data.userOwned,
     title: data.url,
-    text: markdown,
+    text: processedMarkdown,
     sourceType: "external",
     sourceFileBucket: "default",
     sourceUrl: data.url,

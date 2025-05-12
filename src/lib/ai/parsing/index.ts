@@ -8,6 +8,7 @@ import { getDb } from "../../../lib/db/db-connection";
 import { eq } from "drizzle-orm";
 import type { PageContent } from "./pdf/index.d";
 import { generateImageDescription } from "../ai-sdk";
+import { applyPostProcessors } from "./pre-processors";
 
 /**
  * Helper function to parse a file and return the text content and pages if available
@@ -82,6 +83,7 @@ export const parseDocument = async (data: {
   workspaceId?: string;
   model?: string;
   extractImages?: boolean;
+  usePostProcessors?: string[];
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let content: string = "";
@@ -175,6 +177,18 @@ export const parseDocument = async (data: {
     );
   }
   log.debug(`File parsed. Content length: ${content.length}`);
+
+  // Apply post processors if requested
+  if (data.usePostProcessors && data.usePostProcessors.length > 0) {
+    content = await applyPostProcessors(
+      content,
+      data.organisationId,
+      data.usePostProcessors
+    );
+    // set pages to undefined since we don't have pages after post processing
+    pages = undefined;
+    // Optionally, also update pages if needed (not implemented here)
+  }
 
   return { content, pages, title, includesImages: docIncludesImages };
 };

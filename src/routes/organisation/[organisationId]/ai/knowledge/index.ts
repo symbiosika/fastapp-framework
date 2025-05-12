@@ -46,6 +46,10 @@ import {
   upsertFilter,
 } from "../../../../../lib/ai/knowledge/knowledge-filters";
 import { validateScope } from "../../../../../lib/utils/validate-scope";
+import {
+  applyPostProcessors,
+  getAllPostProcessors,
+} from "../../../../../lib/ai/parsing/pre-processors";
 
 const FileSourceType = {
   DB: "db",
@@ -68,6 +72,7 @@ const generateKnowledgeValidation = v.object({
   workspaceId: v.optional(v.string()),
   knowledgeGroupId: v.optional(v.string()),
   model: v.optional(v.string()), // mistral | llama | local
+  usePostProcessors: v.optional(v.array(v.string())),
   extractImages: v.optional(v.boolean()),
   generateSummary: v.optional(v.boolean()),
   summaryCustomPrompt: v.optional(v.string()),
@@ -135,6 +140,7 @@ const addFromTextValidation = v.object({
       sourceId: v.string(),
     })
   ),
+  usePostProcessors: v.optional(v.array(v.string())),
 });
 
 const addFromUrlValidation = v.object({
@@ -146,6 +152,7 @@ const addFromUrlValidation = v.object({
   workspaceId: v.optional(v.string()),
   knowledgeGroupId: v.optional(v.string()),
   userOwned: v.optional(v.boolean()),
+  usePostProcessors: v.optional(v.array(v.string())),
 });
 
 const uploadAndLearnValidation = v.object({
@@ -164,6 +171,7 @@ const uploadAndLearnValidation = v.object({
     })
   ),
   model: v.optional(v.string()), // mistral | llama | local
+  usePostProcessors: v.optional(v.array(v.string())),
   extractImages: v.optional(v.boolean()),
   generateSummary: v.optional(v.boolean()),
   summaryCustomPrompt: v.optional(v.string()),
@@ -474,7 +482,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
   );
 
   /**
-   * Parse a knowledge-text entry to a knowledge entry
+   * Parse a existing file to a knowledge entry
    * That means it will be splitted, embeddings will be created, store as knowledge-entry
    */
   app.post(
@@ -485,7 +493,7 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       method: "post",
       path: "/organisation/:organisationId/ai/knowledge/parse-document",
       tags: ["knowledge"],
-      summary: "Parse a knowledge-text entry to a knowledge entry",
+      summary: "Parse a existing file to a knowledge entry",
       responses: {
         200: {
           description: "Successful response",
@@ -745,11 +753,17 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         const { organisationId } = c.req.valid("param");
         validateOrganisationId(data, organisationId);
 
+        const text = await applyPostProcessors(
+          data.text,
+          organisationId,
+          data.usePostProcessors
+        );
+
         const r = await extractKnowledgeFromText({
           userId: c.get("usersId"),
           organisationId: data.organisationId,
           title: data.title,
-          text: data.text,
+          text,
           filters: data.filters,
           teamId: data.teamId,
           workspaceId: data.workspaceId,
@@ -799,12 +813,12 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
     isOrganisationMember,
     async (c) => {
       try {
-        const body = c.req.valid("json");
+        const data = c.req.valid("json");
         const { organisationId } = c.req.valid("param");
-        validateOrganisationId(body, organisationId);
+        validateOrganisationId(data, organisationId);
 
         const r = await addKnowledgeTextFromUrl({
-          ...body,
+          ...data,
           organisationId,
           userId: c.get("usersId"),
         });
@@ -1126,6 +1140,52 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
         await removeFilterFromKnowledgeEntry(id, filterId, organisationId);
 
         return c.json(RESPONSES.SUCCESS);
+      } catch (e) {
+        throw new HTTPException(400, { message: e + "" });
+      }
+    }
+  );
+
+  /**
+   * List all registered post processors (read-only)
+   */
+  app.get(
+    API_BASE_PATH +
+      "/organisation/:organisationId/ai/knowledge/post-processors",
+    authAndSetUsersInfo,
+    checkUserPermission,
+    describeRoute({
+      method: "get",
+      path: "/organisation/:organisationId/ai/knowledge/post-processors",
+      tags: ["knowledge"],
+      summary: "List all registered post processors",
+      responses: {
+        200: {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: resolver(
+                v.array(
+                  v.object({
+                    name: v.string(),
+                    label: v.string(),
+                    description: v.string(),
+                  })
+                )
+              ),
+            },
+          },
+        },
+      },
+    }),
+    validateScope("ai:knowledge:read"),
+    validator("param", v.object({ organisationId: v.string() })),
+    isOrganisationMember,
+    async (c) => {
+      try {
+        // No organisation-specific filtering for now
+        const processors = await getAllPostProcessors();
+        return c.json(processors);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
       }

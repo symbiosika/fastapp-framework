@@ -246,6 +246,7 @@ export const extractKnowledgeFromExistingDbEntry = async (data: {
   generateSummary?: boolean;
   summaryCustomPrompt?: string;
   summaryModel?: string;
+  usePostProcessors?: string[];
 }) => {
   // Get the file (from DB or local disc) or content from URL
   let { content, pages, title, includesImages } = await parseDocument(data);
@@ -323,6 +324,8 @@ export const extractKnowledgeInOneStep = async (
     generateSummary?: boolean;
     summaryCustomPrompt?: string;
     summaryModel?: string;
+    model?: string;
+    usePostProcessors?: string[];
   },
   overwrite?: boolean
 ) => {

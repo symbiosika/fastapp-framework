@@ -83,6 +83,8 @@ export const processKnowledgeSync = async (params: {
   teamId?: string;
   userId?: string;
   workspaceId?: string;
+  model?: string;
+  usePostProcessors?: string[];
 }) => {
   // Check if content needs to be updated
   const { needsUpdate, existingSource } = await checkIfKnowledgeNeedsUpdate({

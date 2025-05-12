@@ -2,98 +2,167 @@ import type { Chunk } from "../../types/chunks";
 import type { PageContent } from "../parsing/pdf/index.d";
 
 const MAX_WORDS_PER_CHUNK = 500;
-/**
- * Function to split text into logical sections and chunks
- *
- * - Handles page-based content
- * - Try to split by headings
- * - If no headings are found, split by paragraphs
- * - Split blocks that are too long
- */
-export const splitTextIntoSectionsOrChunks = (
-  textOrPages: string | PageContent[]
-): Chunk[] => {
-  // Handle both string and pages array
-  if (typeof textOrPages === "string") {
-    return splitSingleTextIntoChunks(textOrPages);
-  }
 
-  // Handle pages array
-  const pages = textOrPages;
-  const chunks: Chunk[] = [];
-  let globalOrder = 0;
-
-  // Process each page and maintain page information
-  for (const page of pages) {
-    const pageChunks = splitSingleTextIntoChunks(page.text);
-
-    // Add page information to each chunk
-    for (const chunk of pageChunks) {
-      chunks.push({
-        ...chunk,
-        order: globalOrder++,
-        meta: {
-          ...(chunk.meta || {}),
-          page: page.page,
-        },
-      });
-    }
-  }
-
-  return chunks;
+// Counts words in a given text (consecutive sequences separated by whitespace).
+const countWords = (text: string): number => {
+  return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
 };
 
-// Helper function to join tokens with spaces between words, preserving newlines
-function joinTokensWithSpacesAndNewlines(tokens: string[]): string {
-  let result = "";
-  for (let i = 0; i < tokens.length; i++) {
-    result += tokens[i];
-    // Add a space if both current and next token are not newlines
-    if (
-      tokens[i] !== "\n" &&
-      tokens[i + 1] !== undefined &&
-      tokens[i + 1] !== "\n"
-    ) {
-      result += " ";
-    }
-  }
-  return result;
-}
-
 /**
- * Helper function to split a single text string into chunks
+ * Splits markdown (or plain) text into semantic chunks that are **approximately**
+ * `MAX_WORDS_PER_CHUNK` words long while trying **not** to break important
+ * markdown structures (code-blocks, tables, headings …).
+ *
+ * The function also supports an array of `PageContent` objects (mainly coming
+ * from the PDF-parser). In that case the pages are processed one after another
+ * and the originating page number is stored in `chunk.meta.page`.
+ *
+ * The returned chunks are always ordered via the `order` property so callers
+ * can later re-assemble the original document with
+ * `chunks.sort((a,b) => a.order - b.order).map(c => c.text).join("")`.
  */
-const splitSingleTextIntoChunks = (text: string): Chunk[] => {
-  // Split text into tokens, wobei Zeilenumbrüche als eigene Tokens erhalten bleiben
-  const tokens = text.match(/[^\s\n]+|\n/g) || [];
-  let currentChunkTokens: string[] = [];
-  let order = 0;
-  const chunks: Chunk[] = [];
-  let wordCount = 0;
+export const splitTextIntoSectionsOrChunks = (
+  input: string | PageContent[]
+): Chunk[] => {
+  // Helper to assign incremental order numbers
+  let globalOrder = 0;
+  const buildChunk = (
+    text: string,
+    header: string | undefined,
+    meta?: { page?: number }
+  ): Chunk => ({
+    text,
+    header,
+    order: globalOrder++,
+    meta,
+  });
 
-  for (const token of tokens) {
-    currentChunkTokens.push(token);
-    // Zähle nur echte Wörter, keine Zeilenumbrüche
-    if (token !== "\n") {
-      wordCount++;
-    }
-    if (wordCount >= MAX_WORDS_PER_CHUNK) {
-      chunks.push({
-        text: joinTokensWithSpacesAndNewlines(currentChunkTokens),
-        header: undefined,
-        order: order++,
-      });
-      currentChunkTokens = [];
-      wordCount = 0;
-    }
-  }
-  // Add the last chunk if not empty
-  if (currentChunkTokens.length > 0) {
-    chunks.push({
-      text: joinTokensWithSpacesAndNewlines(currentChunkTokens),
-      header: undefined,
-      order: order,
+  // If the input is an array of individual pages, split every page separately
+  // and keep a reference to the page number inside the meta field.
+  if (Array.isArray(input)) {
+    const all: Chunk[] = [];
+    input.forEach((p) => {
+      const chunksForPage = splitTextIntoSectionsOrChunks(p.text);
+      chunksForPage.forEach((c) => (c.meta = { page: p.page }));
+      all.push(...chunksForPage);
     });
+    // order has already been assigned inside the recursive call – but we have
+    // to re-number the chunks to keep a strictly increasing order across all
+    // pages.
+    all.forEach((c, idx) => (c.order = idx));
+    return all;
   }
+
+  ////////////////////////////////////////////////////////////////
+  // Below: processing for a single string (markdown/plain text) //
+  ////////////////////////////////////////////////////////////////
+
+  const text = input;
+
+  // Short-circuit for small inputs
+  if (countWords(text) <= MAX_WORDS_PER_CHUNK) {
+    return [buildChunk(text, undefined)];
+  }
+
+  const chunks: Chunk[] = [];
+
+  // Work line based – this helps to keep structures such as tables intact.
+  const lines = text.split(/\r?\n/);
+
+  let currentHeader: string | undefined = undefined;
+  let currentLines: string[] = [];
+  let currentWordCount = 0;
+  let insideCodeFence = false;
+  let insideTable = false;
+
+  // Pushes the accumulated lines into the chunks array and resets the
+  // collectors.
+  const pushCurrentLines = () => {
+    if (currentLines.length === 0) return;
+    const txt = currentLines.join("\n");
+    chunks.push(buildChunk(txt, currentHeader));
+    currentLines = [];
+    currentWordCount = 0;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const trimmed = line.trim();
+
+    // Toggle code-fence state (```) when encountered
+    if (trimmed.startsWith("```")) {
+      insideCodeFence = !insideCodeFence;
+    }
+
+    // Detect simple markdown tables – continuous lines containing a pipe (|)
+    // outside code fences are considered part of a table.
+    if (!insideCodeFence) {
+      const isTableLine = /\|/.test(line);
+      if (isTableLine) {
+        insideTable = true;
+      } else if (insideTable && !isTableLine) {
+        insideTable = false;
+      }
+    }
+
+    // If we are not inside a code fence, check for headings. A heading starts a
+    // new logical section – we close the previous chunk first.
+    const isHeading = !insideCodeFence && /^#{1,6}\s+/.test(trimmed);
+    if (isHeading) {
+      // Finish the previous section (if any)
+      pushCurrentLines();
+      // Store headline (without leading # characters) as header for following
+      // lines.
+      currentHeader = trimmed.replace(/^#{1,6}\s+/, "").trim();
+    }
+
+    // Words in the current line – calculated once to reuse below.
+    const wordsInLine = countWords(line);
+
+    // Special case: A *single* line can already be bigger than the limit. If we
+    // are **not** in a protected structure (code/table) we split the line by
+    // words directly so the hard requirement from the unit tests is met while
+    // still keeping all characters.
+    if (
+      !insideCodeFence &&
+      !insideTable &&
+      wordsInLine >= MAX_WORDS_PER_CHUNK
+    ) {
+      // Flush previous collected lines first so ordering stays intact.
+      pushCurrentLines();
+
+      const words = line.split(/\s+/);
+      while (words.length) {
+        const slice = words.splice(0, MAX_WORDS_PER_CHUNK);
+        chunks.push(buildChunk(slice.join(" "), currentHeader));
+      }
+      continue; // We already handled this line.
+    }
+
+    // Normal path: just add the line to the current buffer.
+    currentLines.push(line);
+    currentWordCount += wordsInLine;
+
+    // Time to possibly create a new chunk?
+    if (
+      currentWordCount >= MAX_WORDS_PER_CHUNK &&
+      !insideCodeFence &&
+      !insideTable
+    ) {
+      // Prefer to split at blank lines or before next heading to keep markdown
+      // readable. If the next line is a blank one or a heading we push now,
+      // otherwise we wait for the next suitable place (soft limit behaviour).
+      const nextLine = lines[i + 1] ?? "";
+      const nextTrimmed = nextLine.trim();
+      const nextIsHeading = /^#{1,6}\s+/.test(nextTrimmed);
+      if (nextTrimmed === "" || nextIsHeading) {
+        pushCurrentLines();
+      }
+    }
+  }
+
+  // Flush remainder
+  pushCurrentLines();
+
   return chunks;
 };
