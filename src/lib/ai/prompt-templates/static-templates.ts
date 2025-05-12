@@ -112,6 +112,7 @@ export const addServerSideStaticTemplate = (template: StaticTemplateImport) => {
     llmOptions: template.llmOptions || null,
     placeholders: placeholders,
     tools: template.tools || {},
+    deployAsTool: template.deployAsTool || false,
   };
   serverSideStaticTemplates.push(staticTemplate);
 };
