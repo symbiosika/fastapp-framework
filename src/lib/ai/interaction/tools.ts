@@ -10,6 +10,7 @@ import {
   getWebhookToolsForOrganisation,
   getWebhookToolsForUser,
 } from "../../webhooks/tools";
+import { getAssistantToolsForUser } from "../prompt-templates/get-as-tool";
 
 /*
 Tool Registry and Tool Memory
@@ -121,11 +122,17 @@ export const addRuntimeTool = (
     DYNAMIC_TOOL_REGISTRY[chatId] = {};
   }
 
-  DYNAMIC_TOOL_REGISTRY[chatId][name] = {
+  // Normalize name
+  // replace all spaces with underscores
+  let normalizedName = name.toLowerCase().replace(/ /g, "_");
+  // replace all ":" with "_"
+  normalizedName = normalizedName.replace(/:/g, "_");
+
+  DYNAMIC_TOOL_REGISTRY[chatId][normalizedName] = {
     registeredAt: new Date(),
     tool: tool,
     meta: {
-      name,
+      name: normalizedName,
       label: "",
       description: "",
     },
@@ -211,20 +218,26 @@ export const getStaticToolOverviewForMyUser = async (
   const staticAppTools = getStaticToolOverview();
   allTools.push(...staticAppTools);
 
+  // Get all webhook tools for the organisation
   const staticWebhookTools =
     await getWebhookToolsForOrganisation(organisationId);
   staticWebhookTools.map((tool) => {
     allTools.push({
-      name: "webhook-" + tool.name,
+      name: "webhook:" + tool.name,
       label: tool.meta.name ?? tool.name,
       description: tool.meta.description,
     });
   });
 
+  // Get all assistant tools for the user
+  const assistantTools = await getAssistantToolsForUser(userId, organisationId);
+  allTools.push(...assistantTools);
+
+  // Get all webhook tools for the user
   const userWebhookTools = await getWebhookToolsForUser(userId, organisationId);
   userWebhookTools.map((tool) => {
     allTools.push({
-      name: "webhook-" + tool.name,
+      name: "webhook:" + tool.name,
       label: tool.meta.name ?? tool.name,
       description: tool.meta.description,
     });

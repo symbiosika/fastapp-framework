@@ -19,6 +19,7 @@ import { getAvatarForChat } from "../avatars";
 import { addRuntimeToolFromBaseRegistry, addRuntimeTool } from "./tools";
 import { getToolFactoryFromWebhookByName } from "../../webhooks/tools";
 import { getArtifacts } from "./artifacts";
+import { getAssistantToolForUser } from "../prompt-templates/get-as-tool";
 
 export const chatInputValidation = v.object({
   chatId: v.optional(v.string()),
@@ -252,11 +253,15 @@ export async function chat(
 
     // Split tools into regular tools and webhook tools
     const regularTools = enabledToolNames.filter(
-      (tool) => !tool.startsWith("webhook-")
+      (tool) => !tool.startsWith("webhook:")
     );
     const webhookTools = enabledToolNames
-      .filter((tool) => tool.startsWith("webhook-"))
-      .map((tool) => tool.replace("webhook-", ""));
+      .filter((tool) => tool.startsWith("webhook:"))
+      .map((tool) => tool.replace("webhook:", ""));
+
+    const assistantTools = enabledToolNames.filter((tool) =>
+      tool.startsWith("assistant:")
+    );
 
     // Add regular tools
     for (const toolName of regularTools) {
@@ -277,6 +282,19 @@ export async function chat(
       });
       addRuntimeTool(chatId, toolFactory.name, toolFactory.tool);
       log.debug("added webhook tool '" + webhookName + "' to chat: " + chatId);
+    }
+
+    // Add assistant tools
+    for (const assistantToolName of assistantTools) {
+      const assistantTool = await getAssistantToolForUser(
+        options.context.userId,
+        options.context.organisationId,
+        assistantToolName
+      );
+      addRuntimeTool(chatId, assistantTool.name, assistantTool.tool);
+      log.debug(
+        "added assistant tool '" + assistantToolName + "' to chat: " + chatId
+      );
     }
 
     // 5. Convert messages to format expected by AI SDK

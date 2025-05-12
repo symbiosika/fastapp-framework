@@ -347,6 +347,7 @@ export async function chatCompletion(
             error,
           },
         });
+        log.error("Error in chat completion", error + "");
         throw new Error("Failed to generate chat completion");
       },
     });
