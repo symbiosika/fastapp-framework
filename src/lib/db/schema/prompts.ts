@@ -60,6 +60,7 @@ export const promptTemplates = pgBaseTable(
     needsInitialCall: boolean("needs_initial_call").notNull().default(false),
     llmOptions: jsonb("llm_options").$type<LLMOptions>().default({}),
     tools: jsonb("tools").$type<PromptTemplateTools>().default({}).notNull(),
+    deployAsTool: boolean("deploy_as_tool").notNull().default(false),
     // metadata
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()

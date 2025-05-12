@@ -1,0 +1,1 @@
+ALTER TABLE "base_prompt_templates" ADD COLUMN "deploy_as_tool" boolean DEFAULT false NOT NULL;

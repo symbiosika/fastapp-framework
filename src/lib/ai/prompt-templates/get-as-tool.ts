@@ -16,7 +16,7 @@ export async function getAssistantToolForUser(
     organisationId,
   });
 
-  if (!template) {
+  if (!template || !template.deployAsTool) {
     throw new Error("Assistant tool not found");
   }
 
@@ -80,12 +80,14 @@ export async function getAssistantToolsForUser(
   organisationId: string
 ): Promise<{ name: string; label: string; description: string }[]> {
   const templates = await getFullPromptTemplates(organisationId);
-  return templates.map((template) => {
-    const toolName = `assistant:${template.id}`;
-    return {
-      name: toolName,
-      label: template.label || template.name,
-      description: template.description || template.label || template.name,
-    };
-  });
+  return templates
+    .filter((template) => template.deployAsTool)
+    .map((template) => {
+      const toolName = `assistant:${template.id}`;
+      return {
+        name: toolName,
+        label: template.label || template.name,
+        description: template.description || template.label || template.name,
+      };
+    });
 }
