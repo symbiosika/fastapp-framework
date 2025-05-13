@@ -21,6 +21,9 @@ export interface PublicAIModel {
   endpoint: string;
   hostingOrigin: string;
   usesInternet: boolean;
+  showForUser: boolean;
+  supportsToolCalling: boolean;
+  supportsStreaming: boolean;
 }
 
 /**

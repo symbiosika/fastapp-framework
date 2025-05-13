@@ -67,6 +67,11 @@ export const aiProviderModels = pgBaseTable(
     infoBannerColor: varchar("info_banner_color", { length: 255 })
       .notNull()
       .default("green"),
+    showForUser: boolean("show_for_user").notNull().default(true),
+    supportsToolCalling: boolean("supports_tool_calling")
+      .notNull()
+      .default(false),
+    supportsStreaming: boolean("supports_streaming").notNull().default(false),
     createdAt: timestamp("created_at", { mode: "string" })
       .notNull()
       .defaultNow(),

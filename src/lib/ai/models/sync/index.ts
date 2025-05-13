@@ -3,6 +3,7 @@ import {
   getAllAiProviderModels,
   createAiProviderModel,
   deleteAiProviderModel,
+  updateAiProviderModel,
 } from "../index";
 import {
   type AiProviderModelsInsert,
@@ -52,7 +53,7 @@ export async function syncModels(
     const modelsToAdd: AiProviderModelsInsert[] = [];
 
     for (const publicModel of publicModels) {
-      const exists = orgModels.some(
+      const exists = orgModels.find(
         (m: AiProviderModelsSelect) => m.name === publicModel.name && m.system
       );
 
@@ -72,9 +73,27 @@ export async function syncModels(
           hostingOrigin: publicModel.hostingOrigin,
           usesInternet: publicModel.usesInternet,
           active: activeModelNames.has(publicModel.name),
+          showForUser: publicModel.showForUser,
+          supportsToolCalling: publicModel.supportsToolCalling,
+          supportsStreaming: publicModel.supportsStreaming,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           system: true,
+        });
+      } else {
+        // Update existing model
+        await updateAiProviderModel(organisationId, exists.id, {
+          inputType: publicModel.inputType,
+          outputType: publicModel.outputType,
+          maxTokens: publicModel.maxTokens,
+          maxOutputTokens: publicModel.maxOutputTokens,
+          endpoint: publicModel.endpoint,
+          hostingOrigin: publicModel.hostingOrigin,
+          usesInternet: publicModel.usesInternet,
+          showForUser: publicModel.showForUser,
+          supportsToolCalling: publicModel.supportsToolCalling,
+          supportsStreaming: publicModel.supportsStreaming,
+          updatedAt: new Date().toISOString(),
         });
       }
     }
