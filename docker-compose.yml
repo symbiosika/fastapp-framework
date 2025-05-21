@@ -19,21 +19,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  app:
-    image: oven/bun:1
-    container_name: fastapp_app_test
-    depends_on:
-      postgres_db:
-        condition: service_healthy # Wait for postgres_db to be healthy
-    working_dir: /app
-    volumes:
-      - .:/app # Mount current directory into /app
-      - /app/node_modules # Exclude node_modules from the mount to use container's version
-      - ./.env.unittests:/app/.env # Map local .env.testing to container's .env
-   
-    # Keep the container running
-    command: tail -f /dev/null
-
 volumes:
   postgres_data:
     driver: local
