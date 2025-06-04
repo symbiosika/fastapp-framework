@@ -101,7 +101,8 @@
     "clean": "rm -rf ./lib/",
     "release:patch": "tsc && npm version patch && git push --follow-tags && npm publish",
     "release:minor": "tsc && npm version minor && git push --follow-tags && npm publish",
-    "release:major": "tsc && npm version major && git push --follow-tags && npm publish"
+    "release:major": "tsc && npm version major && git push --follow-tags && npm publish",
+    "generate:job-docs": "node scripts/generate-job-service-docs.js"
   },
   "types": "./lib/index.d.ts",
   "dependencies": {
