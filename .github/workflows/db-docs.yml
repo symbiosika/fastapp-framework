@@ -3,9 +3,8 @@ name: Generate DB Documentation
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'src/lib/db/schema/**'
-      - '.github/workflows/db-docs.yml'
+    branches:
+      - main        
 
 jobs:
   build:
@@ -24,3 +23,14 @@ jobs:
         with:
           name: db-schema-doc
           path: docs/db-schema.md
+      - name: Commit documentation
+            run: |
+              if [ -n "$(git status --porcelain docs/db-schema.md)" ]; then
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                git add docs/README_Jobs_API.md
+                git commit -m "chore: update job service docs"
+                git push
+              fi
+            env:
+              GITHUB_TOKEN: ${{ secrets.BE_GH_REPO_KEY }}
