@@ -16,18 +16,26 @@ export const saveFileToLocalDisc: SaveFileFunction = async (
 ) => {
   const id = crypto.randomUUID();
   const fileName = file.name;
-  const fileExtension = fileName.split(".").pop()?.toLowerCase() || "";
+  const fileExtension = fileName.includes(".")
+    ? fileName.split(".").pop()!.toLowerCase()
+    : "";
 
   // Generate the file path
-  const filePath = path.join(ATTACHMENT_DIR, bucket, id + "." + fileExtension);
+  const filePath = path.join(
+    ATTACHMENT_DIR,
+    bucket,
+    fileExtension ? `${id}.${fileExtension}` : id
+  );
 
   // Save the file to the disk
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   await fs.mkdir(path.join(ATTACHMENT_DIR, bucket), { recursive: true });
   await fs.writeFile(filePath, fileBuffer);
+  const publicFileName = fileExtension ? `${id}.${fileExtension}` : id;
+
   return {
-    path: `/api/v1/organisation/${organisationId}/files/local/${bucket}/${id}.${file.name.split(".").pop()}`,
+    path: `/api/v1/organisation/${organisationId}/files/local/${bucket}/${publicFileName}`,
     id: id,
     name: fileName,
     organisationId: organisationId,
