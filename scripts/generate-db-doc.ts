@@ -1,8 +1,16 @@
 import fs from "fs";
 import path from "path";
-import { Project, SyntaxKind, CallExpression, Node, ObjectLiteralExpression } from "ts-morph";
+import {
+  Project,
+  SyntaxKind,
+  CallExpression,
+  Node,
+  ObjectLiteralExpression,
+} from "ts-morph";
 
-const project = new Project({ tsConfigFilePath: path.join(__dirname, "../tsconfig.json") });
+const project = new Project({
+  tsConfigFilePath: path.join(__dirname, "../tsconfig.json"),
+});
 
 const schemaDir = path.join(__dirname, "../src/lib/db/schema");
 const docsDir = path.join(__dirname, "../docs");
@@ -18,7 +26,11 @@ function getBaseCall(expr: CallExpression): CallExpression {
   return current;
 }
 
-function parseTable(fileName: string, tableName: string, columnsObj: ObjectLiteralExpression) {
+function parseTable(
+  fileName: string,
+  tableName: string,
+  columnsObj: ObjectLiteralExpression
+) {
   const columns: { property: string; column: string; type: string }[] = [];
   columnsObj.getProperties().forEach((prop) => {
     if (!Node.isPropertyAssignment(prop)) return;
@@ -28,10 +40,17 @@ function parseTable(fileName: string, tableName: string, columnsObj: ObjectLiter
     const base = getBaseCall(init);
     const typeName = base.getExpression().getText();
     const colArg = base.getArguments()[0];
-    const columnName = colArg && Node.isStringLiteral(colArg.compilerNode)
-      ? colArg.getLiteralText()
-      : propertyName;
-    columns.push({ property: propertyName, column: columnName, type: typeName });
+    let columnName: string;
+    if (colArg && colArg.getKind() === SyntaxKind.StringLiteral) {
+      columnName = colArg.getText().slice(1, -1);
+    } else {
+      columnName = propertyName;
+    }
+    columns.push({
+      property: propertyName,
+      column: columnName,
+      type: typeName,
+    });
   });
 
   docLines.push(`## ${tableName}`);
@@ -66,7 +85,12 @@ for (const file of fs.readdirSync(schemaDir)) {
       if (exprName !== "pgBaseTable" && exprName !== "pgTable") return;
       const args = base.getArguments();
       if (args.length < 2) return;
-      const tableName = args[0].getLiteralText();
+      let tableName: string;
+      if (args[0].getKind() === SyntaxKind.StringLiteral) {
+        tableName = args[0].getText().slice(1, -1);
+      } else {
+        tableName = args[0].getText();
+      }
       const columnsObj = args[1];
       if (!Node.isObjectLiteralExpression(columnsObj)) return;
       parseTable(file, tableName, columnsObj);
