@@ -49,7 +49,7 @@ while ((m = funcRegex.exec(file))) {
 }
 
 let md = '# Job Service API\n\n';
-md += 'This file is generated automatically by a GitHub action. Do not edit manually.\n\n';
+md += '(This file is generated automatically by a GitHub action)\n\n';
 
 for (const fn of functions) {
   md += `## ${fn.name}\n`;
