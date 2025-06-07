@@ -22,10 +22,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: db-schema-doc
-          path: docs/db-schema.md
+          path: docs/11_BuildIn_DB_Schema.md
       - name: Commit documentation
             run: |
-              if [ -n "$(git status --porcelain docs/db-schema.md)" ]; then
+              if [ -n "$(git status --porcelain docs/11_BuildIn_DB_Schema.md)" ]; then
                 git config user.name "github-actions[bot]"
                 git config user.email "github-actions[bot]@users.noreply.github.com"
                 git add docs/README_Jobs_API.md
