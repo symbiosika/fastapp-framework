@@ -18,7 +18,10 @@ import {
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "./get-prompt-template";
-import { getServerSideStaticTemplateByName } from "./static-templates";
+import {
+  getServerSideStaticTemplateByName,
+  getServerSideStaticTemplates,
+} from "./static-templates";
 
 export type FullPromptTemplateImport = PromptTemplatesInsert & {
   placeholders?: Array<
@@ -55,17 +58,24 @@ export const getPlaceholdersForPromptTemplate = async (request: {
 };
 
 /**
- * Get a list of all templates
+ * Get a list of all templates (including static templates)
  */
 export const getTemplates = async (organisationId: string) => {
-  return await getDb()
+  // Get database templates
+  const dbTemplates = await getDb()
     .select()
     .from(promptTemplates)
     .where(eq(promptTemplates.organisationId, organisationId));
+
+  // Get static templates
+  const staticTemplates = getServerSideStaticTemplates(organisationId);
+
+  // Combine and return both
+  return [...dbTemplates, ...staticTemplates];
 };
 
 /**
- * Get a plain template as DB entry
+ * Get a plain template as DB entry (including static templates)
  */
 export const getPlainTemplate = async (request: {
   promptId?: string;
@@ -73,6 +83,25 @@ export const getPlainTemplate = async (request: {
   promptCategory?: string;
   organisationId?: string;
 }) => {
+  // First check if it's a request for a static template by name and category
+  if (
+    request.promptName &&
+    request.promptCategory &&
+    request.promptCategory === "system"
+  ) {
+    try {
+      const staticTemplate = getServerSideStaticTemplateByName(
+        request.promptName
+      );
+      return {
+        ...staticTemplate,
+        organisationId: request.organisationId || "",
+      };
+    } catch (error) {
+      // If static template not found, continue to database search
+    }
+  }
+
   if (request.promptId) {
     const template = await getDb()
       .select()
@@ -114,11 +143,22 @@ export const getPlainTemplate = async (request: {
 };
 
 /**
- * Get all plain placeholders for a prompt template id
+ * Get all plain placeholders for a prompt template id (including static templates)
  */
 export const getPlainPlaceholdersForPromptTemplate = async (
   promptId: string
 ) => {
+  // Check if this is a static template ID
+  if (promptId.startsWith("static-")) {
+    // For static templates, we need to find the template by its ID and return its placeholders
+    const staticTemplates = getServerSideStaticTemplates("");
+    const staticTemplate = staticTemplates.find((t) => t.id === promptId);
+    if (staticTemplate) {
+      return staticTemplate.placeholders;
+    }
+    throw new Error("Static template not found.");
+  }
+
   const placeholders = await getDb()
     .select()
     .from(promptTemplatePlaceholders)
@@ -149,9 +189,22 @@ export const getPlainPlaceholdersForPromptTemplate = async (
 };
 
 /**
- * Get a placeholder for a prompt template by ID
+ * Get a placeholder for a prompt template by ID (including static templates)
  */
 export const getPromptTemplatePlaceholderById = async (id: string) => {
+  // Check if this is a static placeholder ID
+  if (id.startsWith("static-") || id.startsWith("placeholder-")) {
+    // For static placeholders, search through all static templates
+    const staticTemplates = getServerSideStaticTemplates("");
+    for (const template of staticTemplates) {
+      const placeholder = template.placeholders.find((p) => p.id === id);
+      if (placeholder) {
+        return placeholder;
+      }
+    }
+    throw new Error("Static placeholder not found.");
+  }
+
   const placeholder = await getDb()
     .select()
     .from(promptTemplatePlaceholders)
@@ -182,6 +235,12 @@ export const updatePromptTemplate = async (
   if (!data.id || data.id === "") {
     throw new Error("A valid prompt template ID is required.");
   }
+
+  // Prevent updating static templates
+  if (data.id.startsWith("static-")) {
+    throw new Error("Static templates cannot be updated.");
+  }
+
   const updated = await getDb()
     .update(promptTemplates)
     .set(data)
@@ -218,6 +277,11 @@ export const deletePromptTemplate = async (
   id: string,
   organisationId: string
 ) => {
+  // Prevent deleting static templates
+  if (id.startsWith("static-")) {
+    throw new Error("Static templates cannot be deleted.");
+  }
+
   await getDb()
     .delete(promptTemplates)
     .where(
@@ -235,6 +299,11 @@ export const deletePromptTemplate = async (
 export const addPromptTemplatePlaceholder = async (
   data: PromptTemplatePlaceholdersInsert & { suggestions?: string[] }
 ) => {
+  // Prevent adding placeholders to static templates
+  if (data.promptTemplateId.startsWith("static-")) {
+    throw new Error("Placeholders cannot be added to static templates.");
+  }
+
   const { suggestions, ...placeholderData } = data;
   const added = await getDb().transaction(async (tx) => {
     const placeholder = await tx
@@ -270,6 +339,16 @@ export const updatePromptTemplatePlaceholder = async (
       "A valid placeholder ID and prompt template ID are required."
     );
   }
+
+  // Prevent updating static template placeholders
+  if (
+    data.id!.startsWith("static-") ||
+    data.id!.startsWith("placeholder-") ||
+    data.promptTemplateId!.startsWith("static-")
+  ) {
+    throw new Error("Static template placeholders cannot be updated.");
+  }
+
   const { suggestions, ...placeholderData } = data;
 
   const updated = await getDb().transaction(async (tx) => {
@@ -326,6 +405,15 @@ export const deletePromptTemplatePlaceholder = async (
   id: string,
   promptTemplateId: string
 ) => {
+  // Prevent deleting static template placeholders
+  if (
+    id.startsWith("static-") ||
+    id.startsWith("placeholder-") ||
+    promptTemplateId.startsWith("static-")
+  ) {
+    throw new Error("Static template placeholders cannot be deleted.");
+  }
+
   await getDb()
     .delete(promptTemplatePlaceholders)
     .where(

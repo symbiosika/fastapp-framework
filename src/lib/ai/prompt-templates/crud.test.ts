@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import {
   addPromptTemplate,
   updatePromptTemplate,
@@ -11,19 +11,24 @@ import {
   createFullPromptTemplate,
   getFullPromptTemplate,
   getFullPromptTemplates,
+  getTemplates,
 } from "./crud";
 import {
   initTests,
   TEST_ADMIN_USER,
   TEST_ORGANISATION_1,
 } from "../../../test/init.test";
-import { getDb, type PromptTemplatePlaceholdersInsert } from "../../../dbSchema";
+import {
+  getDb,
+  type PromptTemplatePlaceholdersInsert,
+} from "../../../dbSchema";
 import {
   knowledgeEntry,
   knowledgeFilters,
   knowledgeGroup,
 } from "../../db/schema/knowledge";
 import { eq } from "drizzle-orm";
+import { addServerSideStaticTemplate } from "./static-templates";
 
 beforeAll(async () => {
   await initTests();
@@ -614,5 +619,143 @@ describe("Complete Prompt Template Operations", () => {
     getDb()
       .delete(knowledgeGroup)
       .where(eq(knowledgeGroup.id, knowledgeGroupId));
+  });
+});
+
+describe("Template CRUD with Static Templates", () => {
+  test("getTemplates should include static templates", async () => {
+    // Add a static template for testing
+    const testStaticTemplate = {
+      name: "test_static_template",
+      label: "Test Static Template",
+      description: "Test Description",
+      category: "system",
+      systemPrompt: "Test System Prompt",
+      userPrompt: null,
+      langCode: "de",
+      hidden: false,
+      needsInitialCall: true,
+      placeholders: [
+        {
+          name: "user_input",
+          label: "User Input",
+          description: "Test user input",
+          requiredByUser: true,
+        },
+      ],
+    };
+
+    addServerSideStaticTemplate(testStaticTemplate);
+
+    // Get all templates
+    const templates = await getTemplates(TEST_ORGANISATION_1.id);
+
+    // Check that static template is included
+    const staticTemplate = templates.find(
+      (t) => t.name === "test_static_template"
+    );
+    expect(staticTemplate).toBeDefined();
+    expect(staticTemplate?.category).toBe("system");
+    expect(staticTemplate?.organisationId).toBe(TEST_ORGANISATION_1.id);
+  });
+
+  test("getPlainTemplate should find static template by name and category", async () => {
+    // Get the static template by name and category
+    const template = await getPlainTemplate({
+      promptName: "test_static_template",
+      promptCategory: "system",
+      organisationId: TEST_ORGANISATION_1.id,
+    });
+
+    expect(template).toBeDefined();
+    expect(template.name).toBe("test_static_template");
+    expect(template.category).toBe("system");
+    expect(template.organisationId).toBe(TEST_ORGANISATION_1.id);
+  });
+
+  test("getPlainTemplate should throw error for non-existent static template", async () => {
+    expect(async () => {
+      await getPlainTemplate({
+        promptName: "non_existent_template",
+        promptCategory: "system",
+        organisationId: TEST_ORGANISATION_1.id,
+      });
+    }).toThrow();
+  });
+
+  test("getPlainPlaceholdersForPromptTemplate should work with static template ID", async () => {
+    // First get the static template to get its ID
+    const template = await getPlainTemplate({
+      promptName: "test_static_template",
+      promptCategory: "system",
+      organisationId: TEST_ORGANISATION_1.id,
+    });
+
+    // Get placeholders using the static template ID
+    const placeholders = await getPlainPlaceholdersForPromptTemplate(
+      template.id
+    );
+
+    expect(placeholders).toBeDefined();
+    expect(placeholders.length).toBeGreaterThan(0);
+    expect(placeholders[0].name).toBe("user_input");
+  });
+});
+
+describe("Static Template Protection", () => {
+  test("should prevent updating static templates", async () => {
+    expect(async () => {
+      await updatePromptTemplate({
+        id: "static-test123",
+        name: "Updated Static Template",
+        organisationId: TEST_ORGANISATION_1.id,
+      });
+    }).toThrow("Static templates cannot be updated.");
+  });
+
+  test("should prevent deleting static templates", async () => {
+    expect(async () => {
+      await deletePromptTemplate("static-test123", TEST_ORGANISATION_1.id);
+    }).toThrow("Static templates cannot be deleted.");
+  });
+
+  test("should prevent adding placeholders to static templates", async () => {
+    expect(async () => {
+      await addPromptTemplatePlaceholder({
+        promptTemplateId: "static-test123",
+        name: "new_placeholder",
+        label: "New Placeholder",
+        description: "Test",
+        defaultValue: null,
+        hidden: false,
+        type: "text",
+        requiredByUser: false,
+      });
+    }).toThrow("Placeholders cannot be added to static templates.");
+  });
+
+  test("should prevent updating static template placeholders", async () => {
+    expect(async () => {
+      await updatePromptTemplatePlaceholder({
+        id: "static-placeholder123",
+        promptTemplateId: "static-test123",
+        name: "updated_placeholder",
+        label: "Updated Placeholder",
+        description: "Test",
+        defaultValue: null,
+        hidden: false,
+        type: "text",
+        requiredByUser: false,
+      });
+    }).toThrow("Static template placeholders cannot be updated.");
+  });
+
+  test("should prevent deleting static template placeholders", async () => {
+    expect(async () => {
+      await deletePromptTemplatePlaceholder(
+        "static-placeholder123",
+        "static-test123"
+      );
+    }).toThrow("Static template placeholders cannot be deleted.");
   });
 });
