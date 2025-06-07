@@ -167,10 +167,22 @@ class ChatHistoryStoreInDb {
 
   async getHistoryByUserId(
     userId: string,
-    startFrom: string,
-    meta: { organisationId: string }
+    filter: {
+      organisationId: string;
+      startFrom?: string;
+      limit?: number;
+    }
   ): Promise<ChatSession[]> {
-    const result = await getDb()
+    const whereConditions = [
+      eq(chatSessions.userId, userId),
+      eq(chatSessions.organisationId, filter.organisationId),
+    ];
+
+    if (filter.startFrom) {
+      whereConditions.push(gte(chatSessions.updatedAt, filter.startFrom));
+    }
+
+    const baseQuery = getDb()
       .select({
         id: chatSessions.id,
         name: chatSessions.name,
@@ -179,15 +191,13 @@ class ChatHistoryStoreInDb {
         lastUsedAt: chatSessions.lastUsedAt,
       })
       .from(chatSessions)
-
-      .where(
-        and(
-          eq(chatSessions.userId, userId),
-          eq(chatSessions.organisationId, meta.organisationId),
-          gte(chatSessions.updatedAt, startFrom)
-        )
-      )
+      .where(and(...whereConditions))
       .orderBy(desc(chatSessions.updatedAt));
+
+    const result = filter.limit
+      ? await baseQuery.limit(filter.limit)
+      : await baseQuery;
+
     return result as ChatSession[];
   }
 

@@ -201,13 +201,9 @@ export default function defineRoutes(app: FastAppHono, API_BASE_PATH: string) {
       try {
         const usersId = c.get("usersId");
         const { organisationId, startFrom } = c.req.valid("param");
-        const r = await chatStore.getHistoryByUserId(
-          usersId,
-          startFrom ?? "2000-01-01",
-          {
-            organisationId,
-          }
-        );
+        const r = await chatStore.getHistoryByUserId(usersId, {
+          organisationId,
+        });
         return c.json(r);
       } catch (e) {
         throw new HTTPException(400, { message: e + "" });
