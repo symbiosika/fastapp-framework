@@ -400,11 +400,11 @@ const server = defineServer({
   
   customHonoApps: [
     {
-      baseRoute: "/api/v1", // Base path for your routes
+      baseRoute: "/app", // Base path for your routes
       app: defineMyCustomRoutes,   // Your route definition function
     },
     {
-      baseRoute: "/api/v1/admin",
+      baseRoute: "/admin",
       app: defineAdminRoutes,
     },
   ],
@@ -416,5 +416,5 @@ const server = defineServer({
 ### Route Accessibility
 
 With the above configuration:
-- Routes defined in `defineMyCustomRoutes` will be accessible under `/api/v1/`
-- For example: `app.get("/data/:id", ...)` becomes `GET /api/v1/data/:id`
+- Routes defined in `defineMyCustomRoutes` will be accessible under `/app/`
+- For example: `app.get("/data/:id", ...)` becomes `GET /app/data/:id`
