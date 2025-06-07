@@ -10,15 +10,13 @@ import {
   type PromptTemplatesInsert,
   type PromptTemplatesSelect,
   promptTemplateKnowledgeEntries,
-  knowledgeEntry,
   promptTemplateKnowledgeFilters,
-  knowledgeFilters,
   promptTemplateKnowledgeGroups,
-  knowledgeGroup,
 } from "../../../lib/db/db-schema";
 import { RESPONSES } from "../../responses";
 import { getPromptTemplateDefinition } from "./get-prompt-template";
 import {
+  getServerSideStaticTemplateById,
   getServerSideStaticTemplateByName,
   getServerSideStaticTemplates,
 } from "./static-templates";
@@ -440,7 +438,17 @@ export const getFullPromptTemplate = async (request: {
     request.promptName &&
     request.promptCategory === "system"
   ) {
-    const template = getServerSideStaticTemplateByName(request.promptName);
+    const template = getServerSideStaticTemplateByName(
+      request.promptId ?? request.promptName ?? ""
+    );
+    return {
+      ...template,
+      knowledgeEntries: [],
+      knowledgeFilters: [],
+      knowledgeGroups: [],
+    };
+  } else if (request.promptId?.startsWith("static-")) {
+    const template = getServerSideStaticTemplateById(request.promptId);
     return {
       ...template,
       knowledgeEntries: [],
