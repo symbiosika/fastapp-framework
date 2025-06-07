@@ -74,6 +74,7 @@ import {
   deleteAvatar,
   getAvatarForChat,
 } from "./lib/ai/avatars";
+import { generateChatSummary } from "./lib/ai/chat-summary";
 
 type AIService = {
   addPromptTemplate: typeof addPromptTemplate;
@@ -129,6 +130,7 @@ type AIService = {
   updateAvatar: typeof updateAvatar;
   deleteAvatar: typeof deleteAvatar;
   getAvatarForChat: typeof getAvatarForChat;
+  generateChatSummary: typeof generateChatSummary;
 };
 
 export default {
@@ -196,4 +198,6 @@ export default {
   updateAvatar,
   deleteAvatar,
   getAvatarForChat,
+  // chat summary
+  generateChatSummary,
 } as AIService;
