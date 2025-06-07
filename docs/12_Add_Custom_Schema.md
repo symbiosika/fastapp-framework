@@ -15,13 +15,25 @@ Create your custom database schema in a file like `src/db-schema.ts`:
 
 ```typescript
 import { pgTableCreator } from "drizzle-orm/pg-core";
-import { uuid, varchar, text, timestamp, jsonb, boolean, integer } from "drizzle-orm/pg-core";
+import {
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  jsonb,
+  boolean,
+  integer,
+} from "drizzle-orm/pg-core";
 
 // Define your app's table prefix
 export const PREFIX = "ai_coach_";
 
 // Create table creator with your prefix
 export const pgCustomAppTable = pgTableCreator((name) => `${PREFIX}${name}`);
+
+type someSessionsMeta = {
+  notes: string[];
+};
 
 // Define your custom tables
 export const dbSchema = {
@@ -38,6 +50,7 @@ export const dbSchema = {
     completedAt: timestamp("completed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    meta: jsonb("meta").$type<someSessionsMeta>().default({}),
   }),
 
   // Example: Custom progress tracking table
@@ -65,6 +78,14 @@ export const dbSchema = {
 
 // Export individual tables for easier imports
 export const { coachingSessions, progressTracking, appSettings } = dbSchema;
+```
+
+### Export Types
+
+```typescript
+export type SomeSessions = typeof someSessions.$inferSelect;
+export type SomeSessionsInsert = typeof someSessions.$inferInsert;
+export type SomeSessionsUpdate = Partial<SomeSessions>;
 ```
 
 ## 2. Drizzle Configuration Files
@@ -195,11 +216,13 @@ Add these scripts to your `package.json`:
 ### Initial Setup
 
 1. **Generate framework migrations** (first time setup):
+
    ```bash
    npm run fastapp:migrate
    ```
 
 2. **Generate your custom table migrations**:
+
    ```bash
    npm run generate
    ```
@@ -214,6 +237,7 @@ Add these scripts to your `package.json`:
 When you modify your custom schema:
 
 1. **Generate new migration**:
+
    ```bash
    npm run generate
    ```
@@ -240,13 +264,19 @@ import { coachingSessions, progressTracking } from "./db-schema";
 import { db } from "./src/fastapp-framework/src/lib/db/database";
 
 // Create a new coaching session
-const newSession = await db.insert(coachingSessions).values({
-  userId: "user-uuid",
-  sessionType: "goal-setting", 
-  status: "scheduled",
-  goals: { primary: "Improve productivity", secondary: ["Better time management"] },
-  scheduledAt: new Date("2024-01-15T10:00:00Z"),
-}).returning();
+const newSession = await db
+  .insert(coachingSessions)
+  .values({
+    userId: "user-uuid",
+    sessionType: "goal-setting",
+    status: "scheduled",
+    goals: {
+      primary: "Improve productivity",
+      secondary: ["Better time management"],
+    },
+    scheduledAt: new Date("2024-01-15T10:00:00Z"),
+  })
+  .returning();
 
 // Query sessions
 const userSessions = await db
@@ -257,10 +287,10 @@ const userSessions = await db
 // Update session
 await db
   .update(coachingSessions)
-  .set({ 
+  .set({
     status: "completed",
     completedAt: new Date(),
-    notes: "Great progress on time management goals"
+    notes: "Great progress on time management goals",
   })
   .where(eq(coachingSessions.id, sessionId));
 ```
@@ -281,7 +311,7 @@ const server = defineServer({
         .select()
         .from(coachingSessions)
         .where(eq(coachingSessions.userId, userId));
-      
+
       return c.json(sessions);
     });
 
@@ -292,7 +322,7 @@ const server = defineServer({
         .insert(coachingSessions)
         .values(body)
         .returning();
-      
+
       return c.json(session[0]);
     });
   },
@@ -302,17 +332,20 @@ const server = defineServer({
 ## 6. Best Practices
 
 ### Table Naming
+
 - Use descriptive table names
 - Follow snake_case convention
 - Keep prefixes short but meaningful
 
 ### Schema Design
+
 - Include `id`, `createdAt`, and `updatedAt` fields
 - Use UUIDs for primary keys
 - Use appropriate data types (jsonb for flexible data, varchar with limits for constrained text)
 - Add indexes for frequently queried columns
 
 ### Migration Safety
+
 - Always generate migrations for schema changes
 - Test migrations in development first
 - Backup production database before running migrations
