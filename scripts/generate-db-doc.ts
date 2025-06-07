@@ -14,7 +14,7 @@ const project = new Project({
 
 const schemaDir = path.join(__dirname, "../src/lib/db/schema");
 const docsDir = path.join(__dirname, "../docs");
-const outFile = path.join(docsDir, "db-schema.md");
+const outFile = path.join(docsDir, "11_BuildIn_DB_Schema.md");
 
 function getBaseCall(expr: CallExpression): CallExpression {
   let current: CallExpression = expr;

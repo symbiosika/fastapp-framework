@@ -50,6 +50,8 @@ export const initTemplateMessage = async (request: {
   let promptName: string | undefined;
   if (isUUID(request.template)) {
     promptId = request.template;
+  } else if (request.template.startsWith("static-")) {
+    promptId = request.template;
   } else {
     const { category, name } = splitTemplateName(request.template);
     promptCategory = category;

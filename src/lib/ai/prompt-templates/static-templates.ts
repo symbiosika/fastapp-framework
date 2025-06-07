@@ -41,6 +41,17 @@ export const getServerSideStaticTemplateByName = (name: string) => {
   return t;
 };
 
+/**
+ * Get a static template by id
+ */
+export const getServerSideStaticTemplateById = (id: string) => {
+  const t = serverSideStaticTemplates.find((template) => template.id === id);
+  if (!t) {
+    throw new Error("Static template not found");
+  }
+  return t;
+};
+
 export type StaticTemplateImport = PromptTemplatesInsert & {
   placeholders?: Array<{
     name: string;

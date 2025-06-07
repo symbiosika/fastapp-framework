@@ -98,11 +98,10 @@ describe("Chat Store", () => {
   });
 
   test("Get chat history by user ID", async () => {
-    const history = await chatStore.getHistoryByUserId(
-      TEST_ORG1_USER_1.id,
-      "2000-01-01",
-      { organisationId: TEST_ORGANISATION_1.id }
-    );
+    const history = await chatStore.getHistoryByUserId(TEST_ORG1_USER_1.id, {
+      organisationId: TEST_ORGANISATION_1.id,
+      startFrom: "2000-01-01",
+    });
 
     expect(Array.isArray(history)).toBe(true);
     expect(history.length).toBeGreaterThan(0);
